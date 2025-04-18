@@ -6,8 +6,9 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.example.pruebamongodbcss.Utilidades.GestorConexion;
 import com.mongodb.client.MongoDatabase;
+
+import Utilidades.GestorConexion;
 
 public class Servidor {
     private static final int PUERTO_DEFAULT = 50002;
@@ -32,7 +33,7 @@ public class Servidor {
         this.puerto = puerto;
         this.pool = Executors.newCachedThreadPool();
         // Intentar conectar a MongoDB local (Docker) primero
-        MongoDatabase localDB = GestorConexion.conectarBDLocal();
+        MongoDatabase localDB = GestorConexion.conectarBD();
         
         // Si la conexión local falla, intentar con la conexión remota
         if (localDB == null) {

@@ -2,9 +2,10 @@ package com.example.pruebamongodbcss;
 
 import org.bson.Document;
 
-import com.example.pruebamongodbcss.Utilidades.GestorConexion;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+
+import Utilidades.GestorConexion;
 
 public class MostrarColecciones {
     
@@ -13,7 +14,7 @@ public class MostrarColecciones {
         
         try {
             // Conectar a la base de datos
-            MongoDatabase db = GestorConexion.conectarBDLocal();
+            MongoDatabase db = GestorConexion.conectarBD();
             
             if (db == null) {
                 System.out.println("No se pudo conectar a la base de datos local, intentando remota...");

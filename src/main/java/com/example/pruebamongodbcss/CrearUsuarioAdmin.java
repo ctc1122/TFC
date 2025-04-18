@@ -4,10 +4,11 @@ import java.util.Date;
 
 import org.bson.Document;
 
-import com.example.pruebamongodbcss.Utilidades.GestorConexion;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+
+import Utilidades.GestorConexion;
 
 public class CrearUsuarioAdmin {
     
@@ -16,7 +17,7 @@ public class CrearUsuarioAdmin {
         
         try {
             // Conectar a la base de datos local
-            MongoDatabase db = GestorConexion.conectarBDLocal();
+            MongoDatabase db = GestorConexion.conectarBD();
             
             if (db == null) {
                 System.out.println("No se pudo conectar a la base de datos local, intentando remota...");
