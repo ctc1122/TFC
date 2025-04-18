@@ -1,6 +1,5 @@
-package com.example.pruebamongodbcss.Carrusel;
+package com.example.pruebamongodbcss.Modulos.Carrusel;
 
-import javafx.animation.*;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -8,7 +7,6 @@ import javafx.scene.Scene;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.util.Duration;
 
 public class Salvapantallas extends Application {
 

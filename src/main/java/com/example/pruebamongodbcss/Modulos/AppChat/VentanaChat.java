@@ -1,4 +1,4 @@
-package com.example.pruebamongodbcss.AppChat;
+package com.example.pruebamongodbcss.Modulos.AppChat;
 
 import java.io.BufferedWriter;
 import java.io.File;

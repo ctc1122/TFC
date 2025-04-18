@@ -4,7 +4,7 @@
 <?import javafx.geometry.Insets?>
 
 <BorderPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.example.pruebamongodbcss.VentanaChat">
+            fx:controller="com.example.pruebamongodbcss.Modulos.AppChat.VentanaChat">
 
     <!-- BARRA LATERAL IZQUIERDA -->
     <left>

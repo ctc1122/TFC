@@ -65,4 +65,31 @@ db.terminologia_medica.insertMany([
     definicion: "Trastorno metabólico caracterizado por nivel elevado de glucosa en sangre",
     categoria: "Endocrinología"
   }
-]); 
+]);
+
+// Script de inicialización para MongoDB
+db = db.getSiblingDB('Tienda');
+
+// Crear colección de usuarios si no existe
+if (!db.getCollectionNames().includes('usuarios')) {
+    db.createCollection('usuarios');
+    
+    // Insertar usuario administrador
+    db.usuarios.insertOne({
+        usuario: "admin",
+        password: "admin",
+        rol: "ADMIN",
+        nombre: "Administrador",
+        apellido: "Sistema",
+        fechaCreacion: new Date()
+    });
+    
+    print("Colección de usuarios creada con usuario admin");
+} else {
+    print("La colección de usuarios ya existe");
+}
+
+// Crear índices para mejorar rendimiento
+db.usuarios.createIndex({ "usuario": 1 }, { unique: true });
+
+print("Inicialización de base de datos completada"); 

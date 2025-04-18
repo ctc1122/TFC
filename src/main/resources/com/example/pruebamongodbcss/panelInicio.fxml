@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <BorderPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="436.0" prefWidth="781.0" styleClass="fondoMenuPrincipal" stylesheets="@app.css" xmlns="http://javafx.com/javafx/23.0.1" 
-xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.AppController">
+xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.PanelInicioController">
    <left>
       <BorderPane fx:id="sidebarContainer" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
          <center>

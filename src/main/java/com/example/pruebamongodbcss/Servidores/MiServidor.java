@@ -1,9 +1,14 @@
-package com.example.pruebamongodbcss;
+package com.example.pruebamongodbcss.Servidores;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.concurrent.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MiServidor {
     private static final int PUERTO_BASE = 50000;

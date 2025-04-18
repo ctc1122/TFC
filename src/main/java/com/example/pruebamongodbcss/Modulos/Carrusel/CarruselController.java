@@ -1,4 +1,8 @@
-package com.example.pruebamongodbcss.Carrusel;
+package com.example.pruebamongodbcss.Modulos.Carrusel;
+
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.KeyFrame;
@@ -10,10 +14,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
 public class CarruselController {
 

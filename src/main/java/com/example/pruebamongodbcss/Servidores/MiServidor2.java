@@ -1,4 +1,4 @@
-package com.example.pruebamongodbcss;
+package com.example.pruebamongodbcss.Servidores;
 
 import java.io.BufferedReader;
 import java.io.IOException;

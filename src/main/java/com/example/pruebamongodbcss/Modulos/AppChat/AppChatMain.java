@@ -1,4 +1,4 @@
-package com.example.pruebamongodbcss.AppChat;
+package com.example.pruebamongodbcss.Modulos.AppChat;
 
 import java.io.IOException;
 
@@ -17,7 +17,7 @@ public class AppChatMain extends Application {
     @Override
     public void start(Stage stage) throws IOException {
 
-        FXMLLoader fxmlLoader = new FXMLLoader(AppChatMain.class.getResource("/com/example/pruebamongodbcss/panelInicio.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(AppChatMain.class.getResource("/com/example/pruebamongodbcss/chatPanel.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 320, 240);
         scene.getStylesheets().add(getClass().getResource("/Estilos/chatOscuro.css").toExternalForm());
         stage.setTitle("App1!");
