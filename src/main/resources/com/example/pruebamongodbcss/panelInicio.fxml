@@ -12,8 +12,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="436.0" prefWidth="781.0" styleClass="fondoMenuPrincipal" stylesheets="@app.css" xmlns="http://javafx.com/javafx/23.0.1" 
-xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.PanelInicioController">
+<BorderPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="436.0" prefWidth="781.0" styleClass="fondoMenuPrincipal" stylesheets="@app.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.PanelInicioController">
    <left>
       <BorderPane fx:id="sidebarContainer" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
          <center>
@@ -42,6 +41,15 @@ xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.
                            <image>
                               <Image url="@../../../Iconos/iconPet2.png" />
                            </image></ImageView>
+                     </graphic>
+                  </JFXButton>
+                  <JFXButton fx:id="but_clientes" styleClass="itemMenu" text="Clientes">
+                     <graphic>
+                        <ImageView fitHeight="76.0" fitWidth="27.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../Iconos/IconPruebaClientes.png" />
+                           </image>
+                        </ImageView>
                      </graphic>
                   </JFXButton>
                   <JFXButton fx:id="btnFichaje" alignment="TOP_LEFT" graphicTextGap="10.0" layoutX="10.0" layoutY="61.0" maxWidth="1.7976931348623157E308" styleClass="itemMenu" text="Fichaje">
