@@ -10,6 +10,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.ProgressIndicator?>
 
 <BorderPane prefHeight="400" prefWidth="600" style="-fx-background-color: #e6f0ff;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.InicioSesion.PanelInicioSesionController">
 
@@ -47,6 +48,9 @@
 
             <!-- Botón de Login -->
             <MFXButton fx:id="btnInicioSesion" onAction="#inicioSesion" prefHeight="40" prefWidth="200" style="-fx-background-color: #1976d2; -fx-text-fill: white; -fx-font-weight: bold;" text="LOGIN" />
+            
+            <!-- Spinner de carga -->
+            <ProgressIndicator fx:id="spinnerCarga" visible="false" prefHeight="50" prefWidth="50" style="-fx-progress-color: #1976d2;" />
         </VBox>
     </center>
 </BorderPane>

@@ -19,6 +19,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
@@ -53,6 +54,9 @@ public class PanelInicioSesionController extends Application implements Initiali
 
     @FXML
     private Button btnInicioSesion;
+
+    @FXML
+    private ProgressIndicator spinnerCarga;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -96,11 +100,17 @@ public class PanelInicioSesionController extends Application implements Initiali
         }
     }
 
+    /**
+     * Método para iniciar sesión en el servidor MongoDB consulta los datos de usuario y contraseña en la base de datos de MongoDB
+     * @return void
+     * @throws IOException
+     */
     @FXML
     private void inicioSesion() {
         String usuario = campoUsuario.getText();
         String password = campoPassword.getText();
 
+        // Si el usuario o la contraseña están vacíos, mostrar un mensaje de error
         if (usuario.isEmpty() || password.isEmpty()) {
             mostrarMensaje("Por favor, ingrese un usuario y contraseña.");
             return;
@@ -128,10 +138,12 @@ public class PanelInicioSesionController extends Application implements Initiali
             int tipoRespuesta = entrada.readInt();
             if (tipoRespuesta == Protocolo.LOGIN_RESPONSE) {
                 int codigoRespuesta = entrada.readInt();
+                // Si el código de respuesta es 1, se ha iniciado sesión correctamente
                 switch (codigoRespuesta) {
                     case Protocolo.LOGIN_SUCCESS:
                         mostrarMensaje("Inicio de sesión exitoso.");
                         // Aquí puedes agregar la lógica para cambiar a la siguiente pantalla
+                        cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
                         break;
                     case Protocolo.LOGIN_FAILED:
                         mostrarMensaje("Usuario o contraseña incorrectos.");
@@ -154,6 +166,11 @@ public class PanelInicioSesionController extends Application implements Initiali
         }
     }
 
+    /**
+     * Método para mostrar un mensaje en la pantalla de tipo información
+     * @param mensaje
+     * @return void
+     */
     private void mostrarMensaje(String mensaje) {
         Platform.runLater(() -> {
             Alert alert = new Alert(AlertType.INFORMATION);
@@ -163,6 +180,10 @@ public class PanelInicioSesionController extends Application implements Initiali
         });
     }
 
+    /**
+     * Método para cerrar la conexión con el servidor
+     * @return void
+     */
     public void cerrarConexion() {
         try {
             if (entrada != null) entrada.close();
@@ -172,4 +193,42 @@ public class PanelInicioSesionController extends Application implements Initiali
             System.err.println("Error al cerrar la conexión: " + e.getMessage());
         }
     }
+
+    /**
+     * Método para cambiar de pantalla
+     * @param nombreFXML
+     * @return void
+     */
+    public void cambiarPantalla(String nombreFXML) {
+        // Mostrar el spinner
+        Platform.runLater(() -> {
+            spinnerCarga.setVisible(true);
+            spinnerCarga.setProgress(-1); // -1 para animación infinita
+        });
+
+        // Cargar la nueva escena en un hilo separado
+        new Thread(() -> {
+            try {
+                FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(nombreFXML));
+                Scene nuevaEscena = new Scene(fxmlLoader.load(), 700, 450);
+                
+                // Cambiar la escena en el hilo de JavaFX
+                Platform.runLater(() -> {
+                    Stage stage = (Stage) campoUsuario.getScene().getWindow();
+                    stage.setScene(nuevaEscena);
+                });
+            } catch (IOException e) {
+                Platform.runLater(() -> {
+                    spinnerCarga.setVisible(false);
+                    Alert alert = new Alert(AlertType.ERROR);
+                    alert.setTitle("Error");
+                    alert.setContentText("Error al cambiar de pantalla: " + e.getMessage());
+                    alert.showAndWait();
+                });
+            }
+        }).start();
+    }
 }
+    
+
+

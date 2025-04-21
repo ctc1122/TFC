@@ -53,10 +53,12 @@ public class ClienteHandler implements Runnable {
         }
     }
 
+
     private void procesarLogin() throws IOException {
         String usuario = entrada.readUTF();
         String password = entrada.readUTF();
-
+        
+        // Buscar usuario en la colección de usuarios de MongoDB
         MongoCollection<Document> usuarios = database.getCollection("usuarios");
         Document usuarioDoc = usuarios.find(and(
             eq("usuario", usuario),

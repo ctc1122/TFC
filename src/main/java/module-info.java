@@ -9,6 +9,7 @@ module com.example.pruebamongodbcss {
     requires java.desktop;
     requires javafx.graphics;
 
+
     // Configuración básica del módulo principal
     exports com.example.pruebamongodbcss;
     opens com.example.pruebamongodbcss to javafx.fxml;
