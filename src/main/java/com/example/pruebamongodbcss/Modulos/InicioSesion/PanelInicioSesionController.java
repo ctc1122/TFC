@@ -107,8 +107,8 @@ public class PanelInicioSesionController extends Application implements Initiali
      */
     @FXML
     private void inicioSesion() {
-        String usuario = campoUsuario.getText();
-        String password = campoPassword.getText();
+        String usuario = campoUsuario.getText().toLowerCase();
+        String password = campoPassword.getText().toLowerCase();
 
         // Si el usuario o la contraseña están vacíos, mostrar un mensaje de error
         if (usuario.isEmpty() || password.isEmpty()) {
@@ -132,6 +132,7 @@ public class PanelInicioSesionController extends Application implements Initiali
             salida.writeInt(Protocolo.LOGIN_REQUEST);
             salida.writeUTF(usuario);
             salida.writeUTF(password);
+            //flush para enviar los datos al servidor
             salida.flush();
 
             // Recibir respuesta
