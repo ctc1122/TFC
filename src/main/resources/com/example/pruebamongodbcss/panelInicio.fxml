@@ -62,7 +62,7 @@
                      </graphic>
                   </JFXButton>
                   <Separator opacity="0.28" prefWidth="200.0" />
-                  <JFXButton fx:id="btnSalir" graphicTextGap="10.0" maxWidth="1.7976931348623157E308" styleClass="itemMenu" text="SALIR">
+                  <JFXButton fx:id="btnSalir" onAction="#cerrarSesion" graphicTextGap="10.0" maxWidth="1.7976931348623157E308" styleClass="itemMenu" text="SALIR">
                      <graphic>
                         <ImageView fitHeight="29.0" fitWidth="26.0" pickOnBounds="true" preserveRatio="true">
                            <image>

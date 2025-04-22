@@ -17,6 +17,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
 public class PanelInicioController implements Initializable {
@@ -119,4 +120,15 @@ public class PanelInicioController implements Initializable {
         //AJUSTAMOS ANCHOS
         topBox.prefWidthProperty().bind(sidebarContainer.widthProperty().multiply(0.8));
     }
+
+    @FXML
+    public void cerrarSesion(){
+       //TODO: Implementar la lógica para cerrar sesión
+       System.out.println("Cerrando sesión...");
+       Stage stage = (Stage) root.getScene().getWindow();
+       stage.close();
+
+    }
+
+
 }
