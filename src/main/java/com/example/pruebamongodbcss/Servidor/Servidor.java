@@ -53,15 +53,22 @@ public class Servidor {
         this.running = true;
     }
 
+    /**
+     * Método para iniciar el servidor
+     * @return void
+     */
     public void iniciar() {
         try {
             serverSocket = new ServerSocket(puerto);
             System.out.println("Servidor iniciado en puerto " + puerto);
 
             while (running) {
+                // Esperar a que un cliente se conecte
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Nuevo cliente conectado: " + clientSocket.getInetAddress());
+                // Crear un nuevo hilo para manejar la conexión del cliente
                 ClienteHandler handler = new ClienteHandler(clientSocket, database);
+                // Ejecutar el hilo en el pool de hilos
                 pool.execute(handler);
             }
         } catch (IOException e) {
@@ -75,8 +82,10 @@ public class Servidor {
         running = false;
         try {
             if (serverSocket != null && !serverSocket.isClosed()) {
+                // Cerrar el socket del servidor
                 serverSocket.close();
             }
+            // Esperar a que todos los hilos se completen
             pool.shutdown();
         } catch (IOException e) {
             System.err.println("Error al detener el servidor: " + e.getMessage());
