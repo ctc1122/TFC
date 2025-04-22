@@ -120,6 +120,7 @@ public class PanelInicioSesionController extends Application implements Initiali
         if (!conectado) {
             if (usuario.equals("admin") && password.equals("admin")) {
                 mostrarMensaje("Inicio de sesión exitoso (modo local).");
+                cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
             } else {
                 mostrarMensaje("Usuario o contraseña incorrectos (modo local).");
             }
@@ -143,7 +144,7 @@ public class PanelInicioSesionController extends Application implements Initiali
                 switch (codigoRespuesta) {
                     case Protocolo.LOGIN_SUCCESS:
                         mostrarMensaje("Inicio de sesión exitoso.");
-                        // Aquí puedes agregar la lógica para cambiar a la siguiente pantalla
+                        // Cambiar a la siguiente pantalla
                         cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
                         break;
                     case Protocolo.LOGIN_FAILED:
@@ -161,6 +162,7 @@ public class PanelInicioSesionController extends Application implements Initiali
             // Intentar modo local como fallback
             if (usuario.equals("admin") && password.equals("admin")) {
                 mostrarMensaje("Inicio de sesión exitoso (modo local).");
+                cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
             } else {
                 mostrarMensaje("Usuario o contraseña incorrectos (modo local).");
             }
@@ -177,7 +179,20 @@ public class PanelInicioSesionController extends Application implements Initiali
             Alert alert = new Alert(AlertType.INFORMATION);
             alert.setTitle("Mensaje");
             alert.setContentText(mensaje);
-            alert.showAndWait();
+            
+            // Si el mensaje contiene "exitoso", cerrar automáticamente después de 1.5 segundos
+            if (mensaje.toLowerCase().contains("exitoso")) {
+                // Mostrar la alerta sin bloquear
+                alert.show();
+                
+                // Crear un temporizador para cerrarla automáticamente
+                javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(1.5));
+                delay.setOnFinished(event -> alert.close());
+                delay.play();
+            } else {
+                // Para otros mensajes, usar showAndWait como antes
+                alert.showAndWait();
+            }
         });
     }
 
@@ -215,6 +230,19 @@ public class PanelInicioSesionController extends Application implements Initiali
                 
                 // Cambiar la escena en el hilo de JavaFX
                 Platform.runLater(() -> {
+                    // Cerrar cualquier diálogo de alerta que esté abierto
+                    // Usando un enfoque más seguro para cerrar diálogos
+                    try {
+                        for (javafx.stage.Window window : javafx.stage.Window.getWindows()) {
+                            if (window instanceof Stage && window.isShowing() && 
+                                ((Stage) window).getModality() == javafx.stage.Modality.APPLICATION_MODAL) {
+                                ((Stage) window).close();
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error al cerrar diálogos: " + e.getMessage());
+                    }
+                    
                     Stage stage = (Stage) campoUsuario.getScene().getWindow();
                     stage.setScene(nuevaEscena);
                 });

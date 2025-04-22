@@ -37,32 +37,6 @@ services:
     networks:
       - app-network
 
-  # Servidor de gestión clínica (puerto 50000)
-  servidor-clinica:
-    build:
-      context: ../
-      dockerfile: docker/Dockerfile-clinica
-    container_name: servidor-clinica
-    ports:
-      - "50000:50000"
-    depends_on:
-      - mongodb-clinica
-    networks:
-      - app-network
-
-  # Servidor de gestión de inventario (puerto 50001)
-  servidor-inventario:
-    build:
-      context: ../
-      dockerfile: docker/Dockerfile-inventario
-    container_name: servidor-inventario
-    ports:
-      - "50001:50001"
-    depends_on:
-      - mongodb-inventario
-    networks:
-      - app-network
-
 volumes:
   mongodb-clinica-data:
   mongodb-inventario-data:
