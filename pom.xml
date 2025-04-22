@@ -71,7 +71,13 @@
       <artifactId>junit-jupiter-engine</artifactId>
       <version>${junit.version}</version>
       <scope>test</scope>
-    </dependency>  </dependencies>
+    </dependency>
+    <dependency>
+        <groupId>org.json</groupId>
+        <artifactId>json</artifactId>
+        <version>20231013</version>
+    </dependency>
+  </dependencies>
 
   <build>
     <plugins>
@@ -84,15 +90,15 @@
         </configuration>
       </plugin>
       <plugin>
+        <groupId>org.openjfx</groupId>
+        <artifactId>javafx-maven-plugin</artifactId>
+        <version>0.0.8</version>
+      </plugin>
+      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.1.0</version>
-        <configuration>
-          <mainClass>com.example.pruebamongodbcss.HelloApplication</mainClass>
-          <classpathScope>runtime</classpathScope>
-        </configuration>
       </plugin>
-
     </plugins>
   </build>
 </project>
