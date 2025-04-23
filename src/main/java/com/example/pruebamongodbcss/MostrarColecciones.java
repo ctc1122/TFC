@@ -1,7 +1,10 @@
 package com.example.pruebamongodbcss;
 
+import java.util.Iterator;
+
 import org.bson.Document;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
@@ -87,6 +90,24 @@ public class MostrarColecciones {
             }
         } catch (Exception e) {
             System.err.println("Error al mostrar otras colecciones: " + e.getMessage());
+        }
+
+        /*
+        2A forma de mostrar los usuarios
+        */ 
+        MongoCollection<Document> usuarios = db.getCollection("usuarios");
+        FindIterable<Document> iterable = usuarios.find();
+        Iterator<Document> iterator = iterable.iterator();
+        while (iterator.hasNext()) {
+            Document doc = iterator.next();
+            System.out.println(doc);
+            System.out.println();
+            System.out.println();
+            System.out.println("Usuario: "+ doc.get("usuario"));
+            System.out.println("Password: "+ doc.get("password"));
+            System.out.println("Rol: "+ doc.get("rol"));
+            System.out.println("Fecha creación: "+ doc.get("fechaCreacion"));
+            System.out.println("----------------------------------");
         }
     }
 } 

@@ -7,6 +7,7 @@ import org.bson.Document;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
 
 import Utilidades.GestorConexion;
 
@@ -75,6 +76,9 @@ public class CrearUsuarioAdmin {
             for (Document doc : usuarios.find()) {
                 System.out.println(" - " + doc.getString("usuario") + " (Rol: " + doc.getString("rol") + ")");
             }
+
+            // Actualizar el password del usuario administrador
+            //usuarios.updateOne(Filters.eq("usuario", "admin"), Updates.set("password", "admin"));
             
         } catch (Exception e) {
             System.err.println("Error al crear usuario administrador: " + e.getMessage());

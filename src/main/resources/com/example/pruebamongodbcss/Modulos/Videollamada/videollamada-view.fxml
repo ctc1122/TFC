@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="10" alignment="CENTER" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.pruebamongodbcss.Modulos.Videollamada.VideollamadaController"
+      stylesheets="@../styles.css">
+    
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <Label text="Iniciar Videollamada" styleClass="title-label"/>
+    
+    <TextField fx:id="nombreTextField" 
+               promptText="Ingrese su nombre"
+               maxWidth="300"/>
+               
+    <Button fx:id="iniciarButton" 
+            text="Iniciar Videollamada"
+            styleClass="primary-button"/>
+            
+    <Label fx:id="estadoLabel" 
+           styleClass="status-label"
+           wrapText="true"
+           maxWidth="400"/>
+           
+</VBox> 
