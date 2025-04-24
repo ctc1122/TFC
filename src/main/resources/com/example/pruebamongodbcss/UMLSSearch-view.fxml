@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="10" alignment="CENTER" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.pruebamongodbcss.Modulos.UMLSSearch.UMLSSearchController">
+    
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <!-- Campo de búsqueda -->
+    <HBox spacing="10" alignment="CENTER">
+        <TextField fx:id="searchField" promptText="Ingrese un término médico (mínimo 3 caracteres)" HBox.hgrow="ALWAYS"/>
+    </HBox>
+
+    <!-- Lista de sugerencias y detalles -->
+    <SplitPane dividerPositions="0.6" VBox.vgrow="ALWAYS">
+        <!-- Panel izquierdo: Lista de sugerencias -->
+        <VBox spacing="5">
+            <Label text="Sugerencias encontradas:" style="-fx-font-weight: bold"/>
+            <ListView fx:id="suggestionsList" VBox.vgrow="ALWAYS"/>
+        </VBox>
+
+        <!-- Panel derecho: Detalles del término -->
+        <VBox spacing="5">
+            <Label text="Detalles del término:" style="-fx-font-weight: bold"/>
+            <TextArea fx:id="detailsArea" wrapText="true" editable="false" VBox.vgrow="ALWAYS"/>
+        </VBox>
+    </SplitPane>
+
+</VBox> 
