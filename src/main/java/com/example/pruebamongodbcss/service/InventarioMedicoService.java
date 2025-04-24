@@ -7,25 +7,34 @@ import java.util.ArrayList;
 import java.util.Optional;
 
 public class InventarioMedicoService {
+    private final ULMSService umlsService;
     private final BioPortalService bioPortalService;
 
     public InventarioMedicoService(String apiKey) {
+        this.umlsService = new ULMSService(apiKey);
         this.bioPortalService = new BioPortalService(apiKey);
     }
 
     /**
-     * Valida y estandariza el nombre de un equipo médico usando BioPortal
+     * Valida y estandariza el nombre de un equipo médico usando ambos servicios
      * @param nombreEquipo Nombre del equipo a validar
      * @return Nombre estandarizado si se encuentra, o el original si no hay coincidencias
      */
     public String validarNombreEquipo(String nombreEquipo) {
-        List<String> resultados = bioPortalService.searchTerm(nombreEquipo, true);
-        if (!resultados.isEmpty()) {
-            // Tomamos el primer resultado como el más relevante
-            String primerResultado = resultados.get(0);
-            // Extraemos solo el nombre sin la URL
+        // Primero intentamos con BioPortal
+        List<String> resultadosBioPortal = bioPortalService.searchTerm(nombreEquipo, true);
+        if (!resultadosBioPortal.isEmpty() && !resultadosBioPortal.get(0).startsWith("Error:") && !resultadosBioPortal.get(0).startsWith("No se encontraron")) {
+            String primerResultado = resultadosBioPortal.get(0);
             return primerResultado.split(" \\[")[0];
         }
+
+        // Si no hay resultados en BioPortal, intentamos con UMLS
+        List<String> resultadosUMLS = umlsService.searchTerm(nombreEquipo, true);
+        if (!resultadosUMLS.isEmpty() && !resultadosUMLS.get(0).startsWith("Error:") && !resultadosUMLS.get(0).startsWith("No se encontraron")) {
+            String primerResultado = resultadosUMLS.get(0);
+            return primerResultado.split(" \\[")[0];
+        }
+
         return nombreEquipo; // Devolvemos el original si no hay coincidencias
     }
 
@@ -35,28 +44,29 @@ public class InventarioMedicoService {
      * @return Lista de sugerencias
      */
     public List<String> obtenerSugerencias(String nombreEquipo) {
-        List<String> resultados = bioPortalService.searchTerm(nombreEquipo, true);
         List<String> sugerencias = new ArrayList<>();
         
-        for (String resultado : resultados) {
-            // Si es un mensaje de error o "no se encontraron resultados", lo ignoramos
-            if (resultado.startsWith("Error:") || resultado.startsWith("No se encontraron")) {
-                continue;
+        // Obtener sugerencias de BioPortal
+        List<String> resultadosBioPortal = bioPortalService.searchTerm(nombreEquipo, true);
+        for (String resultado : resultadosBioPortal) {
+            if (!resultado.startsWith("Error:") && !resultado.startsWith("No se encontraron")) {
+                String nombreSugerido = resultado.contains(" [") ? 
+                    resultado.split(" \\[")[0] : resultado;
+                if (!nombreSugerido.equals(nombreEquipo)) {
+                    sugerencias.add(nombreSugerido);
+                }
             }
-            
-            // Extraemos solo el nombre sin la URL ni el tipo semántico
-            String nombreSugerido = resultado;
-            if (resultado.contains(" [")) {
-                nombreSugerido = resultado.split(" \\[")[0];
-            }
-            
-            // Eliminamos el tipo semántico si existe
-            if (nombreSugerido.contains(" (Tipo:")) {
-                nombreSugerido = nombreSugerido.split(" \\(Tipo:")[0];
-            }
-            
-            if (!nombreSugerido.equals(nombreEquipo)) {
-                sugerencias.add(nombreSugerido);
+        }
+
+        // Obtener sugerencias de UMLS
+        List<String> resultadosUMLS = umlsService.searchTerm(nombreEquipo, true);
+        for (String resultado : resultadosUMLS) {
+            if (!resultado.startsWith("Error:") && !resultado.startsWith("No se encontraron")) {
+                String nombreSugerido = resultado.contains(" [") ? 
+                    resultado.split(" \\[")[0] : resultado;
+                if (!nombreSugerido.equals(nombreEquipo) && !sugerencias.contains(nombreSugerido)) {
+                    sugerencias.add(nombreSugerido);
+                }
             }
         }
         
@@ -64,48 +74,97 @@ public class InventarioMedicoService {
     }
 
     /**
-     * Verifica si un término médico existe en BioPortal
+     * Verifica si un término médico existe en alguno de los servicios
      * @param termino Término a verificar
-     * @return true si el término existe en BioPortal
+     * @return true si el término existe en algún servicio
      */
     public boolean esTerminoValido(String termino) {
-        List<String> resultados = bioPortalService.searchTerm(termino, true);
-        // Verificamos que los resultados no sean mensajes de error
-        return resultados.stream()
+        // Verificar en BioPortal
+        List<String> resultadosBioPortal = bioPortalService.searchTerm(termino, true);
+        boolean validoEnBioPortal = resultadosBioPortal.stream()
+                .anyMatch(r -> !r.startsWith("Error:") && !r.startsWith("No se encontraron"));
+
+        if (validoEnBioPortal) return true;
+
+        // Si no está en BioPortal, verificar en UMLS
+        List<String> resultadosUMLS = umlsService.searchTerm(termino, true);
+        return resultadosUMLS.stream()
                 .anyMatch(r -> !r.startsWith("Error:") && !r.startsWith("No se encontraron"));
     }
 
     /**
-     * Obtiene la ontología relacionada con un equipo médico
+     * Obtiene la ontología y definición relacionada con un equipo médico
      * @param nombreEquipo Nombre del equipo
-     * @return Opcional con la URL de la ontología si se encuentra
+     * @return Opcional con la fuente y definición si se encuentra
      */
     public Optional<String> obtenerOntologia(String nombreEquipo) {
-        List<String> resultados = bioPortalService.searchTerm(nombreEquipo, true);
-        
-        for (String resultado : resultados) {
-            // Si es un mensaje de error o "no se encontraron resultados", lo ignoramos
-            if (resultado.startsWith("Error:") || resultado.startsWith("No se encontraron")) {
-                continue;
-            }
-            
-            // Extraemos la URL de la ontología
-            int startIndex = resultado.indexOf("[") + 1;
-            int endIndex = resultado.indexOf("]");
-            
-            // Extraemos el tipo semántico si existe
-            String tipoSemantico = "";
-            if (resultado.contains("(Tipo:")) {
-                int tipoStartIndex = resultado.indexOf("(Tipo:") + 6;
-                int tipoEndIndex = resultado.indexOf(")", tipoStartIndex);
-                if (tipoEndIndex > tipoStartIndex) {
-                    tipoSemantico = " - " + resultado.substring(tipoStartIndex, tipoEndIndex).trim();
+        // Primero intentamos con BioPortal
+        List<String> resultadosBioPortal = bioPortalService.searchTerm(nombreEquipo, true);
+        for (String resultado : resultadosBioPortal) {
+            if (!resultado.startsWith("Error:") && !resultado.startsWith("No se encontraron")) {
+                String fuente = "";
+                String definicion = "";
+                
+                if (resultado.contains(" [")) {
+                    int startIndex = resultado.indexOf("[") + 1;
+                    int endIndex = resultado.indexOf("]", startIndex);
+                    if (endIndex > startIndex) {
+                        fuente = resultado.substring(startIndex, endIndex);
+                    }
+                }
+                
+                if (resultado.contains(" - ")) {
+                    definicion = resultado.substring(resultado.indexOf(" - ") + 3);
+                }
+                
+                if (!fuente.isEmpty() || !definicion.isEmpty()) {
+                    StringBuilder info = new StringBuilder();
+                    if (!fuente.isEmpty()) {
+                        info.append("Fuente: ").append(fuente);
+                    }
+                    if (!definicion.isEmpty()) {
+                        if (!fuente.isEmpty()) {
+                            info.append(" | ");
+                        }
+                        info.append("Definición: ").append(definicion);
+                    }
+                    return Optional.of(info.toString());
                 }
             }
-            
-            if (startIndex > 0 && endIndex > startIndex) {
-                String ontologia = resultado.substring(startIndex, endIndex);
-                return Optional.of(ontologia + tipoSemantico);
+        }
+
+        // Si no encontramos en BioPortal, intentamos con UMLS
+        List<String> resultadosUMLS = umlsService.searchTerm(nombreEquipo, true);
+        for (String resultado : resultadosUMLS) {
+            if (!resultado.startsWith("Error:") && !resultado.startsWith("No se encontraron")) {
+                String fuente = "";
+                String definicion = "";
+                
+                if (resultado.contains(" [")) {
+                    int startIndex = resultado.indexOf("[") + 1;
+                    int endIndex = resultado.indexOf("]", startIndex);
+                    if (endIndex > startIndex) {
+                        fuente = resultado.substring(startIndex, endIndex);
+                    }
+                }
+                
+                if (resultado.contains(" - ")) {
+                    definicion = resultado.substring(resultado.indexOf(" - ") + 3);
+                }
+                
+                if (!fuente.isEmpty() || !definicion.isEmpty()) {
+                    StringBuilder info = new StringBuilder();
+                    if (!fuente.isEmpty()) {
+                        info.append("Fuente: ").append(fuente);
+                    }
+                    if (!definicion.isEmpty()) {
+                        if (!fuente.isEmpty()) {
+                            info.append(" | ");
+                        }
+                        info.append("Definición: ").append(definicion);
+                    }
+                    return Optional.of(info.toString());
+                }
             }
         }
         

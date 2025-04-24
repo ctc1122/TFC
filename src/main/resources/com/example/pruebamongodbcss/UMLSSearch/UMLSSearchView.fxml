@@ -17,7 +17,7 @@
     <Label text="Búsqueda de Términos Médicos" 
            style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
            
-    <Label text="Busca cualquier término médico: dispositivos, procedimientos, medicamentos, etc." 
+    <Label text="Base de datos UMLS - Terminología Médica Estándar" 
            style="-fx-font-size: 12px; -fx-font-style: italic; -fx-text-fill: #555555;"/>
 
     <HBox spacing="10" alignment="CENTER_LEFT">
@@ -36,8 +36,11 @@
     <Label fx:id="validationLabel" 
            style="-fx-font-size: 14px;"/>
 
-    <Label fx:id="ontologyLabel" 
-           style="-fx-font-size: 14px; -fx-text-fill: #666666;"/>
+    <TextArea fx:id="detailsTextArea"
+              prefHeight="100"
+              editable="false"
+              wrapText="true"
+              style="-fx-font-size: 14px; -fx-text-fill: #666666;"/>
 
     <Button fx:id="useSuggestionButton" 
             text="Usar Sugerencia" 
