@@ -7,7 +7,7 @@ import com.mongodb.client.MongoDatabase;
 public class GestorConexion {
 
     static String DEFAULT_URI = "mongodb://localhost:27017";
-    static String DEFAULT_DB = "Tienda";
+    static String DEFAULT_DB = "Empresa";
     
     public GestorConexion() {
     }
