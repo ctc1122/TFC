@@ -9,7 +9,7 @@ import javafx.stage.Stage;
 public class UMLSSearchMain extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/UMLSSearch-view.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/UMLSSearch/UMLSSearch-view.fxml"));
         Parent root = loader.load();
         
         Scene scene = new Scene(root, 600, 500);
