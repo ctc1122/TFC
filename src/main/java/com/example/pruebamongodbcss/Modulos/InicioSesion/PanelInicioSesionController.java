@@ -5,9 +5,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
-import com.example.pruebamongodbcss.PanelInicioMain;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 
 import javafx.application.Application;
@@ -19,8 +19,12 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class PanelInicioSesionController extends Application implements Initializable {
@@ -39,18 +43,26 @@ public class PanelInicioSesionController extends Application implements Initiali
 
     @Override
     public void start(Stage stage) throws Exception {
-        FXMLLoader fxmlLoader = new FXMLLoader(PanelInicioMain.class.getResource("/com/example/pruebamongodbcss/InicioSesion/PanelInicioSesion.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 700, 450);
-        stage.setTitle("Inicio de sesión!");
-        stage.setScene(scene);
-        stage.show();
+        System.out.println("Iniciando la aplicación...");
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/InicioSesion/PruebaDoblePanel.fxml"));
+            Scene scene = new Scene(fxmlLoader.load(), 700, 450);
+            stage.setTitle("Inicio de sesión!");
+            stage.setScene(scene);
+            stage.show();
+            System.out.println("Aplicación iniciada correctamente");
+        } catch (Exception e) {
+            System.err.println("Error al iniciar la aplicación: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @FXML
     private TextField campoUsuario;
 
     @FXML
-    private TextField campoPassword;
+    private PasswordField campoPassword;
 
     @FXML
     private Button btnInicioSesion;
@@ -58,10 +70,60 @@ public class PanelInicioSesionController extends Application implements Initiali
     @FXML
     private ProgressIndicator spinnerCarga;
 
+    @FXML
+    private StackPane recommendationPane;
+
+    @FXML
+    private VBox slideContainer;
+
+    @FXML
+    private Button btnNext;
+
+    @FXML
+    private Button btnPrev;
+
+    private final List<String> recomendaciones = List.of
+    (
+    "¿Están abastecidos los cajones?.",
+    "¿Has encendido y limpiado las maquinas de análisis?",
+    "Si estas solo recueda que tienes que tener cerrada la puerta con llave.",
+    "Ante cualquier duda no dudes en preguntar a tu supervisor."
+    );
+
+    private int index = 0;
+
+    private final List<VBox> slides = new java.util.ArrayList<>();
+    private int currentSlide = 0;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // Intentar conectar al servidor al iniciar la app
+        System.out.println("Inicializando controlador...");
         conectarAlServidor();
+        System.out.println("Creando diapositivas...");
+        crearDiapositivas();
+        System.out.println("Mostrando primera diapositiva...");
+        mostrarSlide(currentSlide);
+        
+        // Configurar los botones
+        if (btnNext != null) {
+            System.out.println("Botón siguiente encontrado");
+            btnNext.setOnAction(e -> siguienteRecomendacion());
+        } else {
+            System.err.println("¡Error! Botón siguiente no encontrado");
+        }
+        
+        if (btnPrev != null) {
+            System.out.println("Botón anterior encontrado");
+            btnPrev.setOnAction(e -> anteriorRecomendacion());
+        } else {
+            System.err.println("¡Error! Botón anterior no encontrado");
+        }
+        
+        if (slideContainer != null) {
+            System.out.println("Contenedor de diapositivas encontrado");
+        } else {
+            System.err.println("¡Error! Contenedor de diapositivas no encontrado");
+        }
     }
 
     private void conectarAlServidor() {
@@ -98,6 +160,97 @@ public class PanelInicioSesionController extends Application implements Initiali
             conectado = false;
             mostrarMensaje("No se pudo conectar a ningún servidor.\nUsando modo local.");
         }
+    }
+
+    private void crearDiapositivas() {
+        System.out.println("Creando diapositivas...");
+        slides.clear(); // Limpiar diapositivas existentes
+        
+        VBox slide1 = crearSlide("ChichaVet", "Calidad y compromiso");
+        VBox slide2 = crearSlide("Recordatorio", "¿Están abastecidos los cajones?");
+        VBox slide3 = crearSlide("Checklist", "¿Has encendido y limpiado las maquinas de análisis?");
+        VBox slide4 = crearSlide("Seguridad", "Si estás solo, recuerda cerrar la puerta con llave.");
+        VBox slide5 = crearSlide("Apoyo", "Ante cualquier duda, no dudes en preguntar a tu supervisor.");
+        
+        slides.add(slide1);
+        slides.add(slide2);
+        slides.add(slide3);
+        slides.add(slide4);
+        slides.add(slide5);
+        
+        System.out.println("Se crearon " + slides.size() + " diapositivas");
+    }
+
+    private VBox crearSlide(String titulo, String contenido) {
+        System.out.println("Creando diapositiva: " + titulo);
+        
+        Label labelTitulo = new Label(titulo);
+        labelTitulo.setStyle("-fx-font-size: 24px; -fx-text-fill: #1976d2; -fx-font-weight: bold;");
+        labelTitulo.setWrapText(true);
+        labelTitulo.setAlignment(javafx.geometry.Pos.CENTER);
+
+        Label labelContenido = new Label(contenido);
+        labelContenido.setStyle("-fx-font-size: 16px; -fx-text-fill: #666666;");
+        labelContenido.setWrapText(true);
+        labelContenido.setAlignment(javafx.geometry.Pos.CENTER);
+
+        VBox vbox = new VBox(10, labelTitulo, labelContenido);
+        vbox.setAlignment(javafx.geometry.Pos.CENTER);
+        vbox.setPadding(new javafx.geometry.Insets(20));
+        vbox.setStyle("-fx-background-color: white;");
+        
+        return vbox;
+    }
+
+    private void mostrarSlide(int index) {
+        System.out.println("Mostrando diapositiva " + index);
+    
+        if (slideContainer == null) {
+            System.err.println("¡Error! slideContainer es null");
+            return;
+        }
+    
+        if (index < 0 || index >= slides.size()) {
+            System.err.println("¡Error! Índice de diapositiva fuera de rango: " + index);
+            return;
+        }
+    
+        Platform.runLater(() -> {
+            try {
+                VBox slide = slides.get(index);
+                animarTransicion(slide);
+                System.out.println("Diapositiva " + index + " mostrada con transición");
+            } catch (Exception e) {
+                System.err.println("Error al mostrar diapositiva: " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
+    }
+    
+    private void animarTransicion(VBox nuevoSlide) {
+        nuevoSlide.setOpacity(0);
+        slideContainer.getChildren().clear();
+        slideContainer.getChildren().add(nuevoSlide);
+    
+        javafx.animation.FadeTransition fadeIn = new javafx.animation.FadeTransition(javafx.util.Duration.millis(500), nuevoSlide);
+        fadeIn.setFromValue(0.0);
+        fadeIn.setToValue(1.0);
+        fadeIn.play();
+    }
+    
+
+    @FXML
+    private void siguienteRecomendacion() {
+        System.out.println("Botón siguiente presionado");
+        currentSlide = (currentSlide + 1) % slides.size();
+        mostrarSlide(currentSlide);
+    }
+
+    @FXML
+    private void anteriorRecomendacion() {
+        System.out.println("Botón anterior presionado");
+        currentSlide = (currentSlide - 1 + slides.size()) % slides.size();
+        mostrarSlide(currentSlide);
     }
 
     /**

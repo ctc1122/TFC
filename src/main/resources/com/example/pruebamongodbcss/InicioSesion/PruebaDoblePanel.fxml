@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Hyperlink?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressIndicator?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
@@ -31,7 +31,7 @@
                     <Image url="@../../../../PanelLogin/UsuarioIcono.png" />
                 </image>
             </ImageView>
-            <TextField fx:id="campoUsuario" prefWidth="300" promptText="Username" />
+            <TextField fx:id="campoUsuario" prefWidth="300" promptText="Username" style="-fx-background-color: white; -fx-border-color: #1976d2; -fx-border-width: 0 0 1 0;" />
         </HBox>
 
         <!-- Campo Contraseña -->
@@ -41,7 +41,7 @@
                     <Image url="@../../../../PanelLogin/CandadoLogin.png" />
                 </image>
             </ImageView>
-            <PasswordField fx:id="campoPassword" prefWidth="300" promptText="Password" />
+            <PasswordField fx:id="campoPassword" prefWidth="300" promptText="Password" style="-fx-background-color: white; -fx-border-color: #1976d2; -fx-border-width: 0 0 1 0;" />
         </HBox>
 
         <!-- Recordarme y Olvidé contraseña -->
@@ -52,8 +52,8 @@
 
         <!-- Botón Login -->
         <Button fx:id="btnInicioSesion" onAction="#inicioSesion" prefHeight="40" prefWidth="200" 
-                style="-fx-background-color: #1976d2; -fx-text-fill: white; -fx-font-weight: bold;" 
-                text="LOGIN" />
+                   style="-fx-background-color: #1976d2; -fx-text-fill: white; -fx-font-weight: bold;" 
+                   text="LOGIN" />
 
         <!-- Spinner -->
         <ProgressIndicator fx:id="spinnerCarga" prefHeight="50" prefWidth="50" 
@@ -62,19 +62,16 @@
 
     <!-- PANEL DERECHO: ANIMACIONES Y TEXTO -->
     <StackPane fx:id="recommendationPane" prefWidth="400.0" style="-fx-background-color: #ffffff;">
-        <!-- Contenedor principal de diapositivas -->
-        <VBox fx:id="slideContainer" alignment="CENTER" spacing="20" maxWidth="350" maxHeight="300">
-            <!-- Las diapositivas se agregarán aquí dinámicamente -->
+        <VBox alignment="CENTER" spacing="20">
+            <VBox fx:id="slideContainer" alignment="CENTER" spacing="20" />
+            <HBox alignment="CENTER" spacing="20">
+                <Button fx:id="btnPrev" text="←" onAction="#anteriorRecomendacion" 
+                          style="-fx-font-size: 16px; -fx-text-fill: white; -fx-background-color: #1976d2; -fx-background-radius: 20;"
+                          prefWidth="40" prefHeight="40" />
+                <Button fx:id="btnNext" text="→" onAction="#siguienteRecomendacion"
+                          style="-fx-font-size: 16px; -fx-text-fill: white; -fx-background-color: #1976d2; -fx-background-radius: 20;"
+                          prefWidth="40" prefHeight="40" />
+            </HBox>
         </VBox>
-
-        <!-- Botones de navegación -->
-        <HBox alignment="CENTER" spacing="20" StackPane.alignment="BOTTOM_CENTER" padding="10">
-            <Button fx:id="btnPrev" text="←" onAction="#anteriorRecomendacion"
-                    style="-fx-font-size: 16px; -fx-text-fill: white; -fx-background-color: #1976d2; -fx-background-radius: 20;"
-                    prefWidth="40" prefHeight="40" />
-            <Button fx:id="btnNext" text="→" onAction="#siguienteRecomendacion"
-                    style="-fx-font-size: 16px; -fx-text-fill: white; -fx-background-color: #1976d2; -fx-background-radius: 20;"
-                    prefWidth="40" prefHeight="40" />
-        </HBox>
     </StackPane>
 </HBox>
