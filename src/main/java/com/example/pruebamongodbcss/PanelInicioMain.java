@@ -29,7 +29,7 @@ public class PanelInicioMain extends Application {
 
     public static void main(String[] args) {
         launch();
-        MongoDatabase baseMongo=GestorConexion.conectarBD();
+        MongoDatabase baseMongo=GestorConexion.conectarEmpresa();
         try{
             baseMongo.createCollection("Prueba");
             System.out.println("Colección creada exitosamente.");

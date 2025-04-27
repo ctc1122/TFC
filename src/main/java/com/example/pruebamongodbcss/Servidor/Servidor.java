@@ -33,12 +33,12 @@ public class Servidor {
         this.puerto = puerto;
         this.pool = Executors.newCachedThreadPool();
         // Intentar conectar a MongoDB local (Docker) primero
-        MongoDatabase localDB = GestorConexion.conectarBD();
+        MongoDatabase localDB = GestorConexion.conectarEmpresa();
         
         // Si la conexión local falla, intentar con la conexión remota
         if (localDB == null) {
             System.out.println("Conexión a MongoDB local fallida, intentando conexión remota...");
-            MongoDatabase remoteDB = GestorConexion.conectarBD();
+            MongoDatabase remoteDB = GestorConexion.conectarEmpresa();
             if (remoteDB == null) {
                 System.err.println("Error: No se pudo conectar a ninguna base de datos MongoDB.");
                 throw new RuntimeException("No se pudo establecer conexión con MongoDB");

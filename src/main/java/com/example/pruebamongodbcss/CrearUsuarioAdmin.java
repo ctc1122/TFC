@@ -18,11 +18,11 @@ public class CrearUsuarioAdmin {
         
         try {
             // Conectar a la base de datos local
-            MongoDatabase db = GestorConexion.conectarBD();
+            MongoDatabase db = GestorConexion.conectarEmpresa();
             
             if (db == null) {
                 System.out.println("No se pudo conectar a la base de datos local, intentando remota...");
-                db = GestorConexion.conectarBD();
+                db = GestorConexion.conectarEmpresa();
             }
             
             if (db == null) {

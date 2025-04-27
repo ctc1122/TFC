@@ -1,46 +1,22 @@
 version: '3.8'
 
 services:
-  # Base de datos para gestión clínica
-  mongodb-clinica:
+  # Servicio de MongoDB que contendrá las tres bases de datos
+  mongodb:
     image: mongo:latest
-    container_name: mongodb-clinica
+    container_name: mongodb-tfc
     ports:
       - "27017:27017"
     volumes:
-      - mongodb-clinica-data:/data/db
+      - mongodb-data:/data/db
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
     networks:
       - app-network
-
-  # Base de datos para gestión de inventario
-  mongodb-inventario:
-    image: mongo:latest
-    container_name: mongodb-inventario
-    ports:
-      - "27018:27017"
-    volumes:
-      - mongodb-inventario-data:/data/db
-      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
-    networks:
-      - app-network
-
-  # Base de datos para términos
-  mongodb-terminos:
-    image: mongo:latest
-    container_name: mongodb-terminos
-    ports:
-      - "27019:27017"
-    volumes:
-      - mongodb-terminos-data:/data/db
-      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
-    networks:
-      - app-network
+    restart: unless-stopped
 
 volumes:
-  mongodb-clinica-data:
-  mongodb-inventario-data:
-  mongodb-terminos-data:
+  mongodb-data:
+    name: mongodb-tfc-data
 
 networks:
   app-network:

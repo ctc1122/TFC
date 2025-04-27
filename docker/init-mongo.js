@@ -1,10 +1,34 @@
 // Script para inicializar las bases de datos y colecciones en MongoDB
 
-// Base de datos de gestión clínica
-db = db.getSiblingDB('clinica');
+// Crear las tres bases de datos y sus colecciones iniciales
+
+// Base de datos Clinica
+db = db.getSiblingDB('Clinica');
+db.createCollection('usuarios');
 db.createCollection('pacientes');
 db.createCollection('citas');
-db.createCollection('historial');
+
+// Base de datos Inventario
+db = db.getSiblingDB('Inventario');
+db.createCollection('productos');
+db.createCollection('proveedores');
+db.createCollection('stock');
+
+// Base de datos Terminos
+db = db.getSiblingDB('Terminos');
+db.createCollection('terminos_medicos');
+db.createCollection('categorias');
+
+// Crear índices necesarios
+db = db.getSiblingDB('Clinica');
+db.usuarios.createIndex({ "email": 1 }, { unique: true });
+db.pacientes.createIndex({ "dni": 1 }, { unique: true });
+
+db = db.getSiblingDB('Inventario');
+db.productos.createIndex({ "codigo": 1 }, { unique: true });
+
+db = db.getSiblingDB('Terminos');
+db.terminos_medicos.createIndex({ "nombre": 1 }, { unique: true });
 
 // Insertar algunos datos de ejemplo
 db.pacientes.insertMany([
@@ -24,12 +48,6 @@ db.pacientes.insertMany([
   }
 ]);
 
-// Base de datos de gestión de inventario
-db = db.getSiblingDB('inventario');
-db.createCollection('productos');
-db.createCollection('proveedores');
-db.createCollection('stock');
-
 // Insertar datos de ejemplo en productos
 db.productos.insertMany([
   {
@@ -48,13 +66,8 @@ db.productos.insertMany([
   }
 ]);
 
-// Base de datos de términos
-db = db.getSiblingDB('terminos');
-db.createCollection('terminologia_medica');
-db.createCollection('codigos_diagnosticos');
-
 // Insertar algunos términos médicos de ejemplo
-db.terminologia_medica.insertMany([
+db.terminos_medicos.insertMany([
   {
     termino: "Hipertensión",
     definicion: "Presión arterial alta",
