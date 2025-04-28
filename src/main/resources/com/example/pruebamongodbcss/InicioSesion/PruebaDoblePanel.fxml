@@ -8,18 +8,21 @@
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.effect.Glow?>
 <?import javafx.scene.effect.Reflection?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.paint.Color?>
 <?import javafx.scene.text.Font?>
 
 <HBox prefHeight="400.0" prefWidth="800.0" spacing="0" stylesheets="@PanelInicioSesionEstilo.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.InicioSesion.PanelInicioSesionController">
 
     <!-- PANEL IZQUIERDO: PANEL AZUL Y PANEL CRISTAL DENTRO -->
-    <VBox alignment="CENTER" prefWidth="400.0" styleClass="panel-azul-fondo">
+    <VBox alignment="CENTER" prefWidth="470.0" styleClass="panel-azul-fondo">
         <VBox fx:id="glassPanel" alignment="CENTER" cache="true" prefHeight="300.0" prefWidth="180" spacing="12.0" styleClass="glass-panel" VBox.vgrow="NEVER">
          <Label text="Inicio de Sesión">
             <font>
@@ -37,7 +40,17 @@
                 <TextField fx:id="campoUsuario" alignment="CENTER" minHeight="30.0" minWidth="170.0" prefWidth="120" promptText="Username">
                <HBox.margin>
                   <Insets />
-               </HBox.margin></TextField>
+               </HBox.margin>
+               <effect>
+                  <DropShadow height="0.0" radius="32.24" width="130.96">
+                     <input>
+                        <Glow level="0.15" />
+                     </input>
+                     <color>
+                        <Color opacity="0.6778115034103394" />
+                     </color>
+                  </DropShadow>
+               </effect></TextField>
             <padding>
                <Insets bottom="10.0" />
             </padding>
@@ -53,9 +66,19 @@
                         <Image url="@../../../../PanelLogin/CandadoLogin.png" />
                     </image>
                 </ImageView>
-                <PasswordField fx:id="campoPassword" minHeight="30.0" minWidth="170.0" prefWidth="120" promptText="Password" />
+                <PasswordField fx:id="campoPassword" minHeight="30.0" minWidth="170.0" prefWidth="120" promptText="Password">
+                <effect>
+                  <DropShadow height="0.0" radius="32.24" width="130.96">
+                     <input>
+                        <Glow level="0.15" />
+                     </input>
+                     <color>
+                        <Color opacity="0.6778115034103394" />
+                     </color>
+                  </DropShadow>
+                </effect></PasswordField>
             <padding>
-               <Insets bottom="30.0" />
+               <Insets bottom="25.0" />
             </padding>
             </HBox>
 
@@ -66,7 +89,10 @@
             </HBox>
 
             <!-- Botón Login -->
-            <Button fx:id="btnInicioSesion" contentDisplay="CENTER" onAction="#inicioSesion" prefHeight="30" prefWidth="120" text="LOGIN" />
+            <Button fx:id="btnInicioSesion" contentDisplay="CENTER" onAction="#inicioSesion" prefHeight="57.0" prefWidth="120" text="LOGIN">
+            <VBox.margin>
+               <Insets top="10.0" />
+            </VBox.margin></Button>
 
             <!-- Spinner -->
             <ProgressIndicator fx:id="spinnerCarga" prefHeight="25" prefWidth="25" visible="false" />
@@ -74,7 +100,7 @@
             <Reflection fraction="0.2" topOpacity="0.28" />
          </effect>
          <VBox.margin>
-            <Insets left="30.0" right="30.0" />
+            <Insets left="35.0" right="35.0" />
          </VBox.margin>
         </VBox>
     </VBox>

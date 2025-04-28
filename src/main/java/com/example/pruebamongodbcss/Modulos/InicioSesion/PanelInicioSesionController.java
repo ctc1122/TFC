@@ -51,7 +51,7 @@ public class PanelInicioSesionController extends Application implements Initiali
             screensaverManager = new ScreensaverManager(stage);
             
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/InicioSesion/PruebaDoblePanel.fxml"));
-            Scene scene = new Scene(fxmlLoader.load(), 700, 450);
+            Scene scene = new Scene(fxmlLoader.load(), 790, 450);
             stage.setTitle("Inicio de sesión!");
             stage.setScene(scene);
             stage.show();
@@ -93,7 +93,7 @@ public class PanelInicioSesionController extends Application implements Initiali
     @FXML
     private Button btnPrev;
 
-    @FXML
+     @FXML
     private VBox glassPanel;
 
     private final List<String> recomendaciones = List.of
