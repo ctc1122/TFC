@@ -17,7 +17,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 public class ScreensaverManager {
-    private static final int INACTIVITY_TIMEOUT = 3000; // 3 seconds for testing
+    private static final int INACTIVITY_TIMEOUT = 600000; // 3 seconds for testing
     private Timer inactivityTimer;
     private Stage screensaverStage;
     private Stage activeStage; // Referencia a la ventana activa
