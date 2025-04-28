@@ -73,7 +73,7 @@ public class PanelInicioSesionController extends Application implements Initiali
     private TextField campoUsuario;
 
     @FXML
-    private PasswordField campoPassword;
+    private Object campoPassword;
 
     @FXML
     private Button btnInicioSesion;
@@ -267,7 +267,18 @@ public class PanelInicioSesionController extends Application implements Initiali
     @FXML
     private void inicioSesion() {
         String usuario = campoUsuario.getText().toLowerCase();
-        String password = campoPassword.getText().toLowerCase();
+        
+        // Obtener el texto del MFXPasswordField usando reflection para mayor compatibilidad
+        String password = "";
+        try {
+            java.lang.reflect.Method getTextMethod = campoPassword.getClass().getMethod("getText");
+            password = (String) getTextMethod.invoke(campoPassword);
+            password = password.toLowerCase();
+        } catch (Exception e) {
+            System.err.println("Error al obtener el texto del campo de contraseña: " + e.getMessage());
+            mostrarMensaje("Error en el formulario. Por favor, intente de nuevo.");
+            return;
+        }
 
         // Si el usuario o la contraseña están vacíos, mostrar un mensaje de error
         if (usuario.isEmpty() || password.isEmpty()) {

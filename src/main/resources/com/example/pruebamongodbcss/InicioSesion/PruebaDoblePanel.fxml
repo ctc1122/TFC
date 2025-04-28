@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import io.github.palexdev.mfxcore.controls.Label?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.TextField?>
@@ -37,7 +37,7 @@
                         <Image url="@../../../../PanelLogin/UsuarioIcono.png" />
                     </image>
                 </ImageView>
-                <TextField fx:id="campoUsuario" alignment="CENTER" minHeight="30.0" minWidth="170.0" prefWidth="120" promptText="Username">
+                <TextField fx:id="campoUsuario" alignment="CENTER" minHeight="35.0" prefHeight="35.0" minWidth="190.0" prefWidth="190.0" promptText="Username">
                <HBox.margin>
                   <Insets />
                </HBox.margin>
@@ -66,20 +66,30 @@
                         <Image url="@../../../../PanelLogin/CandadoLogin.png" />
                     </image>
                 </ImageView>
-                <PasswordField fx:id="campoPassword" minHeight="30.0" minWidth="170.0" prefWidth="120" promptText="Password">
-                <effect>
-                  <DropShadow height="0.0" radius="32.24" width="130.96">
-                     <input>
-                        <Glow level="0.15" />
-                     </input>
-                     <color>
-                        <Color opacity="0.6778115034103394" />
-                     </color>
-                  </DropShadow>
-                </effect></PasswordField>
-            <padding>
-               <Insets bottom="25.0" />
-            </padding>
+                <PasswordField fx:id="campoPassword" 
+                    alignment="CENTER" 
+                    minHeight="35.0" 
+                    prefHeight="35.0" 
+                    minWidth="190.0" 
+                    prefWidth="190.0" 
+                    promptText="Password">
+                    <HBox.margin>
+                        <Insets />
+                    </HBox.margin>
+                    <effect>
+                        <DropShadow height="0.0" radius="32.24" width="130.96">
+                            <input>
+                                <Glow level="0.15" />
+                            </input>
+                            <color>
+                                <Color opacity="0.6778115034103394" />
+                            </color>
+                        </DropShadow>
+                    </effect>
+                </PasswordField>
+                <padding>
+                    <Insets bottom="10.0" />
+                </padding>
             </HBox>
 
             <!-- Recordarme y Olvidé contraseña -->
