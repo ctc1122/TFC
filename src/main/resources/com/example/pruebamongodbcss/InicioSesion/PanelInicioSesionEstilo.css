@@ -1,0 +1,60 @@
+.panel-azul-fondo {
+    -fx-background-color: linear-gradient(to bottom, #0575E6, #005295, #00417a);
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+}
+
+.glass-panel {
+    -fx-background-color: linear-gradient(to bottom, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
+    -fx-background-radius: 3;
+    -fx-border-radius: 3;
+    -fx-border-width: 0;
+    -fx-padding: 15;
+    -fx-background-insets: 0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 10, 0.15, 0, 2);
+}
+
+.glass-panel .text-field, .glass-panel .password-field {
+    -fx-background-color: rgba(255, 255, 255, 0.18);
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-width: 0 0 1 0;
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: rgba(255, 255, 255, 0.7);
+    -fx-background-radius: 3;
+    -fx-alignment: center;
+}
+
+.glass-panel .button {
+    -fx-background-color: #0575E6;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-border-width: 0;
+    -fx-alignment: center;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 4, 0, 0, 1);
+}
+
+.glass-panel .button:hover {
+    -fx-background-color: #0989ff;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 6, 0, 0, 1);
+}
+
+.glass-panel .check-box, .glass-panel .hyperlink, .glass-panel .label {
+    -fx-text-fill: white;
+}
+
+.glass-panel HBox {
+    -fx-alignment: center;
+}
+
+.glass-panel .check-box .box {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+}
+
+.glass-panel .progress-indicator {
+    -fx-progress-color: white;
+} 

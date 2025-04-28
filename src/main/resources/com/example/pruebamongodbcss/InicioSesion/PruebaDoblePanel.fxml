@@ -1,76 +1,91 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import io.github.palexdev.mfxcore.controls.Label?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.PasswordField?>
-<?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Hyperlink?>
-<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.effect.Reflection?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-<HBox prefHeight="400.0" prefWidth="800.0" spacing="0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.InicioSesion.PanelInicioSesionController">
+<HBox prefHeight="400.0" prefWidth="800.0" spacing="0" stylesheets="@PanelInicioSesionEstilo.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.InicioSesion.PanelInicioSesionController">
 
-    <!-- PANEL IZQUIERDO: LOGIN -->
-    <VBox alignment="CENTER" prefWidth="400.0" spacing="20.0" style="-fx-background-color: #e6f0ff;">
-        <!-- Avatar Icon -->
-        <ImageView fitHeight="80.0" fitWidth="80.0" pickOnBounds="true" preserveRatio="true">
-            <image>
-                <Image url="@../../../../PanelLogin/AvatarIcono.png" />
-            </image>
-        </ImageView>
+    <!-- PANEL IZQUIERDO: PANEL AZUL Y PANEL CRISTAL DENTRO -->
+    <VBox alignment="CENTER" prefWidth="400.0" styleClass="panel-azul-fondo">
+        <VBox fx:id="glassPanel" alignment="CENTER" cache="true" prefHeight="300.0" prefWidth="180" spacing="12.0" styleClass="glass-panel" VBox.vgrow="NEVER">
+         <Label text="Inicio de Sesión">
+            <font>
+               <Font name="Dubai Regular" size="28.0" />
+            </font>
+         </Label>
 
-        <!-- Campo Usuario -->
-        <HBox alignment="CENTER" spacing="10.0">
-            <ImageView fitHeight="24" fitWidth="24">
-                <image>
-                    <Image url="@../../../../PanelLogin/UsuarioIcono.png" />
-                </image>
-            </ImageView>
-            <TextField fx:id="campoUsuario" prefWidth="300" promptText="Username" style="-fx-background-color: white; -fx-border-color: #1976d2; -fx-border-width: 0 0 1 0;" />
-        </HBox>
+            <!-- Campo Usuario -->
+            <HBox alignment="CENTER" spacing="8.0">
+                <ImageView fitHeight="25.0" fitWidth="25.0">
+                    <image>
+                        <Image url="@../../../../PanelLogin/UsuarioIcono.png" />
+                    </image>
+                </ImageView>
+                <TextField fx:id="campoUsuario" alignment="CENTER" minHeight="30.0" minWidth="170.0" prefWidth="120" promptText="Username">
+               <HBox.margin>
+                  <Insets />
+               </HBox.margin></TextField>
+            <padding>
+               <Insets bottom="10.0" />
+            </padding>
+            <VBox.margin>
+               <Insets top="15.0" />
+            </VBox.margin>
+            </HBox>
 
-        <!-- Campo Contraseña -->
-        <HBox alignment="CENTER" spacing="10.0">
-            <ImageView fitHeight="24" fitWidth="24">
-                <image>
-                    <Image url="@../../../../PanelLogin/CandadoLogin.png" />
-                </image>
-            </ImageView>
-            <PasswordField fx:id="campoPassword" prefWidth="300" promptText="Password" style="-fx-background-color: white; -fx-border-color: #1976d2; -fx-border-width: 0 0 1 0;" />
-        </HBox>
+            <!-- Campo Contraseña -->
+            <HBox alignment="CENTER" spacing="8.0">
+                <ImageView fitHeight="25.0" fitWidth="25.0">
+                    <image>
+                        <Image url="@../../../../PanelLogin/CandadoLogin.png" />
+                    </image>
+                </ImageView>
+                <PasswordField fx:id="campoPassword" minHeight="30.0" minWidth="170.0" prefWidth="120" promptText="Password" />
+            <padding>
+               <Insets bottom="30.0" />
+            </padding>
+            </HBox>
 
-        <!-- Recordarme y Olvidé contraseña -->
-        <HBox alignment="CENTER" spacing="60.0">
-            <CheckBox text="Remember me" />
-            <Hyperlink text="Forgot password?" />
-        </HBox>
+            <!-- Recordarme y Olvidé contraseña -->
+            <HBox alignment="CENTER" spacing="20.0">
+                <CheckBox text="Remember me" />
+                <Hyperlink text="Forgot?" />
+            </HBox>
 
-        <!-- Botón Login -->
-        <Button fx:id="btnInicioSesion" onAction="#inicioSesion" prefHeight="40" prefWidth="200" 
-                   style="-fx-background-color: #1976d2; -fx-text-fill: white; -fx-font-weight: bold;" 
-                   text="LOGIN" />
+            <!-- Botón Login -->
+            <Button fx:id="btnInicioSesion" contentDisplay="CENTER" onAction="#inicioSesion" prefHeight="30" prefWidth="120" text="LOGIN" />
 
-        <!-- Spinner -->
-        <ProgressIndicator fx:id="spinnerCarga" prefHeight="50" prefWidth="50" 
-                          style="-fx-progress-color: #1976d2;" visible="false" />
+            <!-- Spinner -->
+            <ProgressIndicator fx:id="spinnerCarga" prefHeight="25" prefWidth="25" visible="false" />
+         <effect>
+            <Reflection fraction="0.2" topOpacity="0.28" />
+         </effect>
+         <VBox.margin>
+            <Insets left="30.0" right="30.0" />
+         </VBox.margin>
+        </VBox>
     </VBox>
 
     <!-- PANEL DERECHO: ANIMACIONES Y TEXTO -->
-    <StackPane fx:id="recommendationPane" prefWidth="400.0" style="-fx-background-color: #ffffff;">
+    <StackPane fx:id="recommendationPane" prefWidth="450.0" style="-fx-background-color: #ffffff;">
         <VBox alignment="CENTER" spacing="20">
             <VBox fx:id="slideContainer" alignment="CENTER" spacing="20" />
             <HBox alignment="CENTER" spacing="20">
-                <Button fx:id="btnPrev" text="←" onAction="#anteriorRecomendacion" 
-                          style="-fx-font-size: 16px; -fx-text-fill: white; -fx-background-color: #1976d2; -fx-background-radius: 20;"
-                          prefWidth="40" prefHeight="40" />
-                <Button fx:id="btnNext" text="→" onAction="#siguienteRecomendacion"
-                          style="-fx-font-size: 16px; -fx-text-fill: white; -fx-background-color: #1976d2; -fx-background-radius: 20;"
-                          prefWidth="40" prefHeight="40" />
+                <Button fx:id="btnPrev" onAction="#anteriorRecomendacion" prefHeight="40" prefWidth="40" style="-fx-font-size: 16px; -fx-text-fill: white; -fx-background-color: #1976d2; -fx-background-radius: 20;" text="←" />
+                <Button fx:id="btnNext" onAction="#siguienteRecomendacion" prefHeight="40" prefWidth="40" style="-fx-font-size: 16px; -fx-text-fill: white; -fx-background-color: #1976d2; -fx-background-radius: 20;" text="→" />
             </HBox>
         </VBox>
     </StackPane>

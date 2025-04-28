@@ -93,6 +93,9 @@ public class PanelInicioSesionController extends Application implements Initiali
     @FXML
     private Button btnPrev;
 
+    @FXML
+    private VBox glassPanel;
+
     private final List<String> recomendaciones = List.of
     (
     "¿Están abastecidos los cajones?.",
@@ -109,6 +112,13 @@ public class PanelInicioSesionController extends Application implements Initiali
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         System.out.println("Inicializando controlador...");
+        
+        // Aplicar efecto de cristal (glassmorphism) al panel de login
+        if (glassPanel != null) {
+            glassPanel.setEffect(new javafx.scene.effect.GaussianBlur(2));
+            System.out.println("Efecto cristal aplicado al panel de login");
+        }
+        
         conectarAlServidor();
         System.out.println("Creando diapositivas...");
         crearDiapositivas();
