@@ -24,6 +24,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -73,8 +74,17 @@ public class PanelInicioSesionController extends Application implements Initiali
     private TextField campoUsuario;
 
     @FXML
-    private Object campoPassword;
-
+    private PasswordField campoPassword;
+    
+    @FXML
+    private TextField campoPasswordVisible;
+    
+    @FXML
+    private ImageView mostrarPasswordBtn;
+    
+    // Variable para controlar si la contraseña está visible o no
+    private boolean passwordVisible = false;
+    
     @FXML
     private Button btnInicioSesion;
 
@@ -268,16 +278,12 @@ public class PanelInicioSesionController extends Application implements Initiali
     private void inicioSesion() {
         String usuario = campoUsuario.getText().toLowerCase();
         
-        // Obtener el texto del MFXPasswordField usando reflection para mayor compatibilidad
+        // Obtener la contraseña del campo visible o invisible según corresponda
         String password = "";
-        try {
-            java.lang.reflect.Method getTextMethod = campoPassword.getClass().getMethod("getText");
-            password = (String) getTextMethod.invoke(campoPassword);
-            password = password.toLowerCase();
-        } catch (Exception e) {
-            System.err.println("Error al obtener el texto del campo de contraseña: " + e.getMessage());
-            mostrarMensaje("Error en el formulario. Por favor, intente de nuevo.");
-            return;
+        if (passwordVisible) {
+            password = campoPasswordVisible.getText().toLowerCase();
+        } else {
+            password = campoPassword.getText().toLowerCase();
         }
 
         // Si el usuario o la contraseña están vacíos, mostrar un mensaje de error
@@ -426,6 +432,29 @@ public class PanelInicioSesionController extends Application implements Initiali
                 });
             }
         }).start();
+    }
+
+    /**
+     * Método para alternar entre mostrar y ocultar la contraseña
+     */
+    @FXML
+    private void togglePasswordVisibility() {
+        passwordVisible = !passwordVisible;
+        
+        // Si la contraseña debe mostrarse
+        if (passwordVisible) {
+            // Copiar el texto de la contraseña al campo de texto
+            campoPasswordVisible.setText(campoPassword.getText());
+            // Mostrar el campo de texto y ocultar el campo de contraseña
+            campoPasswordVisible.setVisible(true);
+            campoPassword.setVisible(false);
+        } else {
+            // Copiar el texto del campo de texto al campo de contraseña
+            campoPassword.setText(campoPasswordVisible.getText());
+            // Mostrar el campo de contraseña y ocultar el campo de texto
+            campoPasswordVisible.setVisible(false);
+            campoPassword.setVisible(true);
+        }
     }
 }
     

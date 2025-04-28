@@ -31,51 +31,13 @@
          </Label>
 
             <!-- Campo Usuario -->
-            <HBox alignment="CENTER" spacing="8.0">
-                <ImageView fitHeight="25.0" fitWidth="25.0">
+            <HBox alignment="CENTER" prefHeight="45.0" prefWidth="230.0" spacing="10.0">
+                <ImageView fitHeight="22.0" fitWidth="22.0">
                     <image>
                         <Image url="@../../../../PanelLogin/UsuarioIcono.png" />
                     </image>
                 </ImageView>
-                <TextField fx:id="campoUsuario" alignment="CENTER" minHeight="35.0" prefHeight="35.0" minWidth="190.0" prefWidth="190.0" promptText="Username">
-               <HBox.margin>
-                  <Insets />
-               </HBox.margin>
-               <effect>
-                  <DropShadow height="0.0" radius="32.24" width="130.96">
-                     <input>
-                        <Glow level="0.15" />
-                     </input>
-                     <color>
-                        <Color opacity="0.6778115034103394" />
-                     </color>
-                  </DropShadow>
-               </effect></TextField>
-            <padding>
-               <Insets bottom="10.0" />
-            </padding>
-            <VBox.margin>
-               <Insets top="15.0" />
-            </VBox.margin>
-            </HBox>
-
-            <!-- Campo Contraseña -->
-            <HBox alignment="CENTER" spacing="8.0">
-                <ImageView fitHeight="25.0" fitWidth="25.0">
-                    <image>
-                        <Image url="@../../../../PanelLogin/CandadoLogin.png" />
-                    </image>
-                </ImageView>
-                <PasswordField fx:id="campoPassword" 
-                    alignment="CENTER" 
-                    minHeight="35.0" 
-                    prefHeight="35.0" 
-                    minWidth="190.0" 
-                    prefWidth="190.0" 
-                    promptText="Password">
-                    <HBox.margin>
-                        <Insets />
-                    </HBox.margin>
+                <TextField fx:id="campoUsuario" alignment="CENTER" minHeight="35.0" prefHeight="35.0" prefWidth="180.0" promptText="Username">
                     <effect>
                         <DropShadow height="0.0" radius="32.24" width="130.96">
                             <input>
@@ -86,10 +48,61 @@
                             </color>
                         </DropShadow>
                     </effect>
-                </PasswordField>
-                <padding>
-                    <Insets bottom="10.0" />
-                </padding>
+                </TextField>
+                <VBox.margin>
+                    <Insets top="15.0" />
+                </VBox.margin>
+            </HBox>
+
+            <!-- Campo Contraseña con botón para mostrar/ocultar -->
+            <HBox alignment="CENTER" prefHeight="45.0" prefWidth="230.0" spacing="10.0">
+                <ImageView fitHeight="22.0" fitWidth="22.0">
+                    <image>
+                        <Image url="@../../../../PanelLogin/CandadoLogin.png" />
+                    </image>
+                </ImageView>
+                <StackPane>
+                    <!-- Campo de contraseña -->
+                    <PasswordField fx:id="campoPassword" alignment="CENTER" minHeight="35.0" prefHeight="35.0" prefWidth="180.0" promptText="Password">
+                        <effect>
+                            <DropShadow height="0.0" radius="32.24" width="130.96">
+                                <input>
+                                    <Glow level="0.15" />
+                                </input>
+                                <color>
+                                    <Color opacity="0.6778115034103394" />
+                                </color>
+                            </DropShadow>
+                        </effect>
+                    </PasswordField>
+                    
+                    <!-- Campo de texto visible para contraseña -->
+                    <TextField fx:id="campoPasswordVisible" alignment="CENTER" minHeight="35.0" prefHeight="35.0" prefWidth="180.0" promptText="Password" visible="false">
+                        <effect>
+                            <DropShadow height="0.0" radius="32.24" width="130.96">
+                                <input>
+                                    <Glow level="0.15" />
+                                </input>
+                                <color>
+                                    <Color opacity="0.6778115034103394" />
+                                </color>
+                            </DropShadow>
+                        </effect>
+                    </TextField>
+                    
+                    <!-- Botón para mostrar/ocultar contraseña -->
+                    <ImageView fx:id="mostrarPasswordBtn" fitHeight="18.0" fitWidth="18.0" onMouseClicked="#togglePasswordVisibility" pickOnBounds="true" preserveRatio="true" style="-fx-cursor: hand;" StackPane.alignment="CENTER_RIGHT">
+                        <image>
+                            <Image url="@../../../../Iconos/iconPassword.png" />
+                        </image>
+                        <StackPane.margin>
+                            <Insets right="8.0" />
+                        </StackPane.margin>
+                    </ImageView>
+                </StackPane>
+                <VBox.margin>
+                    <Insets top="5.0" />
+                </VBox.margin>
             </HBox>
 
             <!-- Recordarme y Olvidé contraseña -->
