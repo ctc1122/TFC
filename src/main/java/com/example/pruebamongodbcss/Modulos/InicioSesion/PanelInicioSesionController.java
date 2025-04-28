@@ -10,6 +10,7 @@ import java.util.ResourceBundle;
 
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 
+import Utilidades.ScreensaverManager;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -29,13 +30,14 @@ import javafx.stage.Stage;
 
 public class PanelInicioSesionController extends Application implements Initializable {
     private static final String SERVER_HOST = "localhost";
-    private static final int SERVER_PORT = 50000;  // Puerto principal (Docker)
+    private static final int SERVER_PORT = 5000;  // Puerto principal (Docker)
     private static final int SERVER_PORT_ALT = 50002;  // Puerto alternativo (local)
     
     private Socket socket;
     private ObjectOutputStream salida;
     private ObjectInputStream entrada;
     private boolean conectado = false;
+    private ScreensaverManager screensaverManager;
 
     public static void main(String[] args) {
         launch();
@@ -45,11 +47,20 @@ public class PanelInicioSesionController extends Application implements Initiali
     public void start(Stage stage) throws Exception {
         System.out.println("Iniciando la aplicación...");
         try {
+            // Inicializar el salvapantallas con la ventana principal
+            screensaverManager = new ScreensaverManager(stage);
+            
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/InicioSesion/PruebaDoblePanel.fxml"));
             Scene scene = new Scene(fxmlLoader.load(), 700, 450);
             stage.setTitle("Inicio de sesión!");
             stage.setScene(scene);
             stage.show();
+            
+            // Iniciar el monitoreo de inactividad después de que la ventana esté visible
+            Platform.runLater(() -> {
+                screensaverManager.startInactivityMonitoring();
+            });
+            
             System.out.println("Aplicación iniciada correctamente");
         } catch (Exception e) {
             System.err.println("Error al iniciar la aplicación: " + e.getMessage());
@@ -127,21 +138,6 @@ public class PanelInicioSesionController extends Application implements Initiali
     }
 
     private void conectarAlServidor() {
-        // Primero intentamos conectar al puerto principal (Docker)
-        try {
-            System.out.println("Conectando al servidor principal: " + SERVER_HOST + ":" + SERVER_PORT);
-            
-            socket = new Socket(SERVER_HOST, SERVER_PORT);
-            salida = new ObjectOutputStream(socket.getOutputStream());
-            entrada = new ObjectInputStream(socket.getInputStream());
-            
-            conectado = true;
-            System.out.println("Conectado al servidor principal correctamente.");
-            return;
-            
-        } catch (IOException e) {
-            System.err.println("Error al conectar con el servidor principal: " + e.getMessage());
-        }
         
         // Si no se pudo conectar al principal, intentamos el alternativo
         try {
@@ -153,7 +149,7 @@ public class PanelInicioSesionController extends Application implements Initiali
             
             conectado = true;
             System.out.println("Conectado al servidor alternativo correctamente.");
-            return;
+
             
         } catch (IOException e) {
             System.err.println("Error al conectar con el servidor alternativo: " + e.getMessage());
