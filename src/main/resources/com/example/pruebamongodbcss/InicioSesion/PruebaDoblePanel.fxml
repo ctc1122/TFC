@@ -19,16 +19,22 @@
 <?import javafx.scene.paint.Color?>
 <?import javafx.scene.text.Font?>
 
-<HBox prefHeight="400.0" prefWidth="800.0" spacing="0" stylesheets="@PanelInicioSesionEstilo.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.InicioSesion.PanelInicioSesionController">
+<HBox prefHeight="450.0" prefWidth="900.0" spacing="0" stylesheets="@PanelInicioSesionEstilo.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.InicioSesion.PanelInicioSesionController">
 
     <!-- PANEL IZQUIERDO: PANEL AZUL Y PANEL CRISTAL DENTRO -->
-    <VBox alignment="CENTER" prefWidth="470.0" styleClass="panel-azul-fondo">
-        <VBox fx:id="glassPanel" alignment="CENTER" cache="true" prefHeight="300.0" prefWidth="180" spacing="12.0" styleClass="glass-panel" VBox.vgrow="NEVER">
-         <Label text="Inicio de Sesión">
-            <font>
-               <Font name="Dubai Regular" size="28.0" />
-            </font>
-         </Label>
+    <VBox alignment="CENTER" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" styleClass="panel-azul-fondo" HBox.hgrow="NEVER">
+        <VBox fx:id="glassPanel" alignment="CENTER" cache="true" maxWidth="360.0" prefHeight="300.0" prefWidth="360.0" spacing="12.0" styleClass="glass-panel">
+            <style>
+                -fx-background-color: rgba(255, 255, 255, 0.1);
+                -fx-background-radius: 10;
+                -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 0, 0);
+                -fx-padding: 20;
+            </style>
+            <Label text="Inicio de Sesión">
+                <font>
+                    <Font name="Dubai Regular" size="28.0" />
+                </font>
+            </Label>
 
             <!-- Campo Usuario -->
             <HBox alignment="CENTER" prefHeight="45.0" prefWidth="230.0" spacing="10.0">
@@ -62,7 +68,6 @@
                     </image>
                 </ImageView>
                 <StackPane>
-                    <!-- Campo de contraseña -->
                     <PasswordField fx:id="campoPassword" alignment="CENTER" minHeight="35.0" prefHeight="35.0" prefWidth="180.0" promptText="Password">
                         <effect>
                             <DropShadow height="0.0" radius="32.24" width="130.96">
@@ -76,7 +81,6 @@
                         </effect>
                     </PasswordField>
                     
-                    <!-- Campo de texto visible para contraseña -->
                     <TextField fx:id="campoPasswordVisible" alignment="CENTER" minHeight="35.0" prefHeight="35.0" prefWidth="180.0" promptText="Password" visible="false">
                         <effect>
                             <DropShadow height="0.0" radius="32.24" width="130.96">
@@ -90,7 +94,6 @@
                         </effect>
                     </TextField>
                     
-                    <!-- Botón para mostrar/ocultar contraseña -->
                     <ImageView fx:id="mostrarPasswordBtn" fitHeight="18.0" fitWidth="18.0" onMouseClicked="#togglePasswordVisibility" pickOnBounds="true" preserveRatio="true" style="-fx-cursor: hand;" StackPane.alignment="CENTER_RIGHT">
                         <image>
                             <Image url="@../../../../Iconos/iconPassword.png" />
@@ -107,35 +110,45 @@
 
             <!-- Recordarme y Olvidé contraseña -->
             <HBox alignment="CENTER" spacing="20.0">
-                <CheckBox text="Remember me" />
-                <Hyperlink text="Forgot?" />
+                <CheckBox text="Remember me" style="-fx-text-fill: white;" />
+                <Hyperlink text="Forgot?" style="-fx-text-fill: white;" />
             </HBox>
 
             <!-- Botón Login -->
             <Button fx:id="btnInicioSesion" contentDisplay="CENTER" onAction="#inicioSesion" prefHeight="57.0" prefWidth="120" text="LOGIN">
-            <VBox.margin>
-               <Insets top="10.0" />
-            </VBox.margin></Button>
+                <VBox.margin>
+                    <Insets top="10.0" />
+                </VBox.margin>
+            </Button>
 
             <!-- Spinner -->
             <ProgressIndicator fx:id="spinnerCarga" prefHeight="25" prefWidth="25" visible="false" />
-         <effect>
-            <Reflection fraction="0.2" topOpacity="0.28" />
-         </effect>
-         <VBox.margin>
-            <Insets left="35.0" right="35.0" />
-         </VBox.margin>
+            
+            <effect>
+                <Reflection fraction="0.2" topOpacity="0.28" />
+            </effect>
+            <VBox.margin>
+                <Insets left="20.0" right="20.0" />
+            </VBox.margin>
         </VBox>
+        
+        <!-- Botón Salir -->
+        <Button fx:id="btnSalir" contentDisplay="CENTER" onAction="#cerrarAplicacion" prefHeight="40.0" prefWidth="120.0" text="SALIR" styleClass="button-salir">
+            <VBox.margin>
+                <Insets top="20.0" />
+            </VBox.margin>
+        </Button>
     </VBox>
 
     <!-- PANEL DERECHO: ANIMACIONES Y TEXTO -->
-    <StackPane fx:id="recommendationPane" prefWidth="450.0" style="-fx-background-color: #ffffff;">
-        <VBox alignment="CENTER" spacing="20">
-            <VBox fx:id="slideContainer" alignment="CENTER" spacing="20" />
-            <HBox alignment="CENTER" spacing="20">
-                <Button fx:id="btnPrev" onAction="#anteriorRecomendacion" prefHeight="40" prefWidth="40" style="-fx-font-size: 16px; -fx-text-fill: white; -fx-background-color: #1976d2; -fx-background-radius: 20;" text="←" />
-                <Button fx:id="btnNext" onAction="#siguienteRecomendacion" prefHeight="40" prefWidth="40" style="-fx-font-size: 16px; -fx-text-fill: white; -fx-background-color: #1976d2; -fx-background-radius: 20;" text="→" />
-            </HBox>
+    <StackPane fx:id="recommendationPane" alignment="CENTER" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" style="-fx-background-color: #1976d2;" HBox.hgrow="NEVER">
+        <VBox fx:id="slideContainer" alignment="CENTER" maxHeight="450.0" maxWidth="500.0" minHeight="450.0" minWidth="500.0" prefHeight="450.0" prefWidth="500.0">
+            <padding>
+                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+            </padding>
+            <StackPane.margin>
+                <Insets bottom="0.0" left="0.0" right="0.0" top="0.0" />
+            </StackPane.margin>
         </VBox>
     </StackPane>
 </HBox>

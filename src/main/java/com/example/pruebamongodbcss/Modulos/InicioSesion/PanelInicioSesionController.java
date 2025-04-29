@@ -24,10 +24,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 public class PanelInicioSesionController extends Application implements Initializable {
     private static final String SERVER_HOST = "localhost";
@@ -52,9 +54,30 @@ public class PanelInicioSesionController extends Application implements Initiali
             screensaverManager = new ScreensaverManager(stage);
             
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/InicioSesion/PruebaDoblePanel.fxml"));
-            Scene scene = new Scene(fxmlLoader.load(), 790, 450);
+            Scene scene = new Scene(fxmlLoader.load(), 900, 450);
+            
+            // Quitar decoración de la ventana
+            stage.initStyle(StageStyle.UNDECORATED);
+            
+            // Variables para manejar el arrastre de la ventana
+            final double[] xOffset = {0};
+            final double[] yOffset = {0};
+            
+            // Evento para detectar cuando se presiona el mouse
+            scene.setOnMousePressed(event -> {
+                xOffset[0] = event.getSceneX();
+                yOffset[0] = event.getSceneY();
+            });
+            
+            // Evento para mover la ventana cuando se arrastra
+            scene.setOnMouseDragged(event -> {
+                stage.setX(event.getScreenX() - xOffset[0]);
+                stage.setY(event.getScreenY() - yOffset[0]);
+            });
+            
             stage.setTitle("Inicio de sesión!");
             stage.setScene(scene);
+            stage.setResizable(false);
             stage.show();
             
             // Iniciar el monitoreo de inactividad después de que la ventana esté visible
@@ -106,6 +129,9 @@ public class PanelInicioSesionController extends Application implements Initiali
      @FXML
     private VBox glassPanel;
 
+    @FXML
+    private Button btnSalir;
+
     private final List<String> recomendaciones = List.of
     (
     "¿Están abastecidos los cajones?.",
@@ -118,6 +144,8 @@ public class PanelInicioSesionController extends Application implements Initiali
 
     private final List<VBox> slides = new java.util.ArrayList<>();
     private int currentSlide = 0;
+
+    private javafx.animation.Timeline slideTimer;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -135,26 +163,8 @@ public class PanelInicioSesionController extends Application implements Initiali
         System.out.println("Mostrando primera diapositiva...");
         mostrarSlide(currentSlide);
         
-        // Configurar los botones
-        if (btnNext != null) {
-            System.out.println("Botón siguiente encontrado");
-            btnNext.setOnAction(e -> siguienteRecomendacion());
-        } else {
-            System.err.println("¡Error! Botón siguiente no encontrado");
-        }
-        
-        if (btnPrev != null) {
-            System.out.println("Botón anterior encontrado");
-            btnPrev.setOnAction(e -> anteriorRecomendacion());
-        } else {
-            System.err.println("¡Error! Botón anterior no encontrado");
-        }
-        
-        if (slideContainer != null) {
-            System.out.println("Contenedor de diapositivas encontrado");
-        } else {
-            System.err.println("¡Error! Contenedor de diapositivas no encontrado");
-        }
+        // Iniciar el temporizador para cambiar las diapositivas automáticamente
+        iniciarTransicionAutomatica();
     }
 
     private void conectarAlServidor() {
@@ -180,13 +190,40 @@ public class PanelInicioSesionController extends Application implements Initiali
 
     private void crearDiapositivas() {
         System.out.println("Creando diapositivas...");
-        slides.clear(); // Limpiar diapositivas existentes
+        slides.clear();
         
-        VBox slide1 = crearSlide("ChichaVet", "Calidad y compromiso");
-        VBox slide2 = crearSlide("Recordatorio", "¿Están abastecidos los cajones?");
-        VBox slide3 = crearSlide("Checklist", "¿Has encendido y limpiado las maquinas de análisis?");
-        VBox slide4 = crearSlide("Seguridad", "Si estás solo, recuerda cerrar la puerta con llave.");
-        VBox slide5 = crearSlide("Apoyo", "Ante cualquier duda, no dudes en preguntar a tu supervisor.");
+        // Verificar las rutas de las imágenes
+        String[] imagePaths = {
+            null,
+            "/PanelLogin/OrganizarCajones.png",
+            "/PanelLogin/EncenderMaquinas.png",
+            "/PanelLogin/Seguridad.png",
+            "/PanelLogin/Consulta.png"
+        };
+        
+        // Verificar cada ruta de imagen
+        for (String path : imagePaths) {
+            if (path != null) {
+                System.out.println("Verificando imagen: " + path);
+                java.io.InputStream stream = getClass().getResourceAsStream(path);
+                System.out.println("¿Existe? " + (stream != null));
+                if (stream == null) {
+                    System.err.println("No se pudo encontrar la imagen en: " + path);
+                } else {
+                    try {
+                        stream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        
+        VBox slide1 = crearSlide("ChichaVet", "Calidad y compromiso", imagePaths[0]);
+        VBox slide2 = crearSlide("Recordatorio", "¿Están abastecidos los cajones?", imagePaths[1]);
+        VBox slide3 = crearSlide("Checklist", "¿Has encendido y limpiado las maquinas de análisis?", imagePaths[2]);
+        VBox slide4 = crearSlide("Seguridad", "Si estás solo, recuerda cerrar la puerta con llave.", imagePaths[3]);
+        VBox slide5 = crearSlide("Apoyo", "Ante cualquier duda, no dudes en preguntar a tu supervisor.", imagePaths[4]);
         
         slides.add(slide1);
         slides.add(slide2);
@@ -197,24 +234,106 @@ public class PanelInicioSesionController extends Application implements Initiali
         System.out.println("Se crearon " + slides.size() + " diapositivas");
     }
 
-    private VBox crearSlide(String titulo, String contenido) {
+    private VBox crearSlide(String titulo, String contenido, String imagenPath) {
         System.out.println("Creando diapositiva: " + titulo);
         
+        // Crear el VBox principal
+        VBox vbox = new VBox();
+        vbox.setAlignment(javafx.geometry.Pos.CENTER);
+        vbox.setPrefSize(500, 450);
+        vbox.setMaxSize(500, 450);
+        vbox.setMinSize(500, 450);
+        vbox.setStyle("-fx-background-color: #1976d2;");
+
+        // Crear un StackPane para la imagen y el overlay
+        StackPane imagePane = new StackPane();
+        imagePane.setAlignment(javafx.geometry.Pos.CENTER);
+        imagePane.setPrefSize(500, 450);
+        imagePane.setMaxSize(500, 450);
+        imagePane.setMinSize(500, 450);
+
+        // Si se proporciona una ruta de imagen, establecerla como fondo
+        if (imagenPath != null && !imagenPath.isEmpty()) {
+            try {
+                System.out.println("Intentando cargar imagen: " + imagenPath);
+                java.io.InputStream imageStream = getClass().getResourceAsStream(imagenPath);
+                if (imageStream != null) {
+                    Image image = new Image(imageStream);
+                    ImageView imageView = new ImageView(image);
+                    
+                    // Configurar la imagen
+                    imageView.setFitWidth(500);
+                    imageView.setFitHeight(450);
+                    imageView.setPreserveRatio(true);
+                    imageView.setSmooth(true);
+                    imageView.setCache(true);
+                    
+                    // Centrar la imagen
+                    StackPane.setAlignment(imageView, javafx.geometry.Pos.CENTER);
+                    imagePane.getChildren().add(imageView);
+                    
+                    // Agregar overlay semi-transparente
+                    javafx.scene.shape.Rectangle overlay = new javafx.scene.shape.Rectangle(500, 450);
+                    overlay.setFill(javafx.scene.paint.Color.rgb(0, 0, 0, 0.5));
+                    StackPane.setAlignment(overlay, javafx.geometry.Pos.CENTER);
+                    imagePane.getChildren().add(overlay);
+                    
+                    System.out.println("Imagen cargada correctamente: " + imagenPath);
+                    imageStream.close();
+                } else {
+                    System.err.println("No se pudo encontrar la imagen: " + imagenPath);
+                }
+            } catch (Exception e) {
+                System.err.println("Error al cargar la imagen: " + imagenPath + " - " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        // VBox para el texto
+        VBox textBox = new VBox(20);
+        textBox.setAlignment(javafx.geometry.Pos.CENTER);
+        textBox.setPadding(new javafx.geometry.Insets(20));
+        textBox.setMaxWidth(400);
+        textBox.setMinWidth(400);
+        textBox.setPrefWidth(400);
+
+        // Título
         Label labelTitulo = new Label(titulo);
-        labelTitulo.setStyle("-fx-font-size: 24px; -fx-text-fill: #1976d2; -fx-font-weight: bold;");
+        labelTitulo.setStyle(
+            "-fx-font-size: 32px;" +
+            "-fx-text-fill: white;" +
+            "-fx-font-weight: bold;" +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 4, 0, 0, 0);"
+        );
         labelTitulo.setWrapText(true);
         labelTitulo.setAlignment(javafx.geometry.Pos.CENTER);
+        labelTitulo.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+        labelTitulo.setMaxWidth(400);
 
+        // Contenido
         Label labelContenido = new Label(contenido);
-        labelContenido.setStyle("-fx-font-size: 16px; -fx-text-fill: #666666;");
+        labelContenido.setStyle(
+            "-fx-font-size: 24px;" +
+            "-fx-text-fill: white;" +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 4, 0, 0, 0);"
+        );
         labelContenido.setWrapText(true);
         labelContenido.setAlignment(javafx.geometry.Pos.CENTER);
+        labelContenido.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+        labelContenido.setMaxWidth(400);
 
-        VBox vbox = new VBox(10, labelTitulo, labelContenido);
-        vbox.setAlignment(javafx.geometry.Pos.CENTER);
-        vbox.setPadding(new javafx.geometry.Insets(20));
-        vbox.setStyle("-fx-background-color: white;");
+        // Agregar elementos al textBox
+        textBox.getChildren().addAll(labelTitulo, labelContenido);
+
+        // Crear un StackPane final para superponer el texto sobre la imagen
+        StackPane finalPane = new StackPane();
+        finalPane.setAlignment(javafx.geometry.Pos.CENTER);
+        finalPane.setPrefSize(500, 450);
+        finalPane.setMaxSize(500, 450);
+        finalPane.setMinSize(500, 450);
+        finalPane.getChildren().addAll(imagePane, textBox);
         
+        vbox.getChildren().add(finalPane);
         return vbox;
     }
 
@@ -455,6 +574,38 @@ public class PanelInicioSesionController extends Application implements Initiali
             campoPasswordVisible.setVisible(false);
             campoPassword.setVisible(true);
         }
+    }
+
+    private void iniciarTransicionAutomatica() {
+        slideTimer = new javafx.animation.Timeline(
+            new javafx.animation.KeyFrame(javafx.util.Duration.seconds(4), event -> {
+                currentSlide = (currentSlide + 1) % slides.size();
+                mostrarSlide(currentSlide);
+            })
+        );
+        slideTimer.setCycleCount(javafx.animation.Timeline.INDEFINITE);
+        slideTimer.play();
+    }
+
+    @FXML
+    private void cerrarAplicacion() {
+        System.out.println("Cerrando la aplicación...");
+        
+        // Detener el temporizador de diapositivas si está activo
+        if (slideTimer != null) {
+            slideTimer.stop();
+        }
+        
+        // Cerrar la conexión con el servidor si está activa
+        cerrarConexion();
+        
+        // Cerrar la aplicación
+        Platform.runLater(() -> {
+            Stage stage = (Stage) btnSalir.getScene().getWindow();
+            stage.close();
+            Platform.exit();
+            System.exit(0);
+        });
     }
 }
     

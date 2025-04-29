@@ -57,4 +57,23 @@
 
 .glass-panel .progress-indicator {
     -fx-progress-color: white;
+}
+
+.button-salir {
+    -fx-background-color: #d32f2f;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0, 0, 2);
+}
+
+.button-salir:hover {
+    -fx-background-color: #b71c1c;
+    -fx-cursor: hand;
+}
+
+.button-salir:pressed {
+    -fx-background-color: #9a0007;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 4, 0, 0, 1);
 } 
