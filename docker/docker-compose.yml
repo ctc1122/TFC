@@ -1,22 +1,52 @@
 version: '3.8'
 
 services:
-  # Servicio de MongoDB que contendrá las tres bases de datos
-  mongodb:
+  # MongoDB instancia 1 (puerto 27017)
+  mongodb1:
     image: mongo:latest
-    container_name: mongodb-tfc
+    container_name: mongodb-tfc-1
     ports:
       - "27017:27017"
     volumes:
-      - mongodb-data:/data/db
-      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - mongodb-data1:/data/db
+      - ./init-mongo1.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # MongoDB instancia 2 (puerto 27018)
+  mongodb2:
+    image: mongo:latest
+    container_name: mongodb-tfc-2
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb-data2:/data/db
+      - ./init-mongo2.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # MongoDB instancia 3 (puerto 27019)
+  mongodb3:
+    image: mongo:latest
+    container_name: mongodb-tfc-3
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongodb-data3:/data/db
+      - ./init-mongo3.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
     networks:
       - app-network
     restart: unless-stopped
 
 volumes:
-  mongodb-data:
-    name: mongodb-tfc-data
+  mongodb-data1:
+    name: mongodb-tfc-data1
+  mongodb-data2:
+    name: mongodb-tfc-data2
+  mongodb-data3:
+    name: mongodb-tfc-data3
 
 networks:
   app-network:

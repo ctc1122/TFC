@@ -36,3 +36,24 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Ignorar directorios de datos de Docker
+/data/
+/docker-volumes/
+
+# Archivos específicos de Docker
+.docker/
+docker-volume/
+
+# Directorios donde se almacenan los datos de MongoDB
+mongodb-tfc-data1/
+mongodb-tfc-data2/
+mongodb-tfc-data3/
+
+# Ignorar archivos de configuración que puedan contener credenciales
+init-mongo*.js
+
+# Otros archivos comunes a ignorar
+.env
+*.log
+node_modules/
