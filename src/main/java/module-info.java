@@ -12,6 +12,7 @@ module com.example.pruebamongodbcss {
     requires java.net.http;
     requires org.json;
     requires jcef;
+    requires MaterialFX;
 
 
     // Configuración básica del módulo principal
@@ -24,6 +25,7 @@ module com.example.pruebamongodbcss {
     exports com.example.pruebamongodbcss.Modulos.InicioSesion;
     exports com.example.pruebamongodbcss.Modulos.UMLSSearch;
     exports com.example.pruebamongodbcss.Modulos.Videollamada;
+    exports com.example.pruebamongodbcss.Modulos.Clinica;
     exports com.example.pruebamongodbcss.service;
 
     
@@ -33,6 +35,8 @@ module com.example.pruebamongodbcss {
     opens com.example.pruebamongodbcss.Modulos.InicioSesion to javafx.fxml;
     opens com.example.pruebamongodbcss.Modulos.UMLSSearch to javafx.fxml;
     opens com.example.pruebamongodbcss.Modulos.Videollamada to javafx.fxml;
+    opens com.example.pruebamongodbcss.Modulos.Clinica to javafx.fxml;
+
  
     
     // IMPORTANTE: Cada vez que crees un nuevo paquete dentro de Modulos,
