@@ -80,7 +80,7 @@
 
 
 .fondoMenuPrincipal{
-	-fx-background-color: linear-gradient(to  right bottom, #0F2027 0%, #203A43 70%, #2C5364 100%);
+	-fx-background-color: linear-gradient(to right, #232526, #414345); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
 }
 
 

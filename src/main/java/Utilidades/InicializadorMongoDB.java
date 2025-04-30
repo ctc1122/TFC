@@ -10,7 +10,7 @@ public class InicializadorMongoDB {
     public static void main(String[] args) {
         try {
             // Conectar a MongoDB Atlas
-            MongoClientURI uri = new MongoClientURI(GestorConexion.MONGO_URI);
+            MongoClientURI uri = new MongoClientURI(GestorConexion.MONGO_URI_DOCKER);
             MongoClient mongoClient = new MongoClient(uri);
 
             // Inicializar base de datos Clinica
@@ -55,7 +55,7 @@ public class InicializadorMongoDB {
             
             empresaDB.getCollection("usuarios").insertOne(adminUser);
 
-            System.out.println("Bases de datos y colecciones creadas exitosamente en MongoDB Atlas");
+            System.out.println("Bases de datos y colecciones creadas exitosamente en MongoDB ");
             mongoClient.close();
         } catch (Exception e) {
             System.err.println("Error al inicializar las bases de datos: " + e.getMessage());
