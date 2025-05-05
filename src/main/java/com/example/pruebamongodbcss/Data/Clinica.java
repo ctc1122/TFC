@@ -8,13 +8,32 @@ public class Clinica {
     private String nombre;
     private String direccion;
     
-
+    /* Constructor */
     public Clinica(String id, String nombre, String direccion) throws PatronExcepcion {
         this.setCIF(id);
         this.setNombre(nombre);
         this.setDireccion(direccion);
     }
 
+    /* Métodos */
+    public String toString() {
+        return "Clinica{" +
+                "CIF='" + CIF + '\'' +
+                ", nombre='" + nombre + '\'' +
+                ", direccion='" + direccion + '\'' +
+                '}';
+    }
+
+    public void registrarUsuario(Usuario usuario) throws PatronExcepcion {
+        if (usuario == null) {
+            throw new PatronExcepcion("Usuario no válido");
+        }
+        usuario.registrar();
+    }
+
+
+
+    /* Setters y Getters */
 
     public void setNombre(String nombre) throws PatronExcepcion {
         if (nombre.isEmpty() || nombre.length() < 3) {
@@ -48,4 +67,12 @@ public class Clinica {
         return nombre;
     }
 
+
+    public String getDireccion() {
+        return direccion;
+    }
+
+    public String getCIF() {
+        return CIF;
+    }   
 }   
