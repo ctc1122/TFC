@@ -1,5 +1,6 @@
 package com.example.pruebamongodbcss.Data;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -7,6 +8,10 @@ public class Clinica {
     private String CIF;
     private String nombre;
     private String direccion;
+
+    private List<Usuario> usuarios;
+    private static final int MAX_USUARIOS = 100;
+    static final String CONTRASENA_ADMIN = "adminVeterinaria";
     
     /* Constructor */
     public Clinica(String id, String nombre, String direccion) throws PatronExcepcion {

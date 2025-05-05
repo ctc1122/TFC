@@ -6,7 +6,7 @@ public class Usuario {
     private String email;
     private String contraseña;
     private String telefono;
-    
+    private String CONTRASENA_ADMIN;
 
     /* Constructor */
     public Usuario(String nombre, String email, String contraseña, String telefono) throws PatronExcepcion {
@@ -15,6 +15,21 @@ public class Usuario {
         this.setContraseña(contraseña);
         this.setTelefono(telefono);
     }
+
+    public Usuario(String nombre, String email, String contraseña,String telefono,String CONTRASENA_ADMIN) throws Exception {
+        this.setNombre(nombre);
+        this.setEmail(email);
+        this.setContraseña(contraseña);
+        this.setTelefono(telefono);
+        if (CONTRASENA_ADMIN.equals(Clinica.CONTRASENA_ADMIN)) {
+            this.CONTRASENA_ADMIN = CONTRASENA_ADMIN;
+        }else{
+            throw new Exception("Contraseña no válida");
+        }
+        
+    }
+    
+    
     
 
     /* Métodos */
