@@ -43,26 +43,7 @@ public class Usuario {
     }
 
 
-    public void registrar() throws PatronExcepcion {
-        if (this.nombre == null || this.email == null || this.contraseña == null || this.telefono == null) {
-            throw new PatronExcepcion("Usuario no válido");
-        }
-        if (this.nombre.isEmpty() || this.email.isEmpty() || this.contraseña.isEmpty() || this.telefono.isEmpty()) {
-            throw new PatronExcepcion("Usuario no válido");
-        }
-        if (this.nombre.length() < 3 || this.email.length() > 30 || this.contraseña.length() < 8 || this.contraseña.length() > 16 || this.telefono.length() != 9) {
-            throw new PatronExcepcion("Usuario no válido");
-        }
-        if (!this.email.contains("@") || !this.email.contains(".") || this.email.length() > 30 || this.email.length() < 5) {
-            throw new PatronExcepcion("Email no válido");
-        }
-        if (!this.telefono.matches("[0-9]+")) {
-            throw new PatronExcepcion("Teléfono no válido");
-        }
-        if (this.contraseña.contains(" ")) {
-            throw new PatronExcepcion("Contraseña no válida");
-        }
-    }
+
 
     /* Setters y Getters */
     public void setNombre(String nombre) throws PatronExcepcion {
