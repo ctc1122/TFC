@@ -80,7 +80,7 @@
 
 
 .fondoMenuPrincipal{
-	-fx-background-color: linear-gradient(to right, #232526, #414345); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+	-fx-background-color: #c5796d;
 }
 
 
@@ -187,4 +187,21 @@
 
 .link-button .mfx-ripple-generator {
 	-mfx-ripple-color: #D9E9FF;
+}
+
+.circleMenuButton {
+    -fx-background-color: #42275a;
+    -fx-background-radius: 50%;
+    -fx-min-width: 60px;
+    -fx-min-height: 60px;
+    -fx-max-width: 60px;
+    -fx-max-height: 60px;
+    -fx-padding: 0;
+    -fx-alignment: center;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 6, 0.2, 0, 2);
+}
+
+.circleMenuButton .image-view {
+    -fx-fit-width: 32px;
+    -fx-fit-height: 32px;
 }

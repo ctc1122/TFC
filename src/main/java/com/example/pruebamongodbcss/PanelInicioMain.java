@@ -6,6 +6,7 @@ import com.mongodb.client.MongoDatabase;
 
 import Utilidades.GestorConexion;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -22,7 +23,11 @@ public class PanelInicioMain extends Application {
 
         stage.setScene(scene);
 
-
+        // Cierre seguro de la aplicación
+        stage.setOnCloseRequest(event -> {
+            Platform.exit();
+            System.exit(0);
+        });
 
         stage.show();
     }
