@@ -8,8 +8,16 @@ import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 
+import com.example.pruebamongodbcss.Data.Clinica;
+import com.example.pruebamongodbcss.Data.PatronExcepcion;
+import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+import org.bson.Document;
 
+import Utilidades.GestorConexion;
 import Utilidades.ScreensaverManager;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -395,14 +403,15 @@ public class PanelInicioSesionController extends Application implements Initiali
      */
     @FXML
     private void inicioSesion() {
-        String usuario = campoUsuario.getText().toLowerCase();
+        // Obtener el usuario tal como se escribe (respetando mayúsculas/minúsculas)
+        String usuario = campoUsuario.getText();
         
         // Obtener la contraseña del campo visible o invisible según corresponda
-        String password = "";
+        final String password;
         if (passwordVisible) {
-            password = campoPasswordVisible.getText().toLowerCase();
+            password = campoPasswordVisible.getText();
         } else {
-            password = campoPassword.getText().toLowerCase();
+            password = campoPassword.getText();
         }
 
         // Si el usuario o la contraseña están vacíos, mostrar un mensaje de error
@@ -411,56 +420,142 @@ public class PanelInicioSesionController extends Application implements Initiali
             return;
         }
 
-        // Si no estamos conectados al servidor, usar modo local de prueba
-        if (!conectado) {
-            if (usuario.equals("admin") && password.equals("admin")) {
-                mostrarMensaje("Inicio de sesión exitoso (modo local).");
-                cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
-            } else {
-                mostrarMensaje("Usuario o contraseña incorrectos (modo local).");
-            }
-            return;
-        }
-        
-        // Modo conectado al servidor
-        try {
-            // Enviar petición de login
-            salida.writeInt(Protocolo.LOGIN_REQUEST);
-            salida.writeUTF(usuario);
-            salida.writeUTF(password);
-            //flush para enviar los datos al servidor
-            salida.flush();
+        // Mostrar el spinner de carga
+        spinnerCarga.setVisible(true);
+        spinnerCarga.setProgress(-1); // -1 para animación infinita
 
-            // Recibir respuesta
-            int tipoRespuesta = entrada.readInt();
-            if (tipoRespuesta == Protocolo.LOGIN_RESPONSE) {
-                int codigoRespuesta = entrada.readInt();
-                // Si el código de respuesta es 1, se ha iniciado sesión correctamente
-                switch (codigoRespuesta) {
-                    case Protocolo.LOGIN_SUCCESS:
-                        mostrarMensaje("Inicio de sesión exitoso.");
-                        // Cambiar a la siguiente pantalla
-                        cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
-                        break;
-                    case Protocolo.LOGIN_FAILED:
-                        mostrarMensaje("Usuario o contraseña incorrectos.");
-                        break;
-                    default:
-                        mostrarMensaje("Error desconocido en el inicio de sesión.");
+        // Crear un hilo para la autenticación para no bloquear la interfaz
+        new Thread(() -> {
+            try {
+                // Verificar si ya existen usuarios en la base de datos
+                crearUsuariosPruebaEnBaseDatos();
+                
+                boolean autenticado = false;
+                Usuario usuarioAutenticado = null;
+
+                // Si estamos conectados al servidor, intentar autenticar a través de él
+                if (conectado) {
+                    try {
+                        // Enviar petición de login
+                        salida.writeInt(Protocolo.LOGIN_REQUEST);
+                        salida.writeUTF(usuario);
+                        salida.writeUTF(password);
+                        //flush para enviar los datos al servidor
+                        salida.flush();
+
+                        // Recibir respuesta
+                        int tipoRespuesta = entrada.readInt();
+                        if (tipoRespuesta == Protocolo.LOGIN_RESPONSE) {
+                            int codigoRespuesta = entrada.readInt();
+                            // Si el código de respuesta es 1, se ha iniciado sesión correctamente
+                            if (codigoRespuesta == Protocolo.LOGIN_SUCCESS) {
+                                autenticado = true;
+                            }
+                        }
+                    } catch (IOException e) {
+                        System.err.println("Error en la comunicación con el servidor: " + e.getMessage());
+                        conectado = false; // Marcar como desconectado para usar modo local
+                    }
                 }
+
+                // Si no estamos conectados al servidor o falló la autenticación remota, usar la clase Clinica
+                if (!conectado || !autenticado) {
+                    try {
+                        // Crear una instancia de la clínica
+                        Clinica clinica = new Clinica("12345678A", "ChichaVet", "Dirección de la clínica");
+                        
+                        // Usar el método de iniciarSesion de la clase Clinica
+                        usuarioAutenticado = clinica.iniciarSesion(usuario, password);
+                        
+                        // Si no lanza excepción, el usuario se autenticó correctamente
+                        autenticado = (usuarioAutenticado != null);
+                        
+                    } catch (PatronExcepcion e) {
+                        System.err.println("Error de autenticación: " + e.getMessage());
+                        autenticado = false;
+                        
+                        // Imprimir información adicional para debug
+                        System.out.println("Intentando iniciar sesión con: usuario='" + usuario + "', password='" + password + "'");
+                        
+                        // Si todo falla, usar el modo "Administrador"/"admin12345" como último recurso
+                        if (usuario.equals("Administrador") && password.equals("admin12345")) {
+                            autenticado = true;
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error general al iniciar sesión con la clase Clinica: " + e.getMessage());
+                        autenticado = false;
+                        
+                        // Si todo falla, usar el modo "Administrador"/"admin12345" como último recurso
+                        if (usuario.equals("Administrador") && password.equals("admin12345")) {
+                            autenticado = true;
+                        }
+                    }
+                }
+
+                // Procesar el resultado de la autenticación en el hilo de la UI
+                final boolean resultadoFinal = autenticado;
+                Platform.runLater(() -> {
+                    spinnerCarga.setVisible(false); // Ocultar spinner
+                    
+                    if (resultadoFinal) {
+                        mostrarMensaje("Inicio de sesión exitoso.");
+                        cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
+                    } else {
+                        mostrarMensaje("Usuario o contraseña incorrectos.");
+                    }
+                });
+            } catch (Exception e) {
+                System.err.println("Error general en el proceso de login: " + e.getMessage());
+                e.printStackTrace();
+                
+                // Procesar el error en el hilo de la UI
+                Platform.runLater(() -> {
+                    spinnerCarga.setVisible(false); // Ocultar spinner
+                    mostrarMensaje("Error al iniciar sesión: " + e.getMessage());
+                });
             }
-        } catch (IOException e) {
-            System.err.println("Error en la comunicación con el servidor: " + e.getMessage());
-            mostrarMensaje("Error en la comunicación con el servidor: " + e.getMessage() + 
-                          "\nUsando modo local...");
+        }).start();
+    }
+    
+    /**
+     * Crea usuarios de prueba en la base de datos si no existen.
+     */
+    private void crearUsuariosPruebaEnBaseDatos() {
+        try {
+            // Conectar a la base de datos de la empresa
+            MongoDatabase empresaDB = GestorConexion.conectarEmpresa();
+            MongoCollection<Document> usuariosCollection = empresaDB.getCollection("usuarios");
             
-            // Intentar modo local como fallback
-            if (usuario.equals("admin") && password.equals("admin")) {
-                mostrarMensaje("Inicio de sesión exitoso (modo local).");
-                cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
+            // Verificar si existen usuarios en la colección
+            long usuariosCount = usuariosCollection.countDocuments();
+            
+            if (usuariosCount == 0) {
+                System.out.println("No se encontraron usuarios en la base de datos. Creando usuarios de prueba...");
+                
+                // Crear usuario Administrador (con mayúscula)
+                Document adminDoc = new Document()
+                    .append("nombre", "Administrador")
+                    .append("email", "admin@sistema.com")
+                    .append("contraseña", "admin12345")
+                    .append("telefono", "123456789")
+                    .append("rol", "ADMIN");
+                usuariosCollection.insertOne(adminDoc);
+                
+                // Crear un usuario normal para pruebas
+                Document usuarioDoc = new Document()
+                    .append("nombre", "usuario")
+                    .append("email", "usuario@chichavet.com")
+                    .append("contraseña", "usuario123")
+                    .append("telefono", "123456789")
+                    .append("rol", "USER");
+                usuariosCollection.insertOne(usuarioDoc);
+                
+                System.out.println("Usuarios de prueba creados con éxito");
             } else {
-                mostrarMensaje("Usuario o contraseña incorrectos (modo local).");
+                System.out.println("Ya existen " + usuariosCount + " usuarios en la base de datos");
             }
+        } catch (Exception e) {
+            System.err.println("Error al crear usuarios de prueba: " + e.getMessage());
         }
     }
 

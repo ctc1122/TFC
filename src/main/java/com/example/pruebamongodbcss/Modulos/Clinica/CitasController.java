@@ -28,6 +28,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import javafx.application.Platform;
 
 /**
  * Controlador para la gestión de citas
@@ -74,30 +75,43 @@ public class CitasController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // Inicializar el servicio
-        servicio = new ServicioClinica();
-        
-        // Configurar listas observables
-        citasObservable = FXCollections.observableArrayList();
-        
-        // Configurar tabla de citas
-        configurarTablaCitas();
-        
-        // Configurar campo de filtro por estado
-        configurarFiltroEstado();
-        
-        // Inicializar fechas de búsqueda
-        LocalDate hoy = LocalDate.now();
-        dpFechaInicio.setValue(hoy.withDayOfMonth(1));
-        dpFechaFin.setValue(hoy.withDayOfMonth(hoy.lengthOfMonth()));
-        
-        // Cargar citas iniciales
-        cargarCitas();
-        
-        // Configurar calendario
-        mesActual = YearMonth.now();
-        actualizarLabelMes();
-        generarCalendario();
+        try {
+            // Inicializar el servicio
+            servicio = new ServicioClinica();
+            
+            // Configurar listas observables
+            citasObservable = FXCollections.observableArrayList();
+            
+            // Configurar tabla de citas
+            configurarTablaCitas();
+            
+            // Configurar campo de filtro por estado
+            configurarFiltroEstado();
+            
+            // Inicializar fechas de búsqueda
+            LocalDate hoy = LocalDate.now();
+            dpFechaInicio.setValue(hoy.withDayOfMonth(1));
+            dpFechaFin.setValue(hoy.withDayOfMonth(hoy.lengthOfMonth()));
+            
+            // Configurar calendario
+            mesActual = YearMonth.now();
+            actualizarLabelMes();
+            
+            // Agregar listener para búsqueda en tiempo real
+            txtBuscarCita.textProperty().addListener((obs, oldVal, newVal) -> {
+                cargarCitas();
+            });
+            
+            // Cargar citas iniciales (hacerlo después de configurar todos los componentes)
+            Platform.runLater(() -> {
+                cargarCitas();
+                generarCalendario();
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error de inicialización", "Error al inicializar el controlador de citas", 
+                "Ha ocurrido un error al inicializar el controlador: " + e.getMessage());
+        }
     }
     
     /**
