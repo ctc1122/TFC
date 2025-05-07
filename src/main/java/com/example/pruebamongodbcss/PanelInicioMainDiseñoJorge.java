@@ -2,9 +2,6 @@ package com.example.pruebamongodbcss;
 
 import java.io.IOException;
 
-import com.mongodb.client.MongoDatabase;
-
-import Utilidades.GestorConexion;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -34,13 +31,13 @@ public class PanelInicioMainDiseñoJorge extends Application {
 
     public static void main(String[] args) {
         launch();
-        MongoDatabase baseMongo=GestorConexion.conectarEmpresa();
-        try{
-            baseMongo.createCollection("Prueba");
-            System.out.println("Colección creada exitosamente.");
-        }catch (Exception ex){
-            System.out.println("Error");
-        }
+        //MongoDatabase baseMongo=GestorConexion.conectarEmpresa();
+        //try{
+        //    baseMongo.createCollection("Prueba");
+        //    System.out.println("Colección creada exitosamente.");
+        //}catch (Exception ex){
+        //    System.out.println("Error");
+        //}
 
 
     }
