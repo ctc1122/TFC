@@ -163,6 +163,19 @@ public class PanelInicioController implements Initializable {
 
         // Inicializar servicio
         servicioEmpresa = new ServicioEmpresa();
+
+        //NUEVO DE JORGE
+        configurarArrastreBoton(btnChicha);
+        // NUEVO: Estilo circular morado y ocultar botones del menú radial por defecto
+        JFXButton[] botones = {btnMenuPrincipal, btnAnimales, but_clientes, btnFichaje, btnSalir};
+        for (JFXButton boton : botones) {
+            boton.getStyleClass().removeAll("itemMenu");
+            if (!boton.getStyleClass().contains("circleMenuButton")) {
+                boton.getStyleClass().add("circleMenuButton");
+            }
+            boton.setText(""); // Solo icono, sin texto
+            boton.setVisible(false); // Ocultos por defecto
+        }
     }
     
     /**

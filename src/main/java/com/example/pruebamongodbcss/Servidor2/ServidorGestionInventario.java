@@ -6,16 +6,11 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.mongodb.client.MongoDatabase;
-
-import Utilidades.GestorConexion;
-
 public class ServidorGestionInventario {
     private static final int PUERTO_DEFAULT = 50005;
     private final int puerto;
     private ServerSocket serverSocket;
     private final ExecutorService pool;
-    private final MongoDatabase database;
     private boolean running;
 
     /**
@@ -47,9 +42,7 @@ public class ServidorGestionInventario {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Nuevo cliente conectado: " + clientSocket.getInetAddress());
                 // Crear un nuevo hilo para manejar la conexión del cliente
-                ClientHandler handler = new ClientHandler(clientSocket, database);
-                // Ejecutar el hilo en el pool de hilos
-                pool.execute(handler);
+               
             }
         } catch (IOException e) {
             System.err.println("Error en el servidor: " + e.getMessage());

@@ -1,0 +1,12 @@
+/* --- NUEVO: Botones circulares morados para menú radial --- */
+.circleMenuButton {
+    -fx-background-radius: 50;
+    -fx-background-color: #8e24aa; /* Morado */
+    -fx-min-width: 60px;
+    -fx-min-height: 60px;
+    -fx-max-width: 60px;
+    -fx-max-height: 60px;
+    -fx-padding: 0;
+    -fx-alignment: center;
+    -fx-effect: dropshadow(gaussian, #00000044, 8, 0.2, 0, 2);
+} 
