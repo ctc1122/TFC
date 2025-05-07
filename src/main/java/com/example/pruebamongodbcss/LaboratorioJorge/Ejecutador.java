@@ -14,6 +14,7 @@ public class Ejecutador extends Application {
     @Override
     public void start(Stage stage) throws IOException {
 
+        //Cambiar la ruta si quieres porbar otro FXML    
         FXMLLoader fxmlLoader = new FXMLLoader(Ejecutador.class.getResource("/com/example/pruebamongodbcss/panelInicio.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 700, 450);
         scene.getStylesheets().add(getClass().getResource("/com/example/pruebamongodbcss/app.css").toExternalForm());
