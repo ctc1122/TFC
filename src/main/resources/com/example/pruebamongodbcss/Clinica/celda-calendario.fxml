@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox fx:id="container" prefHeight="120.0" prefWidth="140.0" style="-fx-background-color: white; -fx-border-color: #cccccc; -fx-border-width: 1px;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.CeldaCalendarioController">
+   <children>
+      <HBox alignment="CENTER_LEFT" style="-fx-background-color: #f0f0f0;">
+         <children>
+            <Label fx:id="lblDia" text="1" textFill="#333333">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </Label>
+         </children>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+      </HBox>
+      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" style="-fx-background: transparent; -fx-background-color: transparent;" VBox.vgrow="ALWAYS">
+         <content>
+            <VBox fx:id="citasContainer" prefHeight="200.0" spacing="3.0">
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+            </VBox>
+         </content>
+      </ScrollPane>
+   </children>
+</VBox> 

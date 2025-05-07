@@ -6,6 +6,9 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoCollection;
 import org.bson.Document;
 
+import com.example.pruebamongodbcss.Data.Usuario;
+import com.example.pruebamongodbcss.Data.PatronExcepcion;
+
 public class InicializadorMongoDB {
     public static void main(String[] args) {
         try {
@@ -44,16 +47,53 @@ public class InicializadorMongoDB {
             MongoDatabase empresaDB = mongoClient.getDatabase("Empresa");
             empresaDB.createCollection("usuarios");
             
-            // Crear usuario administrador
-            Document adminUser = new Document()
-                .append("usuario", "admin")
-                .append("password", "admin")
-                .append("rol", "ADMIN")
-                .append("nombre", "Administrador")
-                .append("apellido", "Sistema")
-                .append("fechaCreacion", new java.util.Date());
+            // Crear usuario administrador utilizando la clase Usuario
+            try {
+                // Crear usuario administrador usando la clase Usuario (versión normal)
+                Usuario adminUser = new Usuario("Administrador", "admin@sistema.com", "admin12345", "123456789");
+                
+                // Crear documento MongoDB a partir del objeto Usuario
+                Document adminDocument = new Document()
+                    .append("nombre", adminUser.getNombre())
+                    .append("email", adminUser.getEmail())
+                    .append("contraseña", adminUser.getContraseña())
+                    .append("telefono", adminUser.getTelefono())
+                    .append("rol", "ADMIN")
+                    .append("fechaCreacion", new java.util.Date());
+                
+                // Insertar en la colección usuarios
+                empresaDB.getCollection("usuarios").insertOne(adminDocument);
+                
+                // También crear un usuario admin en la colección de la Clínica
+                clinicaDB.getCollection("usuarios").insertOne(adminDocument);
+                
+                System.out.println("Usuario administrador creado exitosamente");
+            } catch (PatronExcepcion e) {
+                System.err.println("Error al crear usuario administrador: " + e.getMessage());
+            }
             
-            empresaDB.getCollection("usuarios").insertOne(adminUser);
+            // También crear un usuario admin en la base de datos Clinica usando el constructor con contraseña admin
+            try {
+                // Intentar crear usuario administrador con contraseña de administrador
+                Usuario adminClinica = new Usuario("AdminClinica", "admin.clinica@sistema.com", "adminClinica123", "987654321", "adminVeterinaria");
+                
+                // Crear documento MongoDB a partir del objeto Usuario
+                Document adminClinicaDocument = new Document()
+                    .append("nombre", adminClinica.getNombre())
+                    .append("email", adminClinica.getEmail())
+                    .append("contraseña", adminClinica.getContraseña())
+                    .append("telefono", adminClinica.getTelefono())
+                    .append("rol", "ADMIN")
+                    .append("esAdministrador", true)
+                    .append("fechaCreacion", new java.util.Date());
+                
+                // Insertar en la colección usuarios de la clínica
+                clinicaDB.getCollection("usuarios").insertOne(adminClinicaDocument);
+                
+                System.out.println("Usuario administrador de clínica creado exitosamente");
+            } catch (Exception e) {
+                System.err.println("Error al crear usuario administrador de clínica: " + e.getMessage());
+            }
 
             System.out.println("Bases de datos y colecciones creadas exitosamente en MongoDB ");
             mongoClient.close();

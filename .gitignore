@@ -57,3 +57,6 @@ init-mongo*.js
 .env
 *.log
 node_modules/
+
+# Ignorar archivos rrf
+*.rrf
