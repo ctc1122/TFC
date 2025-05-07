@@ -26,6 +26,7 @@ module com.example.pruebamongodbcss {
     exports com.example.pruebamongodbcss.Modulos.UMLSSearch;
     exports com.example.pruebamongodbcss.Modulos.Videollamada;
     exports com.example.pruebamongodbcss.Modulos.Clinica;
+    exports com.example.pruebamongodbcss.Modulos.Empresa;
     exports com.example.pruebamongodbcss.service;
 
     
@@ -36,7 +37,7 @@ module com.example.pruebamongodbcss {
     opens com.example.pruebamongodbcss.Modulos.UMLSSearch to javafx.fxml;
     opens com.example.pruebamongodbcss.Modulos.Videollamada to javafx.fxml;
     opens com.example.pruebamongodbcss.Modulos.Clinica to javafx.fxml;
-
+    opens com.example.pruebamongodbcss.Modulos.Empresa to javafx.fxml;
  
     
     // IMPORTANTE: Cada vez que crees un nuevo paquete dentro de Modulos,

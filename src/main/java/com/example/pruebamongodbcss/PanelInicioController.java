@@ -276,36 +276,33 @@ public class PanelInicioController implements Initializable {
         try {
             System.out.println("Abriendo módulo de empresa como administrador...");
             
-            // Cargar la vista de empresa usando la ruta correcta
-            String fxmlPath = "/com/example/pruebamongodbcss/Modulos/Empresa/empresa-view.fxml";
-            System.out.println("Intentando cargar: " + fxmlPath);
             
-            URL resource = getClass().getResource(fxmlPath);
-            if (resource == null) {
-                System.out.println("Recurso no encontrado, probando ruta alternativa...");
-                fxmlPath = "/com/example/pruebamongodbcss/Empresa/empresa-view.fxml";
-                resource = getClass().getResource(fxmlPath);
+            try {
+                // Cargar la vista sin controlador
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Empresa/empresa-view.fxml"));
                 
-                if (resource == null) {
-                    throw new IOException("No se pudo encontrar el archivo empresa-view.fxml en ninguna ubicación");
-                }
+                // Cargar el FXML
+                Parent contenido = loader.load();
+                System.out.println("FXML cargado correctamente.");
+                
+                // Obtener el BorderPane central y reemplazar su contenido
+                BorderPane centerPane = (BorderPane) root.getCenter();
+                centerPane.setCenter(contenido);
+                
+                // Actualizar el título
+                lblClinica.setText("Gestión de Empresa");
+                
+            } catch (Exception e) {
+                System.err.println("Error al cargar el FXML: " + e.getMessage());
+                e.printStackTrace();
+                throw new IOException("Error al procesar el FXML: " + e.getMessage(), e);
             }
-            
-            System.out.println("Recurso encontrado: " + resource);
-            FXMLLoader loader = new FXMLLoader(resource);
-            Parent contenido = loader.load();
-            
-            // Obtener el BorderPane central y reemplazar su contenido
-            BorderPane centerPane = (BorderPane) root.getCenter();
-            centerPane.setCenter(contenido);
-            
-            // Actualizar el título
-            lblClinica.setText("Gestión de Empresa");
             
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Error al cargar el módulo de empresa: " + e.getMessage());
-            mostrarError("Error", "Error al cargar el módulo de empresa: " + e.getMessage());
+            String mensajeError = "Error al cargar el módulo de empresa: " + e.getMessage();
+            System.err.println(mensajeError);
+            mostrarError("Error", mensajeError);
         }
     }
 
