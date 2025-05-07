@@ -422,4 +422,21 @@ public class PanelInicioController implements Initializable {
         alert.setContentText(mensaje);
         alert.showAndWait();
     }
+
+
+
+/*  
+ * -----------------------------------
+ * APARTIR DE AQUI ES EL CODIGO DE JORGE
+ * --------------------------------------
+ * 
+ * 
+ */
+
+
+
+
+
+
+    
 }

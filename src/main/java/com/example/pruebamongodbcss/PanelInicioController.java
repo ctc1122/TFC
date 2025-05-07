@@ -331,7 +331,7 @@ public class PanelInicioController implements Initializable {
         
         // Restaurar contenido por defecto (un Pane con el spinner)
         Pane defaultPane = new Pane();
-        defaultPane.setPrefHeight(400.0);
+        defaultPane.setPrefHeight(700.0);
         defaultPane.setPrefWidth(622.0);
         defaultPane.getStylesheets().add("@app.css");
         

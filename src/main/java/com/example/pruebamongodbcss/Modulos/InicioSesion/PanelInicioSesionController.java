@@ -64,7 +64,7 @@ public class PanelInicioSesionController extends Application implements Initiali
             
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/InicioSesion/PruebaDoblePanel.fxml"));
             Scene scene = new Scene(fxmlLoader.load(), 900, 450);
-            
+            //450 width y 900 height
             // Quitar decoración de la ventana
             stage.initStyle(StageStyle.UNDECORATED);
             
@@ -588,11 +588,30 @@ public class PanelInicioSesionController extends Application implements Initiali
             com.example.pruebamongodbcss.PanelInicioController controller = loader.getController();
             controller.setUsuarioActual(usuario);
             
-            Stage stage = (Stage) btnInicioSesion.getScene().getWindow();
-            Scene scene = new Scene(root);
+            // Obtener la ventana actual
+            Stage currentStage = (Stage) btnInicioSesion.getScene().getWindow();
             
-            // Quitar decoración de la ventana
-            stage.setScene(scene);
+            // Crear una nueva escena con dimensiones específicas
+            Scene scene = new Scene(root, 1024, 700);
+            
+            // Si necesitamos una ventana decorada, y la actual no lo es, crear una nueva
+            if (currentStage.getStyle() == StageStyle.UNDECORATED) {
+                // Crear una nueva ventana con decoración
+                Stage newStage = new Stage();
+                newStage.setTitle("ChichaVet - Clínica Veterinaria");
+                newStage.setScene(scene);
+                
+                // Cerrar la ventana original
+                currentStage.hide();
+                
+                // Mostrar la nueva ventana centrada
+                newStage.show();
+                newStage.centerOnScreen();
+            } else {
+                // Usar la ventana actual
+                currentStage.setScene(scene);
+                currentStage.centerOnScreen();
+            }
             
             // Detener el salvapantallas
             if (screensaverManager != null) {
