@@ -12,6 +12,100 @@
 <?import javafx.scene.layout.VBox?>
 
 <BorderPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="436.0" prefWidth="781.0" styleClass="fondoMenuPrincipal" stylesheets="@app.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.PanelInicioController">
+   <left>
+      <BorderPane fx:id="sidebarContainer" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+         <center>
+            <VBox fx:id="sidebar" prefHeight="338.0" prefWidth="176.0" spacing="15.0" styleClass="bloqueItems" BorderPane.alignment="CENTER_LEFT">
+               <children>
+                  <JFXButton fx:id="btnMenuPrincipal" alignment="TOP_LEFT" graphicTextGap="10.0" maxWidth="1.7976931348623157E308" prefWidth="200.0" ripplerFill="#969696" styleClass="itemMenu" text="Menú Principal" textFill="#b3b3b3" wrapText="true">
+                     <graphic>
+                        <ImageView fitHeight="23.0" fitWidth="27.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../Iconos/iconInicio4.png" />
+                           </image></ImageView>
+                     </graphic>
+                     <padding>
+                        <Insets left="10.0" />
+                     </padding>
+                  </JFXButton>
+                  <JFXButton fx:id="btnAnimales" alignment="TOP_LEFT" graphicTextGap="10.0" maxWidth="1.7976931348623157E308" styleClass="itemMenu" text="Animales">
+                     <graphic>
+                        <ImageView fitHeight="24.0" fitWidth="34.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../Iconos/iconPet2.png" />
+                           </image></ImageView>
+                     </graphic>
+                  </JFXButton>
+                  <JFXButton fx:id="but_clientes" styleClass="itemMenu" text="Clientes">
+                     <graphic>
+                        <ImageView fitHeight="76.0" fitWidth="27.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../Iconos/IconPruebaClientes.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </JFXButton>
+                  <JFXButton fx:id="btnFichaje" alignment="TOP_LEFT" graphicTextGap="10.0" maxWidth="1.7976931348623157E308" styleClass="itemMenu" text="Fichaje">
+                     <graphic>
+                        <ImageView fitHeight="22.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../Iconos/iconClock2.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </JFXButton>
+                  <JFXButton fx:id="btnEmpresa" alignment="TOP_LEFT" graphicTextGap="10.0" maxWidth="1.7976931348623157E308" styleClass="itemMenu" text="Empresa">
+                     <graphic>
+                        <ImageView fitHeight="22.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../Iconos/iconEmpresa.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </JFXButton>
+                  <Separator opacity="0.28" prefWidth="200.0" />
+                  <JFXButton fx:id="btnSalir" graphicTextGap="10.0" maxWidth="1.7976931348623157E308" onAction="#cerrarSesion" styleClass="itemMenu" text="SALIR">
+                     <graphic>
+                        <ImageView fitHeight="29.0" fitWidth="26.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../Iconos/iconSalir.png" />
+                           </image></ImageView>
+                     </graphic>
+                     <VBox.margin>
+                        <Insets top="40.0" />
+                     </VBox.margin>
+                  </JFXButton>
+               </children>
+               <BorderPane.margin>
+                  <Insets top="20.0" />
+               </BorderPane.margin>
+            </VBox>
+         </center>
+         <top>
+            <FlowPane alignment="CENTER_LEFT" orientation="VERTICAL" prefHeight="62.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+               <children>
+                  <Label fx:id="lblClinica" alignment="CENTER" contentDisplay="CENTER" prefHeight="76.0" prefWidth="142.0" styleClass="tituloPrincipal" text="Clínica Veterinaria" textFill="WHITE" wrapText="true">
+                     <graphic>
+                        <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="18.0" prefWidth="148.0" text="MENÚ" textFill="WHITE" visible="false" />
+                     </graphic>
+                     <padding>
+                        <Insets left="20.0" />
+                     </padding>
+                  </Label>
+                  <JFXButton fx:id="btnToggleSidebar" contentDisplay="GRAPHIC_ONLY" onAction="#toggleSidebar" styleClass="itemMenu">
+                     <graphic>
+                        <ImageView fitHeight="31.0" fitWidth="46.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../Iconos/iconMenu5.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </JFXButton>
+               </children>
+            </FlowPane>
+         </top>
+      </BorderPane>
+   </left>
    <center>
       <BorderPane BorderPane.alignment="CENTER">
          <center>
@@ -26,11 +120,6 @@
                         </ImageView>
                      </graphic>
                   </JFXButton>
-                  <JFXButton fx:id="btnMenuPrincipal" layoutX="311.0" layoutY="200.0" styleClass="itemMenu" visible="false" />
-                  <JFXButton fx:id="btnAnimales" layoutX="311.0" layoutY="200.0" styleClass="itemMenu" visible="false" />
-                  <JFXButton fx:id="but_clientes" layoutX="311.0" layoutY="200.0" styleClass="itemMenu" visible="false" />
-                  <JFXButton fx:id="btnFichaje" layoutX="311.0" layoutY="200.0" styleClass="itemMenu" visible="false" />
-                  <JFXButton fx:id="btnSalir" layoutX="311.0" layoutY="200.0" styleClass="itemMenu" visible="false" onAction="#cerrarSesion" />
                </children>
             </Pane>
          </center>

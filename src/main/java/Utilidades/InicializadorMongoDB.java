@@ -12,12 +12,10 @@ import com.example.pruebamongodbcss.Data.PatronExcepcion;
 public class InicializadorMongoDB {
     public static void main(String[] args) {
         try {
-            // Conectar a MongoDB Atlas
-            MongoClientURI uri = new MongoClientURI(GestorConexion.MONGO_URI_DOCKER);
-            MongoClient mongoClient = new MongoClient(uri);
+
 
             // Inicializar base de datos Clinica
-            MongoDatabase clinicaDB = mongoClient.getDatabase("Clinica");
+            MongoDatabase clinicaDB = GestorConexion.conectarBD("Clinica");
             clinicaDB.createCollection("usuarios");
             clinicaDB.createCollection("pacientes");
             clinicaDB.createCollection("citas");
@@ -27,7 +25,7 @@ public class InicializadorMongoDB {
             clinicaDB.getCollection("pacientes").createIndex(new Document("dni", 1));
 
             // Inicializar base de datos Inventario
-            MongoDatabase inventarioDB = mongoClient.getDatabase("Inventario");
+            MongoDatabase inventarioDB = GestorConexion.conectarBD("Inventario");
             inventarioDB.createCollection("productos");
             inventarioDB.createCollection("proveedores");
             inventarioDB.createCollection("stock");
@@ -36,7 +34,7 @@ public class InicializadorMongoDB {
             inventarioDB.getCollection("productos").createIndex(new Document("codigo", 1));
 
             // Inicializar base de datos Terminos
-            MongoDatabase terminosDB = mongoClient.getDatabase("Terminos");
+            MongoDatabase terminosDB = GestorConexion.conectarBD("Terminos");
             terminosDB.createCollection("terminos_medicos");
             terminosDB.createCollection("categorias");
             
@@ -44,7 +42,7 @@ public class InicializadorMongoDB {
             terminosDB.getCollection("terminos_medicos").createIndex(new Document("nombre", 1));
 
             // Inicializar base de datos Empresa
-            MongoDatabase empresaDB = mongoClient.getDatabase("Empresa");
+            MongoDatabase empresaDB = GestorConexion.conectarBD("Empresa");
             empresaDB.createCollection("usuarios");
             
             // Crear usuario administrador utilizando la clase Usuario
@@ -96,7 +94,7 @@ public class InicializadorMongoDB {
             }
 
             System.out.println("Bases de datos y colecciones creadas exitosamente en MongoDB ");
-            mongoClient.close();
+
         } catch (Exception e) {
             System.err.println("Error al inicializar las bases de datos: " + e.getMessage());
         }

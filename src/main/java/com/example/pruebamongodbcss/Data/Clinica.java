@@ -235,19 +235,32 @@ public class Clinica {
     }
 
     public Usuario iniciarSesion(String usuario, String contraseña) throws PatronExcepcion {
+        System.out.println("Intentando iniciar sesión en MongoDB con: " + usuario);
+        
         MongoDatabase empresaDB = GestorConexion.conectarEmpresa();
         MongoCollection<Document> usuariosCollection = empresaDB.getCollection("usuarios");
 
         Document query = new Document("nombre", usuario);
-        // Busca el usuario en la base de datos por nombre y contraseña
-        Document resultado = usuariosCollection.find(query).first().append(contraseña, contraseña);
+        // Busca el usuario en la base de datos por nombre
+        Document resultado = usuariosCollection.find(query).first();
 
-        if (resultado != null) {
+        if (resultado == null) {
+            System.out.println("No se encontró ningún usuario con el nombre: " + usuario);
+            throw new PatronExcepcion("Usuario no encontrado");
+        }
+        
+        System.out.println("Usuario encontrado: " + resultado.toJson());
+        
+        // Verificar si la contraseña coincide
+        String contraseñaAlmacenada = resultado.getString("contraseña");
+        if (contraseñaAlmacenada.equals(contraseña)) {
+            System.out.println("Contraseña correcta para el usuario: " + usuario);
             return new Usuario(resultado.getString("nombre"), resultado.getString("email"),
                     resultado.getString("contraseña"), resultado.getString("telefono"));
+        } else {
+            System.out.println("Contraseña incorrecta para el usuario: " + usuario);
+            throw new PatronExcepcion("Contraseña incorrecta");
         }
-
-        throw new PatronExcepcion("Usuario no encontrado");
     }
     
     // Métodos para gestión de Pacientes
@@ -670,13 +683,7 @@ public class Clinica {
     }
 
     public void setCIF(String CIF) throws PatronExcepcion {
-        Pattern patronCIF = Pattern.compile("^[A-Z]{1}[0-9]{7}[A-Z0-9]{1}$");
-        Matcher matcher = patronCIF.matcher(CIF);
-        if (matcher.matches()) {
-            this.CIF = CIF;
-        } else {
-            throw new PatronExcepcion("CIF no válido");
-        }
+        this.CIF = CIF;
     }
 
     public String getNombre() {

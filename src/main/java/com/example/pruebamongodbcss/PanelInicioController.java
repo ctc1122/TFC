@@ -4,13 +4,18 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import com.example.pruebamongodbcss.Modulos.Clinica.ClinicaController;
+import com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario;
+import com.example.pruebamongodbcss.Modulos.Empresa.ServicioEmpresa;
 import com.jfoenix.controls.JFXButton;
 
 import io.github.palexdev.materialfx.controls.MFXProgressSpinner;
+import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.animation.TranslateTransition;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -25,20 +30,16 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-
 public class PanelInicioController implements Initializable {
-
-
 
     @FXML
     private BorderPane root; // o el layout raíz que contiene todo
-
 
     @FXML
     private VBox sidebar;
 
     @FXML
-    private JFXButton btnMenuPrincipal, btnAnimales, btnFichaje, btnSalir, but_clientes, btnChicha;
+    private JFXButton btnMenuPrincipal, btnAnimales, btnFichaje, btnSalir, btnToggleSidebar, but_clientes, btnEmpresa, btnChicha;
 
     @FXML
     private Label lblClinica;
@@ -48,52 +49,161 @@ public class PanelInicioController implements Initializable {
     private double yOffset = 0;
 
     @FXML
-    private Pane mainPane;
+    private BorderPane sidebarContainer;
+    
+    // Usuario actual de la sesión
+    private ModeloUsuario usuarioActual;
+    private ServicioEmpresa servicioEmpresa;
 
     private boolean menuVisible = false;
+
+    @FXML
+    private void toggleSidebar() {
+        double startWidth = isCollapsed ? 45 : 200;
+        double endWidth = isCollapsed ? 200 : 45;
+
+        Timeline timeline = new Timeline();
+
+        // Animar tanto el VBox como el BorderPane contenedor
+        KeyValue kvSidebar = new KeyValue(sidebar.prefWidthProperty(), endWidth, Interpolator.EASE_BOTH);
+        KeyValue kvContainer = new KeyValue(sidebarContainer.prefWidthProperty(), endWidth, Interpolator.EASE_BOTH);
+
+        KeyFrame kf = new KeyFrame(Duration.seconds(0.3), kvSidebar, kvContainer);
+        timeline.getKeyFrames().add(kf);
+        timeline.play();
+
+        // Animaciones adicionales
+        FadeTransition fade = new FadeTransition(Duration.seconds(0.3), lblClinica);
+        fade.setToValue(isCollapsed ? 1 : 0);
+        fade.play();
+
+        TranslateTransition slide = new TranslateTransition(Duration.seconds(0.3), btnToggleSidebar);
+        slide.setToX(isCollapsed ? 0 : -85);
+        slide.play();
+
+        timeline.setOnFinished(event -> {
+            if (isCollapsed) {
+                btnMenuPrincipal.setText("Menú Principal");
+                btnAnimales.setText("Animales");
+                btnFichaje.setText("Fichaje");
+                btnSalir.setText("SALIR");
+                but_clientes.setText("Clientes");
+                if (btnEmpresa != null) {
+                    btnEmpresa.setText("Empresa");
+                }
+
+                // Quitar tooltips
+                btnMenuPrincipal.setTooltip(null);
+                btnAnimales.setTooltip(null);
+                btnFichaje.setTooltip(null);
+                btnSalir.setTooltip(null);
+                but_clientes.setTooltip(null);
+                if (btnEmpresa != null) {
+                    btnEmpresa.setTooltip(null);
+                }
+
+                // 🔧 LIMPIAR clase "collapsed" si existe
+                sidebar.getStyleClass().removeIf(style -> style.equals("collapsed"));
+
+            } else {
+                btnMenuPrincipal.setText("");
+                btnAnimales.setText("");
+                btnFichaje.setText("");
+                btnSalir.setText("");
+                but_clientes.setText("");
+                if (btnEmpresa != null) {
+                    btnEmpresa.setText("");
+                }
+
+                // Añadir tooltips
+                btnMenuPrincipal.setTooltip(new Tooltip("Menú Principal"));
+                btnAnimales.setTooltip(new Tooltip("Animales"));
+                btnFichaje.setTooltip(new Tooltip("Fichaje"));
+                btnSalir.setTooltip(new Tooltip("Salir"));
+                but_clientes.setTooltip(new Tooltip("Clientes"));
+                if (btnEmpresa != null) {
+                    btnEmpresa.setTooltip(new Tooltip("Empresa"));
+                }
+
+
+                // Añadir clase CSS
+                if (!sidebar.getStyleClass().contains("collapsed")) {
+                    sidebar.getStyleClass().add("collapsed");
+                }
+
+            }
+            isCollapsed = !isCollapsed;
+        });
+    }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         // sidebar.setMinWidth(0);
 
-        // Asignar iconos a los botones
+        // Configurar iconos y tooltips
         setButtonIcon(btnMenuPrincipal, "/Iconos/iconInicio4.png", 32, 32);
         setButtonIcon(btnAnimales, "/Iconos/iconPet2.png", 32, 32);
         setButtonIcon(but_clientes, "/Iconos/IconPruebaClientes.png", 32, 32);
         setButtonIcon(btnFichaje, "/Iconos/iconClock2.png", 32, 32);
         setButtonIcon(btnSalir, "/Iconos/iconSalir.png", 32, 32);
 
-        // Tooltips para los botones circulares
+        // Tooltips para los botones
         btnMenuPrincipal.setTooltip(new Tooltip("Menú Principal"));
         btnAnimales.setTooltip(new Tooltip("Animales"));
         but_clientes.setTooltip(new Tooltip("Clientes"));
         btnFichaje.setTooltip(new Tooltip("Fichaje"));
         btnSalir.setTooltip(new Tooltip("Cerrar sesión"));
 
-        // Aplicar la clase CSS circular a los botones del menú radial
-        JFXButton[] botones = {btnMenuPrincipal, btnAnimales, but_clientes, btnFichaje, btnSalir};
-        for (JFXButton boton : botones) {
-            boton.getStyleClass().removeAll("itemMenu");
-            if (!boton.getStyleClass().contains("circleMenuButton")) {
-                boton.getStyleClass().add("circleMenuButton");
-            }
-            boton.setText("");
-        }
-
-        // Configurar la funcionalidad de arrastre para el botón Chicha
-        configurarArrastreBoton(btnChicha);
-
-        // Configurar menú radial
+        // Configurar eventos
         btnChicha.setOnAction(e -> toggleMenuRadial());
-
-        // Configurar evento para el botón de animales (acceso al módulo de clínica)
         btnAnimales.setOnAction(event -> abrirModuloClinica());
-        
-        // Configurar evento para el botón de clientes (también accede al módulo de clínica)
-        but_clientes.setOnAction(event -> abrirModuloClinica());
-        
-        // Configurar evento para el botón de menú principal
+        but_clientes.setOnAction(event -> abrirModuloClinicaConCitas());
         btnMenuPrincipal.setOnAction(event -> restaurarVistaPrincipal());
+        btnSalir.setOnAction(event -> cerrarSesion());
+
+        // Inicializar servicio
+        servicioEmpresa = new ServicioEmpresa();
+    }
+    
+    /**
+     * Establece el usuario actual de la sesión y configura la interfaz según sus permisos
+     */
+    public void setUsuarioActual(ModeloUsuario usuario) {
+        this.usuarioActual = usuario;
+        
+        // Si existe el botón de empresa, configurar su visibilidad según el rol
+        if (btnEmpresa != null && usuario != null) {
+            boolean esAdmin = usuario.esAdmin();
+            System.out.println("Usuario: " + usuario.getNombre() + ", Es Admin: " + esAdmin + ", Rol: " + usuario.getRol());
+            
+            btnEmpresa.setVisible(esAdmin);
+            btnEmpresa.setManaged(esAdmin);
+            
+            // Corregir icono del botón Empresa
+            try {
+                ImageView empresaIcon = new ImageView(new javafx.scene.image.Image(
+                    getClass().getResourceAsStream("/Iconos/iconEmpresa.png")));
+                empresaIcon.setFitHeight(22.0);
+                empresaIcon.setFitWidth(20.0);
+                empresaIcon.setPreserveRatio(true);
+                btnEmpresa.setGraphic(empresaIcon);
+            } catch (Exception e) {
+                System.err.println("Error al cargar icono de empresa: " + e.getMessage());
+            }
+        } else {
+            System.out.println("Botón empresa no encontrado o usuario nulo: " + 
+                (btnEmpresa == null ? "btnEmpresa es null" : "btnEmpresa existe") + ", " +
+                (usuario == null ? "usuario es null" : "usuario existe"));
+        }
+        
+        // Actualizar el nombre del usuario en la interfaz si se requiere
+        if (lblClinica != null) {
+            if (usuario != null) {
+                lblClinica.setText("Bienvenido, " + usuario.getNombre());
+            } else {
+                lblClinica.setText("Clínica Veterinaria");
+            }
+        }
     }
     
     /**
@@ -118,6 +228,84 @@ public class PanelInicioController implements Initializable {
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Error al cargar el módulo de clínica: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Abre el módulo de gestión clínica veterinaria y selecciona la pestaña de citas
+     */
+    private void abrirModuloClinicaConCitas() {
+        try {
+            // Cargar la vista de la clínica
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/clinica-view.fxml"));
+            Parent contenido = loader.load();
+            
+            // Obtener el controlador para poder acceder a los componentes
+            ClinicaController controller = loader.getController();
+            
+            // Agregar opciones de JVM necesarias en tiempo de ejecución
+            System.setProperty("javafx.controls.behaviour", "com.sun.javafx.scene.control.behavior");
+            
+            // Obtener el BorderPane central y reemplazar su contenido
+            BorderPane centerPane = (BorderPane) root.getCenter();
+            centerPane.setCenter(contenido);
+            
+            // Seleccionar la pestaña de citas (índice 3 en el TabPane)
+            controller.seleccionarTabCitas();
+            
+            // Actualizar el título
+            lblClinica.setText("Gestión de Citas");
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Error al cargar el módulo de clínica con citas: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Abre el módulo de gestión de empresa (usuarios y veterinarios)
+     * Solo accesible para administradores
+     */
+    private void abrirModuloEmpresa() {
+        // Verificar si el usuario es administrador
+        if (usuarioActual == null || !usuarioActual.esAdmin()) {
+            mostrarError("Acceso denegado", "Solo los administradores pueden acceder a esta funcionalidad.");
+            return;
+        }
+        
+        try {
+            System.out.println("Abriendo módulo de empresa como administrador...");
+            
+            // Cargar la vista de empresa usando la ruta correcta
+            String fxmlPath = "/com/example/pruebamongodbcss/Modulos/Empresa/empresa-view.fxml";
+            System.out.println("Intentando cargar: " + fxmlPath);
+            
+            URL resource = getClass().getResource(fxmlPath);
+            if (resource == null) {
+                System.out.println("Recurso no encontrado, probando ruta alternativa...");
+                fxmlPath = "/com/example/pruebamongodbcss/Empresa/empresa-view.fxml";
+                resource = getClass().getResource(fxmlPath);
+                
+                if (resource == null) {
+                    throw new IOException("No se pudo encontrar el archivo empresa-view.fxml en ninguna ubicación");
+                }
+            }
+            
+            System.out.println("Recurso encontrado: " + resource);
+            FXMLLoader loader = new FXMLLoader(resource);
+            Parent contenido = loader.load();
+            
+            // Obtener el BorderPane central y reemplazar su contenido
+            BorderPane centerPane = (BorderPane) root.getCenter();
+            centerPane.setCenter(contenido);
+            
+            // Actualizar el título
+            lblClinica.setText("Gestión de Empresa");
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Error al cargar el módulo de empresa: " + e.getMessage());
+            mostrarError("Error", "Error al cargar el módulo de empresa: " + e.getMessage());
         }
     }
 
@@ -225,5 +413,16 @@ public class PanelInicioController implements Initializable {
             timeline.setOnFinished(e -> boton.setVisible(false));
         }
         timeline.play();
+    }
+
+    /**
+     * Muestra un mensaje de error
+     */
+    private void mostrarError(String titulo, String mensaje) {
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(titulo);
+        alert.setContentText(mensaje);
+        alert.showAndWait();
     }
 }

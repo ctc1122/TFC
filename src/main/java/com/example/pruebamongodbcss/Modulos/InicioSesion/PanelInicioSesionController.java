@@ -8,14 +8,23 @@ import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 
+import com.example.pruebamongodbcss.Data.Clinica;
+import com.example.pruebamongodbcss.Data.PatronExcepcion;
+import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+import org.bson.Document;
 
+import Utilidades.GestorConexion;
 import Utilidades.ScreensaverManager;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -174,7 +183,12 @@ public class PanelInicioSesionController extends Application implements Initiali
             System.out.println("Intentando conectar al servidor alternativo: " + SERVER_HOST + ":" + SERVER_PORT_ALT);
             
             socket = new Socket(SERVER_HOST, SERVER_PORT_ALT);
+            
+            // Importante: primero crear el ObjectOutputStream antes que el ObjectInputStream
+            // para evitar bloqueos
             salida = new ObjectOutputStream(socket.getOutputStream());
+            salida.flush(); // Es importante hacer flush después de crear el ObjectOutputStream
+            
             entrada = new ObjectInputStream(socket.getInputStream());
             
             conectado = true;
@@ -395,14 +409,15 @@ public class PanelInicioSesionController extends Application implements Initiali
      */
     @FXML
     private void inicioSesion() {
-        String usuario = campoUsuario.getText().toLowerCase();
+        // Obtener el usuario tal como se escribe (respetando mayúsculas/minúsculas)
+        String usuario = campoUsuario.getText();
         
         // Obtener la contraseña del campo visible o invisible según corresponda
-        String password = "";
+        final String password;
         if (passwordVisible) {
-            password = campoPasswordVisible.getText().toLowerCase();
+            password = campoPasswordVisible.getText();
         } else {
-            password = campoPassword.getText().toLowerCase();
+            password = campoPassword.getText();
         }
 
         // Si el usuario o la contraseña están vacíos, mostrar un mensaje de error
@@ -411,56 +426,183 @@ public class PanelInicioSesionController extends Application implements Initiali
             return;
         }
 
-        // Si no estamos conectados al servidor, usar modo local de prueba
-        if (!conectado) {
-            if (usuario.equals("admin") && password.equals("admin")) {
-                mostrarMensaje("Inicio de sesión exitoso (modo local).");
-                cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
-            } else {
-                mostrarMensaje("Usuario o contraseña incorrectos (modo local).");
-            }
-            return;
-        }
-        
-        // Modo conectado al servidor
-        try {
-            // Enviar petición de login
-            salida.writeInt(Protocolo.LOGIN_REQUEST);
-            salida.writeUTF(usuario);
-            salida.writeUTF(password);
-            //flush para enviar los datos al servidor
-            salida.flush();
+        // Mostrar el spinner de carga
+        spinnerCarga.setVisible(true);
+        spinnerCarga.setProgress(-1); // -1 para animación infinita
 
-            // Recibir respuesta
-            int tipoRespuesta = entrada.readInt();
-            if (tipoRespuesta == Protocolo.LOGIN_RESPONSE) {
-                int codigoRespuesta = entrada.readInt();
-                // Si el código de respuesta es 1, se ha iniciado sesión correctamente
-                switch (codigoRespuesta) {
-                    case Protocolo.LOGIN_SUCCESS:
-                        mostrarMensaje("Inicio de sesión exitoso.");
-                        // Cambiar a la siguiente pantalla
-                        cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
-                        break;
-                    case Protocolo.LOGIN_FAILED:
-                        mostrarMensaje("Usuario o contraseña incorrectos.");
-                        break;
-                    default:
-                        mostrarMensaje("Error desconocido en el inicio de sesión.");
+        // Crear un hilo para la autenticación para no bloquear la interfaz
+        new Thread(() -> {
+            try {
+                boolean autenticado = false;
+                Usuario usuarioAutenticado = null;
+
+                // Si estamos conectados al servidor, intentar autenticar a través de él
+                if (conectado) {
+                    try {
+                        System.out.println("Enviando solicitud de inicio de sesión al servidor...");
+                        // Enviar petición de login usando los métodos adecuados (writeInt y writeUTF)
+                        salida.writeInt(Protocolo.LOGIN_REQUEST);
+                        salida.writeUTF(usuario);
+                        salida.writeUTF(password);
+                        //flush para enviar los datos al servidor
+                        salida.flush();
+                        System.out.println("Datos enviados al servidor. Esperando respuesta...");
+
+                        // Recibir respuesta
+                        int tipoRespuesta = entrada.readInt();
+                        System.out.println("Respuesta recibida. Tipo: " + tipoRespuesta);
+                        if (tipoRespuesta == Protocolo.LOGIN_RESPONSE) {
+                            int codigoRespuesta = entrada.readInt();
+                            System.out.println("Código de respuesta: " + codigoRespuesta);
+                            // Si el código de respuesta es LOGIN_SUCCESS, se ha iniciado sesión correctamente
+                            if (codigoRespuesta == Protocolo.LOGIN_SUCCESS) {
+                                autenticado = true;
+                            }
+                        }
+                    } catch (IOException e) {
+                        System.err.println("Error en la comunicación con el servidor: " + e.getMessage());
+                        e.printStackTrace();
+                        conectado = false; // Marcar como desconectado para usar modo local
+                    }
                 }
+
+                // Si no estamos conectados al servidor o falló la autenticación remota, usar la clase Clinica
+                if (!conectado || !autenticado) {
+                    try {
+                        System.out.println("Intentando iniciar sesión en modo local con MongoDB...");
+                        // Crear una instancia de la clínica
+                        Clinica clinica = new Clinica("12345678A", "ChichaVet", "Dirección de la clínica");
+                        
+                        // Usar el método de iniciarSesion de la clase Clinica
+                        usuarioAutenticado = clinica.iniciarSesion(usuario, password);
+                        
+                        // Si no lanza excepción, el usuario se autenticó correctamente
+                        autenticado = (usuarioAutenticado != null);
+                        
+                    } catch (PatronExcepcion e) {
+                        System.err.println("Error de autenticación: " + e.getMessage());
+                        autenticado = false;
+                        
+                        // Imprimir información adicional para debug
+                        System.out.println("Intentando iniciar sesión con: usuario='" + usuario + "', password='" + password + "'");
+                        
+                        // Si todo falla, usar el modo "Administrador"/"admin12345" como último recurso
+                        if (usuario.equals("Administrador") && password.equals("admin12345")) {
+                            autenticado = true;
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error general al iniciar sesión con la clase Clinica: " + e.getMessage());
+                        autenticado = false;
+                        
+                        // Si todo falla, usar el modo "Administrador"/"admin12345" como último recurso
+                        if (usuario.equals("Administrador") && password.equals("admin12345")) {
+                            autenticado = true;
+                        }
+                    }
+                }
+
+                // Procesar el resultado de la autenticación en el hilo de la UI
+                final boolean resultadoFinal = autenticado;
+                final Usuario usuarioFinal = usuarioAutenticado;
+                
+                Platform.runLater(() -> {
+                    spinnerCarga.setVisible(false); // Ocultar spinner
+                    
+                    if (resultadoFinal) {
+                        mostrarMensaje("Inicio de sesión exitoso.");
+                        
+                        // Si es el usuario hardcodeado, crear un objeto Usuario para él
+                        if (usuario.equals("Administrador") && password.equals("admin12345") && usuarioFinal == null) {
+                            try {
+                                Usuario adminUsuario = new Usuario("Administrador", "admin@admin.com", "admin12345", "000000000");
+                                cambiarAMenuPrincipal(adminUsuario);
+                            } catch (PatronExcepcion e) {
+                                System.err.println("Error al crear usuario admin: " + e.getMessage());
+                                cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
+                            }
+                        } else if (usuarioFinal != null) {
+                            // Si tenemos un usuario autenticado normal
+                            cambiarAMenuPrincipal(usuarioFinal);
+                        } else {
+                            // Fallback si algo sale mal
+                            cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
+                        }
+                    } else {
+                        mostrarMensaje("Usuario o contraseña incorrectos.");
+                    }
+                });
+            } catch (Exception e) {
+                System.err.println("Error general en el proceso de login: " + e.getMessage());
+                e.printStackTrace();
+                
+                // Procesar el error en el hilo de la UI
+                Platform.runLater(() -> {
+                    spinnerCarga.setVisible(false); // Ocultar spinner
+                    mostrarMensaje("Error al iniciar sesión: " + e.getMessage());
+                });
             }
-        } catch (IOException e) {
-            System.err.println("Error en la comunicación con el servidor: " + e.getMessage());
-            mostrarMensaje("Error en la comunicación con el servidor: " + e.getMessage() + 
-                          "\nUsando modo local...");
+        }).start();
+    }
+    
+    private void cambiarAMenuPrincipal(Usuario usuario) {
+        try {
+            System.out.println("Cambiando a menú principal con usuario: " + usuario.getNombre());
             
-            // Intentar modo local como fallback
-            if (usuario.equals("admin") && password.equals("admin")) {
-                mostrarMensaje("Inicio de sesión exitoso (modo local).");
-                cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
-            } else {
-                mostrarMensaje("Usuario o contraseña incorrectos (modo local).");
+            // Crear un ModeloUsuario para el nuevo sistema a partir del usuario antiguo
+            com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario.RolUsuario rol = com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario.RolUsuario.AUXILIAR;
+            
+            // Asignar rol de administrador si la contraseña es "admin" o si es el usuario hardcodeado
+            if (usuario.getContraseña().equals("admin") || 
+                (usuario.getNombre().equals("Administrador") && usuario.getContraseña().equals("admin12345"))) {
+                rol = com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario.RolUsuario.ADMIN;
             }
+            
+            com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario nuevoUsuario = new com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario();
+            nuevoUsuario.setUsuario(usuario.getNombre());
+            nuevoUsuario.setPassword(usuario.getContraseña());
+            nuevoUsuario.setNombre(usuario.getNombre());
+            nuevoUsuario.setApellido("");
+            nuevoUsuario.setEmail(usuario.getEmail());
+            nuevoUsuario.setTelefono(usuario.getTelefono());
+            nuevoUsuario.setRol(rol);
+            nuevoUsuario.setFechaCreacion(new java.util.Date());
+            nuevoUsuario.setActivo(true);
+            
+            cambiarAMenuPrincipalConModeloUsuario(nuevoUsuario);
+            
+        } catch (Exception e) {
+            System.err.println("Error al cambiar a menú principal: " + e.getMessage());
+            e.printStackTrace();
+            mostrarMensaje("Error al cargar el menú principal: " + e.getMessage());
+        }
+    }
+    
+    private void cambiarAMenuPrincipalConModeloUsuario(com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario usuario) {
+        try {
+            System.out.println("Cambiando a menú principal con modelo de usuario: " + usuario.getNombreCompleto());
+            
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/panelInicio.fxml"));
+            Parent root = loader.load();
+            
+            // Obtener el controlador y establecer el usuario
+            com.example.pruebamongodbcss.PanelInicioController controller = loader.getController();
+            controller.setUsuarioActual(usuario);
+            
+            Stage stage = (Stage) btnInicioSesion.getScene().getWindow();
+            Scene scene = new Scene(root);
+            
+            // Quitar decoración de la ventana
+            stage.setScene(scene);
+            
+            // Detener el salvapantallas
+            if (screensaverManager != null) {
+                screensaverManager.stop();
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error al cambiar a menú principal: " + e.getMessage());
+            e.printStackTrace();
+            mostrarMensaje("Error al cargar el menú principal: " + e.getMessage());
         }
     }
 
@@ -497,9 +639,27 @@ public class PanelInicioSesionController extends Application implements Initiali
      */
     public void cerrarConexion() {
         try {
-            if (entrada != null) entrada.close();
-            if (salida != null) salida.close();
-            if (socket != null) socket.close();
+            if (conectado) {
+                System.out.println("Cerrando conexión con el servidor...");
+                
+                if (entrada != null) {
+                    entrada.close();
+                    entrada = null;
+                }
+                
+                if (salida != null) {
+                    salida.close();
+                    salida = null;
+                }
+                
+                if (socket != null && !socket.isClosed()) {
+                    socket.close();
+                    socket = null;
+                }
+                
+                conectado = false;
+                System.out.println("Conexión cerrada correctamente.");
+            }
         } catch (IOException e) {
             System.err.println("Error al cerrar la conexión: " + e.getMessage());
         }

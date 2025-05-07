@@ -126,9 +126,14 @@ public class ClinicaController implements Initializable {
         // Configurar eventos de búsqueda
         configurarEventosBusqueda();
         
+        // Cargar la vista de citas de forma proactiva
+        // Esto asegura que esté listo antes de que el usuario haga clic en la pestaña
+        cargarVistaCitas();
+        
         // Configurar cambio de pestañas
         tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
             if (newTab == tabCitas) {
+                // Asegurarse de que la vista de citas esté cargada cuando se selecciona la pestaña
                 cargarVistaCitas();
             }
         });
@@ -463,6 +468,14 @@ public class ClinicaController implements Initializable {
     }
     
     // ********** MÉTODOS DE UTILIDAD **********
+    
+    /**
+     * Selecciona la pestaña de citas programáticamente
+     */
+    public void seleccionarTabCitas() {
+        // Seleccionar la pestaña de citas (índice 3 - es la cuarta pestaña)
+        tabPane.getSelectionModel().select(tabCitas);
+    }
     
     private void mostrarAlerta(String titulo, String encabezado, String contenido) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
