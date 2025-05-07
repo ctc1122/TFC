@@ -78,6 +78,10 @@ public class ClinicaController implements Initializable {
     @FXML private Button btnVerDiagnostico;
     @FXML private Button btnEliminarDiagnostico;
     
+    // Tab de Citas
+    @FXML private Tab tabCitas;
+    @FXML private BorderPane citasContainer;
+    
     // Servicio clínico
     private ServicioClinica servicioClinica;
     
@@ -88,6 +92,9 @@ public class ClinicaController implements Initializable {
     
     // Formato de fecha
     private final SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy");
+    
+    // Controlador de citas
+    private CitasController citasController;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -118,6 +125,33 @@ public class ClinicaController implements Initializable {
         
         // Configurar eventos de búsqueda
         configurarEventosBusqueda();
+        
+        // Configurar cambio de pestañas
+        tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+            if (newTab == tabCitas) {
+                cargarVistaCitas();
+            }
+        });
+    }
+    
+    /**
+     * Carga la vista de citas
+     */
+    private void cargarVistaCitas() {
+        try {
+            // Solo cargar si no está ya cargada
+            if (citasContainer.getCenter() == null) {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/citas-view.fxml"));
+                Parent root = loader.load();
+                citasController = loader.getController();
+                
+                citasContainer.setCenter(root);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al cargar vista de citas", 
+                    "Ha ocurrido un error al intentar cargar la vista de citas: " + e.getMessage());
+        }
     }
     
     // ********** CONFIGURACIÓN DE TABLAS **********
@@ -187,7 +221,8 @@ public class ClinicaController implements Initializable {
         propietariosObservable.addAll(propietarios);
     }
     
-    private void buscarDiagnosticos() {
+    @FXML
+    public void buscarDiagnosticos() {
         diagnosticosObservable.clear();
         
         if (dpFechaInicio.getValue() != null && dpFechaFin.getValue() != null) {
@@ -199,43 +234,50 @@ public class ClinicaController implements Initializable {
         }
     }
     
+    @FXML
+    public void buscarDiagnosticos(ActionEvent event) {
+        buscarDiagnosticos();
+    }
+    
     // ********** EVENTOS DE BÚSQUEDA **********
     
     private void configurarEventosBusqueda() {
-        // Búsqueda de pacientes
-        txtBuscarPaciente.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue.isEmpty()) {
+        // Filtro en tiempo real para pacientes
+        txtBuscarPaciente.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null || newVal.isEmpty()) {
                 cargarPacientes();
             } else {
-                pacientesObservable.clear();
-                List<ModeloPaciente> pacientes = servicioClinica.buscarPacientesPorNombre(newValue);
-                pacientesObservable.addAll(pacientes);
+                buscarPacientesPorNombre(newVal);
             }
         });
         
-        // Búsqueda de propietarios
-        txtBuscarPropietario.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue.isEmpty()) {
+        // Filtro en tiempo real para propietarios
+        txtBuscarPropietario.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null || newVal.isEmpty()) {
                 cargarPropietarios();
             } else {
-                propietariosObservable.clear();
-                List<ModeloPropietario> propietarios = servicioClinica.buscarPropietariosPorNombre(newValue);
-                propietariosObservable.addAll(propietarios);
+                buscarPropietariosPorNombre(newVal);
             }
         });
-        
-        // Configurar botón de búsqueda de diagnósticos
-        btnBuscarDiagnostico.setOnAction(event -> buscarDiagnosticos());
     }
     
-    // ********** ACCIONES DE BOTONES **********
+    private void buscarPacientesPorNombre(String nombre) {
+        pacientesObservable.clear();
+        List<ModeloPaciente> pacientes = servicioClinica.buscarPacientesPorNombre(nombre);
+        pacientesObservable.addAll(pacientes);
+    }
+    
+    private void buscarPropietariosPorNombre(String nombre) {
+        propietariosObservable.clear();
+        List<ModeloPropietario> propietarios = servicioClinica.buscarPropietariosPorNombre(nombre);
+        propietariosObservable.addAll(propietarios);
+    }
+    
+    // ********** ACCIONES DE PACIENTES **********
     
     @FXML
     private void onNuevoPaciente(ActionEvent event) {
-        // Todo: Implementar la creación de un nuevo paciente
-        // Esto se implementará en un formulario separado
-        mostrarMensaje("Información", "Funcionalidad pendiente de implementar", 
-                "La creación de nuevos pacientes se implementará en la siguiente fase.");
+        // Implementar apertura de formulario de nuevo paciente
     }
     
     @FXML
@@ -244,8 +286,8 @@ public class ClinicaController implements Initializable {
         if (paciente != null) {
             abrirDetallesPaciente(paciente);
         } else {
-            mostrarAlerta("Error", "Seleccione un paciente", 
-                    "Debe seleccionar un paciente para editar sus datos.");
+            mostrarAlerta("Selección requerida", "No hay paciente seleccionado", 
+                    "Por favor, seleccione un paciente para editar.");
         }
     }
     
@@ -253,24 +295,24 @@ public class ClinicaController implements Initializable {
     private void onEliminarPaciente(ActionEvent event) {
         ModeloPaciente paciente = tablaPacientes.getSelectionModel().getSelectedItem();
         if (paciente != null) {
-            Optional<ButtonType> resultado = mostrarConfirmacion("Eliminar paciente", 
-                    "¿Está seguro de eliminar al paciente " + paciente.getNombre() + "?",
-                    "Esta acción no puede deshacerse y eliminará todo el historial clínico asociado.");
+            Optional<ButtonType> resultado = mostrarConfirmacion("Confirmar eliminación", 
+                    "¿Está seguro que desea eliminar este paciente?", 
+                    "Esta acción eliminará el paciente y todos sus diagnósticos asociados.");
             
             if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
                 boolean eliminado = servicioClinica.eliminarPaciente(paciente.getId());
                 if (eliminado) {
-                    mostrarMensaje("Éxito", "Paciente eliminado", 
-                            "El paciente y su historial clínico se han eliminado correctamente.");
                     cargarPacientes();
+                    mostrarMensaje("Paciente eliminado", "El paciente ha sido eliminado", 
+                            "El paciente y sus diagnósticos asociados han sido eliminados exitosamente.");
                 } else {
-                    mostrarAlerta("Error", "Error al eliminar", 
-                            "No se pudo eliminar el paciente. Inténtelo nuevamente.");
+                    mostrarAlerta("Error", "No se pudo eliminar el paciente", 
+                            "Ha ocurrido un error al intentar eliminar el paciente.");
                 }
             }
         } else {
-            mostrarAlerta("Error", "Seleccione un paciente", 
-                    "Debe seleccionar un paciente para eliminarlo.");
+            mostrarAlerta("Selección requerida", "No hay paciente seleccionado", 
+                    "Por favor, seleccione un paciente para eliminar.");
         }
     }
     
@@ -278,20 +320,30 @@ public class ClinicaController implements Initializable {
     private void onVerHistorial(ActionEvent event) {
         ModeloPaciente paciente = tablaPacientes.getSelectionModel().getSelectedItem();
         if (paciente != null) {
-            // Todo: Implementar la visualización del historial clínico
-            mostrarMensaje("Información", "Funcionalidad pendiente de implementar", 
-                    "La visualización del historial clínico completo se implementará en la siguiente fase.");
+            // Navegar a la pestaña de diagnósticos y filtrar por este paciente
+            tabPane.getSelectionModel().select(tabDiagnosticos);
+            
+            // Buscar los diagnósticos del paciente
+            diagnosticosObservable.clear();
+            List<ModeloDiagnostico> diagnosticos = servicioClinica.buscarDiagnosticosPorPaciente(paciente.getId());
+            diagnosticosObservable.addAll(diagnosticos);
+            
+            // Si no hay diagnósticos, mostrar mensaje
+            if (diagnosticos.isEmpty()) {
+                mostrarMensaje("Sin diagnósticos", "No hay diagnósticos para este paciente", 
+                        "El paciente " + paciente.getNombre() + " no tiene diagnósticos registrados.");
+            }
         } else {
-            mostrarAlerta("Error", "Seleccione un paciente", 
-                    "Debe seleccionar un paciente para ver su historial clínico.");
+            mostrarAlerta("Selección requerida", "No hay paciente seleccionado", 
+                    "Por favor, seleccione un paciente para ver su historial.");
         }
     }
     
+    // ********** ACCIONES DE PROPIETARIOS **********
+    
     @FXML
     private void onNuevoPropietario(ActionEvent event) {
-        // Todo: Implementar la creación de un nuevo propietario
-        mostrarMensaje("Información", "Funcionalidad pendiente de implementar", 
-                "La creación de nuevos propietarios se implementará en la siguiente fase.");
+        // Implementar apertura de formulario de nuevo propietario
     }
     
     @FXML
@@ -300,8 +352,8 @@ public class ClinicaController implements Initializable {
         if (propietario != null) {
             abrirDetallesPropietario(propietario);
         } else {
-            mostrarAlerta("Error", "Seleccione un propietario", 
-                    "Debe seleccionar un propietario para editar sus datos.");
+            mostrarAlerta("Selección requerida", "No hay propietario seleccionado", 
+                    "Por favor, seleccione un propietario para editar.");
         }
     }
     
@@ -309,24 +361,24 @@ public class ClinicaController implements Initializable {
     private void onEliminarPropietario(ActionEvent event) {
         ModeloPropietario propietario = tablaPropietarios.getSelectionModel().getSelectedItem();
         if (propietario != null) {
-            Optional<ButtonType> resultado = mostrarConfirmacion("Eliminar propietario", 
-                    "¿Está seguro de eliminar al propietario " + propietario.getNombreCompleto() + "?",
-                    "Esta acción no puede deshacerse.");
+            Optional<ButtonType> resultado = mostrarConfirmacion("Confirmar eliminación", 
+                    "¿Está seguro que desea eliminar este propietario?", 
+                    "Esta acción eliminará el propietario. No se podrá eliminar si tiene mascotas asociadas.");
             
             if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
                 boolean eliminado = servicioClinica.eliminarPropietario(propietario.getId());
                 if (eliminado) {
-                    mostrarMensaje("Éxito", "Propietario eliminado", 
-                            "El propietario se ha eliminado correctamente.");
                     cargarPropietarios();
+                    mostrarMensaje("Propietario eliminado", "El propietario ha sido eliminado", 
+                            "El propietario ha sido eliminado exitosamente.");
                 } else {
-                    mostrarAlerta("Error", "Error al eliminar", 
-                            "No se pudo eliminar el propietario. Inténtelo nuevamente.");
+                    mostrarAlerta("Error", "No se pudo eliminar el propietario", 
+                            "No se puede eliminar el propietario porque tiene mascotas asociadas.");
                 }
             }
         } else {
-            mostrarAlerta("Error", "Seleccione un propietario", 
-                    "Debe seleccionar un propietario para eliminarlo.");
+            mostrarAlerta("Selección requerida", "No hay propietario seleccionado", 
+                    "Por favor, seleccione un propietario para eliminar.");
         }
     }
     
@@ -334,25 +386,30 @@ public class ClinicaController implements Initializable {
     private void onVerMascotas(ActionEvent event) {
         ModeloPropietario propietario = tablaPropietarios.getSelectionModel().getSelectedItem();
         if (propietario != null) {
-            // Todo: Implementar la visualización de mascotas del propietario
-            mostrarMensaje("Información", "Funcionalidad pendiente de implementar", 
-                    "La visualización de mascotas por propietario se implementará en la siguiente fase.");
+            // Navegar a la pestaña de pacientes y filtrar por este propietario
+            tabPane.getSelectionModel().select(tabPacientes);
+            
+            // Buscar los pacientes de este propietario
+            pacientesObservable.clear();
+            List<ModeloPaciente> mascotas = servicioClinica.buscarPacientesPorPropietario(propietario.getId());
+            pacientesObservable.addAll(mascotas);
+            
+            // Si no hay mascotas, mostrar mensaje
+            if (mascotas.isEmpty()) {
+                mostrarMensaje("Sin mascotas", "No hay mascotas para este propietario", 
+                        "El propietario " + propietario.getNombreCompleto() + " no tiene mascotas registradas.");
+            }
         } else {
-            mostrarAlerta("Error", "Seleccione un propietario", 
-                    "Debe seleccionar un propietario para ver sus mascotas.");
+            mostrarAlerta("Selección requerida", "No hay propietario seleccionado", 
+                    "Por favor, seleccione un propietario para ver sus mascotas.");
         }
     }
     
-    @FXML
-    private void buscarDiagnosticos(ActionEvent event) {
-        buscarDiagnosticos();
-    }
+    // ********** ACCIONES DE DIAGNÓSTICOS **********
     
     @FXML
     private void onNuevoDiagnostico(ActionEvent event) {
-        // Todo: Implementar la creación de un nuevo diagnóstico
-        mostrarMensaje("Información", "Funcionalidad pendiente de implementar", 
-                "La creación de nuevos diagnósticos se implementará en la siguiente fase.");
+        // Implementar apertura de formulario de nuevo diagnóstico
     }
     
     @FXML
@@ -361,8 +418,8 @@ public class ClinicaController implements Initializable {
         if (diagnostico != null) {
             abrirDetallesDiagnostico(diagnostico);
         } else {
-            mostrarAlerta("Error", "Seleccione un diagnóstico", 
-                    "Debe seleccionar un diagnóstico para ver sus detalles.");
+            mostrarAlerta("Selección requerida", "No hay diagnóstico seleccionado", 
+                    "Por favor, seleccione un diagnóstico para ver detalles.");
         }
     }
     
@@ -370,48 +427,42 @@ public class ClinicaController implements Initializable {
     private void onEliminarDiagnostico(ActionEvent event) {
         ModeloDiagnostico diagnostico = tablaDiagnosticos.getSelectionModel().getSelectedItem();
         if (diagnostico != null) {
-            Optional<ButtonType> resultado = mostrarConfirmacion("Eliminar diagnóstico", 
-                    "¿Está seguro de eliminar el diagnóstico seleccionado?",
-                    "Esta acción no puede deshacerse.");
+            Optional<ButtonType> resultado = mostrarConfirmacion("Confirmar eliminación", 
+                    "¿Está seguro que desea eliminar este diagnóstico?", 
+                    "Esta acción eliminará el diagnóstico. Esta operación no se puede deshacer.");
             
             if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
                 boolean eliminado = servicioClinica.eliminarDiagnostico(diagnostico.getId());
                 if (eliminado) {
-                    mostrarMensaje("Éxito", "Diagnóstico eliminado", 
-                            "El diagnóstico se ha eliminado correctamente.");
                     buscarDiagnosticos();
+                    mostrarMensaje("Diagnóstico eliminado", "El diagnóstico ha sido eliminado", 
+                            "El diagnóstico ha sido eliminado exitosamente.");
                 } else {
-                    mostrarAlerta("Error", "Error al eliminar", 
-                            "No se pudo eliminar el diagnóstico. Inténtelo nuevamente.");
+                    mostrarAlerta("Error", "No se pudo eliminar el diagnóstico", 
+                            "Ha ocurrido un error al intentar eliminar el diagnóstico.");
                 }
             }
         } else {
-            mostrarAlerta("Error", "Seleccione un diagnóstico", 
-                    "Debe seleccionar un diagnóstico para eliminarlo.");
+            mostrarAlerta("Selección requerida", "No hay diagnóstico seleccionado", 
+                    "Por favor, seleccione un diagnóstico para eliminar.");
         }
     }
     
-    // ********** FORMULARIOS DE DETALLE **********
+    // ********** APERTURA DE DETALLES **********
     
     private void abrirDetallesPaciente(ModeloPaciente paciente) {
-        // Todo: Implementar la apertura del formulario de detalles de paciente
-        mostrarMensaje("Información", "Funcionalidad pendiente de implementar", 
-                "El formulario de detalles de paciente se implementará en la siguiente fase.");
+        // Implementar apertura de detalles de paciente
     }
     
     private void abrirDetallesPropietario(ModeloPropietario propietario) {
-        // Todo: Implementar la apertura del formulario de detalles de propietario
-        mostrarMensaje("Información", "Funcionalidad pendiente de implementar", 
-                "El formulario de detalles de propietario se implementará en la siguiente fase.");
+        // Implementar apertura de detalles de propietario
     }
     
     private void abrirDetallesDiagnostico(ModeloDiagnostico diagnostico) {
-        // Todo: Implementar la apertura del formulario de detalles de diagnóstico
-        mostrarMensaje("Información", "Funcionalidad pendiente de implementar", 
-                "El formulario de detalles de diagnóstico se implementará en la siguiente fase.");
+        // Implementar apertura de detalles de diagnóstico
     }
     
-    // ********** UTILIDADES **********
+    // ********** MÉTODOS DE UTILIDAD **********
     
     private void mostrarAlerta(String titulo, String encabezado, String contenido) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
