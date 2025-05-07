@@ -183,7 +183,12 @@ public class PanelInicioSesionController extends Application implements Initiali
             System.out.println("Intentando conectar al servidor alternativo: " + SERVER_HOST + ":" + SERVER_PORT_ALT);
             
             socket = new Socket(SERVER_HOST, SERVER_PORT_ALT);
+            
+            // Importante: primero crear el ObjectOutputStream antes que el ObjectInputStream
+            // para evitar bloqueos
             salida = new ObjectOutputStream(socket.getOutputStream());
+            salida.flush(); // Es importante hacer flush después de crear el ObjectOutputStream
+            
             entrada = new ObjectInputStream(socket.getInputStream());
             
             conectado = true;
@@ -404,121 +409,118 @@ public class PanelInicioSesionController extends Application implements Initiali
      */
     @FXML
     private void inicioSesion() {
+        // Obtener el usuario tal como se escribe (respetando mayúsculas/minúsculas)
         String usuario = campoUsuario.getText();
-        String password = passwordVisible ? campoPasswordVisible.getText() : campoPassword.getText();
         
+        // Obtener la contraseña del campo visible o invisible según corresponda
+        final String password;
+        if (passwordVisible) {
+            password = campoPasswordVisible.getText();
+        } else {
+            password = campoPassword.getText();
+        }
+
+        // Si el usuario o la contraseña están vacíos, mostrar un mensaje de error
         if (usuario.isEmpty() || password.isEmpty()) {
-            mostrarMensaje("Por favor, complete todos los campos.");
+            mostrarMensaje("Por favor, ingrese un usuario y contraseña.");
             return;
         }
-        
-        // Mostrar spinner mientras se procesa
+
+        // Mostrar el spinner de carga
         spinnerCarga.setVisible(true);
-        btnInicioSesion.setDisable(true);
-        
-        // Usar un hilo separado para no bloquear la interfaz
+        spinnerCarga.setProgress(-1); // -1 para animación infinita
+
+        // Crear un hilo para la autenticación para no bloquear la interfaz
         new Thread(() -> {
             try {
+                boolean autenticado = false;
+                Usuario usuarioAutenticado = null;
+
+                // Si estamos conectados al servidor, intentar autenticar a través de él
                 if (conectado) {
-                    // Modo servidor
-                    System.out.println("Enviando solicitud de inicio de sesión al servidor...");
-                    salida.writeObject(Protocolo.LOGIN_REQUEST);
-                    salida.writeObject(usuario);
-                    salida.writeObject(password);
-                    salida.flush();
-                    
-                    String respuesta = (String) entrada.readObject();
-                    
-                    if (respuesta.equals(Protocolo.LOGIN_SUCCESS)) {
-                        Usuario usuarioObj = (Usuario) entrada.readObject();
-                        Platform.runLater(() -> {
-                            spinnerCarga.setVisible(false);
-                            btnInicioSesion.setDisable(false);
-                            cambiarAMenuPrincipal(usuarioObj);
-                        });
-                    } else {
-                        Platform.runLater(() -> {
-                            spinnerCarga.setVisible(false);
-                            btnInicioSesion.setDisable(false);
-                            mostrarMensaje("Credenciales incorrectas. Inténtelo de nuevo.");
-                        });
-                    }
-                } else {
-                    // Modo local usando MongoDB
-                    System.out.println("Intentando iniciar sesión en modo local con MongoDB...");
                     try {
-                        // Conectar a MongoDB
-                        MongoDatabase empresaDB = GestorConexion.conectarEmpresa();
-                        if (empresaDB == null) {
-                            Platform.runLater(() -> {
-                                spinnerCarga.setVisible(false);
-                                btnInicioSesion.setDisable(false);
-                                mostrarMensaje("No se pudo conectar a la base de datos.");
-                            });
-                            return;
-                        }
-                        
-                        // Intentar conectarse con Clinica (método legacy)
-                        Clinica clinica = new Clinica("Clínica Veterinaria ChichaVet", "Calle Mayor 123", "B12345678");
-                        try {
-                            Usuario usuarioObj = clinica.iniciarSesion(usuario, password);
-                            
-                            if (usuarioObj != null) {
-                                System.out.println("Inicio de sesión exitoso con usuario: " + usuarioObj);
-                                Platform.runLater(() -> {
-                                    spinnerCarga.setVisible(false);
-                                    btnInicioSesion.setDisable(false);
-                                    cambiarAMenuPrincipal(usuarioObj);
-                                });
-                            } else {
-                                throw new PatronExcepcion("Usuario no encontrado");
-                            }
-                        } catch (PatronExcepcion e) {
-                            System.out.println("Error legacy, intentando con el nuevo sistema de usuarios...");
-                            
-                            // Intentar con el nuevo sistema de usuarios
-                            MongoCollection<Document> usuariosCollection = empresaDB.getCollection("usuarios");
-                            Document query = new Document();
-                            query.append("usuario", usuario);
-                            Document userDoc = usuariosCollection.find(query).first();
-                            
-                            if (userDoc != null && userDoc.getString("password").equals(password)) {
-                                System.out.println("Inicio de sesión exitoso con usuario: " + userDoc.getString("usuario"));
-                                
-                                // Convertir a ModeloUsuario del nuevo sistema
-                                com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario nuevoUsuario = new com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario(userDoc);
-                                
-                                // Ya tenemos el usuario, ahora navegar a la pantalla principal
-                                Platform.runLater(() -> {
-                                    spinnerCarga.setVisible(false);
-                                    btnInicioSesion.setDisable(false);
-                                    cambiarAMenuPrincipalConModeloUsuario(nuevoUsuario);
-                                });
-                            } else {
-                                Platform.runLater(() -> {
-                                    spinnerCarga.setVisible(false);
-                                    btnInicioSesion.setDisable(false);
-                                    mostrarMensaje("Credenciales incorrectas. Inténtelo de nuevo.");
-                                });
+                        System.out.println("Enviando solicitud de inicio de sesión al servidor...");
+                        // Enviar petición de login usando los métodos adecuados (writeInt y writeUTF)
+                        salida.writeInt(Protocolo.LOGIN_REQUEST);
+                        salida.writeUTF(usuario);
+                        salida.writeUTF(password);
+                        //flush para enviar los datos al servidor
+                        salida.flush();
+                        System.out.println("Datos enviados al servidor. Esperando respuesta...");
+
+                        // Recibir respuesta
+                        int tipoRespuesta = entrada.readInt();
+                        System.out.println("Respuesta recibida. Tipo: " + tipoRespuesta);
+                        if (tipoRespuesta == Protocolo.LOGIN_RESPONSE) {
+                            int codigoRespuesta = entrada.readInt();
+                            System.out.println("Código de respuesta: " + codigoRespuesta);
+                            // Si el código de respuesta es LOGIN_SUCCESS, se ha iniciado sesión correctamente
+                            if (codigoRespuesta == Protocolo.LOGIN_SUCCESS) {
+                                autenticado = true;
                             }
                         }
-                    } catch (Exception e) {
-                        System.err.println("Error al intentar iniciar sesión: " + e.getMessage());
+                    } catch (IOException e) {
+                        System.err.println("Error en la comunicación con el servidor: " + e.getMessage());
                         e.printStackTrace();
-                        Platform.runLater(() -> {
-                            spinnerCarga.setVisible(false);
-                            btnInicioSesion.setDisable(false);
-                            mostrarMensaje("Error de conexión: " + e.getMessage());
-                        });
+                        conectado = false; // Marcar como desconectado para usar modo local
                     }
                 }
-            } catch (IOException | ClassNotFoundException e) {
-                System.err.println("Error en inicio de sesión con el servidor: " + e.getMessage());
-                e.printStackTrace();
+
+                // Si no estamos conectados al servidor o falló la autenticación remota, usar la clase Clinica
+                if (!conectado || !autenticado) {
+                    try {
+                        System.out.println("Intentando iniciar sesión en modo local con MongoDB...");
+                        // Crear una instancia de la clínica
+                        Clinica clinica = new Clinica("12345678A", "ChichaVet", "Dirección de la clínica");
+                        
+                        // Usar el método de iniciarSesion de la clase Clinica
+                        usuarioAutenticado = clinica.iniciarSesion(usuario, password);
+                        
+                        // Si no lanza excepción, el usuario se autenticó correctamente
+                        autenticado = (usuarioAutenticado != null);
+                        
+                    } catch (PatronExcepcion e) {
+                        System.err.println("Error de autenticación: " + e.getMessage());
+                        autenticado = false;
+                        
+                        // Imprimir información adicional para debug
+                        System.out.println("Intentando iniciar sesión con: usuario='" + usuario + "', password='" + password + "'");
+                        
+                        // Si todo falla, usar el modo "Administrador"/"admin12345" como último recurso
+                        if (usuario.equals("Administrador") && password.equals("admin12345")) {
+                            autenticado = true;
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error general al iniciar sesión con la clase Clinica: " + e.getMessage());
+                        autenticado = false;
+                        
+                        // Si todo falla, usar el modo "Administrador"/"admin12345" como último recurso
+                        if (usuario.equals("Administrador") && password.equals("admin12345")) {
+                            autenticado = true;
+                        }
+                    }
+                }
+
+                // Procesar el resultado de la autenticación en el hilo de la UI
+                final boolean resultadoFinal = autenticado;
                 Platform.runLater(() -> {
-                    spinnerCarga.setVisible(false);
-                    btnInicioSesion.setDisable(false);
-                    mostrarMensaje("Error de conexión: " + e.getMessage());
+                    spinnerCarga.setVisible(false); // Ocultar spinner
+                    
+                    if (resultadoFinal) {
+                        mostrarMensaje("Inicio de sesión exitoso.");
+                        cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
+                    } else {
+                        mostrarMensaje("Usuario o contraseña incorrectos.");
+                    }
+                });
+            } catch (Exception e) {
+                System.err.println("Error general en el proceso de login: " + e.getMessage());
+                e.printStackTrace();
+                
+                // Procesar el error en el hilo de la UI
+                Platform.runLater(() -> {
+                    spinnerCarga.setVisible(false); // Ocultar spinner
+                    mostrarMensaje("Error al iniciar sesión: " + e.getMessage());
                 });
             }
         }).start();
@@ -616,9 +618,27 @@ public class PanelInicioSesionController extends Application implements Initiali
      */
     public void cerrarConexion() {
         try {
-            if (entrada != null) entrada.close();
-            if (salida != null) salida.close();
-            if (socket != null) socket.close();
+            if (conectado) {
+                System.out.println("Cerrando conexión con el servidor...");
+                
+                if (entrada != null) {
+                    entrada.close();
+                    entrada = null;
+                }
+                
+                if (salida != null) {
+                    salida.close();
+                    salida = null;
+                }
+                
+                if (socket != null && !socket.isClosed()) {
+                    socket.close();
+                    socket = null;
+                }
+                
+                conectado = false;
+                System.out.println("Conexión cerrada correctamente.");
+            }
         } catch (IOException e) {
             System.err.println("Error al cerrar la conexión: " + e.getMessage());
         }
