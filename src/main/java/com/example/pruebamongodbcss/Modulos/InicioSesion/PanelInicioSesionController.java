@@ -503,12 +503,30 @@ public class PanelInicioSesionController extends Application implements Initiali
 
                 // Procesar el resultado de la autenticación en el hilo de la UI
                 final boolean resultadoFinal = autenticado;
+                final Usuario usuarioFinal = usuarioAutenticado;
+                
                 Platform.runLater(() -> {
                     spinnerCarga.setVisible(false); // Ocultar spinner
                     
                     if (resultadoFinal) {
                         mostrarMensaje("Inicio de sesión exitoso.");
-                        cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
+                        
+                        // Si es el usuario hardcodeado, crear un objeto Usuario para él
+                        if (usuario.equals("Administrador") && password.equals("admin12345") && usuarioFinal == null) {
+                            try {
+                                Usuario adminUsuario = new Usuario("Administrador", "admin@admin.com", "admin12345", "000000000");
+                                cambiarAMenuPrincipal(adminUsuario);
+                            } catch (PatronExcepcion e) {
+                                System.err.println("Error al crear usuario admin: " + e.getMessage());
+                                cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
+                            }
+                        } else if (usuarioFinal != null) {
+                            // Si tenemos un usuario autenticado normal
+                            cambiarAMenuPrincipal(usuarioFinal);
+                        } else {
+                            // Fallback si algo sale mal
+                            cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
+                        }
                     } else {
                         mostrarMensaje("Usuario o contraseña incorrectos.");
                     }
@@ -532,7 +550,10 @@ public class PanelInicioSesionController extends Application implements Initiali
             
             // Crear un ModeloUsuario para el nuevo sistema a partir del usuario antiguo
             com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario.RolUsuario rol = com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario.RolUsuario.AUXILIAR;
-            if (usuario.getContraseña().equals("admin")) {
+            
+            // Asignar rol de administrador si la contraseña es "admin" o si es el usuario hardcodeado
+            if (usuario.getContraseña().equals("admin") || 
+                (usuario.getNombre().equals("Administrador") && usuario.getContraseña().equals("admin12345"))) {
                 rol = com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario.RolUsuario.ADMIN;
             }
             

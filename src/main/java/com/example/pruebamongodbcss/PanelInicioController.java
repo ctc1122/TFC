@@ -31,6 +31,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.scene.layout.Pane;
 import io.github.palexdev.materialfx.controls.MFXProgressSpinner;
+import javafx.scene.image.ImageView;
 
 
 public class PanelInicioController implements Initializable {
@@ -176,8 +177,26 @@ public class PanelInicioController implements Initializable {
         // Si existe el botón de empresa, configurar su visibilidad según el rol
         if (btnEmpresa != null && usuario != null) {
             boolean esAdmin = usuario.esAdmin();
+            System.out.println("Usuario: " + usuario.getNombre() + ", Es Admin: " + esAdmin + ", Rol: " + usuario.getRol());
+            
             btnEmpresa.setVisible(esAdmin);
             btnEmpresa.setManaged(esAdmin);
+            
+            // Corregir icono del botón Empresa
+            try {
+                ImageView empresaIcon = new ImageView(new javafx.scene.image.Image(
+                    getClass().getResourceAsStream("/Iconos/iconEmpresa.png")));
+                empresaIcon.setFitHeight(22.0);
+                empresaIcon.setFitWidth(20.0);
+                empresaIcon.setPreserveRatio(true);
+                btnEmpresa.setGraphic(empresaIcon);
+            } catch (Exception e) {
+                System.err.println("Error al cargar icono de empresa: " + e.getMessage());
+            }
+        } else {
+            System.out.println("Botón empresa no encontrado o usuario nulo: " + 
+                (btnEmpresa == null ? "btnEmpresa es null" : "btnEmpresa existe") + ", " +
+                (usuario == null ? "usuario es null" : "usuario existe"));
         }
         
         // Actualizar el nombre del usuario en la interfaz si se requiere
@@ -258,8 +277,25 @@ public class PanelInicioController implements Initializable {
         }
         
         try {
-            // Cargar la vista de empresa
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Empresa/empresa-view.fxml"));
+            System.out.println("Abriendo módulo de empresa como administrador...");
+            
+            // Cargar la vista de empresa usando la ruta correcta
+            String fxmlPath = "/com/example/pruebamongodbcss/Modulos/Empresa/empresa-view.fxml";
+            System.out.println("Intentando cargar: " + fxmlPath);
+            
+            URL resource = getClass().getResource(fxmlPath);
+            if (resource == null) {
+                System.out.println("Recurso no encontrado, probando ruta alternativa...");
+                fxmlPath = "/com/example/pruebamongodbcss/Empresa/empresa-view.fxml";
+                resource = getClass().getResource(fxmlPath);
+                
+                if (resource == null) {
+                    throw new IOException("No se pudo encontrar el archivo empresa-view.fxml en ninguna ubicación");
+                }
+            }
+            
+            System.out.println("Recurso encontrado: " + resource);
+            FXMLLoader loader = new FXMLLoader(resource);
             Parent contenido = loader.load();
             
             // Obtener el BorderPane central y reemplazar su contenido
