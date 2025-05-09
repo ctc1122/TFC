@@ -98,9 +98,22 @@ public class PanelInicioController implements Initializable {
 
         // Configurar eventos del carrusel
         btnChicha.setOnAction(e -> toggleMenuRadial());
-        btnMenuPrincipalCarousel.setOnAction(event -> restaurarVistaPrincipal());
-        btnAnimalesCarousel.setOnAction(event -> abrirModuloClinica());
-        but_clientesCarousel.setOnAction(event -> abrirModuloClinicaConCitas());
+        btnMenuPrincipalCarousel.setOnAction(event -> {
+            restaurarVistaPrincipal();
+            mantenerCarruselVisible(); // Mantener el carrusel visible después de la acción
+        });
+        btnAnimalesCarousel.setOnAction(event -> {
+            abrirModuloClinica();
+            mantenerCarruselVisible(); // Mantener el carrusel visible después de la acción
+        });
+        but_clientesCarousel.setOnAction(event -> {
+            abrirModuloClinicaConCitas();
+            mantenerCarruselVisible(); // Mantener el carrusel visible después de la acción
+        });
+        btnFichajeCarousel.setOnAction(event -> {
+            abrirModuloFichaje();
+            mantenerCarruselVisible(); // Mantener el carrusel visible después de la acción
+        });
         btnSalirCarousel.setOnAction(event -> cerrarSesion());
 
         // Configurar eventos del menú lateral
@@ -147,25 +160,21 @@ public class PanelInicioController implements Initializable {
         // Configurar arrastre del botón
         configurarArrastreBoton(btnChicha);
         
-        // Configurar botones del menú radial
+        // Configurar z-order y estilo circular para los botones del carrusel
         JFXButton[] botonesCarousel = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel};
         for (JFXButton boton : botonesCarousel) {
             boton.getStyleClass().removeAll("itemMenu");
             if (!boton.getStyleClass().contains("circleMenuButton")) {
                 boton.getStyleClass().add("circleMenuButton");
             }
-            boton.setText(""); // Solo icono, sin texto
+            boton.setViewOrder(-1.0); // Valor negativo para estar más adelante en el orden de visualización
         }
 
         // Mostrar sidebar por defecto
         mostrarSidebar();
 
-        // Al hacer clic en la uva, mostrar/ocultar el menú radial
-        btnChicha.setOnAction(event -> {
-            if (isCarouselMode) {
-                toggleMenuRadial();
-            }
-        });
+        // Asegurarse de que el botón del carrusel siempre esté en primer plano
+        btnChicha.setViewOrder(-1.0); // Valor negativo para estar más adelante en el orden de visualización
     }
     
     /**
@@ -228,6 +237,9 @@ public class PanelInicioController implements Initializable {
             // Actualizar el título (opcional)
             lblClinica.setText("Gestión Clínica");
             
+            // Mantener visible el carrusel
+            mantenerCarruselVisible();
+            
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Error al cargar el módulo de clínica: " + e.getMessage());
@@ -259,6 +271,9 @@ public class PanelInicioController implements Initializable {
             // Actualizar el título
             lblClinica.setText("Gestión de Citas");
             
+            // Mantener visible el carrusel
+            mantenerCarruselVisible();
+            
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Error al cargar el módulo de clínica con citas: " + e.getMessage());
@@ -279,7 +294,6 @@ public class PanelInicioController implements Initializable {
         try {
             System.out.println("Abriendo módulo de empresa como administrador...");
             
-            
             try {
                 // Cargar la vista sin controlador
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Empresa/empresa-view.fxml"));
@@ -294,6 +308,9 @@ public class PanelInicioController implements Initializable {
                 
                 // Actualizar el título
                 lblClinica.setText("Gestión de Empresa");
+                
+                // Mantener visible el carrusel
+                mantenerCarruselVisible();
                 
             } catch (Exception e) {
                 System.err.println("Error al cargar el FXML: " + e.getMessage());
@@ -334,7 +351,7 @@ public class PanelInicioController implements Initializable {
         
         // Restaurar contenido por defecto (un Pane con el spinner)
         Pane defaultPane = new Pane();
-        defaultPane.setPrefHeight(700.0);
+        defaultPane.setPrefHeight(400.0);
         defaultPane.setPrefWidth(622.0);
         defaultPane.getStylesheets().add("@app.css");
         
@@ -356,6 +373,18 @@ public class PanelInicioController implements Initializable {
         
         // Restaurar título
         lblClinica.setText("Clínica Veterinaria");
+        
+        // Aplicar la lógica de visibilidad según el modo
+        if (isCarouselMode) {
+            mantenerCarruselVisible();
+        } else {
+            // Si no estamos en modo carrusel, restaurar la barra lateral
+            if (root.getLeft() == null) {
+                root.setLeft(sidebarContainer);
+            }
+            sidebar.setVisible(true);
+            sidebarContainer.setVisible(true);
+        }
     }
 
     /**
@@ -371,7 +400,6 @@ public class PanelInicioController implements Initializable {
             // Al arrastrar, si no estamos en modo carrusel, lo activamos
             if (!isCarouselMode) {
                 activarModoCarrusel();
-                crearZonaAnclaje(); // Crear la zona de anclaje al activar el modo carrusel
             }
             
             // Actualizar posición del botón
@@ -383,13 +411,26 @@ public class PanelInicioController implements Initializable {
                 toggleMenuRadial();
             }
             
+            // Crear o actualizar la zona de anclaje (siempre al arrastrar)
+            crearZonaAnclaje();
+            
             // Verificar si el botón está sobre la zona de anclaje (100px desde el borde izquierdo)
-            if (event.getSceneX() < 100) {
-                // Iluminar la zona de anclaje
-                zonaAnclaje.setStyle("-fx-background-color: rgba(0, 120, 215, 0.3);");
-            } else {
-                // Ocultar el resaltado si está fuera de la zona
-                zonaAnclaje.setStyle("-fx-background-color: rgba(0, 0, 255, 0.0);");
+            if (zonaAnclaje != null && event.getSceneX() < 100) {
+                // Iluminar la zona de anclaje con azul intenso
+                zonaAnclaje.setStyle("-fx-background-color: rgba(0, 191, 255, 0.6); -fx-border-width: 0 4px 0 0; -fx-border-color: rgba(30, 144, 255, 1.0); -fx-effect: dropshadow(gaussian, rgba(30, 144, 255, 0.8), 15, 0, 5, 0);");
+                zonaAnclaje.toFront();
+                btnChicha.toFront();  // Mantener el botón por encima
+                
+                // Traer botones al frente si están visibles
+                if (menuVisible) {
+                    JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel};
+                    for (JFXButton btn : botones) {
+                        btn.toFront();
+                    }
+                }
+            } else if (zonaAnclaje != null) {
+                // Volver al estilo más sutil cuando está fuera de la zona
+                zonaAnclaje.setStyle("-fx-background-color: rgba(0, 191, 255, 0.2); -fx-border-width: 0 2px 0 0; -fx-border-color: rgba(30, 144, 255, 0.5);");
             }
         });
         
@@ -399,9 +440,9 @@ public class PanelInicioController implements Initializable {
                 salirModoCarrusel();
             }
             
-            // Ocultar la iluminación de la zona de anclaje
+            // Ocultar la zona de anclaje al soltar
             if (zonaAnclaje != null) {
-                zonaAnclaje.setStyle("-fx-background-color: rgba(0, 0, 255, 0.0);");
+                zonaAnclaje.setVisible(false);
             }
         });
     }
@@ -414,6 +455,7 @@ public class PanelInicioController implements Initializable {
         button.setGraphic(icon);
     }
 
+    //Metodo que contrae expande el sidebar
     private void toggleSidebar() {
         if (isCarouselMode) {
             return; // No permitir toggle del sidebar en modo carrusel
@@ -438,7 +480,7 @@ public class PanelInicioController implements Initializable {
         fade.play();
 
         TranslateTransition slide = new TranslateTransition(Duration.seconds(0.3), btnToggleSidebar);
-        slide.setToX(isCollapsed ? 0 : -85);
+        slide.setToX(isCollapsed ? 0 : -1);
         slide.play();
 
         timeline.setOnFinished(event -> {
@@ -471,15 +513,37 @@ public class PanelInicioController implements Initializable {
         double centerY = btnChicha.getLayoutY() + btnChicha.getHeight() / 2;
         double radio = 120; // Distancia desde el centro
         int n = botones.length;
+        
+        // Asegurarnos de que todos los botones estén en la escena
+        BorderPane centerPane = (BorderPane) root.getCenter();
+        Pane mainPane = (Pane) centerPane.getCenter();
+        
         if (!menuVisible) {
+            // Asegurar que todos los botones estén en la escena antes de animarlos
+            for (JFXButton boton : botones) {
+                if (!mainPane.getChildren().contains(boton)) {
+                    mainPane.getChildren().add(boton);
+                }
+                boton.setViewOrder(-1.0); // Mismo z-order que btnChicha
+            }
+            
+            // Animar los botones desde el centro hacia afuera
             for (int i = 0; i < n; i++) {
                 double angle = 2 * Math.PI * i / n;
                 double x = centerX + radio * Math.cos(angle) - botones[i].getWidth() / 2;
                 double y = centerY + radio * Math.sin(angle) - botones[i].getHeight() / 2;
+                
+                // Posicionar inicialmente en el centro
+                botones[i].setLayoutX(centerX - botones[i].getWidth() / 2);
+                botones[i].setLayoutY(centerY - botones[i].getHeight() / 2);
                 botones[i].setVisible(true);
+                
+                // Animar hacia la posición final
                 animateButtonTo(botones[i], x, y, true);
+                botones[i].toFront();
             }
         } else {
+            // Animar los botones hacia el centro para ocultarlos
             for (JFXButton boton : botones) {
                 animateButtonTo(boton, centerX - boton.getWidth() / 2, centerY - boton.getHeight() / 2, false);
             }
@@ -532,22 +596,44 @@ public class PanelInicioController implements Initializable {
 
     private void activarModoCarrusel() {
         isCarouselMode = true;
-        sidebar.setVisible(false);
-        sidebarContainer.setVisible(false);
-        btnChicha.setVisible(true);
         menuVisible = false;
         
-        // Asegúrate de que los botones del carrusel están inicialmente ocultos
+        // Remover el panel lateral para que el contenido central ocupe toda la pantalla
+        if (root.getLeft() != null) {
+            root.setLeft(null);
+        }
+        
+        // Obtener el panel principal donde se mostrarán los elementos
+        BorderPane centerPane = (BorderPane) root.getCenter();
+        Pane mainPane = (Pane) centerPane.getCenter();
+        
+        // Asegurar que btnChicha está en la escena
+        if (!mainPane.getChildren().contains(btnChicha)) {
+            mainPane.getChildren().add(btnChicha);
+        }
+        btnChicha.setVisible(true);
+        btnChicha.toFront();
+        
+        // Asegurar que los botones del carrusel existen pero están inicialmente ocultos
         JFXButton[] botonesCarousel = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel};
         for (JFXButton boton : botonesCarousel) {
-            boton.setVisible(false);
+            if (!mainPane.getChildren().contains(boton)) {
+                mainPane.getChildren().add(boton);
+            }
+            boton.setVisible(false);  // Inicialmente ocultos
+            boton.setViewOrder(-1.0); // Z-order alto
         }
+        
+        // Crear zona de anclaje
+        crearZonaAnclaje();
     }
 
     // Método placeholder para Fichaje
     private void abrirModuloFichaje() {
-        // Aquí puedes implementar la lógica para abrir el módulo de fichaje
         System.out.println("Abrir módulo de fichaje (implementa la lógica aquí)");
+        
+        // Mantener visible el carrusel
+        mantenerCarruselVisible();
     }
 
     /**
@@ -562,35 +648,117 @@ public class PanelInicioController implements Initializable {
     }
 
     private void crearZonaAnclaje() {
-        if (zonaAnclajeCreada) return;
+        BorderPane centerPane = (BorderPane) root.getCenter();
+        Pane mainPane = (Pane) centerPane.getCenter();
+        
+        // Si ya existe, solo asegurar que esté visible
+        if (zonaAnclaje != null) {
+            if (!mainPane.getChildren().contains(zonaAnclaje)) {
+                mainPane.getChildren().add(zonaAnclaje);
+            }
+            zonaAnclaje.setPrefHeight(mainPane.getHeight());
+            zonaAnclaje.setVisible(true);
+            zonaAnclaje.toFront();
+            return;
+        }
         
         // Crear la zona de anclaje (rectángulo semitransparente en el lado izquierdo)
         zonaAnclaje = new Pane();
         zonaAnclaje.setPrefWidth(100);
-        zonaAnclaje.setPrefHeight(root.getHeight());
-        zonaAnclaje.setStyle("-fx-background-color: rgba(0, 0, 255, 0.0);"); // Inicialmente invisible
+        zonaAnclaje.setPrefHeight(mainPane.getHeight());
+        // Color intenso para la zona de anclaje
+        zonaAnclaje.setStyle("-fx-background-color: rgba(0, 191, 255, 0.2); -fx-border-width: 0 2px 0 0; -fx-border-color: rgba(30, 144, 255, 0.5);");
         zonaAnclaje.setLayoutX(0);
         zonaAnclaje.setLayoutY(0);
+        zonaAnclaje.setViewOrder(0.0); // Asegurar que esté en un plano visible
         
-        // Añadir al centro del BorderPane (el contenedor principal)
-        BorderPane centerPane = (BorderPane) root.getCenter();
-        Pane mainPane = (Pane) centerPane.getCenter();
         mainPane.getChildren().add(zonaAnclaje);
-        
         zonaAnclajeCreada = true;
+        
+        // Asegurar que está visible
+        zonaAnclaje.toFront();
     }
 
     private void salirModoCarrusel() {
         isCarouselMode = false;
         menuVisible = false;
+        
+        // Restaurar la barra lateral
+        if (root.getLeft() == null) {
+            root.setLeft(sidebarContainer);
+        }
         sidebar.setVisible(true);
         sidebarContainer.setVisible(true);
+        
+        // Ocultar todos los elementos del carrusel
+        BorderPane centerPane = (BorderPane) root.getCenter();
+        Pane mainPane = (Pane) centerPane.getCenter();
+        
+        // Ocultar el botón principal del carrusel
         btnChicha.setVisible(false);
         
         // Ocultar los botones del carrusel
         JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel};
         for (JFXButton boton : botones) {
             boton.setVisible(false);
+        }
+        
+        // Ocultar la zona de anclaje
+        if (zonaAnclaje != null) {
+            zonaAnclaje.setVisible(false);
+        }
+    }
+
+    // Método centralizado para mantener el carrusel visible
+    private void mantenerCarruselVisible() {
+        if (isCarouselMode) {
+            // Poner el botón en primer plano
+            BorderPane centerPane = (BorderPane) root.getCenter();
+            Pane mainPane = (Pane) centerPane.getCenter();
+            
+            // Asegurarse de que el carrusel esté visible
+            if (!mainPane.getChildren().contains(btnChicha)) {
+                mainPane.getChildren().add(btnChicha);
+            }
+            btnChicha.setVisible(true);
+            btnChicha.toFront();
+            
+            // Si el menú está visible, asegurarse de que los botones del menú también estén visibles
+            if (menuVisible) {
+                JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel};
+                for (JFXButton boton : botones) {
+                    if (!mainPane.getChildren().contains(boton)) {
+                        mainPane.getChildren().add(boton);
+                    }
+                    boton.setVisible(true);
+                    boton.toFront();
+                    boton.setViewOrder(-1.0); // Mismo z-order que btnChicha
+                }
+            }
+            
+            // Ocultar el panel lateral
+            sidebar.setVisible(false);
+            sidebarContainer.setVisible(false);
+            
+            // Asegurar que el contenido ocupe toda la pantalla
+            if (root.getLeft() != null) {
+                root.setLeft(null);
+            }
+            
+            // Recrear la zona de anclaje si es necesario
+            crearZonaAnclaje();
+            zonaAnclaje.toFront(); // Asegurar que esté en un plano visible
+            
+            // Traer todos los elementos del carrusel al frente
+            btnChicha.toFront();   // La uva debe estar por encima
+            
+            // Si el menú está desplegado, traer también los botones al frente
+            if (menuVisible) {
+                JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel};
+                for (JFXButton boton : botones) {
+                    boton.toFront();
+                }
+            }
         }
     }
 }
