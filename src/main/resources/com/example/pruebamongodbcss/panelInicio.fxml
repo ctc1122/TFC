@@ -11,22 +11,27 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="436.0" prefWidth="781.0" styleClass="fondoMenuPrincipal" stylesheets="@app.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.PanelInicioController">
+<BorderPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="436.0" prefWidth="781.0" styleClass="panel-azul-fondo" stylesheets="@../InicioSesion/PanelInicioSesionEstilo.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.LaboratorioJorge.PanelInicioController">
    <left>
       <BorderPane fx:id="sidebarContainer" prefWidth="200.0">
+         <BorderPane.margin>
+            <Insets left="18"/>
+         </BorderPane.margin>
          <center>
-            <VBox fx:id="sidebar" prefWidth="200.0" styleClass="sidebar">
-               <children>
-                  <Label fx:id="lblClinica" text="Clínica Veterinaria" />
-                  <Separator />
-                  <JFXButton fx:id="btnToggleSidebar" text="≡" />
-                  <JFXButton fx:id="btnMenuPrincipal" text="Menú Principal" />
-                  <JFXButton fx:id="btnAnimales" text="Animales" />
-                  <JFXButton fx:id="but_clientes" text="Clientes" />
-                  <JFXButton fx:id="btnFichaje" text="Fichaje" />
-                  <JFXButton fx:id="btnEmpresa" text="Empresa" visible="false" />
-                  <JFXButton fx:id="btnSalir" text="SALIR" />
-               </children>
+            <VBox alignment="CENTER" spacing="10.0">
+               <VBox fx:id="sidebar" prefWidth="200.0" styleClass="glass-panel" BorderPane.alignment="CENTER">
+                  <children>
+                     <Label fx:id="lblClinica" text="Clínica Veterinaria" />
+                     <Separator />
+                     <JFXButton fx:id="btnToggleSidebar" text="≡" />
+                     <JFXButton fx:id="btnMenuPrincipal" text="Menú Principal" />
+                     <JFXButton fx:id="btnAnimales" text="Animales" />
+                     <JFXButton fx:id="but_clientes" text="Clientes" />
+                     <JFXButton fx:id="btnFichaje" text="Fichaje" />
+                     <JFXButton fx:id="btnEmpresa" text="Empresa" visible="false" />
+                     <JFXButton fx:id="btnSalir" text="SALIR" />
+                  </children>
+               </VBox>
             </VBox>
          </center>
       </BorderPane>

@@ -76,4 +76,11 @@
 .button-salir:pressed {
     -fx-background-color: #9a0007;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 4, 0, 0, 1);
+}
+
+.glass-panel-sidebar {
+    -fx-background-color: linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(255,255,255,0.08));
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 8, 0.2, 0, 2);
+    -fx-padding: 18;
 } 

@@ -13,31 +13,25 @@ import javafx.stage.Stage;
 public class Ejecutador extends Application {
     @Override
     public void start(Stage stage) throws IOException {
+        // Inicializar la conexión a MongoDB
+        MongoDatabase baseMongo = GestorConexion.conectarEmpresa();
+        try {
+            baseMongo.createCollection("Prueba");
+            System.out.println("Colección creada exitosamente.");
+        } catch (Exception ex) {
+            System.out.println("Error al crear la colección: " + ex.getMessage());
+        }
 
-        //Cambiar la ruta si quieres porbar otro FXML    
+        // Cargar la interfaz gráfica
         FXMLLoader fxmlLoader = new FXMLLoader(Ejecutador.class.getResource("/com/example/pruebamongodbcss/panelInicio.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 700, 450);
-        scene.getStylesheets().add(getClass().getResource("/com/example/pruebamongodbcss/app.css").toExternalForm());
+        scene.getStylesheets().add(getClass().getResource("/com/example/pruebamongodbcss/InicioSesion/PanelInicioSesionEstilo.css").toExternalForm());
         stage.setTitle("App1!");
-
-
         stage.setScene(scene);
-
-
-
         stage.show();
     }
 
     public static void main(String[] args) {
         launch();
-        MongoDatabase baseMongo=GestorConexion.conectarEmpresa();
-        try{
-            baseMongo.createCollection("Prueba");
-            System.out.println("Colección creada exitosamente.");
-        }catch (Exception ex){
-            System.out.println("Error");
-        }
-
-
     }
 }
