@@ -1,5 +1,15 @@
 package com.example.pruebamongodbcss.Modulos.Empresa;
 
+import java.io.IOException;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.Optional;
+import java.util.ResourceBundle;
+
+import com.example.pruebamongodbcss.Data.ServicioUsuarios;
+import com.example.pruebamongodbcss.Data.Usuario;
+
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -10,18 +20,19 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import org.bson.types.ObjectId;
-
-import java.io.IOException;
-import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.Optional;
-import java.util.ResourceBundle;
 
 /**
  * Controlador para la gestión de empresa (usuarios y veterinarios).
@@ -44,13 +55,13 @@ public class EmpresaController implements Initializable {
     
     // Tab de Usuarios
     @FXML private Tab tabUsuarios;
-    @FXML private TableView<ModeloUsuario> tablaUsuarios;
-    @FXML private TableColumn<ModeloUsuario, String> colUsuario;
-    @FXML private TableColumn<ModeloUsuario, String> colNombreUsuario;
-    @FXML private TableColumn<ModeloUsuario, String> colRol;
-    @FXML private TableColumn<ModeloUsuario, String> colEmailUsuario;
-    @FXML private TableColumn<ModeloUsuario, String> colTelefonoUsuario;
-    @FXML private TableColumn<ModeloUsuario, Boolean> colActivo;
+    @FXML private TableView<Usuario> tablaUsuarios;
+    @FXML private TableColumn<Usuario, String> colUsuario;
+    @FXML private TableColumn<Usuario, String> colNombreUsuario;
+    @FXML private TableColumn<Usuario, String> colRol;
+    @FXML private TableColumn<Usuario, String> colEmailUsuario;
+    @FXML private TableColumn<Usuario, String> colTelefonoUsuario;
+    @FXML private TableColumn<Usuario, Boolean> colActivo;
     @FXML private TextField txtBuscarUsuario;
     
     // Tab de Configuración
@@ -60,11 +71,11 @@ public class EmpresaController implements Initializable {
     @FXML private Button btnRestore;
     
     // Servicio
-    private ServicioEmpresa servicio;
+    private ServicioUsuarios servicio;
     
     // Listas observables
     private ObservableList<ModeloVeterinario> veterinariosObservable;
-    private ObservableList<ModeloUsuario> usuariosObservable;
+    private ObservableList<Usuario> usuariosObservable;
     
     // Formato para fechas
     private final SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy");
@@ -72,7 +83,7 @@ public class EmpresaController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Inicializar servicio
-        servicio = new ServicioEmpresa();
+        servicio = new ServicioUsuarios();
         
         // Configurar listas observables
         veterinariosObservable = FXCollections.observableArrayList();
@@ -135,7 +146,7 @@ public class EmpresaController implements Initializable {
             new SimpleBooleanProperty(data.getValue().isActivo()));
         
         // Personalizar la celda de activo para mostrar un círculo verde/rojo
-        colActivo.setCellFactory(col -> new TableCell<ModeloUsuario, Boolean>() {
+        colActivo.setCellFactory(col -> new TableCell<Usuario, Boolean>() {
             @Override
             protected void updateItem(Boolean item, boolean empty) {
                 super.updateItem(item, empty);
@@ -201,27 +212,25 @@ public class EmpresaController implements Initializable {
      */
     private void cargarUsuarios() {
         usuariosObservable.clear();
-        List<ModeloUsuario> usuarios = servicio.obtenerTodosUsuarios();
+        List<Usuario> usuarios = servicio.obtenerTodosUsuarios();
         usuariosObservable.addAll(usuarios);
     }
     
     /**
-     * Busca usuarios por texto (nombre, apellido o usuario)
+     * Busca usuarios por texto (nombre o correo)
      */
     private void buscarUsuariosPorTexto(String texto) {
         usuariosObservable.clear();
-        List<ModeloUsuario> usuarios = servicio.obtenerTodosUsuarios();
+        List<Usuario> usuarios = servicio.obtenerTodosUsuarios();
         
-        // Filtrar localmente por nombre, apellido o usuario
-        usuarios.removeIf(u -> 
-            !u.getNombre().toLowerCase().contains(texto.toLowerCase()) && 
-            !u.getApellido().toLowerCase().contains(texto.toLowerCase()) && 
-            !u.getUsuario().toLowerCase().contains(texto.toLowerCase()));
-        
-        usuariosObservable.addAll(usuarios);
+        for (Usuario usuario : usuarios) {
+            if (usuario.getNombreCompleto().toLowerCase().contains(texto.toLowerCase()) ||
+                usuario.getEmail().toLowerCase().contains(texto.toLowerCase()) ||
+                usuario.getUsuario().toLowerCase().contains(texto.toLowerCase())) {
+                usuariosObservable.add(usuario);
+            }
+        }
     }
-    
-    // ********** ACCIONES DE VETERINARIOS **********
     
     @FXML
     private void onNuevoVeterinario(ActionEvent event) {
@@ -231,41 +240,49 @@ public class EmpresaController implements Initializable {
     @FXML
     private void onEditarVeterinario(ActionEvent event) {
         ModeloVeterinario veterinarioSeleccionado = tablaVeterinarios.getSelectionModel().getSelectedItem();
+        
         if (veterinarioSeleccionado != null) {
             abrirFormularioVeterinario(veterinarioSeleccionado);
         } else {
             mostrarAlerta("Selección requerida", "No hay veterinario seleccionado", 
-                "Por favor, seleccione un veterinario para editar.");
+                "Por favor, seleccione un veterinario de la tabla para editar.");
         }
     }
     
     @FXML
     private void onEliminarVeterinario(ActionEvent event) {
         ModeloVeterinario veterinarioSeleccionado = tablaVeterinarios.getSelectionModel().getSelectedItem();
+        
         if (veterinarioSeleccionado != null) {
             Optional<ButtonType> resultado = mostrarConfirmacion("Confirmar eliminación", 
-                "¿Está seguro que desea eliminar este veterinario?", 
-                "Esta acción no se puede deshacer y podría fallar si hay usuarios asociados.");
+                "¿Está seguro de eliminar este veterinario?", 
+                "Se eliminará al veterinario " + veterinarioSeleccionado.getNombreCompleto() + " del sistema.");
             
             if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
-                boolean eliminado = servicio.eliminarVeterinario(veterinarioSeleccionado.getId());
-                if (eliminado) {
-                    cargarVeterinarios();
-                    mostrarMensaje("Veterinario eliminado", "Eliminación exitosa", 
-                        "El veterinario ha sido eliminado correctamente.");
-                } else {
-                    mostrarAlerta("Error", "No se pudo eliminar el veterinario", 
-                        "Hay usuarios asociados a este veterinario o se produjo un error en la eliminación.");
+                try {
+                    boolean eliminado = servicio.eliminarVeterinario(veterinarioSeleccionado.getId());
+                    
+                    if (eliminado) {
+                        mostrarMensaje("Veterinario eliminado", "Veterinario eliminado con éxito", 
+                            "El veterinario " + veterinarioSeleccionado.getNombreCompleto() + " ha sido eliminado del sistema.");
+                        cargarVeterinarios();
+                    } else {
+                        mostrarAlerta("Error", "No se pudo eliminar", 
+                            "No se pudo eliminar al veterinario. Es posible que tenga registros asociados.");
+                    }
+                } catch (Exception e) {
+                    mostrarAlerta("Error", "Error al eliminar", 
+                        "Se produjo un error al intentar eliminar al veterinario: " + e.getMessage());
                 }
             }
         } else {
             mostrarAlerta("Selección requerida", "No hay veterinario seleccionado", 
-                "Por favor, seleccione un veterinario para eliminar.");
+                "Por favor, seleccione un veterinario de la tabla para eliminar.");
         }
     }
     
     /**
-     * Abre el formulario de veterinario para crear o editar
+     * Muestra el formulario de veterinario para crear o editar
      */
     private void abrirFormularioVeterinario(ModeloVeterinario veterinario) {
         try {
@@ -279,22 +296,22 @@ public class EmpresaController implements Initializable {
                 controller.setVeterinario(veterinario);
             }
             
-            controller.setOnSaveCallback(() -> cargarVeterinarios());
-            
             Stage stage = new Stage();
             stage.setTitle(veterinario == null ? "Nuevo Veterinario" : "Editar Veterinario");
             stage.setScene(new Scene(root));
             stage.initModality(Modality.APPLICATION_MODAL);
+            
             stage.showAndWait();
             
+            // Recargar datos
+            cargarVeterinarios();
+            
         } catch (IOException e) {
-            e.printStackTrace();
             mostrarAlerta("Error", "Error al abrir formulario", 
-                "Ha ocurrido un error al intentar abrir el formulario: " + e.getMessage());
+                "No se pudo abrir el formulario de veterinario: " + e.getMessage());
+            e.printStackTrace();
         }
     }
-    
-    // ********** ACCIONES DE USUARIOS **********
     
     @FXML
     private void onNuevoUsuario(ActionEvent event) {
@@ -303,72 +320,88 @@ public class EmpresaController implements Initializable {
     
     @FXML
     private void onEditarUsuario(ActionEvent event) {
-        ModeloUsuario usuarioSeleccionado = tablaUsuarios.getSelectionModel().getSelectedItem();
+        Usuario usuarioSeleccionado = tablaUsuarios.getSelectionModel().getSelectedItem();
+        
         if (usuarioSeleccionado != null) {
             abrirFormularioUsuario(usuarioSeleccionado);
         } else {
             mostrarAlerta("Selección requerida", "No hay usuario seleccionado", 
-                "Por favor, seleccione un usuario para editar.");
+                "Por favor, seleccione un usuario de la tabla para editar.");
         }
     }
     
     @FXML
     private void onEliminarUsuario(ActionEvent event) {
-        ModeloUsuario usuarioSeleccionado = tablaUsuarios.getSelectionModel().getSelectedItem();
+        Usuario usuarioSeleccionado = tablaUsuarios.getSelectionModel().getSelectedItem();
+        
         if (usuarioSeleccionado != null) {
-            // No permitir eliminar al admin si es el único
+            // No permitir eliminar al último administrador
             if (usuarioSeleccionado.esAdmin() && 
-                usuariosObservable.stream().filter(ModeloUsuario::esAdmin).count() <= 1) {
-                mostrarAlerta("Operación no permitida", "No se puede eliminar el único administrador", 
-                    "Debe existir al menos un administrador en el sistema.");
+                usuariosObservable.stream().filter(Usuario::esAdmin).count() <= 1) {
+                mostrarAlerta("Operación no permitida", "No se puede eliminar el último administrador", 
+                    "El sistema requiere al menos un administrador activo.");
                 return;
             }
             
             Optional<ButtonType> resultado = mostrarConfirmacion("Confirmar eliminación", 
-                "¿Está seguro que desea eliminar este usuario?", 
-                "Esta acción no se puede deshacer.");
+                "¿Está seguro de eliminar este usuario?", 
+                "Se eliminará al usuario " + usuarioSeleccionado.getNombreCompleto() + " del sistema.");
             
             if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
-                boolean eliminado = servicio.eliminarUsuario(usuarioSeleccionado.getId());
-                if (eliminado) {
-                    cargarUsuarios();
-                    mostrarMensaje("Usuario eliminado", "Eliminación exitosa", 
-                        "El usuario ha sido eliminado correctamente.");
-                } else {
-                    mostrarAlerta("Error", "No se pudo eliminar el usuario", 
-                        "Se produjo un error en la eliminación.");
+                try {
+                    boolean eliminado = servicio.eliminarUsuario(usuarioSeleccionado.getId());
+                    
+                    if (eliminado) {
+                        mostrarMensaje("Usuario eliminado", "Usuario eliminado con éxito", 
+                            "El usuario " + usuarioSeleccionado.getNombreCompleto() + " ha sido eliminado del sistema.");
+                        cargarUsuarios();
+                    } else {
+                        mostrarAlerta("Error", "No se pudo eliminar", 
+                            "No se pudo eliminar al usuario. Es posible que tenga registros asociados.");
+                    }
+                } catch (Exception e) {
+                    mostrarAlerta("Error", "Error al eliminar", 
+                        "Se produjo un error al intentar eliminar al usuario: " + e.getMessage());
                 }
             }
         } else {
             mostrarAlerta("Selección requerida", "No hay usuario seleccionado", 
-                "Por favor, seleccione un usuario para eliminar.");
+                "Por favor, seleccione un usuario de la tabla para eliminar.");
         }
     }
     
     @FXML
     private void onResetPassword(ActionEvent event) {
-        ModeloUsuario usuarioSeleccionado = tablaUsuarios.getSelectionModel().getSelectedItem();
+        Usuario usuarioSeleccionado = tablaUsuarios.getSelectionModel().getSelectedItem();
+        
         if (usuarioSeleccionado != null) {
-            Optional<ButtonType> resultado = mostrarConfirmacion("Confirmar reset de contraseña", 
-                "¿Está seguro que desea resetear la contraseña?", 
-                "La contraseña se establecerá a 'password'.");
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle("Resetear contraseña");
+            dialog.setHeaderText("Introduzca la nueva contraseña para " + usuarioSeleccionado.getNombreCompleto());
+            dialog.setContentText("Nueva contraseña:");
             
-            if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
-                usuarioSeleccionado.setPassword("password");
-                servicio.guardarUsuario(usuarioSeleccionado);
-                mostrarMensaje("Contraseña reseteada", "Reset exitoso", 
-                    "La contraseña ha sido reseteada correctamente a 'password'.");
+            Optional<String> resultado = dialog.showAndWait();
+            
+            if (resultado.isPresent() && !resultado.get().isEmpty()) {
+                try {
+                    String nuevaPassword = resultado.get();
+                    usuarioSeleccionado.setPassword(nuevaPassword);
+                    servicio.guardarUsuario(usuarioSeleccionado);
+                    
+                    mostrarMensaje("Contraseña actualizada", "Contraseña actualizada con éxito", 
+                        "La contraseña para " + usuarioSeleccionado.getNombreCompleto() + " ha sido actualizada.");
+                } catch (Exception e) {
+                    mostrarAlerta("Error", "Error al actualizar contraseña", 
+                        "Se produjo un error al actualizar la contraseña: " + e.getMessage());
+                }
             }
         } else {
             mostrarAlerta("Selección requerida", "No hay usuario seleccionado", 
-                "Por favor, seleccione un usuario para resetear su contraseña.");
+                "Por favor, seleccione un usuario de la tabla para resetear la contraseña.");
         }
     }
     
-    /**
-     * Abre el formulario de usuario para crear o editar
-     */
-    private void abrirFormularioUsuario(ModeloUsuario usuario) {
+    private void abrirFormularioUsuario(Usuario usuario) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Empresa/usuario-form.fxml"));
             Parent root = loader.load();
@@ -380,51 +413,56 @@ public class EmpresaController implements Initializable {
                 controller.setUsuario(usuario);
             }
             
-            controller.setOnSaveCallback(() -> cargarUsuarios());
-            
             Stage stage = new Stage();
             stage.setTitle(usuario == null ? "Nuevo Usuario" : "Editar Usuario");
             stage.setScene(new Scene(root));
             stage.initModality(Modality.APPLICATION_MODAL);
+            
             stage.showAndWait();
             
+            // Recargar datos
+            cargarUsuarios();
+            
         } catch (IOException e) {
-            e.printStackTrace();
             mostrarAlerta("Error", "Error al abrir formulario", 
-                "Ha ocurrido un error al intentar abrir el formulario: " + e.getMessage());
+                "No se pudo abrir el formulario de usuario: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     
-    // ********** ACCIONES DE CONFIGURACIÓN **********
-    
     @FXML
     private void onCargarDatos(ActionEvent event) {
-        Optional<ButtonType> resultado = mostrarConfirmacion("Confirmar carga de datos", 
-            "¿Está seguro que desea cargar los datos de prueba?", 
-            "Esto agregará veterinarios y usuarios de ejemplo si no existen.");
+        Optional<ButtonType> resultado = mostrarConfirmacion("Confirmar carga", 
+            "¿Está seguro de cargar datos de prueba?", 
+            "Esta acción cargará datos de prueba en el sistema. No se sobrescribirán datos existentes.");
         
         if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
-            servicio.cargarDatosPrueba();
-            cargarVeterinarios();
-            cargarUsuarios();
-            mostrarMensaje("Datos cargados", "Carga exitosa", 
-                "Los datos de prueba han sido cargados correctamente.");
+            try {
+                servicio.cargarDatosPrueba();
+                
+                mostrarMensaje("Datos cargados", "Datos de prueba cargados con éxito", 
+                    "Los datos de prueba han sido cargados correctamente en el sistema.");
+                
+                cargarVeterinarios();
+                cargarUsuarios();
+            } catch (Exception e) {
+                mostrarAlerta("Error", "Error al cargar datos", 
+                    "Se produjo un error al cargar los datos de prueba: " + e.getMessage());
+            }
         }
     }
     
     @FXML
     private void onCrearBackup(ActionEvent event) {
-        mostrarMensaje("Función no implementada", "Operación pendiente", 
+        mostrarMensaje("Funcionalidad no implementada", "Backup no implementado", 
             "La funcionalidad de backup aún no está implementada.");
     }
     
     @FXML
     private void onRestaurarBackup(ActionEvent event) {
-        mostrarMensaje("Función no implementada", "Operación pendiente", 
-            "La funcionalidad de restauración aún no está implementada.");
+        mostrarMensaje("Funcionalidad no implementada", "Restauración no implementada", 
+            "La funcionalidad de restauración de backup aún no está implementada.");
     }
-    
-    // ********** MÉTODOS DE UTILIDAD **********
     
     private void mostrarAlerta(String titulo, String encabezado, String contenido) {
         Alert alert = new Alert(Alert.AlertType.ERROR);

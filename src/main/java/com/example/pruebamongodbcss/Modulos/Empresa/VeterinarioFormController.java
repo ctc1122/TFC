@@ -1,18 +1,21 @@
 package com.example.pruebamongodbcss.Modulos.Empresa;
 
-import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.TextField;
-import javafx.scene.control.CheckBox;
-import javafx.stage.Stage;
-
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.ResourceBundle;
+
+import com.example.pruebamongodbcss.Data.ServicioUsuarios;
+
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.TextField;
+import javafx.stage.Stage;
 
 /**
  * Controlador para el formulario de creación/edición de veterinarios.
@@ -31,7 +34,7 @@ public class VeterinarioFormController implements Initializable {
     @FXML private Button btnGuardar;
     @FXML private Button btnCancelar;
     
-    private ServicioEmpresa servicio;
+    private ServicioUsuarios servicio;
     private ModeloVeterinario veterinario;
     private Runnable onSaveCallback;
     
@@ -81,7 +84,7 @@ public class VeterinarioFormController implements Initializable {
     /**
      * Establece el servicio a utilizar
      */
-    public void setServicio(ServicioEmpresa servicio) {
+    public void setServicio(ServicioUsuarios servicio) {
         this.servicio = servicio;
     }
     
@@ -140,52 +143,50 @@ public class VeterinarioFormController implements Initializable {
         
         // Validar formato de email
         if (!txtEmail.getText().contains("@") || !txtEmail.getText().contains(".")) {
-            mostrarError("Email inválido", "Por favor, ingrese un email válido.");
+            mostrarError("Email inválido", "Por favor, ingrese una dirección de email válida.");
             return;
         }
         
-        // Verificar si el DNI ya existe (solo para nuevos veterinarios)
-        if (veterinario.getId() == null && 
-            servicio.existeVeterinarioPorDNI(txtDNI.getText())) {
-            mostrarError("DNI duplicado", "Ya existe un veterinario con ese DNI.");
-            return;
+        try {
+            // Actualizar datos del veterinario
+            veterinario.setNombre(txtNombre.getText());
+            veterinario.setApellidos(txtApellidos.getText());
+            veterinario.setDni(txtDNI.getText());
+            veterinario.setNumeroTitulo(txtNumeroTitulo.getText());
+            veterinario.setEspecialidad(txtEspecialidad.getText());
+            veterinario.setEmail(txtEmail.getText());
+            veterinario.setTelefono(txtTelefono.getText());
+            
+            if (dpFechaContratacion.getValue() != null) {
+                Date fecha = Date.from(dpFechaContratacion.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant());
+                veterinario.setFechaContratacion(fecha);
+            }
+            
+            veterinario.setActivo(chkActivo.isSelected());
+            
+            // Guardar en la base de datos
+            servicio.guardarVeterinario(veterinario);
+            
+            // Ejecutar callback si existe
+            if (onSaveCallback != null) {
+                onSaveCallback.run();
+            }
+            
+            // Cerrar ventana
+            cerrarVentana();
+        } catch (Exception e) {
+            mostrarError("Error al guardar", "Se produjo un error: " + e.getMessage());
+            e.printStackTrace();
         }
-        
-        // Actualizar datos del veterinario
-        veterinario.setNombre(txtNombre.getText());
-        veterinario.setApellidos(txtApellidos.getText());
-        veterinario.setDni(txtDNI.getText());
-        veterinario.setNumeroTitulo(txtNumeroTitulo.getText());
-        veterinario.setEspecialidad(txtEspecialidad.getText());
-        veterinario.setEmail(txtEmail.getText());
-        veterinario.setTelefono(txtTelefono.getText());
-        
-        if (dpFechaContratacion.getValue() != null) {
-            Date fecha = Date.from(dpFechaContratacion.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant());
-            veterinario.setFechaContratacion(fecha);
-        }
-        
-        veterinario.setActivo(chkActivo.isSelected());
-        
-        // Guardar en la base de datos
-        servicio.guardarVeterinario(veterinario);
-        
-        // Ejecutar callback si existe
-        if (onSaveCallback != null) {
-            onSaveCallback.run();
-        }
-        
-        // Cerrar ventana
-        cerrarVentana();
     }
     
     /**
      * Muestra un mensaje de error
      */
     private void mostrarError(String titulo, String mensaje) {
-        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText(titulo);
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(titulo);
+        alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
     }

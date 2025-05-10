@@ -7,6 +7,9 @@ import javafx.stage.Stage;
 import javafx.collections.FXCollections;
 import org.bson.types.ObjectId;
 
+import com.example.pruebamongodbcss.Data.Usuario;
+import com.example.pruebamongodbcss.Data.ServicioUsuarios;
+
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
@@ -30,19 +33,19 @@ public class UsuarioFormController implements Initializable {
     @FXML private Button btnCancelar;
     @FXML private Label lblVeterinario;
     
-    private ServicioEmpresa servicio;
-    private ModeloUsuario usuario;
+    private ServicioUsuarios servicio;
+    private Usuario usuario;
     private Runnable onSaveCallback;
     private boolean modoEdicion = false;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Configuración inicial
-        usuario = new ModeloUsuario();
+        usuario = new Usuario();
         
         // Configurar rol combo box
         cmbRol.getItems().clear();
-        for (ModeloUsuario.RolUsuario rol : ModeloUsuario.RolUsuario.values()) {
+        for (Usuario.Rol rol : Usuario.Rol.values()) {
             cmbRol.getItems().add(rol.getDescripcion());
         }
         cmbRol.getSelectionModel().selectFirst();
@@ -52,7 +55,7 @@ public class UsuarioFormController implements Initializable {
         
         // Configurar comportamiento del rol
         cmbRol.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            boolean esVeterinario = newVal.equals(ModeloUsuario.RolUsuario.VETERINARIO.getDescripcion());
+            boolean esVeterinario = newVal.equals(Usuario.Rol.VETERINARIO.getDescripcion());
             lblVeterinario.setVisible(esVeterinario);
             cmbVeterinario.setVisible(esVeterinario);
             
@@ -99,14 +102,14 @@ public class UsuarioFormController implements Initializable {
     /**
      * Establece el servicio a utilizar
      */
-    public void setServicio(ServicioEmpresa servicio) {
+    public void setServicio(ServicioUsuarios servicio) {
         this.servicio = servicio;
     }
     
     /**
      * Establece el usuario a editar
      */
-    public void setUsuario(ModeloUsuario usuario) {
+    public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
         this.modoEdicion = true;
         cargarDatosUsuario();
@@ -169,7 +172,7 @@ public class UsuarioFormController implements Initializable {
             cmbRol.getSelectionModel().select(usuario.getRol().getDescripcion());
             
             // Si es veterinario, cargar y seleccionar el veterinario correspondiente
-            if (usuario.getRol() == ModeloUsuario.RolUsuario.VETERINARIO) {
+            if (usuario.getRol() == Usuario.Rol.VETERINARIO) {
                 cargarVeterinarios();
                 
                 if (usuario.getVeterinarioId() != null) {
@@ -198,70 +201,60 @@ public class UsuarioFormController implements Initializable {
         
         // Validar formato de email
         if (!txtEmail.getText().contains("@") || !txtEmail.getText().contains(".")) {
-            mostrarError("Email inválido", "Por favor, ingrese un email válido.");
+            mostrarError("Email inválido", "Por favor, ingrese una dirección de email válida.");
             return;
         }
         
-        // Validar contraseña para nuevos usuarios
-        if (!modoEdicion && (txtPassword.getText().isEmpty() || txtPassword.getText().length() < 6)) {
-            mostrarError("Contraseña inválida", "La contraseña debe tener al menos 6 caracteres.");
-            return;
-        }
-        
-        // Verificar si el nombre de usuario ya existe (solo para nuevos usuarios)
-        if (!modoEdicion && servicio.existeUsuario(txtUsuario.getText())) {
-            mostrarError("Usuario duplicado", "Ya existe un usuario con ese nombre.");
-            return;
-        }
-        
-        // Obtener el rol seleccionado
-        String rolStr = cmbRol.getSelectionModel().getSelectedItem();
-        ModeloUsuario.RolUsuario rol = ModeloUsuario.RolUsuario.fromString(rolStr);
-        
-        // Actualizar datos del usuario
-        usuario.setUsuario(txtUsuario.getText());
-        
-        // Solo actualizar contraseña si no está vacía en modo edición
-        if (!modoEdicion || !txtPassword.getText().isEmpty()) {
+        try {
+            // Asignar datos del formulario al modelo
+            usuario.setUsuario(txtUsuario.getText());
             usuario.setPassword(txtPassword.getText());
-        }
-        
-        usuario.setNombre(txtNombre.getText());
-        usuario.setApellido(txtApellido.getText());
-        usuario.setEmail(txtEmail.getText());
-        usuario.setTelefono(txtTelefono.getText());
-        usuario.setRol(rol);
-        
-        // Si es veterinario, asignar el ID del veterinario
-        if (rol == ModeloUsuario.RolUsuario.VETERINARIO) {
-            ModeloVeterinario veterinario = cmbVeterinario.getSelectionModel().getSelectedItem();
-            if (veterinario != null) {
-                usuario.setVeterinarioId(veterinario.getId());
+            usuario.setNombre(txtNombre.getText());
+            usuario.setApellido(txtApellido.getText());
+            usuario.setEmail(txtEmail.getText());
+            usuario.setTelefono(txtTelefono.getText());
+            
+            // Asignar rol
+            String rolStr = cmbRol.getSelectionModel().getSelectedItem();
+            Usuario.Rol rol = Usuario.Rol.fromString(rolStr);
+            usuario.setRol(rol);
+            
+            // Si es veterinario, asignar el ID del veterinario
+            if (rol == Usuario.Rol.VETERINARIO) {
+                ModeloVeterinario veterinario = cmbVeterinario.getSelectionModel().getSelectedItem();
+                if (veterinario != null) {
+                    usuario.setVeterinarioId(veterinario.getId());
+                } else {
+                    mostrarError("Veterinario requerido", "Por favor, seleccione un veterinario.");
+                    return;
+                }
             } else {
-                mostrarError("Veterinario requerido", "Debe seleccionar un veterinario para este rol.");
-                return;
+                usuario.setVeterinarioId(null);
             }
-        } else {
-            usuario.setVeterinarioId(null);
+            
+            usuario.setActivo(chkActivo.isSelected());
+            
+            // Si es nuevo usuario, establecer fecha de creación
+            if (!modoEdicion) {
+                usuario.setFechaCreacion(new Date());
+            }
+            
+            // Guardar en base de datos
+            ObjectId id = servicio.guardarUsuario(usuario);
+            
+            if (id != null) {
+                if (onSaveCallback != null) {
+                    onSaveCallback.run();
+                }
+                cerrarVentana();
+            } else {
+                mostrarError("Error al guardar", "No se pudo guardar el usuario en la base de datos.");
+            }
+            
+        } catch (Exception e) {
+            mostrarError("Error", "Se produjo un error: " + e.getMessage());
+            e.printStackTrace();
         }
-        
-        // Asignar fecha de creación si es nuevo
-        if (!modoEdicion) {
-            usuario.setFechaCreacion(new Date());
-        }
-        
-        usuario.setActivo(chkActivo.isSelected());
-        
-        // Guardar en la base de datos
-        servicio.guardarUsuario(usuario);
-        
-        // Ejecutar callback si existe
-        if (onSaveCallback != null) {
-            onSaveCallback.run();
-        }
-        
-        // Cerrar ventana
-        cerrarVentana();
     }
     
     /**
@@ -269,14 +262,14 @@ public class UsuarioFormController implements Initializable {
      */
     private void mostrarError(String titulo, String mensaje) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText(titulo);
+        alert.setTitle(titulo);
+        alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
     }
     
     /**
-     * Cierra la ventana del formulario
+     * Cierra la ventana actual
      */
     private void cerrarVentana() {
         Stage stage = (Stage) btnCancelar.getScene().getWindow();

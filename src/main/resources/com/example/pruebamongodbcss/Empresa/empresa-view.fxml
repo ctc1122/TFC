@@ -45,9 +45,9 @@ xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.
                                     <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
                                  </padding>
                               </TextField>
-                              <Button fx:id="btnNuevoVeterinario" styleClass="btn-primary" text="Nuevo Veterinario" />
-                              <Button fx:id="btnEditarVeterinario" styleClass="btn-secondary" text="Editar" />
-                              <Button fx:id="btnEliminarVeterinario" styleClass="btn-danger" text="Eliminar" />
+                              <Button fx:id="btnNuevoVeterinario" onAction="#onNuevoVeterinario" styleClass="btn-primary" text="Nuevo Veterinario" />
+                              <Button fx:id="btnEditarVeterinario" onAction="#onEditarVeterinario" styleClass="btn-secondary" text="Editar" />
+                              <Button fx:id="btnEliminarVeterinario" onAction="#onEliminarVeterinario" styleClass="btn-danger" text="Eliminar" />
                            </children>
                            <VBox.margin>
                               <Insets left="10.0" right="10.0" top="10.0" />
@@ -89,10 +89,10 @@ xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.
                                     <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
                                  </padding>
                               </TextField>
-                              <Button fx:id="btnNuevoUsuario" styleClass="btn-primary" text="Nuevo Usuario" />
-                              <Button fx:id="btnEditarUsuario" styleClass="btn-secondary" text="Editar" />
-                              <Button fx:id="btnEliminarUsuario" styleClass="btn-danger" text="Eliminar" />
-                              <Button fx:id="btnResetPassword" styleClass="btn-warning" text="Reset Password" />
+                              <Button fx:id="btnNuevoUsuario" onAction="#onNuevoUsuario" styleClass="btn-primary" text="Nuevo Usuario" />
+                              <Button fx:id="btnEditarUsuario" onAction="#onEditarUsuario" styleClass="btn-secondary" text="Editar" />
+                              <Button fx:id="btnEliminarUsuario" onAction="#onEliminarUsuario" styleClass="btn-danger" text="Eliminar" />
+                              <Button fx:id="btnResetPassword" onAction="#onResetPassword" styleClass="btn-warning" text="Reset Password" />
                            </children>
                            <VBox.margin>
                               <Insets left="10.0" right="10.0" top="10.0" />
@@ -134,9 +134,9 @@ xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.
                         </Label>
                         <VBox alignment="CENTER" spacing="15.0">
                            <children>
-                              <Button fx:id="btnCargarDatos" styleClass="btn-primary" text="Cargar Datos de Prueba" />
-                              <Button fx:id="btnBackup" styleClass="btn-secondary" text="Crear Copia de Seguridad" />
-                              <Button fx:id="btnRestore" styleClass="btn-info" text="Restaurar Copia" />
+                              <Button fx:id="btnCargarDatos" onAction="#onCargarDatos" styleClass="btn-primary" text="Cargar Datos de Prueba" />
+                              <Button fx:id="btnBackup" onAction="#onCrearBackup" styleClass="btn-secondary" text="Crear Copia de Seguridad" />
+                              <Button fx:id="btnRestore" onAction="#onRestaurarBackup" styleClass="btn-info" text="Restaurar Copia" />
                            </children>
                            <padding>
                               <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />

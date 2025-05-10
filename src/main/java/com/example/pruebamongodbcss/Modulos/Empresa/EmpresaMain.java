@@ -1,11 +1,13 @@
 package com.example.pruebamongodbcss.Modulos.Empresa;
 
+import java.io.IOException;
+
+import com.example.pruebamongodbcss.Data.ServicioUsuarios;
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-
-import java.io.IOException;
 
 /**
  * Clase principal para ejecutar el módulo de Empresa de forma independiente
@@ -25,7 +27,7 @@ public class EmpresaMain extends Application {
     public static void main(String[] args) {
         // Primero, cargar los datos de prueba si no existen
         try {
-            ServicioEmpresa servicio = new ServicioEmpresa();
+            ServicioUsuarios servicio = new ServicioUsuarios();
             servicio.cargarDatosPrueba();
             System.out.println("Datos de prueba cargados correctamente.");
         } catch (Exception e) {

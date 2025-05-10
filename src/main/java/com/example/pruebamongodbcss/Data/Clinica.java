@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.bson.Document;
@@ -16,10 +14,6 @@ import org.bson.Document;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.result.DeleteResult;
-
-import com.mongodb.client.result.UpdateResult;
 
 import Utilidades.GestorConexion;
 
@@ -34,7 +28,7 @@ public class Clinica {
     private Map<String, SeguimientoClinico> seguimientosClinicos; // Id de paciente -> Seguimiento clínico
     
     private static final int MAX_USUARIOS = 100;
-    static final String CONTRASENA_ADMIN = "adminVeterinaria";
+    static final String CONTRASENA_ADMIN = "admin12345";
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     /* Constructor */
@@ -71,8 +65,49 @@ public class Clinica {
         FindIterable<Document> listaUsuarios = usuariosCollection.find();
         Iterator<Document> iterador = listaUsuarios.iterator();
         while (iterador.hasNext()) {
-            Document usuario = iterador.next();
-            this.usuarios.add(new Usuario(usuario.getString("nombre"), usuario.getString("email"), usuario.getString("contraseña"), usuario.getString("telefono")));
+            Document usuarioDoc = iterador.next();
+            try {
+                // Crear el usuario basado en el rol
+                String rol = usuarioDoc.getString("rol");
+                Usuario usuario;
+                
+                if (rol != null && rol.equals("ADMINISTRADOR")) {
+                    // Crear usuario administrador - la contraseña admin ya está validada en la BD
+                    usuario = new Usuario(
+                        usuarioDoc.getString("nombre"),
+                        usuarioDoc.getString("apellido"),
+                        usuarioDoc.getString("usuario"),
+                        usuarioDoc.getString("password"),
+                        usuarioDoc.getString("email"),
+                        usuarioDoc.getString("telefono"),
+                        CONTRASENA_ADMIN
+                    );
+                } else {
+                    // Crear usuario normal
+                    usuario = new Usuario(
+                        usuarioDoc.getString("nombre"),
+                        usuarioDoc.getString("apellido"),
+                        usuarioDoc.getString("usuario"),
+                        usuarioDoc.getString("password"),
+                        usuarioDoc.getString("email"),
+                        usuarioDoc.getString("telefono")
+                    );
+                }
+                
+                // Asignar el ID de MongoDB si existe
+                if (usuarioDoc.containsKey("_id")) {
+                    usuario.setId(usuarioDoc.getObjectId("_id"));
+                }
+                
+                // Asignar fecha de creación si existe
+                if (usuarioDoc.containsKey("fechaCreacion")) {
+                    usuario.setFechaCreacion(usuarioDoc.getDate("fechaCreacion"));
+                }
+                
+                this.usuarios.add(usuario);
+            } catch (Exception e) {
+                System.err.println("Error al cargar usuario: " + e.getMessage());
+            }
         }
     }
     
@@ -211,10 +246,10 @@ public class Clinica {
             throw new PatronExcepcion("Usuario no válido");
         }
         
-        // Verificar si ya existe un usuario con el mismo nombre
+        // Verificar si ya existe un usuario con el mismo nombre de usuario
         for (Usuario u : usuarios) {
-            if (u.getNombre().equals(usuario.getNombre())) {
-                throw new PatronExcepcion("Ya existe un usuario con ese nombre");
+            if (u.getUsuario().equals(usuario.getUsuario())) {
+                throw new PatronExcepcion("Ya existe un usuario con ese nombre de usuario");
             }
         }
         
@@ -227,9 +262,13 @@ public class Clinica {
         
         Document usuarioDoc = new Document()
                 .append("nombre", usuario.getNombre())
+                .append("apellido", usuario.getApellido())
+                .append("usuario", usuario.getUsuario())
+                .append("password", usuario.getPassword())
                 .append("email", usuario.getEmail())
-                .append("contraseña", usuario.getContraseña())
-                .append("telefono", usuario.getTelefono());
+                .append("telefono", usuario.getTelefono())
+                .append("rol", usuario.getRol().toString())
+                .append("fechaCreacion", usuario.getFechaCreacion());
         
         usuariosCollection.insertOne(usuarioDoc);
     }
@@ -240,8 +279,8 @@ public class Clinica {
         MongoDatabase empresaDB = GestorConexion.conectarEmpresa();
         MongoCollection<Document> usuariosCollection = empresaDB.getCollection("usuarios");
 
-        Document query = new Document("nombre", usuario);
-        // Busca el usuario en la base de datos por nombre
+        Document query = new Document("usuario", usuario);
+        // Busca el usuario en la base de datos por nombre de usuario
         Document resultado = usuariosCollection.find(query).first();
 
         if (resultado == null) {
@@ -252,11 +291,34 @@ public class Clinica {
         System.out.println("Usuario encontrado: " + resultado.toJson());
         
         // Verificar si la contraseña coincide
-        String contraseñaAlmacenada = resultado.getString("contraseña");
+        String contraseñaAlmacenada = resultado.getString("password");
         if (contraseñaAlmacenada.equals(contraseña)) {
             System.out.println("Contraseña correcta para el usuario: " + usuario);
-            return new Usuario(resultado.getString("nombre"), resultado.getString("email"),
-                    resultado.getString("contraseña"), resultado.getString("telefono"));
+            try {
+                String rol = resultado.getString("rol");
+                if (rol != null && rol.equals("ADMINISTRADOR")) {
+                    return new Usuario(
+                        resultado.getString("nombre"),
+                        resultado.getString("apellido"),
+                        resultado.getString("usuario"),
+                        resultado.getString("password"),
+                        resultado.getString("email"),
+                        resultado.getString("telefono"),
+                        CONTRASENA_ADMIN
+                    );
+                } else {
+                    return new Usuario(
+                        resultado.getString("nombre"),
+                        resultado.getString("apellido"),
+                        resultado.getString("usuario"),
+                        resultado.getString("password"),
+                        resultado.getString("email"),
+                        resultado.getString("telefono")
+                    );
+                }
+            } catch (Exception e) {
+                throw new PatronExcepcion("Error al cargar el usuario: " + e.getMessage());
+            }
         } else {
             System.out.println("Contraseña incorrecta para el usuario: " + usuario);
             throw new PatronExcepcion("Contraseña incorrecta");
@@ -419,10 +481,10 @@ public class Clinica {
     /**
      * Busca un usuario por su nombre
      */
-    public Usuario buscarUsuarioPorNombre(String nombre) {
-        for (Usuario usuario : usuarios) {
-            if (usuario.getNombre().equals(nombre)) {
-                return usuario;
+    public Usuario buscarUsuarioPorNombre(String nombreUsuario) {
+        for (Usuario u : usuarios) {
+            if (u.getUsuario().equals(nombreUsuario)) {
+                return u;
             }
         }
         return null;

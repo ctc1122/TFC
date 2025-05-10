@@ -12,12 +12,7 @@ import com.example.pruebamongodbcss.Data.Clinica;
 import com.example.pruebamongodbcss.Data.PatronExcepcion;
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
-import org.bson.Document;
 
-import Utilidades.GestorConexion;
 import Utilidades.ScreensaverManager;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -514,9 +509,18 @@ public class PanelInicioSesionController extends Application implements Initiali
                         // Si es el usuario hardcodeado, crear un objeto Usuario para él
                         if (usuario.equals("Administrador") && password.equals("admin12345") && usuarioFinal == null) {
                             try {
-                                Usuario adminUsuario = new Usuario("Administrador", "admin@admin.com", "admin12345", "000000000");
+                                // Crear el administrador con los parámetros necesarios para el nuevo constructor
+                                Usuario adminUsuario = new Usuario(
+                                    "Administrador", 
+                                    "Sistema", 
+                                    "admin", 
+                                    "admin12345", 
+                                    "admin@admin.com", 
+                                    "000000000", 
+                                    "admin12345" // Contraseña especial para admin
+                                );
                                 cambiarAMenuPrincipal(adminUsuario);
-                            } catch (PatronExcepcion e) {
+                            } catch (Exception e) {
                                 System.err.println("Error al crear usuario admin: " + e.getMessage());
                                 cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
                             }
@@ -547,39 +551,6 @@ public class PanelInicioSesionController extends Application implements Initiali
     private void cambiarAMenuPrincipal(Usuario usuario) {
         try {
             System.out.println("Cambiando a menú principal con usuario: " + usuario.getNombre());
-            
-            // Crear un ModeloUsuario para el nuevo sistema a partir del usuario antiguo
-            com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario.RolUsuario rol = com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario.RolUsuario.AUXILIAR;
-            
-            // Asignar rol de administrador si la contraseña es "admin" o si es el usuario hardcodeado
-            if (usuario.getContraseña().equals("admin") || 
-                (usuario.getNombre().equals("Administrador") && usuario.getContraseña().equals("admin12345"))) {
-                rol = com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario.RolUsuario.ADMIN;
-            }
-            
-            com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario nuevoUsuario = new com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario();
-            nuevoUsuario.setUsuario(usuario.getNombre());
-            nuevoUsuario.setPassword(usuario.getContraseña());
-            nuevoUsuario.setNombre(usuario.getNombre());
-            nuevoUsuario.setApellido("");
-            nuevoUsuario.setEmail(usuario.getEmail());
-            nuevoUsuario.setTelefono(usuario.getTelefono());
-            nuevoUsuario.setRol(rol);
-            nuevoUsuario.setFechaCreacion(new java.util.Date());
-            nuevoUsuario.setActivo(true);
-            
-            cambiarAMenuPrincipalConModeloUsuario(nuevoUsuario);
-            
-        } catch (Exception e) {
-            System.err.println("Error al cambiar a menú principal: " + e.getMessage());
-            e.printStackTrace();
-            mostrarMensaje("Error al cargar el menú principal: " + e.getMessage());
-        }
-    }
-    
-    private void cambiarAMenuPrincipalConModeloUsuario(com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario usuario) {
-        try {
-            System.out.println("Cambiando a menú principal con modelo de usuario: " + usuario.getNombreCompleto());
             
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/panelInicio.fxml"));
             Parent root = loader.load();

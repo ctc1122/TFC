@@ -12,77 +12,51 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="550.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Empresa.UsuarioFormController">
-   <top>
-      <Label text="Datos del Usuario" BorderPane.alignment="CENTER">
-         <font>
-            <Font name="System Bold" size="18.0" />
-         </font>
-         <BorderPane.margin>
-            <Insets bottom="10.0" top="20.0" />
-         </BorderPane.margin>
-      </Label>
-   </top>
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="550.0" prefWidth="450.0" 
+    stylesheets="@../css/form-styles.css" 
+    xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" 
+    fx:controller="com.example.pruebamongodbcss.Modulos.Empresa.UsuarioFormController">
    <center>
-      <GridPane hgap="10.0" vgap="10.0" BorderPane.alignment="CENTER">
-        <columnConstraints>
-          <ColumnConstraints hgrow="SOMETIMES" maxWidth="180.0" minWidth="10.0" prefWidth="150.0" />
-          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-        </columnConstraints>
-        <rowConstraints>
-          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-        </rowConstraints>
+      <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" styleClass="form" BorderPane.alignment="CENTER">
          <children>
-            <Label text="Nombre de Usuario:" />
-            <Label text="Contraseña:" GridPane.rowIndex="1" />
-            <Label text="Nombre:" GridPane.rowIndex="2" />
-            <Label text="Apellido:" GridPane.rowIndex="3" />
-            <Label text="Email:" GridPane.rowIndex="4" />
-            <Label text="Teléfono:" GridPane.rowIndex="5" />
-            <Label text="Rol:" GridPane.rowIndex="6" />
-            <Label fx:id="lblVeterinario" text="Veterinario:" visible="false" GridPane.rowIndex="7" />
-            <TextField fx:id="txtUsuario" GridPane.columnIndex="1" />
-            <PasswordField fx:id="txtPassword" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-            <TextField fx:id="txtNombre" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-            <TextField fx:id="txtApellido" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-            <TextField fx:id="txtEmail" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-            <TextField fx:id="txtTelefono" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-            <ComboBox fx:id="cmbRol" prefHeight="25.0" prefWidth="415.0" GridPane.columnIndex="1" GridPane.rowIndex="6" />
-            <ComboBox fx:id="cmbVeterinario" prefHeight="25.0" prefWidth="415.0" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="7" />
-            <CheckBox fx:id="chkActivo" mnemonicParsing="false" selected="true" text="Activo" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+            <Label styleClass="title" text="Registro de Usuario">
+               <VBox.margin>
+                  <Insets bottom="20.0" />
+               </VBox.margin>
+            </Label>
+            <VBox styleClass="form-content" spacing="10.0">
+               <children>
+                  <TextField fx:id="txtUsuario" promptText="Nombre de Usuario" styleClass="input-field" />
+                  <PasswordField fx:id="txtPassword" promptText="Contraseña" styleClass="input-field" />
+                  <TextField fx:id="txtNombre" promptText="Nombre" styleClass="input-field" />
+                  <TextField fx:id="txtApellido" promptText="Apellido" styleClass="input-field" />
+                  <TextField fx:id="txtEmail" promptText="Email" styleClass="input-field" />
+                  <TextField fx:id="txtTelefono" promptText="Teléfono" styleClass="input-field" />
+                  <ComboBox fx:id="cmbRol" prefHeight="40.0" prefWidth="350.0" promptText="Seleccione un rol" />
+                  <ComboBox fx:id="cmbVeterinario" prefHeight="40.0" prefWidth="350.0" promptText="Seleccione un veterinario" visible="false" />
+                  <CheckBox fx:id="chkActivo" mnemonicParsing="false" selected="true" text="Usuario activo">
+                     <VBox.margin>
+                        <Insets left="5.0" top="10.0" />
+                     </VBox.margin>
+                  </CheckBox>
+               </children>
+               <VBox.margin>
+                  <Insets bottom="20.0" />
+               </VBox.margin>
+            </VBox>
+            <HBox alignment="CENTER" spacing="20.0">
+               <children>
+                  <Button fx:id="btnGuardar" defaultButton="true" mnemonicParsing="false" styleClass="form-button" text="Guardar" />
+                  <Button fx:id="btnCancelar" cancelButton="true" mnemonicParsing="false" style="-fx-background-color: #F44336;" styleClass="form-button" text="Cancelar" />
+               </children>
+            </HBox>
          </children>
          <BorderPane.margin>
-            <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
          </BorderPane.margin>
-      </GridPane>
+      </VBox>
    </center>
-   <bottom>
-      <HBox alignment="CENTER" spacing="20.0" BorderPane.alignment="CENTER">
-         <children>
-            <Button fx:id="btnGuardar" defaultButton="true" mnemonicParsing="false" prefHeight="30.0" prefWidth="100.0" style="-fx-background-color: #4CAF50;" text="Guardar" textFill="WHITE">
-               <font>
-                  <Font name="System Bold" size="12.0" />
-               </font>
-            </Button>
-            <Button fx:id="btnCancelar" cancelButton="true" mnemonicParsing="false" prefHeight="30.0" prefWidth="100.0" style="-fx-background-color: #F44336;" text="Cancelar" textFill="WHITE">
-               <font>
-                  <Font name="System Bold" size="12.0" />
-               </font>
-            </Button>
-         </children>
-         <BorderPane.margin>
-            <Insets bottom="20.0" top="10.0" />
-         </BorderPane.margin>
-      </HBox>
-   </bottom>
 </BorderPane> 

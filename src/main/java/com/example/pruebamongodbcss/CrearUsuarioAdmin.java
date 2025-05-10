@@ -55,13 +55,15 @@ public class CrearUsuarioAdmin {
             if (adminExistente != null) {
                 System.out.println("El usuario administrador ya existe.");
             } else {
-                // Crear documento de usuario administrador
+                // Crear documento de usuario administrador con estructura actualizada
                 Document adminDoc = new Document()
-                    .append("usuario", "admin")
-                    .append("password", "admin")
-                    .append("rol", "ADMIN")
                     .append("nombre", "Administrador")
                     .append("apellido", "Sistema")
+                    .append("usuario", "admin")
+                    .append("password", "admin12345")
+                    .append("email", "admin@clinica.com")
+                    .append("telefono", "000000000")
+                    .append("rol", "ADMINISTRADOR")
                     .append("fechaCreacion", new Date());
                 
                 // Insertar el documento
@@ -75,9 +77,6 @@ public class CrearUsuarioAdmin {
             for (Document doc : usuarios.find()) {
                 System.out.println(" - " + doc.getString("usuario") + " (Rol: " + doc.getString("rol") + ")");
             }
-
-            // Actualizar el password del usuario administrador
-            //usuarios.updateOne(Filters.eq("usuario", "admin"), Updates.set("password", "admin"));
             
         } catch (Exception e) {
             System.err.println("Error al crear usuario administrador: " + e.getMessage());

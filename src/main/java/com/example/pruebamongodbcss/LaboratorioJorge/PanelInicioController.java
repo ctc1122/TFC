@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import com.example.pruebamongodbcss.Data.ServicioUsuarios;
+import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Modulos.Clinica.ClinicaController;
-import com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario;
-import com.example.pruebamongodbcss.Modulos.Empresa.ServicioEmpresa;
 import com.jfoenix.controls.JFXButton;
 
 import io.github.palexdev.materialfx.controls.MFXProgressSpinner;
@@ -20,6 +20,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
@@ -28,6 +29,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
 
 public class PanelInicioController implements Initializable {
@@ -55,8 +57,8 @@ public class PanelInicioController implements Initializable {
     private BorderPane sidebarContainer;
     
     // Usuario actual de la sesión
-    private ModeloUsuario usuarioActual;
-    private ServicioEmpresa servicioEmpresa;
+    private Usuario usuarioActual;
+    private ServicioUsuarios servicioUsuarios;
 
     private boolean menuVisible = false;
     private boolean isCarouselMode = false;
@@ -155,7 +157,7 @@ public class PanelInicioController implements Initializable {
         }
 
         // Inicializar servicio
-        servicioEmpresa = new ServicioEmpresa();
+        servicioUsuarios = new ServicioUsuarios();
         
         // Configurar arrastre del botón
         configurarArrastreBoton(btnChicha);
@@ -180,7 +182,7 @@ public class PanelInicioController implements Initializable {
     /**
      * Establece el usuario actual de la sesión y configura la interfaz según sus permisos
      */
-    public void setUsuarioActual(ModeloUsuario usuario) {
+    public void setUsuarioActual(Usuario usuario) {
         this.usuarioActual = usuario;
         
         // Si existe el botón de empresa, configurar su visibilidad según el rol
@@ -281,64 +283,76 @@ public class PanelInicioController implements Initializable {
     }
     
     /**
-     * Abre el módulo de gestión de empresa (usuarios y veterinarios)
-     * Solo accesible para administradores
+     * Abre el módulo de gestión empresarial
      */
     private void abrirModuloEmpresa() {
-        // Verificar si el usuario es administrador
-        if (usuarioActual == null || !usuarioActual.esAdmin()) {
-            mostrarError("Acceso denegado", "Solo los administradores pueden acceder a esta funcionalidad.");
-            return;
-        }
-        
         try {
-            System.out.println("Abriendo módulo de empresa como administrador...");
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Empresa/empresa-view.fxml"));
+            Parent contenido = loader.load();
             
-            try {
-                // Cargar la vista sin controlador
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Empresa/empresa-view.fxml"));
-                
-                // Cargar el FXML
-                Parent contenido = loader.load();
-                System.out.println("FXML cargado correctamente.");
-                
-                // Obtener el BorderPane central y reemplazar su contenido
-                BorderPane centerPane = (BorderPane) root.getCenter();
-                centerPane.setCenter(contenido);
-                
-                // Actualizar el título
-                lblClinica.setText("Gestión de Empresa");
-                
-                // Mantener visible el carrusel
-                mantenerCarruselVisible();
-                
-            } catch (Exception e) {
-                System.err.println("Error al cargar el FXML: " + e.getMessage());
-                e.printStackTrace();
-                throw new IOException("Error al procesar el FXML: " + e.getMessage(), e);
-            }
+            // No intentamos establecer el servicio o usuario en el controlador
+            // ya que podría no existir en esta versión del código
+            
+            // Obtener el BorderPane central y reemplazar su contenido
+            BorderPane centerPane = (BorderPane) root.getCenter();
+            centerPane.setCenter(contenido);
+            
+            // Actualizar el título
+            lblClinica.setText("Gestión Empresarial");
+            
+            // Mantener visible el carrusel
+            mantenerCarruselVisible();
             
         } catch (IOException e) {
             e.printStackTrace();
-            String mensajeError = "Error al cargar el módulo de empresa: " + e.getMessage();
-            System.err.println(mensajeError);
-            mostrarError("Error", mensajeError);
+            System.err.println("Error al cargar el módulo de empresa: " + e.getMessage());
+            mostrarError("Error", "No se pudo cargar el módulo de gestión empresarial: " + e.getMessage());
         }
     }
 
+    /**
+     * Cierra la sesión actual y vuelve a la pantalla de login
+     */
     @FXML
     public void cerrarSesion(){
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/InicioSesion/PruebaDoblePanel.fxml"));
-            Parent loginRoot = loader.load();
+            
+            // Crear una nueva escena para el inicio de sesión
+            Scene scene = new Scene(loader.load(), 900, 450);
+            
+            // Obtener el stage actual y cambiar su contenido
             Stage stage = (Stage) root.getScene().getWindow();
-            stage.getScene().setRoot(loginRoot);
-            stage.setWidth(900);
-            stage.setHeight(450);
+            
+            // Quitar decoración de la ventana
+            stage.initStyle(StageStyle.UNDECORATED);
+            
+            // Variables para manejar el arrastre de la ventana
+            final double[] xOffset = {0};
+            final double[] yOffset = {0};
+            
+            // Evento para detectar cuando se presiona el mouse
+            scene.setOnMousePressed(event -> {
+                xOffset[0] = event.getSceneX();
+                yOffset[0] = event.getSceneY();
+            });
+            
+            // Evento para mover la ventana cuando se arrastra
+            scene.setOnMouseDragged(event -> {
+                stage.setX(event.getScreenX() - xOffset[0]);
+                stage.setY(event.getScreenY() - yOffset[0]);
+            });
+            
+            // Limpiar el usuario actual de la sesión
+            usuarioActual = null;
+            
+            // Aplicar la nueva escena
+            stage.setScene(scene);
+            stage.setTitle("Inicio de sesión");
             stage.centerOnScreen();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            System.err.println("Error al cargar el panel de inicio de sesión: " + e.getMessage());
+            System.err.println("Error al cerrar sesión: " + e.getMessage());
         }
     }
 

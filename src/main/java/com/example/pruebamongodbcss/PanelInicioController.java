@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import com.example.pruebamongodbcss.Data.ServicioUsuarios;
+import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Modulos.Clinica.ClinicaController;
-import com.example.pruebamongodbcss.Modulos.Empresa.ModeloUsuario;
-import com.example.pruebamongodbcss.Modulos.Empresa.ServicioEmpresa;
 import com.jfoenix.controls.JFXButton;
 
 import io.github.palexdev.materialfx.controls.MFXProgressSpinner;
@@ -55,8 +55,8 @@ public class PanelInicioController implements Initializable {
     private BorderPane sidebarContainer;
     
     // Usuario actual de la sesión
-    private ModeloUsuario usuarioActual;
-    private ServicioEmpresa servicioEmpresa;
+    private Usuario usuarioActual;
+    private ServicioUsuarios servicioUsuarios;
 
     private boolean menuVisible = false;
     private boolean isCarouselMode = false;
@@ -155,7 +155,7 @@ public class PanelInicioController implements Initializable {
         }
 
         // Inicializar servicio
-        servicioEmpresa = new ServicioEmpresa();
+        servicioUsuarios = new ServicioUsuarios();
         
         // Configurar arrastre del botón
         configurarArrastreBoton(btnChicha);
@@ -180,7 +180,7 @@ public class PanelInicioController implements Initializable {
     /**
      * Establece el usuario actual de la sesión y configura la interfaz según sus permisos
      */
-    public void setUsuarioActual(ModeloUsuario usuario) {
+    public void setUsuarioActual(Usuario usuario) {
         this.usuarioActual = usuario;
         
         // Si existe el botón de empresa, configurar su visibilidad según el rol
@@ -281,48 +281,30 @@ public class PanelInicioController implements Initializable {
     }
     
     /**
-     * Abre el módulo de gestión de empresa (usuarios y veterinarios)
-     * Solo accesible para administradores
+     * Abre el módulo de gestión empresarial
      */
     private void abrirModuloEmpresa() {
-        // Verificar si el usuario es administrador
-        if (usuarioActual == null || !usuarioActual.esAdmin()) {
-            mostrarError("Acceso denegado", "Solo los administradores pueden acceder a esta funcionalidad.");
-            return;
-        }
-        
         try {
-            System.out.println("Abriendo módulo de empresa como administrador...");
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Empresa/empresa-view.fxml"));
+            Parent contenido = loader.load();
             
-            try {
-                // Cargar la vista sin controlador
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Empresa/empresa-view.fxml"));
-                
-                // Cargar el FXML
-                Parent contenido = loader.load();
-                System.out.println("FXML cargado correctamente.");
-                
-                // Obtener el BorderPane central y reemplazar su contenido
-                BorderPane centerPane = (BorderPane) root.getCenter();
-                centerPane.setCenter(contenido);
-                
-                // Actualizar el título
-                lblClinica.setText("Gestión de Empresa");
-                
-                // Mantener visible el carrusel
-                mantenerCarruselVisible();
-                
-            } catch (Exception e) {
-                System.err.println("Error al cargar el FXML: " + e.getMessage());
-                e.printStackTrace();
-                throw new IOException("Error al procesar el FXML: " + e.getMessage(), e);
-            }
+            // No intentamos establecer el servicio o usuario en el controlador
+            // ya que podría no existir en esta versión del código
+            
+            // Obtener el BorderPane central y reemplazar su contenido
+            BorderPane centerPane = (BorderPane) root.getCenter();
+            centerPane.setCenter(contenido);
+            
+            // Actualizar el título
+            lblClinica.setText("Gestión Empresarial");
+            
+            // Mantener visible el carrusel
+            mantenerCarruselVisible();
             
         } catch (IOException e) {
             e.printStackTrace();
-            String mensajeError = "Error al cargar el módulo de empresa: " + e.getMessage();
-            System.err.println(mensajeError);
-            mostrarError("Error", mensajeError);
+            System.err.println("Error al cargar el módulo de empresa: " + e.getMessage());
+            mostrarError("Error", "No se pudo cargar el módulo de gestión empresarial: " + e.getMessage());
         }
     }
 
