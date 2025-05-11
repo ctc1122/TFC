@@ -25,21 +25,25 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.Window;
 
 public class PanelInicioSesionController extends Application implements Initializable {
     private static final String SERVER_HOST = "localhost";
@@ -51,6 +55,60 @@ public class PanelInicioSesionController extends Application implements Initiali
     private ObjectInputStream entrada;
     private boolean conectado = false;
     private ScreensaverManager screensaverManager;
+
+    @FXML
+    private VBox leftPanel; // Panel izquierdo que contiene el login
+    
+    @FXML
+    private VBox loginPanel; // Panel de login
+    
+    @FXML
+    private TextField campoUsuario;
+
+    @FXML
+    private PasswordField campoPassword;
+    
+    @FXML
+    private TextField campoPasswordVisible;
+    
+    @FXML
+    private ImageView mostrarPasswordBtn;
+    
+    // Variable para controlar si la contraseña está visible o no
+    private boolean passwordVisible = false;
+    
+    @FXML
+    private Button btnInicioSesion;
+
+    @FXML
+    private ProgressIndicator spinnerCarga;
+
+    @FXML
+    private StackPane recommendationPane;
+
+    @FXML
+    private VBox slideContainer;
+
+    @FXML
+    private Button btnSalir;
+
+    @FXML
+    private Hyperlink signUpLink;
+    
+    private final List<String> recomendaciones = List.of
+    (
+    "¿Están abastecidos los cajones?.",
+    "¿Has encendido y limpiado las maquinas de análisis?",
+    "Si estas solo recueda que tienes que tener cerrada la puerta con llave.",
+    "Ante cualquier duda no dudes en preguntar a tu supervisor."
+    );
+
+    private int index = 0;
+
+    private final List<VBox> slides = new java.util.ArrayList<>();
+    private int currentSlide = 0;
+
+    private javafx.animation.Timeline slideTimer;
 
     public static void main(String[] args) {
         launch();
@@ -103,68 +161,15 @@ public class PanelInicioSesionController extends Application implements Initiali
         }
     }
 
-    @FXML
-    private TextField campoUsuario;
-
-    @FXML
-    private PasswordField campoPassword;
-    
-    @FXML
-    private TextField campoPasswordVisible;
-    
-    @FXML
-    private ImageView mostrarPasswordBtn;
-    
-    // Variable para controlar si la contraseña está visible o no
-    private boolean passwordVisible = false;
-    
-    @FXML
-    private Button btnInicioSesion;
-
-    @FXML
-    private ProgressIndicator spinnerCarga;
-
-    @FXML
-    private StackPane recommendationPane;
-
-    @FXML
-    private VBox slideContainer;
-
-    @FXML
-    private Button btnNext;
-
-    @FXML
-    private Button btnPrev;
-
-     @FXML
-    private VBox glassPanel;
-
-    @FXML
-    private Button btnSalir;
-
-    private final List<String> recomendaciones = List.of
-    (
-    "¿Están abastecidos los cajones?.",
-    "¿Has encendido y limpiado las maquinas de análisis?",
-    "Si estas solo recueda que tienes que tener cerrada la puerta con llave.",
-    "Ante cualquier duda no dudes en preguntar a tu supervisor."
-    );
-
-    private int index = 0;
-
-    private final List<VBox> slides = new java.util.ArrayList<>();
-    private int currentSlide = 0;
-
-    private javafx.animation.Timeline slideTimer;
-
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         System.out.println("Inicializando controlador...");
         
-        // Aplicar efecto de cristal (glassmorphism) al panel de login
-        if (glassPanel != null) {
-            glassPanel.setEffect(new javafx.scene.effect.GaussianBlur(2));
-            System.out.println("Efecto cristal aplicado al panel de login");
+        // Cargar la imagen del icono para mostrar/ocultar contraseña
+        try {
+            mostrarPasswordBtn.setImage(new Image(getClass().getResourceAsStream("/Iconos/ojo.png")));
+        } catch (Exception e) {
+            System.err.println("No se pudo cargar el icono del ojo: " + e.getMessage());
         }
         
         conectarAlServidor();
@@ -696,7 +701,7 @@ public class PanelInicioSesionController extends Application implements Initiali
                     // Cerrar cualquier diálogo de alerta que esté abierto
                     // Usando un enfoque más seguro para cerrar diálogos
                     try {
-                        for (javafx.stage.Window window : javafx.stage.Window.getWindows()) {
+                        for (Window window : javafx.stage.Window.getWindows()) {
                             if (window instanceof Stage && window.isShowing() && 
                                 ((Stage) window).getModality() == javafx.stage.Modality.APPLICATION_MODAL) {
                                 ((Stage) window).close();
@@ -774,6 +779,192 @@ public class PanelInicioSesionController extends Application implements Initiali
             Platform.exit();
             System.exit(0);
         });
+    }
+
+    /**
+     * Método para crear el panel de login dinámicamente
+     */
+    private void crearPanelLogin() {
+        // Crear el panel principal
+        loginPanel = new VBox();
+        loginPanel.setAlignment(javafx.geometry.Pos.CENTER);
+        loginPanel.setCache(true);
+        loginPanel.setMaxWidth(360.0);
+        loginPanel.setPrefWidth(360.0);
+        loginPanel.setSpacing(8.0); // Reducir el espaciado entre elementos
+        loginPanel.getStyleClass().add("glass-panel");
+        
+        // Título
+        Label titulo = new Label("Inicio de Sesión");
+        titulo.getStyleClass().add("title");
+        titulo.setFont(new javafx.scene.text.Font("Dubai Regular", 24.0));
+        loginPanel.getChildren().add(titulo);
+        
+        // Campo de usuario
+        VBox userBox = new VBox();
+        userBox.getStyleClass().add("user-box");
+        campoUsuario = new TextField();
+        campoUsuario.setPromptText("Usuario");
+        campoUsuario.getStyleClass().add("input-field");
+        userBox.getChildren().add(campoUsuario);
+        loginPanel.getChildren().add(userBox);
+        
+        // Campo de contraseña y su versión visible
+        VBox passwordBox = new VBox();
+        passwordBox.getStyleClass().add("user-box");
+        passwordBox.setMaxHeight(35.0); // Limitar altura
+        
+        StackPane passwordStackPane = new StackPane();
+        passwordStackPane.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+        
+        campoPassword = new PasswordField();
+        campoPassword.setPromptText("Contraseña");
+        campoPassword.getStyleClass().add("input-field");
+        
+        campoPasswordVisible = new TextField();
+        campoPasswordVisible.setPromptText("Contraseña");
+        campoPasswordVisible.getStyleClass().add("input-field");
+        campoPasswordVisible.setVisible(false); // Inicialmente oculto
+        
+        // ImageView para mostrar/ocultar contraseña
+        mostrarPasswordBtn = new ImageView();
+        mostrarPasswordBtn.setFitHeight(20.0);
+        mostrarPasswordBtn.setFitWidth(20.0);
+        mostrarPasswordBtn.setPreserveRatio(true);
+        mostrarPasswordBtn.setCursor(javafx.scene.Cursor.HAND);
+        
+        // Cargar imagen del ojo
+        try {
+            mostrarPasswordBtn.setImage(new Image(getClass().getResourceAsStream("/Iconos/ojo.png")));
+        } catch (Exception e) {
+            System.err.println("No se pudo cargar el icono del ojo: " + e.getMessage());
+        }
+        
+        // Configurar evento para mostrar/ocultar contraseña
+        mostrarPasswordBtn.setOnMouseClicked(event -> togglePasswordVisibility());
+        
+        // Agregar los elementos al StackPane
+        passwordStackPane.getChildren().add(campoPassword);
+        passwordStackPane.getChildren().add(campoPasswordVisible);
+        passwordStackPane.getChildren().add(mostrarPasswordBtn);
+        StackPane.setAlignment(mostrarPasswordBtn, javafx.geometry.Pos.CENTER_RIGHT);
+        StackPane.setMargin(mostrarPasswordBtn, new javafx.geometry.Insets(0, 5, 0, 0));
+        
+        passwordBox.getChildren().add(passwordStackPane);
+        loginPanel.getChildren().add(passwordBox);
+        
+        // Spinner de carga (con margen reducido)
+        spinnerCarga = new ProgressIndicator();
+        spinnerCarga.setProgress(-1);
+        spinnerCarga.setPrefSize(25, 25);
+        spinnerCarga.setVisible(false);
+        spinnerCarga.setMaxHeight(25);
+        VBox.setMargin(spinnerCarga, new javafx.geometry.Insets(2, 0, 2, 0));
+        loginPanel.getChildren().add(spinnerCarga);
+        
+        // Botón de inicio de sesión
+        btnInicioSesion = new Button("INICIAR SESIÓN");
+        btnInicioSesion.setPrefHeight(40.0);
+        btnInicioSesion.setPrefWidth(280.0);
+        btnInicioSesion.setOnAction(event -> inicioSesion());
+        VBox.setMargin(btnInicioSesion, new javafx.geometry.Insets(5, 0, 5, 0));
+        loginPanel.getChildren().add(btnInicioSesion);
+        
+        // Enlace de registro
+        HBox signUpLinkBox = new HBox();
+        signUpLinkBox.setAlignment(javafx.geometry.Pos.CENTER);
+        signUpLinkBox.setSpacing(5.0);
+        
+        Label signUpText = new Label("¿No tienes cuenta?");
+        signUpText.getStyleClass().add("login-text");
+        
+        signUpLink = new Hyperlink("Regístrate");
+        signUpLink.getStyleClass().add("sign-up-link");
+        signUpLink.setOnAction(event -> cambiarARegistro());
+        
+        signUpLinkBox.getChildren().addAll(signUpText, signUpLink);
+        loginPanel.getChildren().add(signUpLinkBox);
+        
+        // Agregar efecto de reflejo
+        javafx.scene.effect.Reflection reflection = new javafx.scene.effect.Reflection();
+        reflection.setFraction(0.2);
+        reflection.setTopOpacity(0.28);
+        loginPanel.setEffect(reflection);
+        
+        // Agregar el panel al contenedor
+        leftPanel.getChildren().add(loginPanel);
+    }
+
+    /**
+     * Método para cambiar al panel de registro
+     */
+    @FXML
+    private void cambiarARegistro() {
+        try {
+            // Cargar el panel de registro desde el FXML
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/InicioSesion/SignUp.fxml"));
+            Parent signUpPanel = loader.load();
+            
+            // Crear una nueva escena con el panel de registro en un HBox junto al panel derecho original
+            HBox newRoot = new HBox();
+            newRoot.setPrefSize(900, 450);
+            
+            // Obtener el panel derecho (recommendationPane) desde la escena actual
+            StackPane rightPanel = recommendationPane;
+            
+            // Crear un nuevo VBox para el panel izquierdo con el mismo estilo que el leftPanel original
+            VBox newLeftPanel = new VBox();
+            newLeftPanel.setAlignment(javafx.geometry.Pos.CENTER);
+            newLeftPanel.setMaxWidth(400.0);
+            newLeftPanel.setMinWidth(400.0);
+            newLeftPanel.setPrefWidth(400.0);
+            newLeftPanel.setPrefHeight(450.0);
+            newLeftPanel.getStyleClass().add("panel-azul-fondo");
+            
+            // Añadir el panel de registro al nuevo panel izquierdo
+            newLeftPanel.getChildren().add(signUpPanel);
+            
+            // Añadir el botón SALIR en la parte inferior
+            Button exitButton = new Button("SALIR");
+            exitButton.getStyleClass().add("button-salir");
+            exitButton.setPrefHeight(40.0);
+            exitButton.setPrefWidth(120.0);
+            exitButton.setOnAction(event -> cerrarAplicacion());
+            VBox.setMargin(exitButton, new Insets(15.0, 0, 15.0, 0));
+            newLeftPanel.getChildren().add(exitButton);
+            
+            // Añadir los paneles izquierdo y derecho al nuevo HBox
+            newRoot.getChildren().addAll(newLeftPanel, rightPanel);
+            
+            // Obtener la escena actual y el escenario
+            Scene currentScene = leftPanel.getScene();
+            Stage stage = (Stage) currentScene.getWindow();
+            
+            // Crear y establecer la nueva escena
+            Scene newScene = new Scene(newRoot, 900, 450);
+            newScene.getStylesheets().add(getClass().getResource("/com/example/pruebamongodbcss/InicioSesion/PanelInicioSesionEstilo.css").toExternalForm());
+            
+            // Configurar eventos de arrastre para la nueva escena
+            final double[] xOffset = {0};
+            final double[] yOffset = {0};
+            
+            newScene.setOnMousePressed(event -> {
+                xOffset[0] = event.getSceneX();
+                yOffset[0] = event.getSceneY();
+            });
+            
+            newScene.setOnMouseDragged(event -> {
+                stage.setX(event.getScreenX() - xOffset[0]);
+                stage.setY(event.getScreenY() - yOffset[0]);
+            });
+            
+            stage.setScene(newScene);
+            
+        } catch (IOException e) {
+            System.err.println("Error al cargar el panel de registro: " + e.getMessage());
+            e.printStackTrace();
+            mostrarMensaje("Error al cargar el panel de registro: " + e.getMessage());
+        }
     }
 }
     

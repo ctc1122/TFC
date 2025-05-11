@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:id="signUpPanel" alignment="CENTER" maxWidth="380.0" prefWidth="380.0" spacing="8.0" styleClass="glass-panel" stylesheets="@PanelInicioSesionEstilo.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.InicioSesion.SignUpController">
+   <children>
+      <Label styleClass="title" text="Sign Up">
+         <VBox.margin>
+            <Insets bottom="5.0" />
+         </VBox.margin>
+      </Label>
+      
+      <ScrollPane fitToWidth="true" prefHeight="220.0" styleClass="transparent-scroll-pane">
+         <content>
+            <VBox alignment="CENTER" spacing="5.0">
+               <children>
+                  <VBox styleClass="user-box">
+                     <children>
+                        <TextField fx:id="nombreField" promptText="Nombre" styleClass="input-field" />
+                     </children>
+                  </VBox>
+                  
+                  <VBox styleClass="user-box">
+                     <children>
+                        <TextField fx:id="apellidoField" promptText="Apellido" styleClass="input-field" />
+                     </children>
+                  </VBox>
+                  
+                  <VBox styleClass="user-box">
+                     <children>
+                        <TextField fx:id="usuarioField" promptText="Username" styleClass="input-field" />
+                     </children>
+                  </VBox>
+                  
+                  <VBox styleClass="user-box">
+                     <children>
+                        <TextField fx:id="emailField" promptText="Email" styleClass="input-field" />
+                     </children>
+                  </VBox>
+                  
+                  <VBox styleClass="user-box">
+                     <children>
+                        <TextField fx:id="telefonoField" promptText="Teléfono (9 dígitos)" styleClass="input-field" />
+                     </children>
+                  </VBox>
+                  
+                  <VBox styleClass="user-box">
+                     <children>
+                        <HBox alignment="CENTER" spacing="10.0">
+                           <children>
+                              <Label styleClass="role-label" text="Rol:" />
+                              <ComboBox fx:id="rolComboBox" prefWidth="220.0" promptText="Seleccione un rol" styleClass="combo-box" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  
+                  <VBox styleClass="user-box">
+                     <children>
+                        <PasswordField fx:id="passwordSignUpField" promptText="Contraseña" styleClass="input-field" />
+                     </children>
+                  </VBox>
+                  
+                  <VBox styleClass="user-box">
+                     <children>
+                        <PasswordField fx:id="confirmPasswordField" promptText="Confirmar Contraseña" styleClass="input-field" />
+                     </children>
+                  </VBox>
+                  
+                  <VBox styleClass="user-box">
+                     <children>
+                        <PasswordField fx:id="adminPasswordField" promptText="Contraseña de Admin" styleClass="input-field" />
+                     </children>
+                  </VBox>
+               </children>
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+            </VBox>
+         </content>
+      </ScrollPane>
+      
+      <Button fx:id="submitButton" maxWidth="150.0" mnemonicParsing="false" onAction="#registrarUsuario" prefHeight="40.0" styleClass="submit-button" text="SUBMIT">
+         <VBox.margin>
+            <Insets bottom="5.0" top="5.0" />
+         </VBox.margin>
+      </Button>
+      
+      <HBox alignment="CENTER" spacing="5.0">
+         <children>
+            <Label styleClass="login-text" text="Already have an account?" />
+            <Hyperlink fx:id="loginLink" onAction="#volverALogin" styleClass="login-link" text="Login" />
+         </children>
+      </HBox>
+   </children>
+   <padding>
+      <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+   </padding>
+</VBox> 

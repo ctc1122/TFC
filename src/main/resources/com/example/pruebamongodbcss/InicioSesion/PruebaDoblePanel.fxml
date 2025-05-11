@@ -22,7 +22,7 @@
 <HBox prefHeight="450.0" prefWidth="900.0" spacing="0" stylesheets="@PanelInicioSesionEstilo.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.InicioSesion.PanelInicioSesionController">
 
     <!-- PANEL IZQUIERDO: PANEL AZUL Y PANEL CRISTAL DENTRO -->
-    <VBox alignment="CENTER" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" styleClass="panel-azul-fondo" HBox.hgrow="NEVER">
+    <VBox fx:id="leftPanel" alignment="CENTER" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" styleClass="panel-azul-fondo" HBox.hgrow="NEVER">
         <VBox fx:id="glassPanel" alignment="CENTER" cache="true" maxWidth="360.0" prefHeight="300.0" prefWidth="360.0" spacing="12.0" styleClass="glass-panel">
             <style>
                 -fx-background-color: rgba(255, 255, 255, 0.1);
@@ -108,11 +108,7 @@
                 </VBox.margin>
             </HBox>
 
-            <!-- Recordarme y Olvidé contraseña -->
-            <HBox alignment="CENTER" spacing="20.0">
-                <CheckBox text="Remember me" style="-fx-text-fill: white;" />
-                <Hyperlink text="Forgot?" style="-fx-text-fill: white;" />
-            </HBox>
+
 
             <!-- Botón Login -->
             <Button fx:id="btnInicioSesion" contentDisplay="CENTER" onAction="#inicioSesion" prefHeight="57.0" prefWidth="120" text="LOGIN">
@@ -123,6 +119,12 @@
 
             <!-- Spinner -->
             <ProgressIndicator fx:id="spinnerCarga" prefHeight="25" prefWidth="25" visible="false" />
+            
+            <!-- Registro / Sign up link -->
+            <HBox alignment="CENTER" spacing="5.0">
+                <Label styleClass="login-text" text="¿No tienes cuenta?" />
+                <Hyperlink fx:id="signUpLink" onAction="#cambiarARegistro" styleClass="sign-up-link" text="Regístrate" />
+            </HBox>
             
             <effect>
                 <Reflection fraction="0.2" topOpacity="0.28" />
