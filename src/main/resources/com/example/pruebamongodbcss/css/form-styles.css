@@ -11,7 +11,7 @@
 
 .title {
     font-size: 28px;
-    color: royalblue;
+    color: #FF5722; /* Naranja intenso */
     font-weight: 600;
     letter-spacing: -1px;
     position: relative;
@@ -27,7 +27,7 @@
     width: 16px;
     border-radius: 50%;
     left: 0px;
-    background-color: royalblue;
+    background-color: #FF5722; /* Naranja intenso */
 }
 
 .form-content {
@@ -46,11 +46,11 @@
 }
 
 .form .input-field:focused {
-    -fx-background-color: #e8f0fe;
+    -fx-background-color: #FFF9C4; /* Amarillo claro */
 }
 
 .form-button {
-    -fx-background-color: royalblue;
+    -fx-background-color: #4CAF50; /* Verde brillante */
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-border-radius: 4px;
@@ -60,11 +60,57 @@
 }
 
 .form-button:hover {
-    -fx-background-color: #3a5fcd;
+    -fx-background-color: #43A047; /* Verde brillante más oscuro */
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0.0, 0, 4);
+}
+
+.danger-button {
+    -fx-background-color: #F44336; /* Rojo */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 8px;
+    -fx-padding: 10px 15px;
+    -fx-cursor: hand;
+}
+
+.danger-button:hover {
+    -fx-background-color: #D32F2F; /* Rojo más oscuro */
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0.0, 0, 4);
+}
+
+.warning-button {
+    -fx-background-color: #FFC107; /* Amarillo */
+    -fx-text-fill: #333;
+    -fx-font-weight: bold;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 8px;
+    -fx-padding: 10px 15px;
+    -fx-cursor: hand;
+}
+
+.warning-button:hover {
+    -fx-background-color: #FFB300; /* Amarillo más oscuro */
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0.0, 0, 4);
+}
+
+.info-button {
+    -fx-background-color: #2196F3; /* Azul */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 8px;
+    -fx-padding: 10px 15px;
+    -fx-cursor: hand;
+}
+
+.info-button:hover {
+    -fx-background-color: #1976D2; /* Azul más oscuro */
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0.0, 0, 4);
 }
 
 .form-link {
-    -fx-text-fill: royalblue;
+    -fx-text-fill: #FF5722; /* Naranja intenso */
     -fx-font-size: 12px;
     -fx-padding: 10px 0;
     -fx-text-alignment: center;
@@ -82,8 +128,8 @@
 }
 
 .text-field:focused, .password-field:focused {
-    -fx-background-color: #e8f0fe;
-    -fx-border-color: royalblue;
+    -fx-background-color: #FFF9C4; /* Amarillo claro */
+    -fx-border-color: #FF5722; /* Naranja intenso */
     -fx-border-width: 0 0 1 0;
 }
 
@@ -96,8 +142,8 @@
 }
 
 .combo-box:focused {
-    -fx-background-color: #e8f0fe;
-    -fx-border-color: royalblue;
+    -fx-background-color: #FFF9C4; /* Amarillo claro */
+    -fx-border-color: #FF5722; /* Naranja intenso */
 }
 
 .check-box .box {
@@ -111,5 +157,84 @@
 }
 
 .check-box:selected .box {
-    -fx-background-color: royalblue;
+    -fx-background-color: #4CAF50; /* Verde brillante */
+}
+
+/* Estilos para las tablas */
+.table-view {
+    -fx-background-color: white;
+    -fx-background-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0.0, 0, 2);
+}
+
+.table-view .column-header {
+    -fx-background-color: #4CAF50; /* Verde brillante */
+    -fx-text-fill: white;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+/* Estilo para filas alternas en tablas */
+.table-row-cell:odd {
+    -fx-background-color: #F5F5F5;
+}
+
+.table-row-cell:even {
+    -fx-background-color: white;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #B2DFDB; /* Verde claro */
+}
+
+/* Estilos para pestañas */
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-background-color: #E0F2F1; /* Verde muy claro */
+}
+
+.tab-pane .tab {
+    -fx-background-color: #B2DFDB; /* Verde claro */
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: #4CAF50; /* Verde brillante */
+}
+
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+/* Estilo para el panel principal */
+.panel-fondo {
+    -fx-background-color: white;
+    -fx-background-radius: 10px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 15, 0.0, 0, 5);
+}
+
+/* Estilo para el ScrollPane transparente */
+.transparent-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.transparent-scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.transparent-scroll-pane .scroll-bar:vertical {
+    -fx-background-color: transparent;
+}
+
+.transparent-scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: #4CAF50;
+    -fx-background-radius: 5px;
+}
+
+.transparent-scroll-pane .scroll-bar:vertical .track {
+    -fx-background-color: #f0f0f0;
+    -fx-background-radius: 5px;
 } 

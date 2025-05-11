@@ -24,6 +24,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -31,11 +32,13 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 /**
- * Controlador para la gestión de usuarios y veterinarios
+ * Controlador principal para la gestión de usuarios y veterinarios.
+ * Esta clase unifica la gestión de todos los tipos de usuarios en una sola interfaz.
  */
 public class GestionUsuariosController implements Initializable {
 
@@ -43,6 +46,7 @@ public class GestionUsuariosController implements Initializable {
     @FXML private TabPane tabPane;
     
     // Pestaña de usuarios
+    @FXML private Tab tabUsuarios;
     @FXML private TableView<Usuario> tablaUsuarios;
     @FXML private TableColumn<Usuario, String> colUsuario;
     @FXML private TableColumn<Usuario, String> colNombre;
@@ -54,6 +58,7 @@ public class GestionUsuariosController implements Initializable {
     @FXML private TextField txtBuscarUsuario;
     
     // Pestaña de veterinarios
+    @FXML private Tab tabVeterinarios;
     @FXML private TableView<Usuario> tablaVeterinarios;
     @FXML private TableColumn<Usuario, String> colNombreVet;
     @FXML private TableColumn<Usuario, String> colApellidoVet;
@@ -63,11 +68,19 @@ public class GestionUsuariosController implements Initializable {
     @FXML private TableColumn<Usuario, Boolean> colDisponible;
     @FXML private TextField txtBuscarVeterinario;
     
-    // Botones de acción
+    // Pestaña de configuración
+    @FXML private Tab tabConfiguracion;
+    @FXML private VBox vboxConfiguracion;
+    @FXML private Button btnCargarDatos;
+    @FXML private Button btnReconectarDB;
+    
+    // Botones de acción para usuarios
     @FXML private Button btnNuevoUsuario;
     @FXML private Button btnEditarUsuario;
     @FXML private Button btnEliminarUsuario;
     @FXML private Button btnResetPassword;
+    
+    // Botones de acción para veterinarios
     @FXML private Button btnNuevoVeterinario;
     @FXML private Button btnEditarVeterinario;
     @FXML private Button btnEliminarVeterinario;
@@ -87,36 +100,41 @@ public class GestionUsuariosController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // Inicializar servicio
-        servicio = new ServicioUsuarios();
-        
-        // Configurar listas observables
-        usuariosObservable = FXCollections.observableArrayList();
-        usuariosFiltrados = new FilteredList<>(usuariosObservable, p -> true);
-        
-        veterinariosObservable = FXCollections.observableArrayList();
-        veterinariosFiltrados = new FilteredList<>(veterinariosObservable, p -> true);
-        
-        // Configurar tablas
-        configurarTablaUsuarios();
-        configurarTablaVeterinarios();
-        
-        // Cargar datos de prueba explícitamente
         try {
-            servicio.cargarDatosPrueba();
-            System.out.println("Intentando cargar datos de prueba...");
+            System.out.println("Inicializando GestionUsuariosController...");
+            
+            // Inicializar servicio
+            servicio = new ServicioUsuarios();
+            
+            // Configurar listas observables
+            usuariosObservable = FXCollections.observableArrayList();
+            usuariosFiltrados = new FilteredList<>(usuariosObservable, p -> true);
+            
+            veterinariosObservable = FXCollections.observableArrayList();
+            veterinariosFiltrados = new FilteredList<>(veterinariosObservable, p -> true);
+            
+            // Configurar tablas
+            configurarTablaUsuarios();
+            configurarTablaVeterinarios();
+            
+            // Configurar botones de la pestaña de configuración
+            configurarBotonesConfiguracion();
+            
+            // Cargar datos iniciales
+            cargarUsuarios();
+            cargarVeterinarios();
+            
+            // Configurar filtros de búsqueda
+            configurarFiltrosUsuarios();
+            configurarFiltrosVeterinarios();
+            
+            System.out.println("GestionUsuariosController inicializado correctamente");
         } catch (Exception e) {
-            System.err.println("Error al cargar datos de prueba: " + e.getMessage());
+            System.err.println("Error al inicializar GestionUsuariosController: " + e.getMessage());
             e.printStackTrace();
+            mostrarAlerta("Error", "Error al inicializar", 
+                "Se produjo un error al inicializar el controlador: " + e.getMessage());
         }
-        
-        // Cargar datos iniciales
-        cargarUsuarios();
-        cargarVeterinarios();
-        
-        // Configurar filtros de búsqueda
-        configurarFiltrosUsuarios();
-        configurarFiltrosVeterinarios();
     }
     
     /**
@@ -144,7 +162,7 @@ public class GestionUsuariosController implements Initializable {
         colActivo.setCellValueFactory(data -> 
             new SimpleBooleanProperty(data.getValue().isActivo()));
         
-        // Personalizar la celda de activo para mostrar un círculo verde/rojo
+        // Personalizar la celda de activo para mostrar un texto verde/rojo
         colActivo.setCellFactory(col -> new TableCell<Usuario, Boolean>() {
             @Override
             protected void updateItem(Boolean item, boolean empty) {
@@ -223,21 +241,38 @@ public class GestionUsuariosController implements Initializable {
     }
     
     /**
+     * Configura los botones de la pestaña de configuración
+     */
+    private void configurarBotonesConfiguracion() {
+        // Verificar que los botones existan antes de configurarlos
+        if (btnCargarDatos != null) {
+            btnCargarDatos.setOnAction(event -> cargarDatosPrueba());
+        } else {
+            System.err.println("Error: btnCargarDatos es null");
+        }
+        
+        if (btnReconectarDB != null) {
+            btnReconectarDB.setOnAction(event -> reconectarBaseDatos());
+        } else {
+            System.err.println("Error: btnReconectarDB es null");
+        }
+    }
+    
+    /**
      * Configura los filtros de búsqueda para usuarios
      */
     private void configurarFiltrosUsuarios() {
         txtBuscarUsuario.textProperty().addListener((obs, oldVal, newVal) -> {
             usuariosFiltrados.setPredicate(usuario -> {
                 if (newVal == null || newVal.isEmpty()) {
-                    return usuario.getRol() != Rol.VETERINARIO; // Mostrar todos excepto veterinarios
+                    return true; // Mostrar todos los usuarios, incluyendo veterinarios
                 }
                 
                 String lowerCaseFilter = newVal.toLowerCase();
                 
                 return (usuario.getNombre().toLowerCase().contains(lowerCaseFilter) ||
                         usuario.getApellido().toLowerCase().contains(lowerCaseFilter) ||
-                        usuario.getUsuario().toLowerCase().contains(lowerCaseFilter)) &&
-                        usuario.getRol() != Rol.VETERINARIO;
+                        usuario.getUsuario().toLowerCase().contains(lowerCaseFilter));
             });
         });
     }
@@ -269,10 +304,6 @@ public class GestionUsuariosController implements Initializable {
     private void cargarUsuarios() {
         usuariosObservable.clear();
         List<Usuario> usuarios = servicio.obtenerTodosUsuarios();
-        
-        // Filtrar los que no son veterinarios
-        usuarios.removeIf(u -> u.getRol() == Rol.VETERINARIO);
-        
         usuariosObservable.addAll(usuarios);
     }
     
@@ -283,6 +314,77 @@ public class GestionUsuariosController implements Initializable {
         veterinariosObservable.clear();
         List<Usuario> veterinarios = servicio.buscarUsuariosPorRol(Rol.VETERINARIO);
         veterinariosObservable.addAll(veterinarios);
+    }
+    
+    /**
+     * Recarga los datos de ambas tablas
+     */
+    private void recargarTablas() {
+        cargarUsuarios();
+        cargarVeterinarios();
+    }
+    
+    /**
+     * Carga datos de prueba en la base de datos
+     */
+    private void cargarDatosPrueba() {
+        Optional<ButtonType> resultado = mostrarConfirmacion("Confirmar carga", 
+            "¿Está seguro de cargar datos de prueba?", 
+            "Esta acción cargará datos de prueba en el sistema. No se sobrescribirán datos existentes.");
+        
+        if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
+            try {
+                System.out.println("Iniciando carga de datos de prueba...");
+                
+                // Asegurar que tenemos una conexión válida a la base de datos
+                try {
+                    // Intentar reiniciar la conexión primero
+                    System.out.println("Verificando conexión a MongoDB...");
+                    if (!servicio.verificarConexion()) {
+                        throw new Exception("No se pudo establecer conexión con MongoDB");
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error al conectar a MongoDB: " + e.getMessage());
+                    mostrarAlerta("Error de conexión", "Error al conectar a MongoDB", 
+                        "No se pudo establecer conexión con la base de datos. Detalles: " + e.getMessage());
+                    return;
+                }
+                
+                // Cargar datos de prueba
+                servicio.cargarDatosPrueba();
+                
+                mostrarMensaje("Datos cargados", "Datos de prueba cargados con éxito", 
+                    "Los datos de prueba han sido cargados correctamente en el sistema.");
+                
+                // Recargar los datos en las tablas
+                recargarTablas();
+                
+            } catch (Exception e) {
+                System.err.println("Error al cargar datos: " + e.getMessage());
+                e.printStackTrace();
+                mostrarAlerta("Error", "Error al cargar datos", 
+                    "Se produjo un error al cargar los datos de prueba: " + e.getMessage());
+            }
+        }
+    }
+    
+    /**
+     * Reconecta a la base de datos
+     */
+    private void reconectarBaseDatos() {
+        try {
+            System.out.println("Forzando reconexión a MongoDB...");
+            servicio.reiniciarConexion();
+            
+            // Recargar datos
+            recargarTablas();
+            
+            mostrarMensaje("Conexión restablecida", "Reconexión exitosa", 
+                "La conexión a la base de datos ha sido restablecida correctamente.");
+        } catch (Exception e) {
+            mostrarAlerta("Error", "Error al reconectar", 
+                "Se produjo un error al intentar reconectar a la base de datos: " + e.getMessage());
+        }
     }
     
     // ********** ACCIONES DE USUARIOS **********
@@ -307,6 +409,16 @@ public class GestionUsuariosController implements Initializable {
     private void eliminarUsuarioSeleccionado() {
         Usuario usuario = tablaUsuarios.getSelectionModel().getSelectedItem();
         if (usuario != null) {
+            // No permitir eliminar al último administrador
+            if (usuario.getRol() == Usuario.Rol.ADMINISTRADOR && 
+                usuariosObservable.stream()
+                    .filter(u -> u.getRol() == Usuario.Rol.ADMINISTRADOR)
+                    .count() <= 1) {
+                mostrarAlerta("Operación no permitida", "No se puede eliminar el último administrador", 
+                    "El sistema requiere al menos un administrador activo.");
+                return;
+            }
+            
             Optional<ButtonType> resultado = mostrarConfirmacion("Confirmar eliminación", 
                 "¿Está seguro que desea eliminar este usuario?", 
                 "Esta acción no se puede deshacer.");
@@ -314,7 +426,7 @@ public class GestionUsuariosController implements Initializable {
             if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
                 boolean eliminado = servicio.eliminarUsuario(usuario.getId());
                 if (eliminado) {
-                    usuariosObservable.remove(usuario);
+                    recargarTablas();
                     mostrarMensaje("Usuario eliminado", "Usuario eliminado correctamente", 
                         "El usuario ha sido eliminado de la base de datos.");
                 } else {
@@ -342,13 +454,6 @@ public class GestionUsuariosController implements Initializable {
             if (resultado.isPresent() && !resultado.get().isEmpty()) {
                 String nuevaContraseña = resultado.get();
                 
-                // Validar longitud mínima
-                if (nuevaContraseña.length() < 8) {
-                    mostrarAlerta("Error", "Contraseña no válida", 
-                        "La contraseña debe tener al menos 8 caracteres.");
-                    return;
-                }
-                
                 // Resetear contraseña
                 boolean reseteo = servicio.resetearContrasena(usuario.getId(), nuevaContraseña);
                 if (reseteo) {
@@ -368,7 +473,7 @@ public class GestionUsuariosController implements Initializable {
     // ********** ACCIONES DE VETERINARIOS **********
     
     @FXML
-    private void crearNuevoVeterinario() {
+    public void crearNuevoVeterinario() {
         abrirFormularioUsuario(null, true);
     }
     
@@ -394,7 +499,7 @@ public class GestionUsuariosController implements Initializable {
             if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
                 boolean eliminado = servicio.eliminarUsuario(veterinario.getId());
                 if (eliminado) {
-                    veterinariosObservable.remove(veterinario);
+                    recargarTablas();
                     mostrarMensaje("Veterinario eliminado", "Veterinario eliminado correctamente", 
                         "El veterinario ha sido eliminado de la base de datos.");
                 } else {
@@ -426,26 +531,42 @@ public class GestionUsuariosController implements Initializable {
                 return;
             }
             
+            // Cargar el formulario
             FXMLLoader loader = new FXMLLoader(url);
             Parent root = loader.load();
             
+            // Obtener y configurar el controlador
             RegistroUsuarioController controller = loader.getController();
-            
-            // Si es un veterinario, configurar el rol
-            if (esVeterinario && usuario == null) {
-                // Nuevo veterinario
-                try {
-                    Usuario nuevoVeterinario = new Usuario();
-                    nuevoVeterinario.setRol(Rol.VETERINARIO);
-                    controller.setUsuarioParaEditar(nuevoVeterinario);
-                } catch (Exception e) {
-                    System.err.println("Error al crear nuevo veterinario: " + e.getMessage());
-                    e.printStackTrace();
-                }
-            } else if (usuario != null) {
-                // Editar existente
-                controller.setUsuarioParaEditar(usuario);
+            if (controller == null) {
+                System.err.println("Error: No se pudo obtener el controlador del formulario");
+                mostrarAlerta("Error", "Error al inicializar", 
+                    "No se pudo inicializar el controlador del formulario.");
+                return;
             }
+            
+            // Establecer el servicio
+            controller.setServicio(servicio);
+            
+            // Preparar usuario para edición/creación
+            Usuario usuarioEdicion = null;
+            
+            if (esVeterinario && usuario == null) {
+                // Nuevo veterinario - crear un objeto vacío con rol VETERINARIO
+                usuarioEdicion = new Usuario();
+                usuarioEdicion.setRol(Rol.VETERINARIO);
+                // No establecer valores por defecto vacíos, dejar que el formulario maneje los campos vacíos
+            } else if (usuario == null) {
+                // Nuevo usuario normal
+                usuarioEdicion = new Usuario();
+                usuarioEdicion.setRol(Rol.NORMAL);
+                // No establecer valores por defecto vacíos, dejar que el formulario maneje los campos vacíos
+            } else {
+                // Editar usuario existente
+                usuarioEdicion = usuario;
+            }
+            
+            // Configurar el controlador con el usuario a editar
+            controller.setUsuarioParaEditar(usuarioEdicion);
             
             // Configurar la ventana modal
             Stage stage = new Stage();
@@ -453,13 +574,18 @@ public class GestionUsuariosController implements Initializable {
                                            ("Editar " + (esVeterinario ? "Veterinario" : "Usuario")));
             stage.initModality(Modality.APPLICATION_MODAL);
             
+            // Configurar y mostrar la escena
             Scene scene = new Scene(root);
+            // Agregar el archivo CSS al formulario
+            String cssPath = "/com/example/pruebamongodbcss/css/form-styles.css";
+            scene.getStylesheets().add(getClass().getResource(cssPath).toExternalForm());
             stage.setScene(scene);
+            
+            // Mostrar la ventana y esperar a que se cierre
             stage.showAndWait();
             
             // Recargar datos después de cerrar el formulario
-            cargarUsuarios();
-            cargarVeterinarios();
+            recargarTablas();
             
         } catch (IOException e) {
             System.err.println("Error al abrir formulario: " + e.getMessage());

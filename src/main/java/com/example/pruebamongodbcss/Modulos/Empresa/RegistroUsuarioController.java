@@ -141,6 +141,24 @@ public class RegistroUsuarioController implements Initializable {
             // Inicialmente ocultar panel de veterinario y admin
             panelVeterinario.setVisible(false);
             panelVeterinario.setManaged(false);
+            
+            // Aplicar estilos a los elementos del formulario
+            if (btnGuardar != null) btnGuardar.getStyleClass().add("form-button");
+            if (btnCancelar != null) btnCancelar.getStyleClass().add("danger-button");
+            
+            // Aplicar estilos a los campos de texto
+            if (txtNombre != null) txtNombre.getStyleClass().add("text-field");
+            if (txtApellido != null) txtApellido.getStyleClass().add("text-field");
+            if (txtUsuario != null) txtUsuario.getStyleClass().add("text-field");
+            if (txtPassword != null) txtPassword.getStyleClass().add("password-field");
+            if (txtEmail != null) txtEmail.getStyleClass().add("text-field");
+            if (txtTelefono != null) txtTelefono.getStyleClass().add("text-field");
+            
+            // Aplicar estilos a los campos de veterinario
+            if (txtEspecialidad != null) txtEspecialidad.getStyleClass().add("text-field");
+            if (txtNumeroColegiado != null) txtNumeroColegiado.getStyleClass().add("text-field");
+            if (txtHoraInicio != null) txtHoraInicio.getStyleClass().add("text-field");
+            if (txtHoraFin != null) txtHoraFin.getStyleClass().add("text-field");
 
         } catch (Exception e) {
             mostrarAlerta("Error", "Error al inicializar: " + e.getMessage(), Alert.AlertType.ERROR);
@@ -156,36 +174,46 @@ public class RegistroUsuarioController implements Initializable {
         }
         
         this.usuario = usuario;
-        this.modoEdicion = true;
+        this.modoEdicion = usuario.getId() != null;
         
-        // Configurar título
-        lblTitulo.setText("Editar " + (usuario.getRol() == Usuario.Rol.VETERINARIO ? "Veterinario" : "Usuario"));
+        // Configurar título según modo (nuevo o edición)
+        if (modoEdicion) {
+            lblTitulo.setText("Editar " + (usuario.getRol() == Usuario.Rol.VETERINARIO ? "Veterinario" : "Usuario"));
+            
+            // Cargar datos en los campos solo si estamos en modo edición
+            txtNombre.setText(usuario.getNombre());
+            txtApellido.setText(usuario.getApellido());
+            txtUsuario.setText(usuario.getUsuario());
+            txtPassword.setText(usuario.getPassword());
+            txtEmail.setText(usuario.getEmail());
+            txtTelefono.setText(usuario.getTelefono());
+            
+            // Si es veterinario, cargar datos adicionales
+            if (usuario.getRol() == Usuario.Rol.VETERINARIO) {
+                txtEspecialidad.setText(usuario.getEspecialidad());
+                txtNumeroColegiado.setText(usuario.getNumeroColegiado());
+                txtHoraInicio.setText(usuario.getHoraInicio());
+                txtHoraFin.setText(usuario.getHoraFin());
+                chkDisponible.setSelected(usuario.isDisponible());
+            }
+            
+            // Deshabilitar usuario en modo edición
+            txtUsuario.setDisable(true);
+        } else {
+            // En modo nuevo, asegurarnos de que el campo usuario esté habilitado
+            txtUsuario.setDisable(false);
+            
+            // Configurar título para usuario nuevo
+            lblTitulo.setText("Nuevo " + (usuario.getRol() == Usuario.Rol.VETERINARIO ? "Veterinario" : "Usuario"));
+        }
         
-        // Cargar datos en los campos
-        txtNombre.setText(usuario.getNombre());
-        txtApellido.setText(usuario.getApellido());
-        txtUsuario.setText(usuario.getUsuario());
-        txtPassword.setText(usuario.getPassword());
-        txtEmail.setText(usuario.getEmail());
-        txtTelefono.setText(usuario.getTelefono());
+        // Configurar combo de roles según el tipo de usuario
         comboRol.getSelectionModel().select(usuario.getRol());
         
         // Si es admin, seleccionar checkbox
         if (usuario.getRol() == Usuario.Rol.ADMINISTRADOR) {
             chkAdmin.setSelected(true);
         }
-        
-        // Si es veterinario, cargar datos adicionales
-        if (usuario.getRol() == Usuario.Rol.VETERINARIO) {
-            txtEspecialidad.setText(usuario.getEspecialidad());
-            txtNumeroColegiado.setText(usuario.getNumeroColegiado());
-            txtHoraInicio.setText(usuario.getHoraInicio());
-            txtHoraFin.setText(usuario.getHoraFin());
-            chkDisponible.setSelected(usuario.isDisponible());
-        }
-        
-        // Deshabilitar usuario en modo edición
-        txtUsuario.setDisable(true);
     }
 
     @FXML
@@ -197,31 +225,28 @@ public class RegistroUsuarioController implements Initializable {
         try {
             if (usuario == null) {
                 // Nuevo usuario
+                usuario = new Usuario();
+                usuario.setNombre(txtNombre.getText());
+                usuario.setApellido(txtApellido.getText());
+                usuario.setUsuario(txtUsuario.getText());
+                usuario.setPassword(txtPassword.getText());
+                usuario.setEmail(txtEmail.getText());
+                usuario.setTelefono(txtTelefono.getText());
+                
+                // Establecer rol según la selección
                 if (chkAdmin.isSelected()) {
-                    // Crear usuario normal primero
-                    usuario = new Usuario(
-                        txtNombre.getText(),
-                        txtApellido.getText(),
-                        txtUsuario.getText(),
-                        txtPassword.getText(),
-                        txtEmail.getText(),
-                        txtTelefono.getText()
-                    );
-                    // Establecer rol administrador
                     usuario.setRol(Usuario.Rol.ADMINISTRADOR);
                 } else {
-                    // Crear usuario normal
-                    usuario = new Usuario(
-                        txtNombre.getText(),
-                        txtApellido.getText(),
-                        txtUsuario.getText(),
-                        txtPassword.getText(),
-                        txtEmail.getText(),
-                        txtTelefono.getText()
-                    );
-                    
-                    // Asignar rol seleccionado
                     usuario.setRol(comboRol.getValue());
+                }
+                
+                // Si es veterinario, establecer campos adicionales
+                if (comboRol.getValue() == Usuario.Rol.VETERINARIO) {
+                    usuario.setEspecialidad(txtEspecialidad.getText());
+                    usuario.setNumeroColegiado(txtNumeroColegiado.getText());
+                    usuario.setHoraInicio(txtHoraInicio.getText());
+                    usuario.setHoraFin(txtHoraFin.getText());
+                    usuario.setDisponible(chkDisponible.isSelected());
                 }
             } else {
                 // Actualizar usuario existente
@@ -230,16 +255,22 @@ public class RegistroUsuarioController implements Initializable {
                 usuario.setPassword(txtPassword.getText());
                 usuario.setEmail(txtEmail.getText());
                 usuario.setTelefono(txtTelefono.getText());
-                usuario.setRol(comboRol.getValue());
-            }
-            
-            // Si es veterinario, actualizar campos adicionales
-            if (comboRol.getValue() == Usuario.Rol.VETERINARIO) {
-                usuario.setEspecialidad(txtEspecialidad.getText());
-                usuario.setNumeroColegiado(txtNumeroColegiado.getText());
-                usuario.setHoraInicio(txtHoraInicio.getText());
-                usuario.setHoraFin(txtHoraFin.getText());
-                usuario.setDisponible(chkDisponible.isSelected());
+                
+                // Asignar rol según la selección
+                if (chkAdmin.isSelected()) {
+                    usuario.setRol(Usuario.Rol.ADMINISTRADOR);
+                } else {
+                    usuario.setRol(comboRol.getValue());
+                }
+                
+                // Si es veterinario, actualizar campos adicionales
+                if (comboRol.getValue() == Usuario.Rol.VETERINARIO) {
+                    usuario.setEspecialidad(txtEspecialidad.getText());
+                    usuario.setNumeroColegiado(txtNumeroColegiado.getText());
+                    usuario.setHoraInicio(txtHoraInicio.getText());
+                    usuario.setHoraFin(txtHoraFin.getText());
+                    usuario.setDisponible(chkDisponible.isSelected());
+                }
             }
             
             // Guardar en la base de datos
@@ -271,67 +302,110 @@ public class RegistroUsuarioController implements Initializable {
      * Valida los campos del formulario
      */
     private boolean validarCampos() {
-        // Validar campos obligatorios
-        if (txtNombre.getText().isEmpty() || txtApellido.getText().isEmpty() || 
-            txtUsuario.getText().isEmpty() || txtPassword.getText().isEmpty() || 
-            txtEmail.getText().isEmpty() || txtTelefono.getText().isEmpty()) {
-            
-            mostrarError("Campos incompletos", "Todos los campos marcados con * son obligatorios.");
-            return false;
-        }
-        
-        // Validar longitud de contraseña
-        if (txtPassword.getText().length() < 8) {
-            mostrarError("Contraseña inválida", "La contraseña debe tener al menos 8 caracteres.");
-            return false;
-        }
-        
-        // Validar formato de email
-        if (!txtEmail.getText().matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")) {
-            mostrarError("Email inválido", "El formato del email no es válido.");
-            return false;
-        }
-        
-        // Validar formato de teléfono
-        if (!txtTelefono.getText().matches("^[0-9]{9}$")) {
-            mostrarError("Teléfono inválido", "El teléfono debe tener 9 dígitos.");
-            return false;
-        }
-        
-        // Validar que el usuario no exista (solo en modo creación)
-        if (!modoEdicion && servicio.existeUsuario(txtUsuario.getText())) {
-            mostrarError("Usuario existente", "El nombre de usuario ya existe en el sistema.");
-            return false;
-        }
-        
-        // Validar campos de veterinario si aplica
-        if (comboRol.getValue() == Usuario.Rol.VETERINARIO) {
-            if (txtEspecialidad.getText().isEmpty() || txtNumeroColegiado.getText().isEmpty() || 
-                txtHoraInicio.getText().isEmpty() || txtHoraFin.getText().isEmpty()) {
-                
-                mostrarError("Campos incompletos", "Todos los campos de veterinario son obligatorios.");
+        try {
+            // Verificar que los campos básicos existan antes de validarlos
+            if (txtNombre == null || txtApellido == null || txtUsuario == null || 
+                txtPassword == null || txtEmail == null || txtTelefono == null || 
+                comboRol == null) {
+                mostrarError("Error de inicialización", "No se han inicializado correctamente todos los campos del formulario.");
                 return false;
             }
             
-            // Validar formato de hora
-            if (!txtHoraInicio.getText().matches("^([01]?[0-9]|2[0-3]):[0-5][0-9]$") || 
-                !txtHoraFin.getText().matches("^([01]?[0-9]|2[0-3]):[0-5][0-9]$")) {
+            // Validar campos obligatorios
+            String nombre = txtNombre.getText();
+            String apellido = txtApellido.getText();
+            String nombreUsuario = txtUsuario.getText();
+            String password = txtPassword.getText();
+            String email = txtEmail.getText();
+            String telefono = txtTelefono.getText();
+            
+            if (nombre == null || apellido == null || nombreUsuario == null || 
+                password == null || email == null || telefono == null) {
+                mostrarError("Error de datos", "Algunos campos contienen valores nulos.");
+                return false;
+            }
+            
+            if (nombre.isEmpty() || apellido.isEmpty() || nombreUsuario.isEmpty() || 
+                password.isEmpty() || email.isEmpty() || telefono.isEmpty()) {
+                mostrarError("Campos incompletos", "Todos los campos marcados con * son obligatorios.");
+                return false;
+            }
+            
+            // Validar longitud de contraseña
+            if (password.length() < 8) {
+                mostrarError("Contraseña inválida", "La contraseña debe tener al menos 8 caracteres.");
+                return false;
+            }
+            
+            // Validar formato de email
+            if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")) {
+                mostrarError("Email inválido", "El formato del email no es válido.");
+                return false;
+            }
+            
+            // Validar formato de teléfono
+            if (!telefono.matches("^[0-9]{9}$")) {
+                mostrarError("Teléfono inválido", "El teléfono debe tener 9 dígitos.");
+                return false;
+            }
+            
+            // Validar que el usuario no exista (solo en modo creación)
+            if (!modoEdicion && servicio != null && servicio.existeUsuario(nombreUsuario)) {
+                mostrarError("Usuario existente", "El nombre de usuario ya existe en el sistema.");
+                return false;
+            }
+            
+            // Validar campos de veterinario si aplica
+            if (comboRol.getValue() == Usuario.Rol.VETERINARIO) {
+                // Verificar que los campos de veterinario existen
+                if (txtEspecialidad == null || txtNumeroColegiado == null || 
+                    txtHoraInicio == null || txtHoraFin == null) {
+                    mostrarError("Error de inicialización", "No se han inicializado correctamente los campos de veterinario.");
+                    return false;
+                }
                 
-                mostrarError("Formato de hora inválido", "El formato de hora debe ser HH:MM.");
-                return false;
+                String especialidad = txtEspecialidad.getText();
+                String numeroColegiado = txtNumeroColegiado.getText();
+                String horaInicio = txtHoraInicio.getText();
+                String horaFin = txtHoraFin.getText();
+                
+                if (especialidad == null || numeroColegiado == null || 
+                    horaInicio == null || horaFin == null) {
+                    mostrarError("Error de datos", "Algunos campos de veterinario contienen valores nulos.");
+                    return false;
+                }
+                
+                if (especialidad.isEmpty() || numeroColegiado.isEmpty() || 
+                    horaInicio.isEmpty() || horaFin.isEmpty()) {
+                    mostrarError("Campos incompletos", "Todos los campos de veterinario son obligatorios.");
+                    return false;
+                }
+                
+                // Validar formato de hora
+                if (!horaInicio.matches("^([01]?[0-9]|2[0-3]):[0-5][0-9]$") || 
+                    !horaFin.matches("^([01]?[0-9]|2[0-3]):[0-5][0-9]$")) {
+                    mostrarError("Formato de hora inválido", "El formato de hora debe ser HH:MM.");
+                    return false;
+                }
             }
-        }
-        
-        // Validar contraseña de admin si aplica
-        if (chkAdmin.isSelected() && !modoEdicion) {
-            // Verificar que el usuario actual tiene permisos de administrador
-            if (!servicio.esUsuarioAdmin()) {
-                mostrarError("Permisos insuficientes", "Solo los administradores pueden crear nuevos usuarios administradores.");
-                return false;
+            
+            // Validar contraseña de admin si aplica
+            if (chkAdmin != null && chkAdmin.isSelected() && !modoEdicion) {
+                // Verificar que el usuario actual tiene permisos de administrador
+                if (servicio != null && !servicio.esUsuarioAdmin()) {
+                    mostrarError("Permisos insuficientes", "Solo los administradores pueden crear nuevos usuarios administradores.");
+                    return false;
+                }
             }
+            
+            return true;
+        } catch (Exception e) {
+            // Capturar cualquier excepción inesperada
+            System.err.println("Error inesperado en validación de campos: " + e.getMessage());
+            e.printStackTrace();
+            mostrarError("Error", "Error inesperado en la validación: " + e.getMessage());
+            return false;
         }
-        
-        return true;
     }
 
     /**
@@ -359,5 +433,12 @@ public class RegistroUsuarioController implements Initializable {
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+
+    /**
+     * Establece el servicio de usuarios a utilizar
+     */
+    public void setServicio(ServicioUsuarios servicio) {
+        this.servicio = servicio;
     }
 } 

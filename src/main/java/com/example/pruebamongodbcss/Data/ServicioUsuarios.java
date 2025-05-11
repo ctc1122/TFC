@@ -7,7 +7,6 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
-import com.example.pruebamongodbcss.Modulos.Empresa.ModeloVeterinario;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -18,63 +17,76 @@ import com.mongodb.client.result.DeleteResult;
 import Utilidades.GestorConexion;
 
 /**
- * Servicio unificado para gestionar todos los usuarios y veterinarios del sistema
+ * Servicio unificado para gestionar todos los usuarios del sistema.
+ * Esta clase proporciona métodos para realizar operaciones CRUD sobre usuarios,
+ * incluyendo veterinarios y otros roles, además de funcionalidades específicas
+ * como autenticación, búsqueda por criterios y carga de datos de prueba.
  */
 public class ServicioUsuarios {
 
     private MongoDatabase empresaDB;
     private MongoCollection<Document> usuariosCollection;
-    private MongoCollection<Document> veterinariosCollection;
     private Usuario usuarioActual;
 
     /**
-     * Constructor del servicio de usuarios
+     * Constructor del servicio de usuarios.
+     * Inicializa la conexión con la base de datos y asegura que exista la colección de usuarios.
      */
     public ServicioUsuarios() {
-        // Conectar a la base de datos
-        this.empresaDB = GestorConexion.conectarEmpresa();
-        
-        // Asegurar que existen las colecciones de usuarios y veterinarios
-        List<String> collectionNames = new ArrayList<>();
-        empresaDB.listCollectionNames().into(collectionNames);
-        
-        if (!collectionNames.contains("usuarios")) {
-            empresaDB.createCollection("usuarios");
+        try {
+            // Conectar a la base de datos
+            this.empresaDB = GestorConexion.conectarEmpresa();
+            
+            // Asegurar que existen las colecciones de usuarios
+            List<String> collectionNames = new ArrayList<>();
+            empresaDB.listCollectionNames().into(collectionNames);
+            
+            if (!collectionNames.contains("usuarios")) {
+                empresaDB.createCollection("usuarios");
+            }
+            
+            // Obtener referencias a las colecciones
+            this.usuariosCollection = empresaDB.getCollection("usuarios");
+        } catch (Exception e) {
+            System.err.println("Error al inicializar ServicioUsuarios: " + e.getMessage());
+            e.printStackTrace();
         }
-        if (!collectionNames.contains("veterinarios")) {
-            empresaDB.createCollection("veterinarios");
-        }
-        
-        // Obtener referencias a las colecciones
-        this.usuariosCollection = empresaDB.getCollection("usuarios");
-        this.veterinariosCollection = empresaDB.getCollection("veterinarios");
     }
 
     /**
-     * Establece el usuario actual de la sesión
+     * Establece el usuario actual de la sesión.
+     * @param usuario Usuario a establecer como actual
      */
     public void setUsuarioActual(Usuario usuario) {
         this.usuarioActual = usuario;
     }
     
     /**
-     * Obtiene el usuario actual de la sesión
+     * Obtiene el usuario actual de la sesión.
+     * @return Usuario actual
      */
     public Usuario getUsuarioActual() {
         return usuarioActual;
     }
     
     /**
-     * Verifica si el usuario actual es administrador
+     * Verifica si el usuario actual es administrador.
+     * @return true si el usuario actual es administrador
      */
     public boolean esUsuarioAdmin() {
         return usuarioActual != null && usuarioActual.esAdmin();
     }
     
     /**
-     * Autenticar un usuario
+     * Autenticar un usuario con nombre de usuario y contraseña.
+     * @param nombreUsuario Nombre de usuario
+     * @param password Contraseña
+     * @return Usuario autenticado o null si no se encuentra
      */
     public Usuario autenticarUsuario(String nombreUsuario, String password) {
+        // Verificar y renovar la conexión si es necesario
+        renovarConexionSiNecesario();
+        
         Document query = new Document("usuario", nombreUsuario)
                         .append("password", password)
                         .append("activo", true);
@@ -95,9 +107,16 @@ public class ServicioUsuarios {
     }
     
     /**
-     * Guardar un usuario en la base de datos
+     * Guardar un usuario en la base de datos.
+     * Si el usuario no tiene ID, se crea uno nuevo.
+     * Si ya tiene ID, se actualiza el existente.
+     * @param usuario Usuario a guardar
+     * @return ID del usuario guardado
      */
     public ObjectId guardarUsuario(Usuario usuario) {
+        // Verificar y renovar la conexión si es necesario
+        renovarConexionSiNecesario();
+        
         Document doc = usuario.toDocument();
         
         if (usuario.getId() == null) {
@@ -118,17 +137,27 @@ public class ServicioUsuarios {
     }
     
     /**
-     * Verificar si un nombre de usuario ya existe
+     * Verificar si un nombre de usuario ya existe en la base de datos.
+     * @param nombreUsuario Nombre de usuario a verificar
+     * @return true si el usuario ya existe
      */
     public boolean existeUsuario(String nombreUsuario) {
+        // Verificar y renovar la conexión si es necesario
+        renovarConexionSiNecesario();
+        
         Document query = new Document("usuario", nombreUsuario);
         return usuariosCollection.countDocuments(query) > 0;
     }
     
     /**
-     * Obtener un usuario por su ID
+     * Obtener un usuario por su ID.
+     * @param id ID del usuario
+     * @return Usuario encontrado o null
      */
     public Usuario obtenerUsuarioPorId(ObjectId id) {
+        // Verificar y renovar la conexión si es necesario
+        renovarConexionSiNecesario();
+        
         Document doc = usuariosCollection.find(Filters.eq("_id", id)).first();
         if (doc != null) {
             try {
@@ -141,36 +170,62 @@ public class ServicioUsuarios {
     }
     
     /**
-     * Buscar usuarios por rol
+     * Buscar usuarios por rol.
+     * @param rol Rol a buscar
+     * @return Lista de usuarios con el rol especificado
      */
     public List<Usuario> buscarUsuariosPorRol(Usuario.Rol rol) {
         return buscarUsuarios(Filters.eq("rol", rol.name()));
     }
     
     /**
-     * Buscar veterinarios
+     * Buscar veterinarios.
+     * @return Lista de usuarios con rol VETERINARIO
      */
     public List<Usuario> buscarVeterinarios() {
         return buscarUsuarios(Filters.eq("rol", Usuario.Rol.VETERINARIO.name()));
     }
     
     /**
-     * Buscar usuarios activos
+     * Buscar usuarios activos.
+     * @return Lista de usuarios activos
      */
     public List<Usuario> buscarUsuariosActivos() {
         return buscarUsuarios(Filters.eq("activo", true));
     }
     
     /**
-     * Buscar usuarios con un filtro personalizado
+     * Buscar veterinarios por especialidad.
+     * @param especialidad Especialidad a buscar
+     * @return Lista de veterinarios con la especialidad indicada
+     */
+    public List<Usuario> buscarVeterinariosPorEspecialidad(String especialidad) {
+        if (especialidad == null || especialidad.trim().isEmpty()) {
+            return buscarVeterinarios();
+        }
+        
+        Bson filtro = Filters.and(
+            Filters.eq("rol", Usuario.Rol.VETERINARIO.name()),
+            Filters.regex("especialidad", ".*" + especialidad + ".*", "i")
+        );
+        return buscarUsuarios(filtro);
+    }
+    
+    /**
+     * Buscar usuarios con un filtro personalizado.
+     * @param filtro Filtro a aplicar
+     * @return Lista de usuarios que cumplen el filtro
      */
     public List<Usuario> buscarUsuarios(Bson filtro) {
+        // Verificar y renovar la conexión si es necesario
+        renovarConexionSiNecesario();
+        
         List<Usuario> usuarios = new ArrayList<>();
         
-        FindIterable<Document> findIterable = usuariosCollection.find(filtro);
-        MongoCursor<Document> cursor = findIterable.iterator();
-        
         try {
+            FindIterable<Document> findIterable = usuariosCollection.find(filtro);
+            MongoCursor<Document> cursor = findIterable.iterator();
+            
             while (cursor.hasNext()) {
                 try {
                     usuarios.add(new Usuario(cursor.next()));
@@ -178,34 +233,65 @@ public class ServicioUsuarios {
                     System.err.println("Error al crear usuario desde documento: " + e.getMessage());
                 }
             }
-        } finally {
             cursor.close();
+        } catch (Exception e) {
+            System.err.println("Error al buscar usuarios: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Intentar reiniciar la conexión y reintentar
+            try {
+                reiniciarConexion();
+                FindIterable<Document> findIterable = usuariosCollection.find(filtro);
+                try (MongoCursor<Document> cursor = findIterable.iterator()) {
+                    while (cursor.hasNext()) {
+                        try {
+                            usuarios.add(new Usuario(cursor.next()));
+                        } catch (Exception ex) {
+                            System.err.println("Error al crear usuario en segundo intento: " + ex.getMessage());
+                        }
+                    }
+                }
+            } catch (Exception e2) {
+                System.err.println("Error en segundo intento de búsqueda: " + e2.getMessage());
+            }
         }
         
         return usuarios;
     }
     
     /**
-     * Obtener todos los usuarios
+     * Obtener todos los usuarios de la base de datos.
+     * @return Lista con todos los usuarios
      */
     public List<Usuario> obtenerTodosUsuarios() {
         return buscarUsuarios(new Document());
     }
     
     /**
-     * Eliminar un usuario
+     * Eliminar un usuario por su ID.
+     * @param id ID del usuario a eliminar
+     * @return true si el usuario fue eliminado correctamente
      */
     public boolean eliminarUsuario(ObjectId id) {
+        // Verificar y renovar la conexión si es necesario
+        renovarConexionSiNecesario();
+        
         Bson filter = Filters.eq("_id", id);
         DeleteResult result = usuariosCollection.deleteOne(filter);
         return result.wasAcknowledged() && result.getDeletedCount() > 0;
     }
     
     /**
-     * Resetear la contraseña de un usuario
+     * Resetear la contraseña de un usuario.
+     * @param id ID del usuario
+     * @param nuevaContrasena Nueva contraseña
+     * @return true si la contraseña fue actualizada correctamente
      */
     public boolean resetearContrasena(ObjectId id, String nuevaContrasena) {
         try {
+            // Verificar y renovar la conexión si es necesario
+            renovarConexionSiNecesario();
+            
             Document update = new Document("$set", new Document("password", nuevaContrasena));
             usuariosCollection.updateOne(Filters.eq("_id", id), update);
             return true;
@@ -216,10 +302,16 @@ public class ServicioUsuarios {
     }
     
     /**
-     * Activar o desactivar un usuario
+     * Activar o desactivar un usuario.
+     * @param id ID del usuario
+     * @param activo Estado de activación (true/false)
+     * @return true si el estado fue actualizado correctamente
      */
     public boolean cambiarEstadoUsuario(ObjectId id, boolean activo) {
         try {
+            // Verificar y renovar la conexión si es necesario
+            renovarConexionSiNecesario();
+            
             Document update = new Document("$set", new Document("activo", activo));
             usuariosCollection.updateOne(Filters.eq("_id", id), update);
             return true;
@@ -230,9 +322,15 @@ public class ServicioUsuarios {
     }
     
     /**
-     * Buscar usuarios por nombre, apellido o usuario
+     * Buscar usuarios por texto en nombre, apellido o usuario.
+     * @param texto Texto a buscar
+     * @return Lista de usuarios que coinciden con el texto
      */
     public List<Usuario> buscarUsuariosPorTexto(String texto) {
+        if (texto == null || texto.trim().isEmpty()) {
+            return obtenerTodosUsuarios();
+        }
+        
         Bson filtro = Filters.or(
             Filters.regex("nombre", ".*" + texto + ".*", "i"),
             Filters.regex("apellido", ".*" + texto + ".*", "i"),
@@ -242,44 +340,8 @@ public class ServicioUsuarios {
     }
     
     /**
-     * Buscar veterinarios por especialidad
-     */
-    public List<Usuario> buscarUsuariosVeterinariosPorEspecialidad(String especialidad) {
-        Bson filtro = Filters.and(
-            Filters.eq("rol", Usuario.Rol.VETERINARIO.name()),
-            Filters.regex("especialidad", ".*" + especialidad + ".*", "i")
-        );
-        return buscarUsuarios(filtro);
-    }
-    
-    /**
-     * Verifica que la conexión esté activa y la renueva si es necesario
-     */
-    private void renovarConexionSiNecesario() {
-        try {
-            // Verificar si la conexión es válida intentando ejecutar un comando simple
-            empresaDB.runCommand(new Document("ping", 1));
-        } catch (Exception e) {
-            System.err.println("La conexión a MongoDB no es válida. Intentando renovar...");
-            try {
-                // Intentar cerrar la conexión existente
-                GestorConexion.cerrarConexion();
-                
-                // Renovar la conexión
-                this.empresaDB = GestorConexion.conectarEmpresa();
-                this.usuariosCollection = empresaDB.getCollection("usuarios");
-                this.veterinariosCollection = empresaDB.getCollection("veterinarios");
-                
-                System.out.println("Conexión renovada correctamente.");
-            } catch (Exception e2) {
-                System.err.println("Error al renovar la conexión: " + e2.getMessage());
-                throw e2; // Re-lanzar para manejo superior
-            }
-        }
-    }
-
-    /**
-     * Cargar datos de prueba (usuarios y veterinarios)
+     * Carga datos de prueba (usuarios con diferentes roles).
+     * Solo carga datos si la colección de usuarios está vacía.
      */
     public void cargarDatosPrueba() {
         try {
@@ -290,7 +352,7 @@ public class ServicioUsuarios {
             
             System.out.println("Conectado a la base de datos: " + empresaDB.getName());
             
-            // Verificar conexión a la colección
+            // Verificar si ya existen usuarios
             long countUsuarios = 0;
             try {
                 countUsuarios = usuariosCollection.countDocuments();
@@ -331,52 +393,15 @@ public class ServicioUsuarios {
             }
             
             // Crear veterinarios
-            ModeloVeterinario vet1 = new ModeloVeterinario();
-            vet1.setNombre("Carlos");
-            vet1.setApellidos("Rodríguez López");
-            vet1.setDni("12345678A");
-            vet1.setNumeroTitulo("VET12345");
-            vet1.setEspecialidad("Cirugía");
-            vet1.setEmail("carlos@clinica.com");
-            vet1.setTelefono("666234567");
+            crearVeterinarioPrueba(
+                "Carlos", "Rodríguez López", "carlos", "carlos",
+                "carlos@clinica.com", "666234567", "Cirugía", "VET12345", "09:00", "17:00"
+            );
             
-            ObjectId vet1Id = guardarVeterinario(vet1);
-            
-            ModeloVeterinario vet2 = new ModeloVeterinario();
-            vet2.setNombre("Ana");
-            vet2.setApellidos("García Martín");
-            vet2.setDni("87654321B");
-            vet2.setNumeroTitulo("VET54321");
-            vet2.setEspecialidad("Dermatología");
-            vet2.setEmail("ana@clinica.com");
-            vet2.setTelefono("666345678");
-            
-            ObjectId vet2Id = guardarVeterinario(vet2);
-            
-            // Crear usuarios para veterinarios
-            Usuario userVet1 = new Usuario();
-            userVet1.setNombre("Carlos");
-            userVet1.setApellido("Rodríguez");
-            userVet1.setUsuario("carlos");
-            userVet1.setPassword("carlos");
-            userVet1.setEmail("carlos@clinica.com");
-            userVet1.setTelefono("666234567");
-            userVet1.setRol(Usuario.Rol.VETERINARIO);
-            userVet1.setVeterinarioId(vet1Id);
-            
-            guardarUsuario(userVet1);
-            
-            Usuario userVet2 = new Usuario();
-            userVet2.setNombre("Ana");
-            userVet2.setApellido("García");
-            userVet2.setUsuario("ana");
-            userVet2.setPassword("ana");
-            userVet2.setEmail("ana@clinica.com");
-            userVet2.setTelefono("666345678");
-            userVet2.setRol(Usuario.Rol.VETERINARIO);
-            userVet2.setVeterinarioId(vet2Id);
-            
-            guardarUsuario(userVet2);
+            crearVeterinarioPrueba(
+                "Ana", "García Martín", "ana", "ana",
+                "ana@clinica.com", "666345678", "Dermatología", "VET54321", "10:00", "18:00"
+            );
             
             // Crear recepcionista
             Usuario recepcionista = new Usuario(
@@ -416,108 +441,38 @@ public class ServicioUsuarios {
         }
     }
     
-    // Métodos para gestión de veterinarios
-    
     /**
-     * Guardar un veterinario en la base de datos
+     * Método auxiliar para crear un veterinario de prueba.
      */
-    public ObjectId guardarVeterinario(ModeloVeterinario veterinario) {
-        Document doc = veterinario.toDocument();
-        
-        if (veterinario.getId() == null) {
-            // Nuevo veterinario
-            veterinariosCollection.insertOne(doc);
-            if (doc.containsKey("_id")) {
-                veterinario.setId(doc.getObjectId("_id"));
-                return veterinario.getId();
-            }
-        } else {
-            // Actualizar veterinario existente
-            Bson filter = Filters.eq("_id", veterinario.getId());
-            veterinariosCollection.replaceOne(filter, doc);
-            return veterinario.getId();
-        }
-        
-        return null;
-    }
-    
-    /**
-     * Eliminar un veterinario de la base de datos
-     */
-    public boolean eliminarVeterinario(ObjectId id) {
-        Bson filter = Filters.eq("_id", id);
-        DeleteResult result = veterinariosCollection.deleteOne(filter);
-        return result.wasAcknowledged() && result.getDeletedCount() > 0;
-    }
-    
-    /**
-     * Obtener un veterinario por su ID
-     */
-    public ModeloVeterinario obtenerVeterinarioPorId(ObjectId id) {
-        Document doc = veterinariosCollection.find(Filters.eq("_id", id)).first();
-        return doc != null ? new ModeloVeterinario(doc) : null;
-    }
-    
-    /**
-     * Buscar veterinarios por nombre
-     */
-    public List<ModeloVeterinario> buscarVeterinariosPorNombre(String nombre) {
-        if (nombre == null || nombre.trim().isEmpty()) {
-            return obtenerTodosVeterinarios();
-        }
-        
-        Bson filtro = Filters.or(
-            Filters.regex("nombre", ".*" + nombre + ".*", "i"),
-            Filters.regex("apellidos", ".*" + nombre + ".*", "i")
-        );
-        
-        return buscarVeterinarios(filtro);
-    }
-    
-    /**
-     * Buscar veterinarios por especialidad
-     */
-    public List<ModeloVeterinario> buscarVeterinariosPorEspecialidad(String especialidad) {
-        return buscarVeterinarios(Filters.regex("especialidad", ".*" + especialidad + ".*", "i"));
-    }
-    
-    /**
-     * Buscar veterinarios activos
-     */
-    public List<ModeloVeterinario> buscarVeterinariosActivos() {
-        return buscarVeterinarios(Filters.eq("activo", true));
-    }
-    
-    /**
-     * Buscar veterinarios con un filtro personalizado
-     */
-    public List<ModeloVeterinario> buscarVeterinarios(Bson filtro) {
-        List<ModeloVeterinario> veterinarios = new ArrayList<>();
-        
-        FindIterable<Document> findIterable = veterinariosCollection.find(filtro);
-        MongoCursor<Document> cursor = findIterable.iterator();
-        
+    private ObjectId crearVeterinarioPrueba(String nombre, String apellido, String usuario, String password,
+                                         String email, String telefono, String especialidad, String numeroColegiado,
+                                         String horaInicio, String horaFin) {
         try {
-            while (cursor.hasNext()) {
-                Document doc = cursor.next();
-                veterinarios.add(new ModeloVeterinario(doc));
-            }
-        } finally {
-            cursor.close();
+            Usuario veterinario = new Usuario();
+            veterinario.setNombre(nombre);
+            veterinario.setApellido(apellido);
+            veterinario.setUsuario(usuario);
+            veterinario.setPassword(password);
+            veterinario.setEmail(email);
+            veterinario.setTelefono(telefono);
+            veterinario.setRol(Usuario.Rol.VETERINARIO);
+            veterinario.setEspecialidad(especialidad);
+            veterinario.setNumeroColegiado(numeroColegiado);
+            veterinario.setHoraInicio(horaInicio);
+            veterinario.setHoraFin(horaFin);
+            veterinario.setDisponible(true);
+            veterinario.setActivo(true);
+            
+            return guardarUsuario(veterinario);
+        } catch (Exception e) {
+            System.err.println("Error al crear veterinario de prueba: " + e.getMessage());
+            e.printStackTrace();
+            return null;
         }
-        
-        return veterinarios;
     }
     
     /**
-     * Obtener todos los veterinarios
-     */
-    public List<ModeloVeterinario> obtenerTodosVeterinarios() {
-        return buscarVeterinarios(new Document());
-    }
-
-    /**
-     * Verifica la conexión a MongoDB y la renueva si es necesario
+     * Verifica la conexión a MongoDB y la renueva si es necesario.
      * @return true si la conexión es válida (después de intentar renovarla si fuera necesario)
      */
     public boolean verificarConexion() {
@@ -549,13 +504,6 @@ public class ServicioUsuarios {
     }
     
     /**
-     * Obtiene acceso a la colección de veterinarios
-     */
-    public MongoCollection<Document> getVeterinariosCollection() {
-        return veterinariosCollection;
-    }
-    
-    /**
      * Reinicia la conexión a MongoDB si hay problemas
      */
     public void reiniciarConexion() {
@@ -577,12 +525,36 @@ public class ServicioUsuarios {
             
             // Actualizar las referencias a las colecciones
             this.usuariosCollection = empresaDB.getCollection("usuarios");
-            this.veterinariosCollection = empresaDB.getCollection("veterinarios");
             
             System.out.println("Conexión a MongoDB reiniciada correctamente");
         } catch (Exception e) {
             System.err.println("Error al reiniciar conexión a MongoDB: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Verifica que la conexión esté activa y la renueva si es necesario.
+     */
+    private void renovarConexionSiNecesario() {
+        try {
+            // Verificar si la conexión es válida intentando ejecutar un comando simple
+            empresaDB.runCommand(new Document("ping", 1));
+        } catch (Exception e) {
+            System.err.println("La conexión a MongoDB no es válida. Intentando renovar...");
+            try {
+                // Intentar cerrar la conexión existente
+                GestorConexion.cerrarConexion();
+                
+                // Renovar la conexión
+                this.empresaDB = GestorConexion.conectarEmpresa();
+                this.usuariosCollection = empresaDB.getCollection("usuarios");
+                
+                System.out.println("Conexión renovada correctamente.");
+            } catch (Exception e2) {
+                System.err.println("Error al renovar la conexión: " + e2.getMessage());
+                throw e2; // Re-lanzar para manejo superior
+            }
         }
     }
 } 

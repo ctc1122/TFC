@@ -282,30 +282,38 @@ public class PanelInicioController implements Initializable {
     }
     
     /**
-     * Abre el módulo de gestión empresarial
+     * Abre el módulo de gestión de empresa
      */
     private void abrirModuloEmpresa() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Empresa/empresa-view.fxml"));
-            Parent contenido = loader.load();
+            // Verificar que el usuario tenga permisos de administrador
+            if (usuarioActual == null || !usuarioActual.esAdmin()) {
+                mostrarError("Acceso denegado", "Solo los administradores pueden acceder al módulo de Empresa.");
+                return;
+            }
             
-            // No intentamos establecer el servicio o usuario en el controlador
-            // ya que podría no existir en esta versión del código
+            // Establecer el usuario actual en el servicio
+            servicioUsuarios.setUsuarioActual(usuarioActual);
             
-            // Obtener el BorderPane central y reemplazar su contenido
+            // Inicializar el módulo de Empresa usando la nueva clase simplificada
+            com.example.pruebamongodbcss.Modulos.Empresa.EmpresaMain empresaMain = 
+                new com.example.pruebamongodbcss.Modulos.Empresa.EmpresaMain(servicioUsuarios);
+            
+            // Obtener el BorderPane central para integrar el módulo
             BorderPane centerPane = (BorderPane) root.getCenter();
-            centerPane.setCenter(contenido);
+            
+            // Iniciar el módulo integrado en el panel central
+            empresaMain.iniciarIntegrado(centerPane);
             
             // Actualizar el título
-            lblClinica.setText("Gestión Empresarial");
+            lblClinica.setText("Gestión de Empresa");
             
-            // Mantener visible el carrusel
+            // Mantener visible el carrusel si está activo
             mantenerCarruselVisible();
             
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            System.err.println("Error al cargar el módulo de empresa: " + e.getMessage());
-            mostrarError("Error", "No se pudo cargar el módulo de gestión empresarial: " + e.getMessage());
+            mostrarError("Error", "Error al iniciar el módulo de Empresa: " + e.getMessage());
         }
     }
 

@@ -5,8 +5,16 @@ import java.util.Date;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+/**
+ * Clase central para la gestión de usuarios del sistema.
+ * Representa un usuario del sistema con sus diferentes roles y características.
+ * Este modelo unificado maneja tanto usuarios regulares como veterinarios.
+ */
 public class Usuario {
 
+    /**
+     * Enumeración de los roles disponibles en el sistema.
+     */
     public enum Rol {
         ADMINISTRADOR("Administrador"),
         VETERINARIO("Veterinario"),
@@ -34,6 +42,7 @@ public class Usuario {
         }
     }
 
+    // Campos básicos de usuario
     private ObjectId _id;
     private String nombre;
     private String apellido;
@@ -44,14 +53,16 @@ public class Usuario {
     private String email;
     private String telefono;
     private boolean activo;
-    private ObjectId veterinarioId; // Referencia al ModeloVeterinario si el rol es VETERINARIO
     
-    // Campos adicionales para veterinarios
+    // Campos específicos para veterinarios
     private String especialidad;
     private String numeroColegiado;
     private String horaInicio;
     private String horaFin;
     private boolean disponible;
+    
+    // Campo de referencia (solo para compatibilidad)
+    private ObjectId veterinarioId;
 
     /* Constructores */
     
@@ -72,7 +83,6 @@ public class Usuario {
 
     /**
      * Constructor para crear un nuevo usuario administrador
-     * (ahora necesita que la solicitud venga de un usuario con privilegios de administrador)
      */
     public Usuario(String nombre, String apellido, String usuario, String password, String email, String telefono, String contrasenaAdmin) throws Exception {
         this.setNombre(nombre);
@@ -83,9 +93,6 @@ public class Usuario {
         this.setTelefono(telefono);
         this.fechaCreacion = new Date();
         this.activo = true;
-        
-        // Ya no verificamos una contraseña hardcodeada
-        // La verificación de privilegios de administrador se hace en el controlador
         this.rol = Rol.ADMINISTRADOR;
     }
     
@@ -249,7 +256,11 @@ public class Usuario {
         return doc;
     }
 
-    /* Métodos */
+    /* Métodos utilitarios */
+    
+    /**
+     * Devuelve una representación en cadena del usuario
+     */
     @Override
     public String toString() {
         return "Usuario{" +
@@ -264,7 +275,7 @@ public class Usuario {
     }
     
     /**
-     * Devuelve el nombre completo del usuario
+     * Devuelve el nombre completo del usuario (nombre + apellido)
      */
     public String getNombreCompleto() {
         return nombre + " " + apellido;
@@ -276,8 +287,30 @@ public class Usuario {
     public boolean esAdmin() {
         return rol == Rol.ADMINISTRADOR;
     }
+    
+    /**
+     * Verifica si el usuario es veterinario
+     */
+    public boolean esVeterinario() {
+        return rol == Rol.VETERINARIO;
+    }
+    
+    /**
+     * Verifica si el usuario es recepcionista
+     */
+    public boolean esRecepcionista() {
+        return rol == Rol.RECEPCIONISTA;
+    }
+    
+    /**
+     * Verifica si el usuario es auxiliar
+     */
+    public boolean esAuxiliar() {
+        return rol == Rol.AUXILIAR;
+    }
 
     /* Setters y Getters */
+    
     public void setNombre(String nombre) throws PatronExcepcion {
         if (nombre == null || nombre.isEmpty() || !nombre.matches("^[A-Za-zÁÉÍÓÚáéíóúñÑ ]{2,50}$")) {
             throw new PatronExcepcion("Nombre no válido");
