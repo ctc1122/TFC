@@ -5,14 +5,20 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.URL;
+import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
+
+import org.bson.Document;
 
 import com.example.pruebamongodbcss.Data.Clinica;
 import com.example.pruebamongodbcss.Data.PatronExcepcion;
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 
+import Utilidades.GestorConexion;
 import Utilidades.ScreensaverManager;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -405,7 +411,7 @@ public class PanelInicioSesionController extends Application implements Initiali
     @FXML
     private void inicioSesion() {
         // Obtener el usuario tal como se escribe (respetando mayúsculas/minúsculas)
-        String usuario = campoUsuario.getText();
+        final String usuario = campoUsuario.getText();
         
         // Obtener la contraseña del campo visible o invisible según corresponda
         final String password;
@@ -474,25 +480,15 @@ public class PanelInicioSesionController extends Application implements Initiali
                         // Si no lanza excepción, el usuario se autenticó correctamente
                         autenticado = (usuarioAutenticado != null);
                         
-                    } catch (PatronExcepcion e) {
-                        System.err.println("Error de autenticación: " + e.getMessage());
-                        autenticado = false;
-                        
                         // Imprimir información adicional para debug
                         System.out.println("Intentando iniciar sesión con: usuario='" + usuario + "', password='" + password + "'");
                         
-                        // Si todo falla, usar el modo "Administrador"/"admin12345" como último recurso
-                        if (usuario.equals("Administrador") && password.equals("admin12345")) {
-                            autenticado = true;
-                        }
+                    } catch (PatronExcepcion e) {
+                        System.err.println("Error de autenticación: " + e.getMessage());
+                        autenticado = false;
                     } catch (Exception e) {
                         System.err.println("Error general al iniciar sesión con la clase Clinica: " + e.getMessage());
                         autenticado = false;
-                        
-                        // Si todo falla, usar el modo "Administrador"/"admin12345" como último recurso
-                        if (usuario.equals("Administrador") && password.equals("admin12345")) {
-                            autenticado = true;
-                        }
                     }
                 }
 
@@ -506,30 +502,52 @@ public class PanelInicioSesionController extends Application implements Initiali
                     if (resultadoFinal) {
                         mostrarMensaje("Inicio de sesión exitoso.");
                         
-                        // Si es el usuario hardcodeado, crear un objeto Usuario para él
-                        if (usuario.equals("Administrador") && password.equals("admin12345") && usuarioFinal == null) {
-                            try {
-                                // Crear el administrador con los parámetros necesarios para el nuevo constructor
-                                Usuario adminUsuario = new Usuario(
-                                    "Administrador", 
-                                    "Sistema", 
-                                    "admin", 
-                                    "admin12345", 
-                                    "admin@admin.com", 
-                                    "000000000", 
-                                    "admin12345" // Contraseña especial para admin
-                                );
-                                cambiarAMenuPrincipal(adminUsuario);
-                            } catch (Exception e) {
-                                System.err.println("Error al crear usuario admin: " + e.getMessage());
-                                cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
-                            }
-                        } else if (usuarioFinal != null) {
+                        // Si el usuario es nulo pero la autenticación es correcta,
+                        // crear un usuario básico para permitir el inicio de sesión
+                        if (usuarioFinal != null) {
                             // Si tenemos un usuario autenticado normal
                             cambiarAMenuPrincipal(usuarioFinal);
                         } else {
-                            // Fallback si algo sale mal
-                            cambiarPantalla("/com/example/pruebamongodbcss/panelInicio.fxml");
+                            // Crear un usuario básico con los datos de inicio de sesión
+                            try {
+                                System.out.println("Usuario autenticado pero sin datos completos. Creando usuario básico...");
+                                
+                                // Crear un Document con datos mínimos del usuario
+                                Document userDoc = new Document()
+                                    .append("usuario", usuario)
+                                    .append("password", password)
+                                    .append("nombre", usuario)
+                                    .append("apellido", "")
+                                    .append("email", usuario + "@clinica.com")
+                                    .append("telefono", "000000000")
+                                    .append("rol", "NORMAL") // Por defecto normal
+                                    .append("fechaCreacion", new Date())
+                                    .append("activo", true);
+                                
+                                try {
+                                    // Intentar obtener información de rol desde la base de datos
+                                    MongoDatabase db = GestorConexion.conectarEmpresa();
+                                    MongoCollection<Document> usuariosCollection = db.getCollection("usuarios");
+                                    Document query = new Document("usuario", usuario);
+                                    Document result = usuariosCollection.find(query).first();
+                                    
+                                    if (result != null && result.containsKey("rol")) {
+                                        String rol = result.getString("rol");
+                                        System.out.println("Rol encontrado en BD: " + rol);
+                                        userDoc.append("rol", rol);
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al buscar rol en BD: " + e.getMessage());
+                                }
+                                
+                                // Usar el constructor que acepta un Document
+                                Usuario usuarioBasico = new Usuario(userDoc);
+                                
+                                cambiarAMenuPrincipal(usuarioBasico);
+                            } catch (Exception e) {
+                                System.err.println("Error al crear usuario básico: " + e.getMessage());
+                                mostrarMensaje("Error: No se pudo crear un usuario básico. " + e.getMessage());
+                            }
                         }
                     } else {
                         mostrarMensaje("Usuario o contraseña incorrectos.");

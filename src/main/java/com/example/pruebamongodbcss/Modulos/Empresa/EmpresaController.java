@@ -10,6 +10,7 @@ import java.util.ResourceBundle;
 import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.Data.Usuario;
 
+import Utilidades.GestorConexion;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -34,6 +35,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+
+
 /**
  * Controlador para la gestión de empresa (usuarios y veterinarios).
  */
@@ -55,50 +58,62 @@ public class EmpresaController implements Initializable {
     
     // Tab de Usuarios
     @FXML private Tab tabUsuarios;
-    @FXML private TableView<Usuario> tablaUsuarios;
-    @FXML private TableColumn<Usuario, String> colUsuario;
-    @FXML private TableColumn<Usuario, String> colNombreUsuario;
-    @FXML private TableColumn<Usuario, String> colRol;
-    @FXML private TableColumn<Usuario, String> colEmailUsuario;
-    @FXML private TableColumn<Usuario, String> colTelefonoUsuario;
-    @FXML private TableColumn<Usuario, Boolean> colActivo;
+    @FXML private TableView<ModeloUsuario> tablaUsuarios;
+    @FXML private TableColumn<ModeloUsuario, String> colUsuario;
+    @FXML private TableColumn<ModeloUsuario, String> colNombreUsuario;
+    @FXML private TableColumn<ModeloUsuario, String> colRol;
+    @FXML private TableColumn<ModeloUsuario, String> colEmailUsuario;
+    @FXML private TableColumn<ModeloUsuario, String> colTelefonoUsuario;
+    @FXML private TableColumn<ModeloUsuario, Boolean> colActivo;
     @FXML private TextField txtBuscarUsuario;
     
     // Tab de Configuración
     @FXML private Tab tabConfiguracion;
     @FXML private Button btnCargarDatos;
+    @FXML private Button btnReconectarDB;
     @FXML private Button btnBackup;
     @FXML private Button btnRestore;
     
-    // Servicio
+    // Servicios
     private ServicioUsuarios servicio;
+    private ServicioModeloUsuario servicioModelo;
     
     // Listas observables
     private ObservableList<ModeloVeterinario> veterinariosObservable;
-    private ObservableList<Usuario> usuariosObservable;
+    private ObservableList<ModeloUsuario> usuariosObservable;
     
     // Formato para fechas
     private final SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy");
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // Inicializar servicio
-        servicio = new ServicioUsuarios();
-        
-        // Configurar listas observables
-        veterinariosObservable = FXCollections.observableArrayList();
-        usuariosObservable = FXCollections.observableArrayList();
-        
-        // Configurar tablas
-        configurarTablaVeterinarios();
-        configurarTablaUsuarios();
-        
-        // Cargar datos iniciales
-        cargarVeterinarios();
-        cargarUsuarios();
-        
-        // Configurar filtros de búsqueda
-        configurarFiltros();
+        try {
+            // Inicializar servicios
+            servicio = new ServicioUsuarios();
+            servicioModelo = new ServicioModeloUsuario();
+            
+            // Configurar listas observables
+            veterinariosObservable = FXCollections.observableArrayList();
+            usuariosObservable = FXCollections.observableArrayList();
+            
+            // Configurar tablas
+            configurarTablaVeterinarios();
+            configurarTablaUsuarios();
+            
+            // Cargar datos iniciales
+            cargarVeterinarios();
+            cargarUsuarios();
+            
+            // Configurar filtros de búsqueda
+            configurarFiltros();
+            
+            System.out.println("Inicialización completada correctamente");
+        } catch (Exception e) {
+            System.err.println("Error en la inicialización: " + e.getMessage());
+            e.printStackTrace();
+            mostrarAlerta("Error de inicialización", "No se pudo inicializar la aplicación correctamente", 
+                "Se produjo un error al inicializar la aplicación: " + e.getMessage());
+        }
     }
     
     /**
@@ -133,11 +148,11 @@ public class EmpresaController implements Initializable {
      */
     private void configurarTablaUsuarios() {
         colUsuario.setCellValueFactory(data -> 
-            new SimpleStringProperty(data.getValue().getUsuario()));
+            new SimpleStringProperty(data.getValue().getUsername()));
         colNombreUsuario.setCellValueFactory(data -> 
             new SimpleStringProperty(data.getValue().getNombreCompleto()));
         colRol.setCellValueFactory(data -> 
-            new SimpleStringProperty(data.getValue().getRol().getDescripcion()));
+            new SimpleStringProperty(data.getValue().getRolUsuario().getDescripcion()));
         colEmailUsuario.setCellValueFactory(data -> 
             new SimpleStringProperty(data.getValue().getEmail()));
         colTelefonoUsuario.setCellValueFactory(data -> 
@@ -145,8 +160,8 @@ public class EmpresaController implements Initializable {
         colActivo.setCellValueFactory(data -> 
             new SimpleBooleanProperty(data.getValue().isActivo()));
         
-        // Personalizar la celda de activo para mostrar un círculo verde/rojo
-        colActivo.setCellFactory(col -> new TableCell<Usuario, Boolean>() {
+        // Personalizar la celda de activo para mostrar un texto verde/rojo
+        colActivo.setCellFactory(col -> new TableCell<ModeloUsuario, Boolean>() {
             @Override
             protected void updateItem(Boolean item, boolean empty) {
                 super.updateItem(item, empty);
@@ -208,12 +223,25 @@ public class EmpresaController implements Initializable {
     }
     
     /**
-     * Carga todos los usuarios
+     * Carga todos los usuarios usando el servicio de ModeloUsuario
      */
     private void cargarUsuarios() {
-        usuariosObservable.clear();
-        List<Usuario> usuarios = servicio.obtenerTodosUsuarios();
-        usuariosObservable.addAll(usuarios);
+        try {
+            // Limpiar la lista observable
+            usuariosObservable.clear();
+            
+            // Obtener usuarios directamente desde el servicio
+            List<Usuario> usuariosOriginales = servicio.obtenerTodosUsuarios();
+            
+            if (usuariosOriginales != null && !usuariosOriginales.isEmpty()) {
+                for (Usuario user : usuariosOriginales) {
+                    ModeloUsuario modelo = new ModeloUsuario(user);
+                    usuariosObservable.add(modelo);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al cargar usuarios: " + e.getMessage());
+        }
     }
     
     /**
@@ -221,15 +249,8 @@ public class EmpresaController implements Initializable {
      */
     private void buscarUsuariosPorTexto(String texto) {
         usuariosObservable.clear();
-        List<Usuario> usuarios = servicio.obtenerTodosUsuarios();
-        
-        for (Usuario usuario : usuarios) {
-            if (usuario.getNombreCompleto().toLowerCase().contains(texto.toLowerCase()) ||
-                usuario.getEmail().toLowerCase().contains(texto.toLowerCase()) ||
-                usuario.getUsuario().toLowerCase().contains(texto.toLowerCase())) {
-                usuariosObservable.add(usuario);
-            }
-        }
+        List<ModeloUsuario> usuarios = servicioModelo.buscarUsuariosPorTexto(texto);
+        usuariosObservable.addAll(usuarios);
     }
     
     @FXML
@@ -320,7 +341,7 @@ public class EmpresaController implements Initializable {
     
     @FXML
     private void onEditarUsuario(ActionEvent event) {
-        Usuario usuarioSeleccionado = tablaUsuarios.getSelectionModel().getSelectedItem();
+        ModeloUsuario usuarioSeleccionado = tablaUsuarios.getSelectionModel().getSelectedItem();
         
         if (usuarioSeleccionado != null) {
             abrirFormularioUsuario(usuarioSeleccionado);
@@ -332,12 +353,14 @@ public class EmpresaController implements Initializable {
     
     @FXML
     private void onEliminarUsuario(ActionEvent event) {
-        Usuario usuarioSeleccionado = tablaUsuarios.getSelectionModel().getSelectedItem();
+        ModeloUsuario usuarioSeleccionado = tablaUsuarios.getSelectionModel().getSelectedItem();
         
         if (usuarioSeleccionado != null) {
             // No permitir eliminar al último administrador
-            if (usuarioSeleccionado.esAdmin() && 
-                usuariosObservable.stream().filter(Usuario::esAdmin).count() <= 1) {
+            if (usuarioSeleccionado.getRol() == Usuario.Rol.ADMINISTRADOR && 
+                usuariosObservable.stream()
+                    .filter(u -> u.getRol() == Usuario.Rol.ADMINISTRADOR)
+                    .count() <= 1) {
                 mostrarAlerta("Operación no permitida", "No se puede eliminar el último administrador", 
                     "El sistema requiere al menos un administrador activo.");
                 return;
@@ -349,7 +372,7 @@ public class EmpresaController implements Initializable {
             
             if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
                 try {
-                    boolean eliminado = servicio.eliminarUsuario(usuarioSeleccionado.getId());
+                    boolean eliminado = servicioModelo.eliminarUsuario(usuarioSeleccionado.getId());
                     
                     if (eliminado) {
                         mostrarMensaje("Usuario eliminado", "Usuario eliminado con éxito", 
@@ -372,7 +395,7 @@ public class EmpresaController implements Initializable {
     
     @FXML
     private void onResetPassword(ActionEvent event) {
-        Usuario usuarioSeleccionado = tablaUsuarios.getSelectionModel().getSelectedItem();
+        ModeloUsuario usuarioSeleccionado = tablaUsuarios.getSelectionModel().getSelectedItem();
         
         if (usuarioSeleccionado != null) {
             TextInputDialog dialog = new TextInputDialog();
@@ -384,12 +407,18 @@ public class EmpresaController implements Initializable {
             
             if (resultado.isPresent() && !resultado.get().isEmpty()) {
                 try {
-                    String nuevaPassword = resultado.get();
-                    usuarioSeleccionado.setPassword(nuevaPassword);
-                    servicio.guardarUsuario(usuarioSeleccionado);
+                    // Obtener el usuario subyacente y modificar la contraseña
+                    Usuario usuario = usuarioSeleccionado.getUsuario();
+                    usuario.setPassword(resultado.get());
+                    
+                    // Guardar el usuario modificado
+                    servicio.guardarUsuario(usuario);
                     
                     mostrarMensaje("Contraseña actualizada", "Contraseña actualizada con éxito", 
                         "La contraseña para " + usuarioSeleccionado.getNombreCompleto() + " ha sido actualizada.");
+                    
+                    // Recargar usuarios
+                    cargarUsuarios();
                 } catch (Exception e) {
                     mostrarAlerta("Error", "Error al actualizar contraseña", 
                         "Se produjo un error al actualizar la contraseña: " + e.getMessage());
@@ -401,7 +430,7 @@ public class EmpresaController implements Initializable {
         }
     }
     
-    private void abrirFormularioUsuario(Usuario usuario) {
+    private void abrirFormularioUsuario(ModeloUsuario usuario) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Empresa/usuario-form.fxml"));
             Parent root = loader.load();
@@ -410,7 +439,8 @@ public class EmpresaController implements Initializable {
             controller.setServicio(servicio);
             
             if (usuario != null) {
-                controller.setUsuario(usuario);
+                // Pasar el Usuario subyacente al formulario
+                controller.setUsuario(usuario.getUsuario());
             }
             
             Stage stage = new Stage();
@@ -438,17 +468,60 @@ public class EmpresaController implements Initializable {
         
         if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
             try {
-                servicio.cargarDatosPrueba();
+                System.out.println("Iniciando carga de datos de prueba...");
+                
+                // Asegurar que tenemos una conexión válida a la base de datos
+                try {
+                    // Intentar reiniciar la conexión primero
+                    System.out.println("Reiniciando conexión a MongoDB...");
+                    GestorConexion.cerrarConexion();
+                    servicioModelo.reiniciarConexion();
+                    
+                    // Verificar si la conexión es válida
+                    if (!servicioModelo.verificarConexion()) {
+                        throw new Exception("No se pudo establecer conexión con MongoDB");
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error al conectar a MongoDB: " + e.getMessage());
+                    mostrarAlerta("Error de conexión", "Error al conectar a MongoDB", 
+                        "No se pudo establecer conexión con la base de datos. Detalles: " + e.getMessage());
+                    return;
+                }
+                
+                // Cargar datos de prueba
+                servicioModelo.cargarDatosPrueba();
                 
                 mostrarMensaje("Datos cargados", "Datos de prueba cargados con éxito", 
                     "Los datos de prueba han sido cargados correctamente en el sistema.");
                 
+                // Recargar los datos en las tablas
                 cargarVeterinarios();
                 cargarUsuarios();
+                
             } catch (Exception e) {
+                System.err.println("Error al cargar datos: " + e.getMessage());
+                e.printStackTrace();
                 mostrarAlerta("Error", "Error al cargar datos", 
                     "Se produjo un error al cargar los datos de prueba: " + e.getMessage());
             }
+        }
+    }
+    
+    @FXML
+    private void onReconectarDB(ActionEvent event) {
+        try {
+            System.out.println("Forzando reconexión a MongoDB...");
+            servicioModelo.reiniciarConexion();
+            
+            // Recargar datos
+            cargarVeterinarios();
+            cargarUsuarios();
+            
+            mostrarMensaje("Conexión restablecida", "Reconexión exitosa", 
+                "La conexión a la base de datos ha sido restablecida correctamente.");
+        } catch (Exception e) {
+            mostrarAlerta("Error", "Error al reconectar", 
+                "Se produjo un error al intentar reconectar a la base de datos: " + e.getMessage());
         }
     }
     

@@ -135,6 +135,7 @@ xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.
                         <VBox alignment="CENTER" spacing="15.0">
                            <children>
                               <Button fx:id="btnCargarDatos" onAction="#onCargarDatos" styleClass="btn-primary" text="Cargar Datos de Prueba" />
+                              <Button fx:id="btnReconectarDB" onAction="#onReconectarDB" styleClass="btn-warning" text="Reconectar Base de Datos" />
                               <Button fx:id="btnBackup" onAction="#onCrearBackup" styleClass="btn-secondary" text="Crear Copia de Seguridad" />
                               <Button fx:id="btnRestore" onAction="#onRestaurarBackup" styleClass="btn-info" text="Restaurar Copia" />
                            </children>

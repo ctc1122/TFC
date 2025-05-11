@@ -114,37 +114,33 @@ public class RegistroUsuarioController implements Initializable {
                 
                 if (newVal == Usuario.Rol.ADMINISTRADOR) {
                     chkAdmin.setSelected(true);
-                    panelAdmin.setVisible(true);
-                    panelAdmin.setManaged(true);
                 } else {
                     if (!modoEdicion) {
                         chkAdmin.setSelected(false);
                     }
-                    panelAdmin.setVisible(false);
-                    panelAdmin.setManaged(false);
                 }
             });
             
             // Mostrar/ocultar panel de admin según checkbox
             chkAdmin.selectedProperty().addListener((obs, oldVal, newVal) -> {
                 if (newVal) {
-                    panelAdmin.setVisible(true);
-                    panelAdmin.setManaged(true);
                     comboRol.getSelectionModel().select(Usuario.Rol.ADMINISTRADOR);
                 } else {
-                    panelAdmin.setVisible(false);
-                    panelAdmin.setManaged(false);
                     if (comboRol.getValue() == Usuario.Rol.ADMINISTRADOR) {
                         comboRol.getSelectionModel().select(Usuario.Rol.NORMAL);
                     }
                 }
             });
             
+            // Ocultar panel de admin (ya no se necesita contraseña de admin)
+            if (panelAdmin != null) {
+                panelAdmin.setVisible(false);
+                panelAdmin.setManaged(false);
+            }
+            
             // Inicialmente ocultar panel de veterinario y admin
             panelVeterinario.setVisible(false);
             panelVeterinario.setManaged(false);
-            panelAdmin.setVisible(false);
-            panelAdmin.setManaged(false);
 
         } catch (Exception e) {
             mostrarAlerta("Error", "Error al inicializar: " + e.getMessage(), Alert.AlertType.ERROR);
@@ -202,16 +198,17 @@ public class RegistroUsuarioController implements Initializable {
             if (usuario == null) {
                 // Nuevo usuario
                 if (chkAdmin.isSelected()) {
-                    // Crear admin
+                    // Crear usuario normal primero
                     usuario = new Usuario(
                         txtNombre.getText(),
                         txtApellido.getText(),
                         txtUsuario.getText(),
                         txtPassword.getText(),
                         txtEmail.getText(),
-                        txtTelefono.getText(),
-                        txtContraseñaAdmin.getText()
+                        txtTelefono.getText()
                     );
+                    // Establecer rol administrador
+                    usuario.setRol(Usuario.Rol.ADMINISTRADOR);
                 } else {
                     // Crear usuario normal
                     usuario = new Usuario(
@@ -327,8 +324,9 @@ public class RegistroUsuarioController implements Initializable {
         
         // Validar contraseña de admin si aplica
         if (chkAdmin.isSelected() && !modoEdicion) {
-            if (!txtContraseñaAdmin.getText().equals("admin12345")) {
-                mostrarError("Contraseña incorrecta", "La contraseña de administrador es incorrecta.");
+            // Verificar que el usuario actual tiene permisos de administrador
+            if (!servicio.esUsuarioAdmin()) {
+                mostrarError("Permisos insuficientes", "Solo los administradores pueden crear nuevos usuarios administradores.");
                 return false;
             }
         }

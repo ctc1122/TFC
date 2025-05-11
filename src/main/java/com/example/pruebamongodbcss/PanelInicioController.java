@@ -14,6 +14,7 @@ import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
+import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
 import javafx.fxml.FXML;
@@ -685,9 +686,25 @@ public class PanelInicioController implements Initializable {
             boton.setVisible(false);
         }
         
-        // Ocultar la zona de anclaje
+        // Mantener la zona de anclaje visible y resaltada en azul
         if (zonaAnclaje != null) {
-            zonaAnclaje.setVisible(false);
+            // Asegurar que sigue visible
+            zonaAnclaje.setVisible(true);
+            // Establecer estilo destacado para la zona de anclaje
+            zonaAnclaje.setStyle("-fx-background-color: rgba(0, 191, 255, 0.6); -fx-border-width: 0 4px 0 0; -fx-border-color: rgba(30, 144, 255, 1.0); -fx-effect: dropshadow(gaussian, rgba(30, 144, 255, 0.8), 15, 0, 5, 0);");
+            zonaAnclaje.toFront();
+            
+            // Configurar un temporizador para ocultar la zona de anclaje después de un breve periodo
+            PauseTransition delay = new PauseTransition(Duration.seconds(1.5));
+            delay.setOnFinished(event -> {
+                // Desvanecer gradualmente la zona de anclaje
+                FadeTransition fade = new FadeTransition(Duration.seconds(0.5), zonaAnclaje);
+                fade.setFromValue(1.0);
+                fade.setToValue(0.0);
+                fade.setOnFinished(e -> zonaAnclaje.setVisible(false));
+                fade.play();
+            });
+            delay.play();
         }
     }
 

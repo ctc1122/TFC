@@ -28,7 +28,6 @@ public class Clinica {
     private Map<String, SeguimientoClinico> seguimientosClinicos; // Id de paciente -> Seguimiento clínico
     
     private static final int MAX_USUARIOS = 100;
-    static final String CONTRASENA_ADMIN = "admin12345";
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     /* Constructor */
@@ -67,41 +66,14 @@ public class Clinica {
         while (iterador.hasNext()) {
             Document usuarioDoc = iterador.next();
             try {
-                // Crear el usuario basado en el rol
-                String rol = usuarioDoc.getString("rol");
                 Usuario usuario;
                 
-                if (rol != null && rol.equals("ADMINISTRADOR")) {
-                    // Crear usuario administrador - la contraseña admin ya está validada en la BD
-                    usuario = new Usuario(
-                        usuarioDoc.getString("nombre"),
-                        usuarioDoc.getString("apellido"),
-                        usuarioDoc.getString("usuario"),
-                        usuarioDoc.getString("password"),
-                        usuarioDoc.getString("email"),
-                        usuarioDoc.getString("telefono"),
-                        CONTRASENA_ADMIN
-                    );
-                } else {
-                    // Crear usuario normal
-                    usuario = new Usuario(
-                        usuarioDoc.getString("nombre"),
-                        usuarioDoc.getString("apellido"),
-                        usuarioDoc.getString("usuario"),
-                        usuarioDoc.getString("password"),
-                        usuarioDoc.getString("email"),
-                        usuarioDoc.getString("telefono")
-                    );
-                }
+                // Crear usuario usando el constructor apropiado basado en el documento
+                usuario = new Usuario(usuarioDoc);
                 
-                // Asignar el ID de MongoDB si existe
-                if (usuarioDoc.containsKey("_id")) {
-                    usuario.setId(usuarioDoc.getObjectId("_id"));
-                }
-                
-                // Asignar fecha de creación si existe
-                if (usuarioDoc.containsKey("fechaCreacion")) {
-                    usuario.setFechaCreacion(usuarioDoc.getDate("fechaCreacion"));
+                // También podemos cargar otros datos específicos si es necesario
+                if (usuarioDoc.containsKey("activo")) {
+                    usuario.setActivo(usuarioDoc.getBoolean("activo"));
                 }
                 
                 this.usuarios.add(usuario);
@@ -273,49 +245,21 @@ public class Clinica {
         usuariosCollection.insertOne(usuarioDoc);
     }
 
+    /**
+     * Inicia sesión con un usuario y contraseña
+     */
     public Usuario iniciarSesion(String usuario, String contraseña) throws PatronExcepcion {
-        System.out.println("Intentando iniciar sesión en MongoDB con: " + usuario);
-        
+        // Buscar el usuario en la base de datos
         MongoDatabase empresaDB = GestorConexion.conectarEmpresa();
         MongoCollection<Document> usuariosCollection = empresaDB.getCollection("usuarios");
-
-        Document query = new Document("usuario", usuario);
-        // Busca el usuario en la base de datos por nombre de usuario
-        Document resultado = usuariosCollection.find(query).first();
-
-        if (resultado == null) {
-            System.out.println("No se encontró ningún usuario con el nombre: " + usuario);
-            throw new PatronExcepcion("Usuario no encontrado");
-        }
         
-        System.out.println("Usuario encontrado: " + resultado.toJson());
+        Document filtro = new Document("usuario", usuario).append("password", contraseña);
+        Document resultado = usuariosCollection.find(filtro).first();
         
-        // Verificar si la contraseña coincide
-        String contraseñaAlmacenada = resultado.getString("password");
-        if (contraseñaAlmacenada.equals(contraseña)) {
-            System.out.println("Contraseña correcta para el usuario: " + usuario);
+        if (resultado != null) {
             try {
-                String rol = resultado.getString("rol");
-                if (rol != null && rol.equals("ADMINISTRADOR")) {
-                    return new Usuario(
-                        resultado.getString("nombre"),
-                        resultado.getString("apellido"),
-                        resultado.getString("usuario"),
-                        resultado.getString("password"),
-                        resultado.getString("email"),
-                        resultado.getString("telefono"),
-                        CONTRASENA_ADMIN
-                    );
-                } else {
-                    return new Usuario(
-                        resultado.getString("nombre"),
-                        resultado.getString("apellido"),
-                        resultado.getString("usuario"),
-                        resultado.getString("password"),
-                        resultado.getString("email"),
-                        resultado.getString("telefono")
-                    );
-                }
+                // Crear el usuario usando el constructor basado en Document
+                return new Usuario(resultado);
             } catch (Exception e) {
                 throw new PatronExcepcion("Error al cargar el usuario: " + e.getMessage());
             }

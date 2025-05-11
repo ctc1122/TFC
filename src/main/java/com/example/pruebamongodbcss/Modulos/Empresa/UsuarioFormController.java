@@ -1,19 +1,24 @@
 package com.example.pruebamongodbcss.Modulos.Empresa;
 
-import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
-import javafx.scene.control.*;
-import javafx.stage.Stage;
-import javafx.collections.FXCollections;
+import java.net.URL;
+import java.util.ResourceBundle;
+
 import org.bson.types.ObjectId;
 
-import com.example.pruebamongodbcss.Data.Usuario;
+import com.example.pruebamongodbcss.Data.PatronExcepcion;
 import com.example.pruebamongodbcss.Data.ServicioUsuarios;
+import com.example.pruebamongodbcss.Data.Usuario;
 
-import java.net.URL;
-import java.util.Date;
-import java.util.List;
-import java.util.ResourceBundle;
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
+import javafx.stage.Stage;
 
 /**
  * Controlador para el formulario de creación/edición de usuarios.
@@ -34,7 +39,9 @@ public class UsuarioFormController implements Initializable {
     @FXML private Label lblVeterinario;
     
     private ServicioUsuarios servicio;
+    private ServicioModeloUsuario servicioModelo;
     private Usuario usuario;
+    private ModeloUsuario modeloUsuario;
     private Runnable onSaveCallback;
     private boolean modoEdicion = false;
     
@@ -55,12 +62,14 @@ public class UsuarioFormController implements Initializable {
         
         // Configurar comportamiento del rol
         cmbRol.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            boolean esVeterinario = newVal.equals(Usuario.Rol.VETERINARIO.getDescripcion());
-            lblVeterinario.setVisible(esVeterinario);
-            cmbVeterinario.setVisible(esVeterinario);
-            
-            if (esVeterinario && servicio != null) {
-                cargarVeterinarios();
+            if (lblVeterinario != null && cmbVeterinario != null) {
+                boolean esVeterinario = newVal != null && newVal.equals(Usuario.Rol.VETERINARIO.getDescripcion());
+                lblVeterinario.setVisible(esVeterinario);
+                cmbVeterinario.setVisible(esVeterinario);
+                
+                if (esVeterinario && servicio != null) {
+                    cargarVeterinarios();
+                }
             }
         });
         
@@ -70,40 +79,18 @@ public class UsuarioFormController implements Initializable {
     }
     
     /**
-     * Configura las validaciones de los campos del formulario
-     */
-    private void configurarValidaciones() {
-        // Usuario: sin espacios
-        txtUsuario.textProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null && newVal.contains(" ")) {
-                txtUsuario.setText(newVal.replace(" ", ""));
-            }
-        });
-        
-        // Teléfono: solo números, máximo 9 dígitos
-        txtTelefono.textProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null && !newVal.matches("\\d{0,9}")) {
-                txtTelefono.setText(oldVal);
-            }
-        });
-        
-        // Email: validación simple
-        txtEmail.textProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null && newVal.length() > 0) {
-                if (!newVal.contains("@") || !newVal.contains(".")) {
-                    txtEmail.setStyle("-fx-border-color: red;");
-                } else {
-                    txtEmail.setStyle("");
-                }
-            }
-        });
-    }
-    
-    /**
-     * Establece el servicio a utilizar
+     * Establece el servicio
      */
     public void setServicio(ServicioUsuarios servicio) {
         this.servicio = servicio;
+        this.servicioModelo = new ServicioModeloUsuario();
+    }
+    
+    /**
+     * Establece el callback a ejecutar al guardar
+     */
+    public void setOnSaveCallback(Runnable callback) {
+        this.onSaveCallback = callback;
     }
     
     /**
@@ -111,48 +98,75 @@ public class UsuarioFormController implements Initializable {
      */
     public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
-        this.modoEdicion = true;
+        this.modeloUsuario = new ModeloUsuario(usuario);
+        this.modoEdicion = (usuario.getId() != null);
         cargarDatosUsuario();
     }
     
     /**
-     * Establece la función de callback a ejecutar al guardar
+     * Establece el ModeloUsuario a editar
      */
-    public void setOnSaveCallback(Runnable callback) {
-        this.onSaveCallback = callback;
+    public void setModeloUsuario(ModeloUsuario modeloUsuario) {
+        this.modeloUsuario = modeloUsuario;
+        this.usuario = modeloUsuario.getUsuario();
+        this.modoEdicion = (usuario.getId() != null);
+        cargarDatosUsuario();
     }
     
     /**
-     * Carga la lista de veterinarios en el combo
+     * Configura las validaciones de los campos del formulario
+     */
+    private void configurarValidaciones() {
+        // Validación de correo electrónico
+        txtEmail.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && !newVal.isEmpty()) {
+                if (!newVal.contains("@") || !newVal.contains(".")) {
+                    txtEmail.setStyle("-fx-text-box-border: red; -fx-focus-color: red;");
+                } else {
+                    txtEmail.setStyle("");
+                }
+            }
+        });
+        
+        // Validación de nombre de usuario (alfanumérico)
+        txtUsuario.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && !newVal.isEmpty()) {
+                if (!newVal.matches("^[a-zA-Z0-9]{4,16}$")) {
+                    txtUsuario.setStyle("-fx-text-box-border: red; -fx-focus-color: red;");
+                } else {
+                    txtUsuario.setStyle("");
+                }
+            }
+        });
+        
+        // Validación de nombre y apellido
+        txtNombre.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && !newVal.isEmpty()) {
+                if (!newVal.matches("^[A-Za-zÁÉÍÓÚáéíóúñÑ ]{2,50}$")) {
+                    txtNombre.setStyle("-fx-text-box-border: red; -fx-focus-color: red;");
+                } else {
+                    txtNombre.setStyle("");
+                }
+            }
+        });
+        
+        txtApellido.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && !newVal.isEmpty()) {
+                if (!newVal.matches("^[A-Za-zÁÉÍÓÚáéíóúñÑ ]{2,50}$")) {
+                    txtApellido.setStyle("-fx-text-box-border: red; -fx-focus-color: red;");
+                } else {
+                    txtApellido.setStyle("");
+                }
+            }
+        });
+    }
+    
+    /**
+     * Carga el listado de veterinarios
      */
     private void cargarVeterinarios() {
-        List<ModeloVeterinario> veterinarios = servicio.buscarVeterinariosActivos();
-        cmbVeterinario.setItems(FXCollections.observableArrayList(veterinarios));
-        
-        // Configurar como se muestran los veterinarios
-        cmbVeterinario.setCellFactory(cell -> new ListCell<ModeloVeterinario>() {
-            @Override
-            protected void updateItem(ModeloVeterinario item, boolean empty) {
-                super.updateItem(item, empty);
-                if (item == null || empty) {
-                    setText(null);
-                } else {
-                    setText(item.getNombreCompleto());
-                }
-            }
-        });
-        
-        cmbVeterinario.setButtonCell(new ListCell<ModeloVeterinario>() {
-            @Override
-            protected void updateItem(ModeloVeterinario item, boolean empty) {
-                super.updateItem(item, empty);
-                if (item == null || empty) {
-                    setText(null);
-                } else {
-                    setText(item.getNombreCompleto());
-                }
-            }
-        });
+        cmbVeterinario.getItems().clear();
+        cmbVeterinario.getItems().addAll(servicio.obtenerTodosVeterinarios());
     }
     
     /**
@@ -234,31 +248,39 @@ public class UsuarioFormController implements Initializable {
             
             usuario.setActivo(chkActivo.isSelected());
             
-            // Si es nuevo usuario, establecer fecha de creación
-            if (!modoEdicion) {
-                usuario.setFechaCreacion(new Date());
-            }
+            // Guardar usuario
+            ObjectId idUsuario = servicio.guardarUsuario(usuario);
             
-            // Guardar en base de datos
-            ObjectId id = servicio.guardarUsuario(usuario);
-            
-            if (id != null) {
+            if (idUsuario != null) {
+                usuario.setId(idUsuario);
+                
+                // Si hay callback, ejecutarlo
                 if (onSaveCallback != null) {
                     onSaveCallback.run();
                 }
+                
                 cerrarVentana();
             } else {
-                mostrarError("Error al guardar", "No se pudo guardar el usuario en la base de datos.");
+                mostrarError("Error al guardar", "No se pudo guardar el usuario. Inténtelo de nuevo.");
             }
-            
+        } catch (PatronExcepcion e) {
+            mostrarError("Error de validación", e.getMessage());
         } catch (Exception e) {
-            mostrarError("Error", "Se produjo un error: " + e.getMessage());
+            mostrarError("Error", "Se produjo un error al guardar el usuario: " + e.getMessage());
             e.printStackTrace();
         }
     }
     
     /**
-     * Muestra un mensaje de error
+     * Cierra la ventana del formulario
+     */
+    private void cerrarVentana() {
+        Stage stage = (Stage) btnCancelar.getScene().getWindow();
+        stage.close();
+    }
+    
+    /**
+     * Muestra un diálogo de error
      */
     private void mostrarError(String titulo, String mensaje) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -266,13 +288,5 @@ public class UsuarioFormController implements Initializable {
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
-    }
-    
-    /**
-     * Cierra la ventana actual
-     */
-    private void cerrarVentana() {
-        Stage stage = (Stage) btnCancelar.getScene().getWindow();
-        stage.close();
     }
 } 

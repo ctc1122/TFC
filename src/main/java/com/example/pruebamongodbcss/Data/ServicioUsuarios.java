@@ -22,9 +22,9 @@ import Utilidades.GestorConexion;
  */
 public class ServicioUsuarios {
 
-    private final MongoDatabase empresaDB;
-    private final MongoCollection<Document> usuariosCollection;
-    private final MongoCollection<Document> veterinariosCollection;
+    private MongoDatabase empresaDB;
+    private MongoCollection<Document> usuariosCollection;
+    private MongoCollection<Document> veterinariosCollection;
     private Usuario usuarioActual;
 
     /**
@@ -253,12 +253,59 @@ public class ServicioUsuarios {
     }
     
     /**
+     * Verifica que la conexión esté activa y la renueva si es necesario
+     */
+    private void renovarConexionSiNecesario() {
+        try {
+            // Verificar si la conexión es válida intentando ejecutar un comando simple
+            empresaDB.runCommand(new Document("ping", 1));
+        } catch (Exception e) {
+            System.err.println("La conexión a MongoDB no es válida. Intentando renovar...");
+            try {
+                // Intentar cerrar la conexión existente
+                GestorConexion.cerrarConexion();
+                
+                // Renovar la conexión
+                this.empresaDB = GestorConexion.conectarEmpresa();
+                this.usuariosCollection = empresaDB.getCollection("usuarios");
+                this.veterinariosCollection = empresaDB.getCollection("veterinarios");
+                
+                System.out.println("Conexión renovada correctamente.");
+            } catch (Exception e2) {
+                System.err.println("Error al renovar la conexión: " + e2.getMessage());
+                throw e2; // Re-lanzar para manejo superior
+            }
+        }
+    }
+
+    /**
      * Cargar datos de prueba (usuarios y veterinarios)
      */
     public void cargarDatosPrueba() {
         try {
+            System.out.println("Iniciando carga de datos de prueba...");
+            
+            // Verificar y renovar la conexión si es necesario
+            renovarConexionSiNecesario();
+            
+            System.out.println("Conectado a la base de datos: " + empresaDB.getName());
+            
+            // Verificar conexión a la colección
+            long countUsuarios = 0;
+            try {
+                countUsuarios = usuariosCollection.countDocuments();
+                System.out.println("Documentos en colección usuarios: " + countUsuarios);
+            } catch (Exception e) {
+                System.err.println("Error al contar documentos: " + e.getMessage());
+                // Intentar renovar la conexión una vez más
+                renovarConexionSiNecesario();
+                // Reintentar la operación
+                countUsuarios = usuariosCollection.countDocuments();
+                System.out.println("Documentos en colección usuarios (reintento): " + countUsuarios);
+            }
+            
             // Verificar si ya existen usuarios
-            if (usuariosCollection.countDocuments() > 0) {
+            if (countUsuarios > 0) {
                 System.out.println("Los datos de prueba ya están cargados. Omitiendo...");
                 return;
             }
@@ -266,17 +313,22 @@ public class ServicioUsuarios {
             System.out.println("Cargando datos de prueba...");
             
             // Crear administrador
-            Usuario admin = new Usuario(
-                "Administrador", 
-                "Sistema", 
-                "admin", 
-                "admin12345", 
-                "admin@clinica.com", 
-                "666555444", 
-                "admin12345"
-            );
-            admin.setRol(Usuario.Rol.ADMINISTRADOR);
-            guardarUsuario(admin);
+            try {
+                Usuario admin = new Usuario();
+                admin.setNombre("Administrador");
+                admin.setApellido("Sistema");
+                admin.setUsuario("admin");
+                admin.setPassword("admin");
+                admin.setEmail("admin@clinica.com");
+                admin.setTelefono("666555444");
+                admin.setRol(Usuario.Rol.ADMINISTRADOR);
+                admin.setActivo(true);
+                ObjectId adminId = guardarUsuario(admin);
+                System.out.println("Administrador creado con ID: " + (adminId != null ? adminId.toString() : "null"));
+            } catch (Exception e) {
+                System.err.println("Error al crear administrador: " + e.getMessage());
+                e.printStackTrace();
+            }
             
             // Crear veterinarios
             ModeloVeterinario vet1 = new ModeloVeterinario();
@@ -350,9 +402,17 @@ public class ServicioUsuarios {
             auxiliar.setRol(Usuario.Rol.AUXILIAR);
             guardarUsuario(auxiliar);
             
+            // Verificar que los usuarios se han creado correctamente
+            List<Usuario> usuarios = obtenerTodosUsuarios();
+            System.out.println("Total usuarios creados: " + usuarios.size());
+            for (Usuario u : usuarios) {
+                System.out.println("Usuario: " + u.getUsuario() + ", Rol: " + u.getRol() + ", ID: " + u.getId());
+            }
+            
             System.out.println("Datos de prueba cargados correctamente");
         } catch (Exception e) {
             System.err.println("Error al cargar datos de prueba: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     
@@ -454,5 +514,75 @@ public class ServicioUsuarios {
      */
     public List<ModeloVeterinario> obtenerTodosVeterinarios() {
         return buscarVeterinarios(new Document());
+    }
+
+    /**
+     * Verifica la conexión a MongoDB y la renueva si es necesario
+     * @return true si la conexión es válida (después de intentar renovarla si fuera necesario)
+     */
+    public boolean verificarConexion() {
+        try {
+            // Intentar una operación simple para verificar la conexión
+            empresaDB.runCommand(new Document("ping", 1));
+            return true;
+        } catch (Exception e) {
+            System.err.println("Error al verificar conexión a MongoDB: " + e.getMessage());
+            
+            // Intentar renovar la conexión
+            try {
+                reiniciarConexion();
+                // Verificar de nuevo
+                empresaDB.runCommand(new Document("ping", 1));
+                return true;
+            } catch (Exception e2) {
+                System.err.println("No se pudo restablecer la conexión: " + e2.getMessage());
+                return false;
+            }
+        }
+    }
+    
+    /**
+     * Obtiene acceso a la colección de usuarios
+     */
+    public MongoCollection<Document> getUsuariosCollection() {
+        return usuariosCollection;
+    }
+    
+    /**
+     * Obtiene acceso a la colección de veterinarios
+     */
+    public MongoCollection<Document> getVeterinariosCollection() {
+        return veterinariosCollection;
+    }
+    
+    /**
+     * Reinicia la conexión a MongoDB si hay problemas
+     */
+    public void reiniciarConexion() {
+        try {
+            System.out.println("Reiniciando conexión a MongoDB...");
+            
+            // Cerrar la conexión actual completamente
+            GestorConexion.cerrarConexion();
+            
+            // Esperar un momento para que las conexiones se cierren correctamente
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            
+            // Volver a conectar
+            this.empresaDB = GestorConexion.conectarEmpresa();
+            
+            // Actualizar las referencias a las colecciones
+            this.usuariosCollection = empresaDB.getCollection("usuarios");
+            this.veterinariosCollection = empresaDB.getCollection("veterinarios");
+            
+            System.out.println("Conexión a MongoDB reiniciada correctamente");
+        } catch (Exception e) {
+            System.err.println("Error al reiniciar conexión a MongoDB: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 } 
