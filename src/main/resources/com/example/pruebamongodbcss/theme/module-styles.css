@@ -1,0 +1,316 @@
+/* Estilos para módulos específicos con soporte de temas */
+
+/* ================= ESTILOS GENERALES TEMA CLARO ================= */
+/* Paneles y headers */
+.panel-header {
+    -fx-background-color: #4a6fd1;
+    -fx-padding: 15px 20px;
+}
+
+.panel-header .label {
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.panel-content {
+    -fx-background-color: white;
+}
+
+/* Estilos de tablas - Tema claro */
+.table-view {
+    -fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 4px;
+}
+
+.table-view .column-header {
+    -fx-background-color: #4a6fd1;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-border-width: 0 1px 0 0;
+    -fx-border-color: #e0e0e0;
+}
+
+.table-view .column-header-background .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 0 10px 5px;
+}
+
+.table-view .table-cell {
+    -fx-alignment: center-left;
+    -fx-padding: 10px 5px;
+    -fx-border-width: 0 0 1px 0;
+    -fx-border-color: #f0f0f0;
+    -fx-text-fill: #333333;
+}
+
+.table-view .table-row-cell {
+    -fx-background-color: white;
+}
+
+.table-view .table-row-cell:hover {
+    -fx-background-color: #f5f5f5;
+}
+
+.table-view .table-row-cell:selected {
+    -fx-background-color: derive(#4a6fd1, 90%);
+    -fx-text-fill: #333333;
+}
+
+.table-view .table-row-cell:odd {
+    -fx-background-color: #f8f9fa;
+}
+
+.table-view .table-row-cell:empty {
+    -fx-background-color: white;
+}
+
+/* Tab pane - Tema claro */
+.tab-pane .tab-header-area {
+    -fx-background-color: #f0f0f0;
+}
+
+.tab-pane .tab-header-background {
+    -fx-background-color: #f0f0f0;
+}
+
+.tab-pane .tab {
+    -fx-background-color: #f0f0f0;
+    -fx-background-radius: 4px 4px 0 0;
+    -fx-padding: 5px 10px;
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: #4a6fd1;
+}
+
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: white;
+}
+
+.tab-pane .tab .tab-label {
+    -fx-text-fill: #333333;
+}
+
+.tab-pane .tab-content-area {
+    -fx-background-color: white;
+}
+
+/* Botones - Tema claro */
+.btn-primary {
+    -fx-background-color: #4a6fd1;
+    -fx-text-fill: white;
+    -fx-font-weight: normal;
+    -fx-cursor: hand;
+    -fx-padding: 7px 15px;
+    -fx-background-radius: 4px;
+}
+
+.btn-primary:hover {
+    -fx-background-color: derive(#4a6fd1, 15%);
+}
+
+.btn-secondary {
+    -fx-background-color: #4caf50;
+    -fx-text-fill: white;
+    -fx-font-weight: normal;
+    -fx-cursor: hand;
+    -fx-padding: 7px 15px;
+    -fx-background-radius: 4px;
+}
+
+.btn-secondary:hover {
+    -fx-background-color: derive(#4caf50, 15%);
+}
+
+.btn-danger {
+    -fx-background-color: #e74a3b;
+    -fx-text-fill: white;
+    -fx-font-weight: normal;
+    -fx-cursor: hand;
+    -fx-padding: 7px 15px;
+    -fx-background-radius: 4px;
+}
+
+.btn-danger:hover {
+    -fx-background-color: derive(#e74a3b, 15%);
+}
+
+.btn-info {
+    -fx-background-color: #17a2b8;
+    -fx-text-fill: white;
+    -fx-font-weight: normal;
+    -fx-cursor: hand;
+    -fx-padding: 7px 15px;
+    -fx-background-radius: 4px;
+}
+
+.btn-info:hover {
+    -fx-background-color: derive(#17a2b8, 15%);
+}
+
+.btn-warning {
+    -fx-background-color: #f1c40f;
+    -fx-text-fill: white;
+    -fx-font-weight: normal;
+    -fx-cursor: hand;
+    -fx-padding: 7px 15px;
+    -fx-background-radius: 4px;
+}
+
+.btn-warning:hover {
+    -fx-background-color: derive(#f1c40f, 15%);
+}
+
+.btn-success {
+    -fx-background-color: #1cc88a;
+    -fx-text-fill: white;
+    -fx-font-weight: normal;
+    -fx-cursor: hand;
+    -fx-padding: 7px 15px;
+    -fx-background-radius: 4px;
+}
+
+.btn-success:hover {
+    -fx-background-color: derive(#1cc88a, 15%);
+}
+
+/* ================= ESTILOS ESPECÍFICOS MODO OSCURO ================= */
+/* Aplicados cuando se agrega la clase .dark-theme al root */
+
+/* Paneles y headers - Tema oscuro */
+.dark-theme .panel-header {
+    -fx-background-color: #2d3748;
+}
+
+.dark-theme .panel-content {
+    -fx-background-color: #1b1d21;
+}
+
+/* Tablas - Tema oscuro */
+.dark-theme .table-view {
+    -fx-background-color: #25272c;
+    -fx-border-color: #383b45;
+}
+
+.dark-theme .table-view .column-header {
+    -fx-background-color: #2d3748;
+    -fx-border-color: #383b45;
+}
+
+.dark-theme .table-view .table-cell {
+    -fx-text-fill: #e0e0e0;
+    -fx-border-color: #383b45;
+}
+
+.dark-theme .table-view .table-row-cell {
+    -fx-background-color: #25272c;
+}
+
+.dark-theme .table-view .table-row-cell:hover {
+    -fx-background-color: #383b45;
+}
+
+.dark-theme .table-view .table-row-cell:selected {
+    -fx-background-color: #3d5af1;
+}
+
+.dark-theme .table-view .table-row-cell:selected .table-cell {
+    -fx-text-fill: white;
+}
+
+.dark-theme .table-view .table-row-cell:odd {
+    -fx-background-color: #1e2029;
+}
+
+.dark-theme .table-view .table-row-cell:empty {
+    -fx-background-color: #25272c;
+}
+
+/* Tab pane - Tema oscuro */
+.dark-theme .tab-pane .tab-header-area {
+    -fx-background-color: #25272c;
+}
+
+.dark-theme .tab-pane .tab-header-background {
+    -fx-background-color: #25272c;
+}
+
+.dark-theme .tab-pane .tab {
+    -fx-background-color: #25272c;
+}
+
+.dark-theme .tab-pane .tab:selected {
+    -fx-background-color: #3d5af1;
+}
+
+.dark-theme .tab-pane .tab:selected .tab-label {
+    -fx-text-fill: white;
+}
+
+.dark-theme .tab-pane .tab .tab-label {
+    -fx-text-fill: #e0e0e0;
+}
+
+.dark-theme .tab-pane .tab-content-area {
+    -fx-background-color: #1b1d21;
+}
+
+/* Campos de texto - Tema oscuro */
+.dark-theme .text-field {
+    -fx-background-color: #383b45;
+    -fx-text-fill: #e0e0e0;
+    -fx-prompt-text-fill: #acacac;
+}
+
+.dark-theme .text-field:focused {
+    -fx-background-color: #3d5af1;
+    -fx-text-fill: white;
+}
+
+/* Botones - Tema oscuro */
+.dark-theme .btn-primary {
+    -fx-background-color: #3d5af1;
+}
+
+.dark-theme .btn-primary:hover {
+    -fx-background-color: derive(#3d5af1, 15%);
+}
+
+.dark-theme .btn-secondary {
+    -fx-background-color: #2d8a4f;
+}
+
+.dark-theme .btn-info {
+    -fx-background-color: #2c91d9;
+}
+
+.dark-theme .btn-danger {
+    -fx-background-color: #c9184a;
+}
+
+.dark-theme .btn-warning {
+    -fx-background-color: #e67e22;
+}
+
+.dark-theme .btn-success {
+    -fx-background-color: #19a974;
+}
+
+/* Específico para el panel de empresa */
+.empresa-header {
+    -fx-background-color: #4a6fd1;
+    -fx-padding: 15px 20px;
+}
+
+.empresa-header .label {
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.dark-theme .empresa-header {
+    -fx-background-color: #2d3748;
+} 

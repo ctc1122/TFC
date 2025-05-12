@@ -15,6 +15,7 @@ public class ThemeManager {
     private final String LIGHT_THEME_PATH = "/com/example/pruebamongodbcss/theme/light-theme.css";
     private final String DARK_THEME_PATH = "/com/example/pruebamongodbcss/theme/dark-theme.css";
     private final String CLINIC_BUTTONS_PATH = "/com/example/pruebamongodbcss/theme/clinic-buttons.css";
+    private final String MODULE_STYLES_PATH = "/com/example/pruebamongodbcss/theme/module-styles.css";
     
     // Lista de estilos que serán eliminados al aplicar nuestros temas
     private final List<String> OVERRIDE_STYLES = List.of(
@@ -22,7 +23,8 @@ public class ThemeManager {
         "app.css",
         "Carrusel.css",
         "chatOscuro.css",
-        "estilos.css"
+        "estilos.css",
+        "clinica-styles.css"
     );
     
     private boolean isDarkTheme = false;
@@ -139,6 +141,12 @@ public class ThemeManager {
         String clinicButtonsPath = getClass().getResource(CLINIC_BUTTONS_PATH).toExternalForm();
         if (!scene.getStylesheets().contains(clinicButtonsPath)) {
             scene.getStylesheets().add(clinicButtonsPath);
+        }
+        
+        // Agregar los estilos de módulos específicos
+        String moduleStylesPath = getClass().getResource(MODULE_STYLES_PATH).toExternalForm();
+        if (!scene.getStylesheets().contains(moduleStylesPath)) {
+            scene.getStylesheets().add(moduleStylesPath);
         }
         
         // Aplicar o quitar la clase dark-theme para estilos específicos de tema

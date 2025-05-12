@@ -18,35 +18,35 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.layout.Region?>
 
-<BorderPane fx:id="mainPane" prefHeight="700.0" prefWidth="1024.0" stylesheets="@../css/clinica-styles.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.ClinicaController">
+<BorderPane fx:id="mainPane" prefHeight="700.0" prefWidth="1024.0" styleClass="panel-content" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.ClinicaController">
    <top>
-      <HBox alignment="CENTER_LEFT" prefHeight="60.0" style="-fx-background-color: #3f51b5;" BorderPane.alignment="CENTER">
+      <HBox alignment="CENTER_LEFT" prefHeight="60.0" styleClass="panel-header" BorderPane.alignment="CENTER">
          <children>
-            <!-- Eliminado: <Label text="Gestión de Clínica Veterinaria" textFill="WHITE">
+            <Label text="Gestión de Clínica Veterinaria">
                <font>
                   <Font name="System Bold" size="24.0" />
                </font>
                <HBox.margin>
                   <Insets left="20.0" />
                </HBox.margin>
-            </Label> -->
+            </Label>
          </children>
       </HBox>
    </top>
    <center>
-      <VBox alignment="CENTER" styleClass="glass-panel-sidebar">
+      <VBox alignment="CENTER" styleClass="panel-content">
          <VBox.margin>
             <Insets top="32" left="32" right="32" bottom="32"/>
          </VBox.margin>
-         <TabPane fx:id="tabPane" style="-fx-background-color: white;" BorderPane.alignment="CENTER">
+         <TabPane fx:id="tabPane" BorderPane.alignment="CENTER">
             <tabs>
                <Tab fx:id="tabPacientes" closable="false" text="Pacientes">
                   <content>
-                     <VBox spacing="10.0">
+                     <VBox spacing="10.0" styleClass="panel-content">
                         <children>
                            <HBox alignment="CENTER_LEFT" spacing="10.0">
                               <children>
-                                 <TextField fx:id="txtBuscarPaciente" promptText="Buscar paciente..." style="-fx-background-color: #f5f5f5;" HBox.hgrow="ALWAYS">
+                                 <TextField fx:id="txtBuscarPaciente" promptText="Buscar paciente..." HBox.hgrow="ALWAYS">
                                     <padding>
                                        <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
                                     </padding>
@@ -64,7 +64,7 @@
                               <children>
                                  <ScrollPane fitToHeight="true" fitToWidth="true">
                                     <content>
-                                       <TableView fx:id="tablaPacientes" prefHeight="400.0" style="-fx-background-color: white;">
+                                       <TableView fx:id="tablaPacientes" prefHeight="400.0">
                                           <columns>
                                              <TableColumn fx:id="colNombrePaciente" prefWidth="200.0" text="Nombre" />
                                              <TableColumn fx:id="colEspecie" prefWidth="150.0" text="Especie" />
