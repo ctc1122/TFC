@@ -14,8 +14,8 @@ module com.example.pruebamongodbcss {
     requires jcef;
     requires MaterialFX;
     requires java.sql;
-
-
+    requires org.apache.pdfbox;
+    
     // Configuración básica del módulo principal
     exports com.example.pruebamongodbcss;
     opens com.example.pruebamongodbcss to javafx.fxml;
@@ -30,6 +30,7 @@ module com.example.pruebamongodbcss {
     exports com.example.pruebamongodbcss.Modulos.Empresa;
     exports com.example.pruebamongodbcss.LaboratorioJorge;
     exports com.example.pruebamongodbcss.service;
+    exports com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico;
 
     
     // Apertura de submódulos para FXML
@@ -41,6 +42,7 @@ module com.example.pruebamongodbcss {
     opens com.example.pruebamongodbcss.Modulos.Clinica to javafx.fxml;
     opens com.example.pruebamongodbcss.Modulos.Empresa to javafx.fxml;
     opens com.example.pruebamongodbcss.LaboratorioJorge to javafx.fxml;
+    opens com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico to javafx.fxml;
     
     // IMPORTANTE: Cada vez que crees un nuevo paquete dentro de Modulos,
     // necesitarás añadir dos líneas como estas:

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<?import java.net.URL?>
+
+<VBox fx:id="contenedorPrincipal" prefHeight="700.0" prefWidth="1000.0" spacing="10.0" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico.DiagnosticoController">
+    <stylesheets>
+        <URL value="@../../app.css" />
+    </stylesheets>
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+    </padding>
+    
+    <!-- Cabecera -->
+    <HBox alignment="CENTER_LEFT" styleClass="header-container">
+        <Label text="Nuevo Diagnóstico Médico" styleClass="view-title">
+            <font>
+                <Font name="System Bold" size="24.0" />
+            </font>
+        </Label>
+        <Region HBox.hgrow="ALWAYS" />
+        <!-- Botones de exportación -->
+        <Button fx:id="btnExportarPDF" mnemonicParsing="false" onAction="#exportarPDF" styleClass="button-export" text="Exportar a PDF" />
+        <Button fx:id="btnExportarCSV" mnemonicParsing="false" onAction="#exportarCSV" styleClass="button-export" text="Exportar a CSV" />
+        <Button fx:id="btnCancelar" cancelButton="true" mnemonicParsing="false" onAction="#cancelar" styleClass="button-cancel" text="Cancelar" />
+        <Button fx:id="btnGuardar" defaultButton="true" mnemonicParsing="false" onAction="#guardarDiagnostico" styleClass="button-primary" text="Guardar" />
+        <padding>
+            <Insets bottom="10.0" />
+        </padding>
+    </HBox>
+    
+    <!-- Filtro de Pacientes -->
+    <HBox spacing="10.0" alignment="CENTER_LEFT" styleClass="section-container">
+        <Label text="Filtrar por paciente:" styleClass="label-field" />
+        <ComboBox fx:id="cmbPacientes" promptText="Seleccionar paciente" prefWidth="300.0" />
+        <Button fx:id="btnFiltrarPaciente" mnemonicParsing="false" onAction="#filtrarPorPaciente" text="Filtrar" styleClass="button-search" />
+        <Button fx:id="btnLimpiarFiltro" mnemonicParsing="false" onAction="#limpiarFiltro" text="Mostrar todos" styleClass="button-secondary" />
+    </HBox>
+    
+    <!-- Información del Paciente -->
+    <TitledPane animated="true" collapsible="false" text="Información del Paciente" styleClass="section-container">
+        <GridPane hgap="15.0" vgap="10.0">
+            <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="120.0" />
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="180.0" />
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="120.0" />
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="180.0" />
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            </rowConstraints>
+            
+            <Label text="Nombre:" styleClass="label-field" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+            <Label fx:id="lblNombrePaciente" text="[Nombre Paciente]" styleClass="label-value" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+            
+            <Label text="Especie:" styleClass="label-field" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+            <Label fx:id="lblEspecie" text="[Especie]" styleClass="label-value" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+            
+            <Label text="Raza:" styleClass="label-field" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+            <Label fx:id="lblRaza" text="[Raza]" styleClass="label-value" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            
+            <Label text="Edad:" styleClass="label-field" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+            <Label fx:id="lblEdad" text="[Edad]" styleClass="label-value" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+            
+            <Label text="Sexo:" styleClass="label-field" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+            <Label fx:id="lblSexo" text="[Sexo]" styleClass="label-value" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            
+            <Label text="Peso:" styleClass="label-field" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+            <Label fx:id="lblPeso" text="[Peso]" styleClass="label-value" GridPane.columnIndex="3" GridPane.rowIndex="2" />
+        </GridPane>
+    </TitledPane>
+    
+    <!-- Datos de la consulta -->
+    <GridPane hgap="15.0" vgap="10.0" styleClass="section-container">
+        <columnConstraints>
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="150.0" />
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="300.0" />
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="150.0" />
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="300.0" />
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+        
+        <Label text="Fecha:" styleClass="label-field" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+        <DatePicker fx:id="dpFecha" promptText="Seleccione fecha" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+        
+        <Label text="Motivo consulta:" styleClass="label-field" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+        <TextField fx:id="txtMotivo" promptText="Ingrese motivo de la consulta" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+    </GridPane>
+    
+    <!-- Anamnesis y Examen físico -->
+    <HBox spacing="15.0" VBox.vgrow="ALWAYS">
+        <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+            <Label text="Anamnesis:" styleClass="label-field" />
+            <TextArea fx:id="txtAnamnesis" promptText="Historial y síntomas reportados por el propietario" wrapText="true" VBox.vgrow="ALWAYS" />
+        </VBox>
+        
+        <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+            <Label text="Examen Físico:" styleClass="label-field" />
+            <TextArea fx:id="txtExamenFisico" promptText="Hallazgos del examen físico" wrapText="true" VBox.vgrow="ALWAYS" />
+        </VBox>
+    </HBox>
+    
+    <!-- Diagnóstico -->
+    <TitledPane animated="true" collapsible="false" text="Diagnóstico" styleClass="section-container">
+        <VBox spacing="10.0">
+            <HBox spacing="10.0" alignment="CENTER_LEFT">
+                <Label text="Buscar diagnóstico:" styleClass="label-field" />
+                <TextField fx:id="txtBusquedaDiagnostico" promptText="Ingrese términos de búsqueda" HBox.hgrow="ALWAYS" />
+                <Button mnemonicParsing="false" onAction="#buscarDiagnosticos" styleClass="button-search" text="Buscar" />
+            </HBox>
+            
+            <HBox spacing="15.0" VBox.vgrow="ALWAYS">
+                <!-- Lista de resultados de búsqueda -->
+                <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                    <Label text="Resultados de búsqueda:" styleClass="label-field" />
+                    <TableView fx:id="tblDiagnosticos" VBox.vgrow="ALWAYS" styleClass="table-diagnosticos" prefHeight="150.0">
+                        <columns>
+                            <TableColumn fx:id="colDescripcion" prefWidth="400.0" text="Descripción" />
+                            <TableColumn fx:id="colCodigo" prefWidth="100.0" text="Código" />
+                            <TableColumn fx:id="colFuente" prefWidth="100.0" text="Fuente" />
+                        </columns>
+                        <placeholder>
+                            <Label text="No hay diagnósticos disponibles" />
+                        </placeholder>
+                    </TableView>
+                </VBox>
+                
+                <!-- Botones para agregar/quitar diagnósticos -->
+                <VBox spacing="5.0" alignment="CENTER">
+                    <Button fx:id="btnAgregarDiagnostico" mnemonicParsing="false" onAction="#agregarDiagnostico" styleClass="button-add" text="Agregar >" />
+                    <Button fx:id="btnQuitarDiagnostico" mnemonicParsing="false" onAction="#quitarDiagnostico" styleClass="button-remove" text="&lt; Quitar" />
+                </VBox>
+                
+                <!-- Lista de diagnósticos seleccionados -->
+                <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                    <Label text="Diagnósticos seleccionados:" styleClass="label-field" />
+                    <ListView fx:id="lstDiagnosticosSeleccionados" VBox.vgrow="ALWAYS" prefHeight="150.0" />
+                </VBox>
+            </HBox>
+        </VBox>
+    </TitledPane>
+    
+    <!-- Tratamiento y Observaciones -->
+    <HBox spacing="15.0" VBox.vgrow="ALWAYS">
+        <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+            <Label text="Tratamiento:" styleClass="label-field" />
+            <TextArea fx:id="txtTratamiento" promptText="Describa el tratamiento a seguir" wrapText="true" VBox.vgrow="ALWAYS" />
+        </VBox>
+        
+        <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+            <Label text="Observaciones:" styleClass="label-field" />
+            <TextArea fx:id="txtObservaciones" promptText="Observaciones adicionales" wrapText="true" VBox.vgrow="ALWAYS" />
+        </VBox>
+    </HBox>
+    
+    <!-- Próxima visita -->
+    <HBox spacing="10.0" alignment="CENTER_LEFT" styleClass="section-container">
+        <Label text="Próxima visita:" styleClass="label-field" />
+        <DatePicker fx:id="dpProximaVisita" promptText="Seleccione fecha (opcional)" />
+    </HBox>
+</VBox> 

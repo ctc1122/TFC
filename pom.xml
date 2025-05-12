@@ -118,6 +118,20 @@
         <version>8.0.33</version>
     </dependency>
     
+    <!-- MariaDB Connector -->
+    <dependency>
+        <groupId>org.mariadb.jdbc</groupId>
+        <artifactId>mariadb-java-client</artifactId>
+        <version>3.3.3</version>
+    </dependency>
+    
+    <!-- Apache PDFBox para generación de PDFs -->
+    <dependency>
+        <groupId>org.apache.pdfbox</groupId>
+        <artifactId>pdfbox</artifactId>
+        <version>2.0.30</version>
+    </dependency>
+    
   </dependencies>
 
   <build>
@@ -159,6 +173,8 @@
                 <option>javafx.controls/com.sun.javafx.scene.control.behavior=com.jfoenix</option>
                 <option>--add-exports</option>
                 <option>javafx.controls/com.sun.javafx.scene.control.behavior=ALL-UNNAMED</option>
+                <option>--add-reads</option>
+                <option>com.example.pruebamongodbcss=org.apache.pdfbox</option>
               </options>
             </configuration>
           </execution>

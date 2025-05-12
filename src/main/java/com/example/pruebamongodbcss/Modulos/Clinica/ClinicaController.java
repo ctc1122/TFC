@@ -1,25 +1,10 @@
 package com.example.pruebamongodbcss.Modulos.Clinica;
 
-import io.github.palexdev.materialfx.controls.MFXDatePicker;
-import javafx.application.Platform;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.fxml.Initializable;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.VBox;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
-import org.bson.types.ObjectId;
-
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -28,6 +13,38 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
+
+import org.bson.types.ObjectId;
+
+import io.github.palexdev.materialfx.controls.MFXDatePicker;
+import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Node;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 /**
  * Controlador principal para la gestión clínica veterinaria.
@@ -69,6 +86,7 @@ public class ClinicaController implements Initializable {
     @FXML private TableColumn<ModeloDiagnostico, String> colFechaDiagnostico;
     @FXML private TableColumn<ModeloDiagnostico, String> colPacienteDiagnostico;
     @FXML private TableColumn<ModeloDiagnostico, String> colMotivo;
+    @FXML private TableColumn<ModeloDiagnostico, String> colDiagnostico;
     @FXML private TableColumn<ModeloDiagnostico, String> colVeterinario;
     @FXML private MFXDatePicker dpFechaInicio;
     @FXML private MFXDatePicker dpFechaFin;
@@ -77,6 +95,10 @@ public class ClinicaController implements Initializable {
     @FXML private Button btnNuevoDiagnostico;
     @FXML private Button btnVerDiagnostico;
     @FXML private Button btnEliminarDiagnostico;
+    @FXML private ComboBox<ModeloPaciente> cmbPacientesDiagnostico;
+    @FXML private Button btnLimpiarFiltro;
+    @FXML private Button btnExportarPDF;
+    @FXML private Button btnExportarCSV;
     
     // Tab de Citas
     @FXML private Tab tabCitas;
@@ -200,6 +222,7 @@ public class ClinicaController implements Initializable {
         });
         colPacienteDiagnostico.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getNombrePaciente()));
         colMotivo.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getMotivo()));
+        colDiagnostico.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDiagnostico()));
         colVeterinario.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getVeterinario()));
         
         tablaDiagnosticos.setItems(diagnosticosObservable);
@@ -210,6 +233,183 @@ public class ClinicaController implements Initializable {
                 abrirDetallesDiagnostico(tablaDiagnosticos.getSelectionModel().getSelectedItem());
             }
         });
+        
+        // Configurar ComboBox de pacientes
+        configurarComboBoxPacientes();
+    }
+    
+    /**
+     * Configura el ComboBox de pacientes para filtrar diagnósticos
+     */
+    private void configurarComboBoxPacientes() {
+        // Personalizar la visualización de los pacientes en el ComboBox
+        cmbPacientesDiagnostico.setCellFactory(lv -> new ListCell<ModeloPaciente>() {
+            @Override
+            protected void updateItem(ModeloPaciente item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.getNombre() + " (" + item.getEspecie() + " - " + item.getRaza() + ")");
+                }
+            }
+        });
+        
+        // Configurar celda del botón
+        cmbPacientesDiagnostico.setButtonCell(new ListCell<ModeloPaciente>() {
+            @Override
+            protected void updateItem(ModeloPaciente item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.getNombre() + " (" + item.getEspecie() + " - " + item.getRaza() + ")");
+                }
+            }
+        });
+        
+        // Cargar todos los pacientes en el ComboBox
+        List<ModeloPaciente> pacientes = servicioClinica.obtenerTodosPacientes();
+        cmbPacientesDiagnostico.setItems(FXCollections.observableArrayList(pacientes));
+        
+        // Manejar cambio de selección en el ComboBox
+        cmbPacientesDiagnostico.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                filtrarDiagnosticosPorPaciente(newVal.getId());
+            }
+        });
+    }
+    
+    /**
+     * Limpia el filtro de pacientes y muestra todos los diagnósticos
+     */
+    @FXML
+    private void onLimpiarFiltroDiagnostico() {
+        cmbPacientesDiagnostico.getSelectionModel().clearSelection();
+        buscarDiagnosticos();
+    }
+    
+    /**
+     * Filtra los diagnósticos por el paciente seleccionado
+     * @param pacienteId ID del paciente para filtrar
+     */
+    private void filtrarDiagnosticosPorPaciente(ObjectId pacienteId) {
+        if (pacienteId != null) {
+            diagnosticosObservable.clear();
+            List<ModeloDiagnostico> diagnosticos = servicioClinica.buscarDiagnosticosPorPaciente(pacienteId);
+            diagnosticosObservable.addAll(diagnosticos);
+        }
+    }
+    
+    /**
+     * Exporta los diagnósticos seleccionados o visibles a un archivo PDF (o texto)
+     */
+    @FXML
+    private void onExportarPDFDiagnostico() {
+        ModeloDiagnostico diagnostico = tablaDiagnosticos.getSelectionModel().getSelectedItem();
+        if (diagnostico == null) {
+            mostrarAlerta("Selección requerida", "No hay diagnóstico seleccionado", 
+                    "Por favor, seleccione un diagnóstico para exportar a PDF.");
+            return;
+        }
+        
+        try {
+            // Abrir la vista de diagnóstico para exportación
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Diagnostico/diagnostico-view.fxml"));
+            Parent root = loader.load();
+            
+            // Obtener el controlador y configurarlo con el diagnóstico seleccionado
+            com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico.DiagnosticoController controller = loader.getController();
+            
+            // Buscar el paciente asociado al diagnóstico
+            ModeloPaciente paciente = servicioClinica.obtenerPacientePorId(diagnostico.getPacienteId());
+            if (paciente != null) {
+                controller.setPaciente(paciente);
+                controller.setDiagnostico(diagnostico);
+                
+                // Llamar al método de exportación a PDF
+                exportarDiagnosticoPDF(controller);
+            } else {
+                mostrarAlerta("Error", "Paciente no encontrado", 
+                        "No se pudo encontrar el paciente asociado a este diagnóstico.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al exportar", 
+                    "Ha ocurrido un error al intentar exportar el diagnóstico a PDF: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Utiliza el controlador de diagnóstico para exportar a PDF
+     */
+    private void exportarDiagnosticoPDF(com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico.DiagnosticoController controller) {
+        try {
+            // Crear un Stage temporal para tener acceso a la escena (necesario para FileChooser)
+            Stage tempStage = new Stage();
+            tempStage.initModality(Modality.APPLICATION_MODAL);
+            
+            // Llamar al método exportarPDF del controlador de diagnóstico
+            Method metodoExportar = controller.getClass().getDeclaredMethod("exportarPDF");
+            metodoExportar.setAccessible(true);
+            metodoExportar.invoke(controller);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al exportar a PDF", 
+                    "Ha ocurrido un error al intentar exportar el diagnóstico a PDF: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Exporta los diagnósticos seleccionados o visibles a un archivo CSV
+     */
+    @FXML
+    private void onExportarCSVDiagnostico() {
+        // Si no hay diagnósticos para exportar
+        if (diagnosticosObservable.isEmpty()) {
+            mostrarAlerta("Sin datos", "No hay diagnósticos para exportar", 
+                    "No hay diagnósticos disponibles para exportar a CSV.");
+            return;
+        }
+        
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Guardar CSV");
+        fileChooser.getExtensionFilters().add(
+            new FileChooser.ExtensionFilter("Archivos CSV", "*.csv")
+        );
+        fileChooser.setInitialFileName("diagnosticos.csv");
+        
+        File file = fileChooser.showSaveDialog(mainPane.getScene().getWindow());
+        if (file != null) {
+            try (FileWriter writer = new FileWriter(file)) {
+                // Escribir encabezados
+                writer.write("Fecha,Paciente,Motivo,Diagnóstico,Veterinario\n");
+                
+                // Escribir cada diagnóstico
+                for (ModeloDiagnostico diag : diagnosticosObservable) {
+                    String fecha = diag.getFecha() != null ? formatoFecha.format(diag.getFecha()) : "";
+                    String paciente = diag.getNombrePaciente() != null ? diag.getNombrePaciente().replace(",", ";") : "";
+                    String motivo = diag.getMotivo() != null ? diag.getMotivo().replace(",", ";") : "";
+                    String diagnostico = diag.getDiagnostico() != null ? diag.getDiagnostico().replace(",", ";") : "";
+                    String veterinario = diag.getVeterinario() != null ? diag.getVeterinario().replace(",", ";") : "";
+                    
+                    writer.write(fecha + "," +
+                                paciente + "," +
+                                motivo + "," +
+                                diagnostico + "," +
+                                veterinario + "\n");
+                }
+                
+                mostrarMensaje("Exportación exitosa", "Diagnósticos exportados", 
+                        "Los diagnósticos han sido exportados correctamente a CSV.");
+                
+            } catch (Exception e) {
+                e.printStackTrace();
+                mostrarAlerta("Error", "Error al exportar", 
+                        "Ha ocurrido un error al intentar exportar los diagnósticos a CSV: " + e.getMessage());
+            }
+        }
     }
     
     // ********** CARGA DE DATOS **********
@@ -414,7 +614,79 @@ public class ClinicaController implements Initializable {
     
     @FXML
     private void onNuevoDiagnostico(ActionEvent event) {
-        // Implementar apertura de formulario de nuevo diagnóstico
+        try {
+            // Mostrar un indicador de carga para mejorar la experiencia de usuario
+            VBox loadingBox = new VBox();
+            loadingBox.setSpacing(10);
+            loadingBox.setStyle("-fx-alignment: center; -fx-padding: 20px;");
+            
+            Label cargandoLabel = new Label("Cargando formulario de diagnóstico...");
+            cargandoLabel.setStyle("-fx-font-size: 14px;");
+            
+            loadingBox.getChildren().add(cargandoLabel);
+            
+            // Guardar el contenido original del tab
+            Node contenidoOriginal = tabDiagnosticos.getContent();
+            
+            // Mostrar el indicador de carga
+            tabDiagnosticos.setContent(loadingBox);
+            
+            // Cargar el formulario en un hilo separado para no bloquear la interfaz
+            new Thread(() -> {
+                try {
+                    // Cargar la vista de diagnóstico
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Diagnostico/diagnostico-view.fxml"));
+                    Parent root = loader.load();
+                    
+                    // Obtener el controlador
+                    com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico.DiagnosticoController controller = loader.getController();
+                    
+                    // Verificar si hay un paciente seleccionado en la pestaña de pacientes
+                    ModeloPaciente pacienteSeleccionado = tablaPacientes.getSelectionModel().getSelectedItem();
+                    
+                    // Configurar un manejador para volver a la vista original
+                    Runnable volverAVistaPrincipal = () -> {
+                        // Restaurar el contenido original y actualizar la tabla
+                        tabDiagnosticos.setContent(contenidoOriginal);
+                        buscarDiagnosticos();
+                    };
+                    
+                    // Ejecutar en el hilo de la interfaz de usuario
+                    Platform.runLater(() -> {
+                        try {
+                            // Si hay un paciente seleccionado, asignarlo
+                            if (pacienteSeleccionado != null) {
+                                controller.setPaciente(pacienteSeleccionado);
+                            }
+                            
+                            // Configurar callbacks
+                            controller.setOnGuardarCallback(volverAVistaPrincipal);
+                            controller.setOnCancelarCallback(volverAVistaPrincipal);
+                            
+                            // Reemplazar el contenido del tab con el formulario
+                            tabDiagnosticos.setContent(root);
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            mostrarAlerta("Error", "Error al configurar formulario", 
+                                    "Ha ocurrido un error al configurar el formulario: " + ex.getMessage());
+                            volverAVistaPrincipal.run();
+                        }
+                    });
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Platform.runLater(() -> {
+                        mostrarAlerta("Error", "Error al cargar formulario", 
+                                "Ha ocurrido un error al cargar el formulario: " + e.getMessage());
+                        tabDiagnosticos.setContent(contenidoOriginal);
+                    });
+                }
+            }).start();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error inesperado", 
+                    "Ha ocurrido un error inesperado: " + e.getMessage());
+        }
     }
     
     @FXML
