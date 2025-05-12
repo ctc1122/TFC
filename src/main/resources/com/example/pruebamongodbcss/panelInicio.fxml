@@ -8,8 +8,10 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
+<?import com.example.pruebamongodbcss.theme.ThemeToggleSwitch?>
 
 <BorderPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="436.0" prefWidth="781.0" styleClass="panel-azul-fondo" stylesheets="@../InicioSesion/PanelInicioSesionEstilo.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.PanelInicioController">
    <left>
@@ -23,7 +25,10 @@
                   <children>
                      <Label fx:id="lblClinica" text="Clínica Veterinaria" />
                      <Separator />
-                     <JFXButton fx:id="btnToggleSidebar" text="≡" />
+                     <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <JFXButton fx:id="btnToggleSidebar" text="≡" />
+                        <ThemeToggleSwitch fx:id="themeToggle" />
+                     </HBox>
                      <JFXButton fx:id="btnMenuPrincipal" text="Menú Principal" />
                      <JFXButton fx:id="btnAnimales" text="Animales" />
                      <JFXButton fx:id="but_clientes" text="Clientes" />

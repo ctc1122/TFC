@@ -1,0 +1,94 @@
+/* Estilos específicos para los botones de la clínica veterinaria */
+
+/* Estilos comunes para todos los botones de acción */
+.action-button {
+    -fx-font-weight: bold;
+    -fx-background-radius: 5px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 4, 0, 0, 2);
+}
+
+/* Botones específicos con los colores correctos */
+#btnNuevoDiagnostico {
+    -fx-background-color: #4e73df;
+    -fx-text-fill: white;
+}
+
+#btnNuevoDiagnostico:hover {
+    -fx-background-color: derive(#4e73df, 15%);
+    -fx-cursor: hand;
+}
+
+#btnVerDetalles {
+    -fx-background-color: #37a2eb;
+    -fx-text-fill: white;
+}
+
+#btnVerDetalles:hover {
+    -fx-background-color: derive(#37a2eb, 15%);
+    -fx-cursor: hand;
+}
+
+#btnEliminar {
+    -fx-background-color: #e74a3b;
+    -fx-text-fill: white;
+}
+
+#btnEliminar:hover {
+    -fx-background-color: derive(#e74a3b, 15%);
+    -fx-cursor: hand;
+}
+
+#btnMostrarTodos {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+}
+
+#btnMostrarTodos:hover {
+    -fx-background-color: derive(#4CAF50, 15%);
+    -fx-cursor: hand;
+}
+
+#btnExportarPDF {
+    -fx-background-color: #376fd9;
+    -fx-text-fill: white;
+}
+
+#btnExportarPDF:hover {
+    -fx-background-color: derive(#376fd9, 15%);
+    -fx-cursor: hand;
+}
+
+#btnExportarCSV {
+    -fx-background-color: #1cc88a;
+    -fx-text-fill: white;
+}
+
+#btnExportarCSV:hover {
+    -fx-background-color: derive(#1cc88a, 15%);
+    -fx-cursor: hand;
+}
+
+/* Versión para tema oscuro */
+.dark-theme #btnNuevoDiagnostico {
+    -fx-background-color: #3d5af1;
+}
+
+.dark-theme #btnVerDetalles {
+    -fx-background-color: #2c91d9;
+}
+
+.dark-theme #btnEliminar {
+    -fx-background-color: #c9184a;
+}
+
+.dark-theme #btnMostrarTodos {
+    -fx-background-color: #2d8a4f;
+}
+
+.dark-theme #btnExportarPDF {
+    -fx-background-color: #3355c5;
+}
+
+.dark-theme #btnExportarCSV {
+    -fx-background-color: #19a974;
+} 

@@ -1,0 +1,392 @@
+/* Light Theme CSS - Inspirado en diseño profesional y minimalista */
+
+/* Base Colors */
+* {
+    -fx-primary-color: #ffffff;
+    -fx-secondary-color: #f8f9fa;
+    -fx-accent-color: #4a6fd1;
+    -fx-light-accent: #e8f0ff;
+    -fx-text-color: #2c3e50;
+    -fx-light-text-color: #6c757d;
+    -fx-success-color: #28a745;
+    -fx-warning-color: #ffc107;
+    -fx-error-color: #dc3545;
+    -fx-info-color: #17a2b8;
+
+    /* Chart Colors */
+    -fx-chart-primary: #3a7ff6;
+    -fx-chart-secondary: #52bdff;
+    -fx-chart-tertiary: #60d394;
+    -fx-chart-background: #f8f9fa;
+    
+    /* Sidebar Colors */
+    -fx-sidebar-bg: #ffffff;
+    -fx-sidebar-button-bg: transparent;
+    -fx-sidebar-button-text: #2c3e50;
+    -fx-sidebar-button-hover: #f1f5ff;
+    
+    /* Específicos de la clínica veterinaria */
+    -fx-clinic-tab-bg: #f8f9fa;
+    -fx-clinic-header-bg: #4a6fd1;
+    -fx-clinic-header-text: white;
+    -fx-clinic-content-bg: #ffffff;
+}
+
+/* Root elements */
+.root {
+    -fx-background-color: -fx-secondary-color;
+    -fx-font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Main panels and containers */
+.panel-azul-fondo {
+    -fx-background-color: -fx-secondary-color;
+}
+
+.glass-panel, .content-panel {
+    -fx-background-color: -fx-primary-color;
+    -fx-background-radius: 10px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 10, 0, 0, 4);
+    -fx-padding: 15px;
+}
+
+.title-panel {
+    -fx-background-color: -fx-primary-color;
+    -fx-padding: 10px;
+    -fx-background-radius: 10px 10px 0 0;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: -fx-secondary-color;
+}
+
+/* Cards */
+.card {
+    -fx-background-color: -fx-primary-color;
+    -fx-background-radius: 8px;
+    -fx-padding: 15px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.07), 10, 0, 0, 4);
+}
+
+.card-header {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text-color;
+    -fx-padding: 0 0 10px 0;
+}
+
+/* Text Styles */
+.label {
+    -fx-text-fill: -fx-text-color;
+}
+
+.title-label {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text-color;
+}
+
+.subtitle-label {
+    -fx-font-size: 16px;
+    -fx-text-fill: -fx-light-text-color;
+}
+
+.small-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: -fx-light-text-color;
+}
+
+/* Tables */
+.table-view {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8px;
+    -fx-padding: 0;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: -fx-clinic-header-bg;
+    -fx-background-radius: 8px 8px 0 0;
+}
+
+.table-view .column-header, .table-view .filler {
+    -fx-background-color: transparent;
+    -fx-size: 45px;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: -fx-secondary-color;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.table-view .table-cell {
+    -fx-padding: 10px 10px 10px 10px;
+    -fx-text-fill: -fx-text-color;
+    -fx-alignment: CENTER_LEFT;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: -fx-secondary-color;
+}
+
+.table-row-cell {
+    -fx-background-color: -fx-primary-color;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: -fx-secondary-color;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: -fx-light-accent;
+    -fx-text-fill: -fx-text-color;
+}
+
+/* Buttons */
+.button, .jfx-button {
+    -fx-background-color: #4a6fd1;
+    -fx-text-fill: white;
+    -fx-background-radius: 5px;
+    -fx-padding: 8px 15px;
+    -fx-cursor: hand;
+    -fx-font-size: 13px;
+}
+
+.button:hover, .jfx-button:hover {
+    -fx-background-color: derive(#4a6fd1, 15%);
+}
+
+.button.secondary, .jfx-button.secondary {
+    -fx-background-color: -fx-secondary-color;
+    -fx-text-fill: -fx-text-color;
+    -fx-border-width: 1px;
+    -fx-border-color: derive(-fx-secondary-color, -15%);
+}
+
+.button.secondary:hover, .jfx-button.secondary:hover {
+    -fx-background-color: derive(-fx-secondary-color, -5%);
+}
+
+/* Botones especiales para la vista de clínica */
+#btnNuevoDiagnostico {
+    -fx-background-color: #4e73df;
+}
+
+#btnVerDetalles {
+    -fx-background-color: #37a2eb;
+}
+
+#btnEliminar {
+    -fx-background-color: #e74a3b;
+}
+
+#btnMostrarTodos {
+    -fx-background-color: #4CAF50;
+}
+
+#btnExportarPDF {
+    -fx-background-color: #376fd9;
+}
+
+#btnExportarCSV {
+    -fx-background-color: #1cc88a;
+}
+
+/* Toggle Switch */
+.theme-toggle-switch {
+    -fx-border-color: transparent;
+    -fx-background-color: transparent;
+}
+
+/* Charts */
+.chart {
+    -fx-background-color: transparent;
+    -fx-padding: 10px;
+}
+
+.chart-series-line {
+    -fx-stroke-width: 2px;
+    -fx-effect: null;
+}
+
+.default-color0.chart-series-line { -fx-stroke: -fx-chart-primary; }
+.default-color1.chart-series-line { -fx-stroke: -fx-chart-secondary; }
+.default-color2.chart-series-line { -fx-stroke: -fx-chart-tertiary; }
+
+.chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.chart-vertical-grid-lines {
+    -fx-stroke: derive(-fx-secondary-color, -5%);
+    -fx-stroke-dash-array: 3 3;
+}
+
+.chart-horizontal-grid-lines {
+    -fx-stroke: derive(-fx-secondary-color, -5%);
+    -fx-stroke-dash-array: 3 3;
+}
+
+/* Text fields */
+.text-field {
+    -fx-background-color: -fx-primary-color;
+    -fx-background-radius: 5px;
+    -fx-border-color: derive(-fx-secondary-color, -10%);
+    -fx-border-radius: 5px;
+    -fx-padding: 8px;
+    -fx-text-fill: -fx-text-color;
+}
+
+.text-field:focused {
+    -fx-border-color: -fx-accent-color;
+}
+
+/* Status indicators */
+.status-success {
+    -fx-text-fill: -fx-success-color;
+}
+
+.status-warning {
+    -fx-text-fill: -fx-warning-color;
+}
+
+.status-error {
+    -fx-text-fill: -fx-error-color;
+}
+
+.status-info {
+    -fx-text-fill: -fx-info-color;
+}
+
+/* Side menu */
+.sidebar {
+    -fx-background-color: -fx-sidebar-bg;
+    -fx-background-radius: 10px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 10, 0, 0, 5);
+    -fx-padding: 15px 10px;
+}
+
+/* Menu lateral - Botones */
+#btnMenuPrincipal, #btnAnimales, #but_clientes, #btnFichaje, #btnEmpresa, #btnSalir {
+    -fx-background-color: -fx-sidebar-button-bg;
+    -fx-text-fill: -fx-sidebar-button-text;
+    -fx-background-radius: 5px;
+}
+
+#btnMenuPrincipal:hover, #btnAnimales:hover, #but_clientes:hover, #btnFichaje:hover, #btnEmpresa:hover, #btnSalir:hover {
+    -fx-background-color: -fx-sidebar-button-hover;
+}
+
+#btnMenuPrincipal .image-view, #btnAnimales .image-view, #but_clientes .image-view, 
+#btnFichaje .image-view, #btnEmpresa .image-view, #btnSalir .image-view {
+    -fx-opacity: 0.8;
+}
+
+/* Botón SALIR con color especial */
+#btnSalir {
+    -fx-background-color: transparent;
+    -fx-text-fill: #e74a3b;
+    -fx-font-weight: bold;
+}
+
+#btnSalir:hover {
+    -fx-background-color: rgba(231, 74, 59, 0.1);
+}
+
+/* Specific components */
+.itemMenu {
+    -fx-background-color: -fx-primary-color;
+    -fx-background-radius: 50%;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 10, 0, 0, 3);
+}
+
+.circleMenuButton {
+    -fx-background-color: -fx-primary-color;
+    -fx-background-radius: 50%;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 8, 0, 0, 2);
+}
+
+/* Pestañas (Tabs) */
+.tab-pane > .tab-header-area {
+    -fx-background-color: -fx-clinic-tab-bg;
+}
+
+.tab-pane > .tab-header-area > .tab-header-background {
+    -fx-background-color: -fx-clinic-tab-bg;
+    -fx-background-radius: 8px 8px 0 0;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: -fx-clinic-tab-bg;
+    -fx-background-radius: 8px 8px 0 0;
+    -fx-padding: 4px 10px;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: -fx-clinic-header-bg;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected .tab-label {
+    -fx-text-fill: white;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab .tab-label {
+    -fx-text-fill: -fx-text-color;
+}
+
+/* Progress indicators */
+.progress-bar > .bar {
+    -fx-background-color: -fx-accent-color;
+    -fx-background-radius: 3px;
+}
+
+.progress-bar > .track {
+    -fx-background-color: -fx-light-accent;
+    -fx-background-radius: 3px;
+}
+
+/* Scroll bars */
+.scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: derive(-fx-secondary-color, -20%);
+    -fx-background-radius: 10px;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: derive(-fx-secondary-color, -30%);
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+}
+
+/* Date pickers y combos */
+.date-picker, .combo-box {
+    -fx-background-color: -fx-primary-color;
+    -fx-border-color: derive(-fx-secondary-color, -10%);
+    -fx-border-radius: 5px;
+}
+
+.date-picker .arrow-button, .combo-box .arrow-button {
+    -fx-background-color: -fx-secondary-color;
+}
+
+.date-picker:focused, .combo-box:focused {
+    -fx-border-color: -fx-accent-color;
+}
+
+/* Panel específico de la clínica */
+.clinic-main-panel {
+    -fx-background-color: -fx-clinic-content-bg;
+}
+
+/* Headers específicos de la clínica */
+.clinic-header {
+    -fx-background-color: -fx-clinic-header-bg;
+    -fx-text-fill: -fx-clinic-header-text;
+    -fx-padding: 10px;
+    -fx-font-weight: bold;
+} 

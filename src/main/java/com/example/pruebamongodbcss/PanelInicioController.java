@@ -7,6 +7,9 @@ import java.util.ResourceBundle;
 import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Modulos.Clinica.ClinicaController;
+import com.example.pruebamongodbcss.theme.ThemeManager;
+import com.example.pruebamongodbcss.theme.ThemeToggleSwitch;
+import com.example.pruebamongodbcss.theme.ThemeUtil;
 import com.jfoenix.controls.JFXButton;
 
 import io.github.palexdev.materialfx.controls.MFXProgressSpinner;
@@ -21,6 +24,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
@@ -47,6 +51,9 @@ public class PanelInicioController implements Initializable {
 
     @FXML
     private Label lblClinica;
+
+    @FXML
+    private ThemeToggleSwitch themeToggle;
 
     private boolean isCollapsed = false;
     private double xOffset = 0;
@@ -75,6 +82,27 @@ public class PanelInicioController implements Initializable {
         carouselContainer = new Pane();
         carouselContainer.setPrefWidth(200);
         carouselContainer.setStyle("-fx-background-color: transparent;");
+        
+        // Inicializar el gestor de temas y registrar la escena actual
+        // Se hace de forma postergada ya que la escena aún no está disponible
+        javafx.application.Platform.runLater(() -> {
+            if (root.getScene() != null) {
+                // Registrar la escena en el ThemeManager para aplicar el tema
+                ThemeManager.getInstance().registerScene(root.getScene());
+                
+                // Aplicar el tema a todas las ventanas abiertas
+                ThemeUtil.applyThemeToAllOpenWindows();
+            }
+        });
+        
+        // Agregar un listener al toggle de tema para mantener actualizadas todas las ventanas
+        if (themeToggle != null) {
+            themeToggle.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                javafx.application.Platform.runLater(() -> {
+                    ThemeUtil.applyThemeToAllOpenWindows();
+                });
+            });
+        }
         
         // Configurar iconos y tooltips para el menú lateral
         setButtonIcon(btnMenuPrincipal, "/Iconos/iconInicio4.png", 32, 32);
@@ -226,7 +254,7 @@ public class PanelInicioController implements Initializable {
         try {
             // Cargar la vista de la clínica
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/clinica-view.fxml"));
-            Parent contenido = loader.load();
+            Parent contenido = ThemeUtil.loadWithTheme(loader);
             
             // Agregar opciones de JVM necesarias en tiempo de ejecución
             System.setProperty("javafx.controls.behaviour", "com.sun.javafx.scene.control.behavior");
@@ -234,6 +262,9 @@ public class PanelInicioController implements Initializable {
             // Obtener el BorderPane central y reemplazar su contenido
             BorderPane centerPane = (BorderPane) root.getCenter();
             centerPane.setCenter(contenido);
+            
+            // Asegurarse de que todas las ventanas tengan el tema aplicado
+            javafx.application.Platform.runLater(ThemeUtil::applyThemeToAllOpenWindows);
             
             // Actualizar el título (opcional)
             lblClinica.setText("Gestión Clínica");
@@ -248,26 +279,23 @@ public class PanelInicioController implements Initializable {
     }
     
     /**
-     * Abre el módulo de gestión clínica veterinaria y selecciona la pestaña de citas
+     * Abre el módulo de clínica veterinaria con la sección de citas
      */
     private void abrirModuloClinicaConCitas() {
         try {
-            // Cargar la vista de la clínica
+            // Cargar la vista de la clínica con citas
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/clinica-view.fxml"));
-            Parent contenido = loader.load();
+            Parent contenido = ThemeUtil.loadWithTheme(loader);
             
-            // Obtener el controlador para poder acceder a los componentes
+            // Obtener el controlador y configurar la pestaña de citas
             ClinicaController controller = loader.getController();
-            
-            // Agregar opciones de JVM necesarias en tiempo de ejecución
-            System.setProperty("javafx.controls.behaviour", "com.sun.javafx.scene.control.behavior");
+            if (controller != null) {
+                controller.seleccionarTabCitas();
+            }
             
             // Obtener el BorderPane central y reemplazar su contenido
             BorderPane centerPane = (BorderPane) root.getCenter();
             centerPane.setCenter(contenido);
-            
-            // Seleccionar la pestaña de citas (índice 3 en el TabPane)
-            controller.seleccionarTabCitas();
             
             // Actualizar el título
             lblClinica.setText("Gestión de Citas");
@@ -317,19 +345,22 @@ public class PanelInicioController implements Initializable {
         }
     }
 
+    /**
+     * Cierra la sesión actual y vuelve a la pantalla de login
+     */
     @FXML
     public void cerrarSesion(){
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/InicioSesion/PruebaDoblePanel.fxml"));
-            Parent loginRoot = loader.load();
-            Stage stage = (Stage) root.getScene().getWindow();
-            stage.getScene().setRoot(loginRoot);
-            stage.setWidth(900);
-            stage.setHeight(450);
+            Parent root = loader.load();
+            Scene scene = ThemeUtil.createScene(root, 900, 450);
+            Stage stage = (Stage) btnSalir.getScene().getWindow();
+            stage.setScene(scene);
             stage.centerOnScreen();
+            
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Error al cargar el panel de inicio de sesión: " + e.getMessage());
+            System.err.println("Error al cerrar sesión: " + e.getMessage());
         }
     }
 

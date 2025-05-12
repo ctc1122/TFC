@@ -1,0 +1,418 @@
+/* Dark Theme CSS - Inspirado en diseño minimalista y profesional (modo oscuro) */
+
+/* Base Colors */
+* {
+    -fx-primary-color: #1b1d21;
+    -fx-secondary-color: #25272c;
+    -fx-accent-color: #4d7eff;
+    -fx-light-accent: #383b45;
+    -fx-text-color: #e0e0e0;
+    -fx-light-text-color: #acacac;
+    -fx-success-color: #2ecc71;
+    -fx-warning-color: #f1c40f;
+    -fx-error-color: #e74c3c;
+    -fx-info-color: #3498db;
+
+    /* Chart Colors */
+    -fx-chart-primary: #4d7eff;
+    -fx-chart-secondary: #3fd9fb;
+    -fx-chart-tertiary: #50e3b9;
+    -fx-chart-background: #25272c;
+    
+    /* Sidebar Colors */
+    -fx-sidebar-bg: #25272c;
+    -fx-sidebar-button-bg: transparent;
+    -fx-sidebar-button-text: #e0e0e0;
+    -fx-sidebar-button-hover: rgba(77, 126, 255, 0.2);
+    
+    /* Específicos de la clínica veterinaria */
+    -fx-clinic-tab-bg: #25272c;
+    -fx-clinic-header-bg: #2d3748;
+    -fx-clinic-header-text: #e0e0e0;
+    -fx-clinic-content-bg: #1b1d21;
+}
+
+/* Root elements */
+.root {
+    -fx-background-color: -fx-primary-color;
+    -fx-font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Main panels and containers */
+.panel-azul-fondo {
+    -fx-background-color: -fx-primary-color;
+}
+
+.glass-panel, .content-panel {
+    -fx-background-color: -fx-secondary-color;
+    -fx-background-radius: 10px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 10, 0, 0, 4);
+    -fx-padding: 15px;
+}
+
+.title-panel {
+    -fx-background-color: -fx-secondary-color;
+    -fx-padding: 10px;
+    -fx-background-radius: 10px 10px 0 0;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: -fx-light-accent;
+}
+
+/* Cards */
+.card {
+    -fx-background-color: -fx-secondary-color;
+    -fx-background-radius: 8px;
+    -fx-padding: 15px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 10, 0, 0, 4);
+}
+
+.card-header {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text-color;
+    -fx-padding: 0 0 10px 0;
+}
+
+/* Text Styles */
+.label {
+    -fx-text-fill: -fx-text-color;
+}
+
+.title-label {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text-color;
+}
+
+.subtitle-label {
+    -fx-font-size: 16px;
+    -fx-text-fill: -fx-light-text-color;
+}
+
+.small-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: -fx-light-text-color;
+}
+
+/* Tables */
+.table-view {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8px;
+    -fx-padding: 0;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: -fx-clinic-header-bg;
+    -fx-background-radius: 8px 8px 0 0;
+}
+
+.table-view .column-header, .table-view .filler {
+    -fx-background-color: transparent;
+    -fx-size: 45px;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: -fx-light-accent;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: -fx-clinic-header-text;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.table-view .table-cell {
+    -fx-padding: 10px 10px 10px 10px;
+    -fx-text-fill: -fx-text-color;
+    -fx-alignment: CENTER_LEFT;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: -fx-light-accent;
+}
+
+.table-row-cell {
+    -fx-background-color: -fx-secondary-color;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: derive(-fx-secondary-color, -5%);
+}
+
+.table-row-cell:selected {
+    -fx-background-color: -fx-light-accent;
+    -fx-text-fill: -fx-text-color;
+}
+
+/* Buttons */
+.button, .jfx-button {
+    -fx-background-color: #3d5af1;
+    -fx-text-fill: white;
+    -fx-background-radius: 5px;
+    -fx-padding: 8px 15px;
+    -fx-cursor: hand;
+    -fx-font-size: 13px;
+}
+
+.button:hover, .jfx-button:hover {
+    -fx-background-color: derive(#3d5af1, 15%);
+}
+
+.button.secondary, .jfx-button.secondary {
+    -fx-background-color: -fx-light-accent;
+    -fx-text-fill: -fx-text-color;
+    -fx-border-width: 1px;
+    -fx-border-color: derive(-fx-light-accent, 15%);
+}
+
+.button.secondary:hover, .jfx-button.secondary:hover {
+    -fx-background-color: derive(-fx-light-accent, 5%);
+}
+
+/* Botones especiales para la vista de clínica (versión oscura) */
+#btnNuevoDiagnostico {
+    -fx-background-color: #3d5af1;
+}
+
+#btnVerDetalles {
+    -fx-background-color: #2c91d9;
+}
+
+#btnEliminar {
+    -fx-background-color: #c9184a;
+}
+
+#btnMostrarTodos {
+    -fx-background-color: #2d8a4f;
+}
+
+#btnExportarPDF {
+    -fx-background-color: #3355c5;
+}
+
+#btnExportarCSV {
+    -fx-background-color: #19a974;
+}
+
+/* Toggle Switch */
+.theme-toggle-switch {
+    -fx-border-color: transparent;
+    -fx-background-color: transparent;
+}
+
+/* Charts */
+.chart {
+    -fx-background-color: transparent;
+    -fx-padding: 10px;
+}
+
+.chart-series-line {
+    -fx-stroke-width: 2px;
+    -fx-effect: null;
+}
+
+.default-color0.chart-series-line { -fx-stroke: -fx-chart-primary; }
+.default-color1.chart-series-line { -fx-stroke: -fx-chart-secondary; }
+.default-color2.chart-series-line { -fx-stroke: -fx-chart-tertiary; }
+
+.chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.chart-vertical-grid-lines {
+    -fx-stroke: -fx-light-accent;
+    -fx-stroke-dash-array: 3 3;
+}
+
+.chart-horizontal-grid-lines {
+    -fx-stroke: -fx-light-accent;
+    -fx-stroke-dash-array: 3 3;
+}
+
+/* Text fields */
+.text-field {
+    -fx-background-color: derive(-fx-secondary-color, 5%);
+    -fx-background-radius: 5px;
+    -fx-border-color: -fx-light-accent;
+    -fx-border-radius: 5px;
+    -fx-padding: 8px;
+    -fx-text-fill: -fx-text-color;
+}
+
+.text-field:focused {
+    -fx-border-color: -fx-accent-color;
+}
+
+/* Status indicators */
+.status-success {
+    -fx-text-fill: -fx-success-color;
+}
+
+.status-warning {
+    -fx-text-fill: -fx-warning-color;
+}
+
+.status-error {
+    -fx-text-fill: -fx-error-color;
+}
+
+.status-info {
+    -fx-text-fill: -fx-info-color;
+}
+
+/* Side menu */
+.sidebar {
+    -fx-background-color: -fx-sidebar-bg;
+    -fx-background-radius: 10px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 10, 0, 0, 5);
+    -fx-padding: 15px 10px;
+}
+
+/* Menu lateral - Botones (modo oscuro) */
+#btnMenuPrincipal, #btnAnimales, #but_clientes, #btnFichaje, #btnEmpresa, #btnSalir {
+    -fx-background-color: -fx-sidebar-button-bg;
+    -fx-text-fill: -fx-sidebar-button-text;
+    -fx-background-radius: 5px;
+}
+
+#btnMenuPrincipal:hover, #btnAnimales:hover, #but_clientes:hover, #btnFichaje:hover, #btnEmpresa:hover, #btnSalir:hover {
+    -fx-background-color: -fx-sidebar-button-hover;
+}
+
+#btnMenuPrincipal .image-view, #btnAnimales .image-view, #but_clientes .image-view, 
+#btnFichaje .image-view, #btnEmpresa .image-view, #btnSalir .image-view {
+    -fx-opacity: 0.9;
+}
+
+/* Botón SALIR con color especial (modo oscuro) */
+#btnSalir {
+    -fx-background-color: transparent;
+    -fx-text-fill: #f56565;
+    -fx-font-weight: bold;
+}
+
+#btnSalir:hover {
+    -fx-background-color: rgba(245, 101, 101, 0.2);
+}
+
+/* Specific components */
+.itemMenu {
+    -fx-background-color: -fx-secondary-color;
+    -fx-background-radius: 50%;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 10, 0, 0, 3);
+}
+
+.circleMenuButton {
+    -fx-background-color: -fx-secondary-color;
+    -fx-background-radius: 50%;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 8, 0, 0, 2);
+}
+
+/* Pestañas (Tabs) - Versión oscura */
+.tab-pane > .tab-header-area {
+    -fx-background-color: -fx-clinic-tab-bg;
+}
+
+.tab-pane > .tab-header-area > .tab-header-background {
+    -fx-background-color: -fx-clinic-tab-bg;
+    -fx-background-radius: 8px 8px 0 0;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: -fx-secondary-color;
+    -fx-background-radius: 8px 8px 0 0;
+    -fx-padding: 4px 10px;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: #3d5af1;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected .tab-label {
+    -fx-text-fill: white;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab .tab-label {
+    -fx-text-fill: -fx-text-color;
+}
+
+/* Progress indicators */
+.progress-bar > .bar {
+    -fx-background-color: -fx-accent-color;
+    -fx-background-radius: 3px;
+}
+
+.progress-bar > .track {
+    -fx-background-color: -fx-light-accent;
+    -fx-background-radius: 3px;
+}
+
+/* Progress Indicators - Custom circular styles */
+.circular-progress {
+    -fx-stroke: -fx-accent-color;
+    -fx-fill: transparent;
+    -fx-stroke-width: 8px;
+    -fx-stroke-line-cap: round;
+}
+
+.circular-progress-background {
+    -fx-stroke: -fx-light-accent;
+    -fx-fill: transparent;
+    -fx-stroke-width: 8px;
+    -fx-stroke-line-cap: round;
+}
+
+/* Scroll bars */
+.scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: derive(-fx-light-accent, 10%);
+    -fx-background-radius: 10px;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: derive(-fx-light-accent, 20%);
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+}
+
+/* Date pickers y combos - Versión oscura */
+.date-picker, .combo-box {
+    -fx-background-color: derive(-fx-secondary-color, 5%);
+    -fx-border-color: -fx-light-accent;
+    -fx-border-radius: 5px;
+    -fx-text-fill: -fx-text-color;
+}
+
+.date-picker .arrow-button, .combo-box .arrow-button {
+    -fx-background-color: derive(-fx-secondary-color, 10%);
+}
+
+.date-picker .text-field, .combo-box .text-field {
+    -fx-background-color: derive(-fx-secondary-color, 5%);
+    -fx-text-fill: -fx-text-color;
+}
+
+.date-picker .cell, .combo-box .cell, .combo-box-popup .list-cell {
+    -fx-background-color: -fx-secondary-color;
+    -fx-text-fill: -fx-text-color;
+}
+
+.date-picker:focused, .combo-box:focused {
+    -fx-border-color: -fx-accent-color;
+}
+
+/* Panel específico de la clínica - Versión oscura */
+.clinic-main-panel {
+    -fx-background-color: -fx-clinic-content-bg;
+}
+
+/* Headers específicos de la clínica - Versión oscura */
+.clinic-header {
+    -fx-background-color: -fx-clinic-header-bg;
+    -fx-text-fill: -fx-clinic-header-text;
+    -fx-padding: 10px;
+    -fx-font-weight: bold;
+} 
