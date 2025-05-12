@@ -13,6 +13,7 @@ module com.example.pruebamongodbcss {
     requires org.json;
     requires jcef;
     requires MaterialFX;
+    requires java.sql;
 
 
     // Configuración básica del módulo principal

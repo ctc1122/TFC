@@ -40,6 +40,37 @@ services:
       - app-network
     restart: unless-stopped
 
+  # MariaDB (puerto 3306)
+  mariadb:
+    image: mariadb:latest
+    container_name: umls-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: miclave
+      MYSQL_DATABASE: umls
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app-network
+
+  # phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: mariadb
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: miclave
+    ports:
+      - "8080:80"
+    depends_on:
+      - mariadb
+    networks:
+      - app-network
+
 volumes:
   mongodb-data1:
     name: mongodb-tfc-data1
@@ -47,6 +78,8 @@ volumes:
     name: mongodb-tfc-data2
   mongodb-data3:
     name: mongodb-tfc-data3
+  mysql_data:
+    name: umls-db-data
 
 networks:
   app-network:
