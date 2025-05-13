@@ -21,6 +21,7 @@
     -fx-background-color: -fx-secondary-color;
     -fx-padding: 0;
     -fx-border-width: 0;
+    -fx-fit-to-width: true;
 }
 
 .home-scroll-pane > .viewport {
@@ -41,6 +42,16 @@
     -fx-min-height: 450px;
     -fx-pref-height: 450px;
     -fx-background-color: -fx-secondary-color;
+    -fx-opacity: 1;
+    -fx-transition: opacity 0.3s ease-in-out;
+}
+
+.home-page-hiding {
+    -fx-opacity: 0;
+}
+
+.home-page-showing {
+    -fx-opacity: 1;
 }
 
 .home-grid {
@@ -105,10 +116,38 @@
     -fx-padding: 8px 16px;
     -fx-background-radius: 4px;
     -fx-cursor: hand;
+    -fx-transition: background-color 0.3s;
 }
 
 .btn-card:hover {
     -fx-background-color: derive(-fx-accent-color, 15%);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 3, 0, 0, 1);
+}
+
+.btn-back {
+    -fx-background-color: transparent;
+    -fx-text-fill: -fx-accent-color;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-padding: 5px 10px;
+    -fx-cursor: hand;
+    -fx-border-width: 1px;
+    -fx-border-color: -fx-accent-color;
+    -fx-border-radius: 4px;
+    -fx-transition: background-color 0.3s;
+}
+
+.btn-back:hover {
+    -fx-background-color: derive(-fx-accent-color, 85%);
+}
+
+.dark-theme .btn-back {
+    -fx-text-fill: -fx-accent-color;
+    -fx-border-color: -fx-accent-color;
+}
+
+.dark-theme .btn-back:hover {
+    -fx-background-color: rgba(61, 90, 241, 0.2);
 }
 
 .btn-footer {
@@ -117,6 +156,7 @@
     -fx-padding: 10px 20px;
     -fx-background-radius: 4px;
     -fx-cursor: hand;
+    -fx-transition: background-color 0.3s;
 }
 
 /* Page Indicators */
@@ -134,6 +174,11 @@
 
 .indicator-inactive {
     -fx-fill: #cccccc;
+}
+
+/* Page Animation Support */
+.page-transition {
+    -fx-transition: all 0.5s ease-in-out;
 }
 
 /* Feature Styles for Page 2 */
@@ -283,4 +328,18 @@
     -fx-min-height: 430px;
     -fx-pref-height: 430px;
     -fx-padding: 0 20px 20px 20px;
+    -fx-background-color: -fx-secondary-color;
+}
+
+/* Para animaciones fluidas - Actualizado para StackPane */
+.home-page .feature-row {
+    -fx-opacity: 1;
+    -fx-translate-y: 0;
+    -fx-transition: opacity 0.5s, translate-y 0.5s;
+}
+
+/* Para animaciones fluidas */
+.home-scroll-pane {
+    -fx-pref-viewport-height: 450px;
+    -fx-smooth-scrolling: true;
 } 

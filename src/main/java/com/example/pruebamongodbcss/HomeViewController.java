@@ -6,19 +6,16 @@ import java.util.ResourceBundle;
 import com.example.pruebamongodbcss.theme.ThemeManager;
 import com.jfoenix.controls.JFXButton;
 
+import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
+import javafx.animation.ParallelTransition;
+import javafx.animation.TranslateTransition;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
@@ -32,10 +29,7 @@ public class HomeViewController implements Initializable {
     private BorderPane homeContainer;
     
     @FXML
-    private ScrollPane scrollPane;
-    
-    @FXML
-    private VBox contentContainer;
+    private StackPane pagesContainer;
     
     @FXML
     private VBox page1;
@@ -53,38 +47,16 @@ public class HomeViewController implements Initializable {
     private Rectangle indicator2;
     
     @FXML
-    private Rectangle indicator1Copy;
-    
-    @FXML
-    private Rectangle indicator2Copy;
-    
-    @FXML
-    private HBox homeHeader;
-    
-    @FXML
-    private Label homeTitle;
-    
-    @FXML
-    private HBox homeFooter;
-    
-    @FXML
-    private JFXButton btnSolutions;
-    
-    @FXML
-    private JFXButton btnAboutUs;
-    
-    @FXML
-    private JFXButton btnPricing;
-    
-    @FXML
     private HBox pageIndicatorContainer;
     
-    private boolean isScrolling = false;
+    @FXML
+    private JFXButton btnLearnMore;
+    
+    @FXML
+    private JFXButton btnBack;
+    
     private boolean isPage1Visible = true;
     private boolean isAnimating = false;
-    private double scrollThreshold = 0.3; // Porcentaje de la página para activar cambio
-    private double lastScrollPosition = 0;
-    private ChangeListener<Number> scrollListener;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -101,8 +73,8 @@ public class HomeViewController implements Initializable {
         // Set button action handlers
         setButtonActions();
         
-        // Configure scroll behavior
-        configureScrollAnimation();
+        // Configure initial page state
+        configurePageTransitions();
     }
     
     /**
@@ -123,8 +95,14 @@ public class HomeViewController implements Initializable {
      * Set action handlers for all buttons
      */
     private void setButtonActions() {
-        // Find all buttons using CSS selectors and add handlers
-        homeContainer.lookupAll(".btn-card, .btn-footer").forEach(node -> {
+        // Add learn more button handler
+        btnLearnMore.setOnAction(e -> navigateToPage2());
+        
+        // Add back button handler
+        btnBack.setOnAction(e -> navigateToPage1());
+        
+        // Add hover effects to all buttons
+        homeContainer.lookupAll(".btn-card, .btn-footer, .btn-back").forEach(node -> {
             if (node instanceof JFXButton) {
                 JFXButton button = (JFXButton) node;
                 
@@ -132,107 +110,30 @@ public class HomeViewController implements Initializable {
                 button.setOnMouseEntered(e -> button.setStyle("-fx-scale-x: 1.05; -fx-scale-y: 1.05;"));
                 button.setOnMouseExited(e -> button.setStyle("-fx-scale-x: 1.0; -fx-scale-y: 1.0;"));
                 
-                // Add click handler based on button type
-                button.setOnAction(e -> handleButtonClick(button));
+                // Add click handler for non-navigation buttons
+                if (button != btnLearnMore && button != btnBack) {
+                    button.setOnAction(e -> handleButtonClick(button));
+                }
             }
         });
+        
+        // Make indicators clickable for navigation
+        indicator1.setOnMouseClicked(e -> navigateToPage1());
+        indicator2.setOnMouseClicked(e -> navigateToPage2());
     }
     
     /**
-     * Configure scroll animation and snap behavior
+     * Configure page transitions
      */
-    private void configureScrollAnimation() {
-        // Asegurar que el contenedor no tenga padding y el scrollPane tome todo el espacio
-        pageIndicatorContainer.toFront();
-        contentContainer.setStyle("-fx-padding: 0; -fx-spacing: 0;");
-        
-        // Aplicar estilo específico al ScrollPane
-        scrollPane.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
-        
-        // Establecer posición inicial
-        scrollPane.setVvalue(0);
+    private void configurePageTransitions() {
+        // Set initial page state
+        page1.setVisible(true);
+        page2.setVisible(false);
         page1.setOpacity(1.0);
         page2.setOpacity(0.0);
         
-        // Configurar padding para que la página 2 esté siempre al principio cuando está activa
-        page1.layoutBoundsProperty().addListener((observable, oldValue, newValue) -> {
-            if (page2 != null) {
-                // Ajustar el padding-top de page2 para que siempre aparezca arriba del todo cuando está activa
-                page2.setPadding(new javafx.geometry.Insets(0, 20, 20, 20));
-            }
-        });
-        
-        // Haciendo los indicadores clicables para navegar entre páginas
-        indicator1.setOnMouseClicked(e -> snapToPage(true));
-        indicator2.setOnMouseClicked(e -> snapToPage(false));
-        
-        // Configure the scroll behavior
-        scrollListener = (ObservableValue<? extends Number> observable, Number oldValue, Number newValue) -> {
-            if (isAnimating) return; // Skip if already animating
-            
-            double vvalue = newValue.doubleValue();
-            double delta = Math.abs(vvalue - lastScrollPosition);
-            
-            // Crossfade between pages - más abrupto para que se vea más claramente
-            if (vvalue < 0.4) {
-                // Primer página completamente visible
-                page1.setOpacity(1.0);
-                page2.setOpacity(0.0);
-                updateIndicators(true);
-                isPage1Visible = true;
-            } else if (vvalue >= 0.4 && vvalue < 0.6) {
-                // Zona de transición
-                double progress = (vvalue - 0.4) / 0.2; // 0 a 1 en el rango 0.4-0.6
-                page1.setOpacity(1.0 - progress);
-                page2.setOpacity(progress);
-            } else {
-                // Segunda página completamente visible
-                page1.setOpacity(0.0);
-                page2.setOpacity(1.0);
-                updateIndicators(false);
-                isPage1Visible = false;
-                
-                // Asegurar que la página 2 esté en la parte superior cuando se muestra
-                if (vvalue > 0.9) {
-                    page2.toFront();
-                }
-            }
-            
-            // Snap más agresivo
-            if (delta < 0.01 && isScrolling) {
-                isScrolling = false;
-                
-                // Si está en la zona de transición, ir a la página más cercana
-                if (vvalue > 0.3 && vvalue < 0.7) {
-                    snapToPage(vvalue < 0.5);
-                }
-            } else if (delta >= 0.01) {
-                isScrolling = true;
-            }
-            
-            lastScrollPosition = vvalue;
-        };
-        
-        // Añadir el listener de scroll
-        scrollPane.vvalueProperty().addListener(scrollListener);
-        
-        // Mouse wheel event para un scrolling más suave
-        scrollPane.setOnScroll(e -> {
-            if (isAnimating) return;
-            
-            // Determinar dirección y aplicar scroll más suave
-            if (e.getDeltaY() < 0) {
-                // Scrolling hacia abajo - ir a página 2
-                if (isPage1Visible) {
-                    snapToPage(false);
-                }
-            } else {
-                // Scrolling hacia arriba - ir a página 1
-                if (!isPage1Visible) {
-                    snapToPage(true);
-                }
-            }
-        });
+        // Ensure indicators are showing correct state
+        updateIndicators(true);
     }
     
     /**
@@ -248,57 +149,121 @@ public class HomeViewController implements Initializable {
     }
     
     /**
-     * Snap to a specific page with animation
-     * @param toPage1 true to snap to page 1, false to snap to page 2
+     * Navigate to page 1 with animation
      */
-    private void snapToPage(boolean toPage1) {
+    public void navigateToPage1() {
+        if (isAnimating || isPage1Visible) return;
         isAnimating = true;
         
-        // Establecer la opacidad inmediatamente para una respuesta más rápida
-        page1.setOpacity(toPage1 ? 1.0 : 0.0);
-        page2.setOpacity(toPage1 ? 0.0 : 1.0);
+        // Update indicators
+        updateIndicators(true);
         
-        // Actualizar indicadores inmediatamente
-        updateIndicators(toPage1);
+        // Make both pages visible for the transition
+        page1.setVisible(true);
+        page2.getStyleClass().add("home-page-hiding");
         
-        // Si vamos a la página 2, asegurar que está en la parte superior
-        if (!toPage1) {
-            // Asegurar que la página 2 esté en la parte superior
-            scrollPane.setVvalue(0.6); // Iniciar un poco por encima para que la animación sea visible
-            
-            // Mover la página 2 al frente
-            page2.toFront();
-            
-            // Asegurar que el padding sea correcto
-            page2.setPadding(new javafx.geometry.Insets(0, 20, 20, 20));
-        }
+        // Create animation
+        FadeTransition fadeOutPage2 = new FadeTransition(Duration.millis(300), page2);
+        fadeOutPage2.setFromValue(1.0);
+        fadeOutPage2.setToValue(0.0);
         
-        // Crear animación más rápida para el scroll
-        Timeline timeline = new Timeline();
-        KeyValue kv = new KeyValue(scrollPane.vvalueProperty(), toPage1 ? 0.0 : 1.0, Interpolator.EASE_OUT);
-        KeyFrame kf = new KeyFrame(Duration.millis(300), kv); // Más rápido: 300ms
-        timeline.getKeyFrames().add(kf);
+        FadeTransition fadeInPage1 = new FadeTransition(Duration.millis(300), page1);
+        fadeInPage1.setFromValue(0.0);
+        fadeInPage1.setToValue(1.0);
         
-        // Reproducir animación
-        timeline.play();
+        // Add slide effect
+        TranslateTransition slidePage1 = new TranslateTransition(Duration.millis(300), page1);
+        slidePage1.setFromY(50);
+        slidePage1.setToY(0);
+        slidePage1.setInterpolator(Interpolator.EASE_OUT);
         
-        // Actualizar estado cuando finaliza la animación
-        timeline.setOnFinished(e -> {
+        // Run animations in parallel
+        ParallelTransition transition = new ParallelTransition(fadeOutPage2, fadeInPage1, slidePage1);
+        
+        transition.setOnFinished(e -> {
+            // Update state after animation
+            page2.setVisible(false);
+            page2.getStyleClass().remove("home-page-hiding");
+            isPage1Visible = true;
             isAnimating = false;
-            isPage1Visible = toPage1;
+        });
+        
+        transition.play();
+    }
+    
+    /**
+     * Navigate to page 2 with animation
+     */
+    public void navigateToPage2() {
+        if (isAnimating || !isPage1Visible) return;
+        isAnimating = true;
+        
+        // Update indicators
+        updateIndicators(false);
+        
+        // Make both pages visible for the transition
+        page2.setVisible(true);
+        page1.getStyleClass().add("home-page-hiding");
+        
+        // Create animation
+        FadeTransition fadeOutPage1 = new FadeTransition(Duration.millis(300), page1);
+        fadeOutPage1.setFromValue(1.0);
+        fadeOutPage1.setToValue(0.0);
+        
+        FadeTransition fadeInPage2 = new FadeTransition(Duration.millis(300), page2);
+        fadeInPage2.setFromValue(0.0);
+        fadeInPage2.setToValue(1.0);
+        
+        // Add slide effect
+        TranslateTransition slidePage2 = new TranslateTransition(Duration.millis(300), page2);
+        slidePage2.setFromY(-50);
+        slidePage2.setToY(0);
+        slidePage2.setInterpolator(Interpolator.EASE_OUT);
+        
+        // Run animations in parallel
+        ParallelTransition transition = new ParallelTransition(fadeOutPage1, fadeInPage2, slidePage2);
+        
+        transition.setOnFinished(e -> {
+            // Update state after animation
+            page1.setVisible(false);
+            page1.getStyleClass().remove("home-page-hiding");
+            isPage1Visible = false;
+            isAnimating = false;
             
-            // Si vamos a la página 2, asegurar que esté completamente en la parte superior
-            if (!toPage1) {
-                // Forzar posición correcta después de terminar la animación
-                scrollPane.setVvalue(1.0);
-                page2.toFront();
-                
-                // Aplicar un pequeño delay y volver a posicionar para asegurar que se ajuste correctamente
-                javafx.application.Platform.runLater(() -> {
-                    // Forzar reposicionamiento
-                    scrollPane.setVvalue(1.0);
-                });
-            }
+            // Add staggered animation for feature rows
+            animateFeatureRows();
+        });
+        
+        transition.play();
+    }
+    
+    /**
+     * Animate feature rows with a staggered effect
+     */
+    private void animateFeatureRows() {
+        // Find all feature rows
+        page2.lookupAll(".feature-row").forEach(node -> {
+            // Set initial state
+            node.setOpacity(0);
+            node.setTranslateY(20);
+            
+            // Create animation
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(300), node);
+            fadeIn.setFromValue(0);
+            fadeIn.setToValue(1);
+            
+            TranslateTransition slideUp = new TranslateTransition(Duration.millis(300), node);
+            slideUp.setFromY(20);
+            slideUp.setToY(0);
+            
+            ParallelTransition animation = new ParallelTransition(fadeIn, slideUp);
+            
+            // Add delay based on index
+            int index = ((VBox)page2).getChildren().indexOf(node.getParent());
+            animation.setDelay(Duration.millis(150 * index));
+            
+            // Play animation
+            animation.play();
         });
     }
     
@@ -308,10 +273,6 @@ public class HomeViewController implements Initializable {
      */
     private void handleButtonClick(JFXButton button) {
         switch (button.getText()) {
-            case "LEARN MORE":
-                // Scroll to page 2 when Learn More is clicked
-                snapToPage(false);
-                break;
             case "SOLUTIONS":
                 System.out.println("Solutions clicked");
                 // Add functionality as needed
