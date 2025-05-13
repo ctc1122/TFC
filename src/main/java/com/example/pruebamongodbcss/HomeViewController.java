@@ -12,6 +12,9 @@ import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -57,6 +60,10 @@ public class HomeViewController implements Initializable {
     
     private boolean isPage1Visible = true;
     private boolean isAnimating = false;
+    private ScrollPane scrollWrapper;
+    private boolean isScrolling = false;
+    private double lastScrollY = 0;
+    private static final double SCROLL_THRESHOLD = 30.0;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -64,6 +71,8 @@ public class HomeViewController implements Initializable {
         homeContainer.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
                 ThemeManager.getInstance().registerScene(newScene);
+                // Configurar el scroll una vez que la escena esté disponible
+                setupScrollFunctionality(newScene);
             }
         });
         
@@ -75,6 +84,58 @@ public class HomeViewController implements Initializable {
         
         // Configure initial page state
         configurePageTransitions();
+    }
+    
+    /**
+     * Configurar la funcionalidad de scroll para navegar entre páginas
+     */
+    private void setupScrollFunctionality(javafx.scene.Scene scene) {
+        // Crear un wrapper de ScrollPane en código (sin afectar el FXML)
+        if (scrollWrapper == null) {
+            // Añadir eventos de scroll a la escena
+            scene.addEventFilter(ScrollEvent.SCROLL, this::handleScroll);
+            
+            // Configurar las propiedades del contenedor para detectar swipes en pantallas táctiles
+            pagesContainer.setOnSwipeUp(e -> {
+                if (isPage1Visible && !isAnimating) {
+                    navigateToPage2();
+                }
+            });
+            
+            pagesContainer.setOnSwipeDown(e -> {
+                if (!isPage1Visible && !isAnimating) {
+                    navigateToPage1();
+                }
+            });
+        }
+    }
+    
+    /**
+     * Manejar eventos de scroll
+     */
+    private void handleScroll(ScrollEvent event) {
+        if (isAnimating) return;
+        
+        // Calcular la dirección y cantidad de scroll
+        double deltaY = event.getDeltaY();
+        lastScrollY += deltaY;
+        
+        // Determinar si el scroll es suficiente para cambiar de página
+        if (Math.abs(lastScrollY) > SCROLL_THRESHOLD) {
+            if (lastScrollY < 0 && isPage1Visible) {
+                // Scroll hacia abajo - navegar a página 2
+                navigateToPage2();
+            } else if (lastScrollY > 0 && !isPage1Visible) {
+                // Scroll hacia arriba - navegar a página 1
+                navigateToPage1();
+            }
+            
+            // Reiniciar el contador de scroll
+            lastScrollY = 0;
+        }
+        
+        // Prevenir propagación del evento para evitar comportamiento no deseado
+        event.consume();
     }
     
     /**
@@ -259,7 +320,11 @@ public class HomeViewController implements Initializable {
             ParallelTransition animation = new ParallelTransition(fadeIn, slideUp);
             
             // Add delay based on index
-            int index = ((VBox)page2).getChildren().indexOf(node.getParent());
+            int index = 0;
+            Node parent = node.getParent();
+            if (parent instanceof VBox) {
+                index = ((VBox) parent).getChildren().indexOf(node);
+            }
             animation.setDelay(Duration.millis(150 * index));
             
             // Play animation
