@@ -145,6 +145,9 @@ public class PanelInicioSesionController extends Application implements Initiali
             
             stage.setTitle("Inicio de sesión!");
             stage.setScene(scene);
+            stage.setOnCloseRequest(event -> {
+                stage.close();
+            });
             stage.setResizable(false);
             stage.show();
             
@@ -593,6 +596,10 @@ public class PanelInicioSesionController extends Application implements Initiali
                 // Crear una nueva ventana con decoración
                 Stage newStage = new Stage();
                 newStage.setTitle("ChichaVet - Clínica Veterinaria");
+                newStage.setOnCloseRequest(event -> {
+                    event.consume();
+                    cerrarAplicacion();
+                });
                 newStage.setScene(scene);
                 
                 // Cerrar la ventana original

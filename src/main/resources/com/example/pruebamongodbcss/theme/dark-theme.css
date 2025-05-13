@@ -415,4 +415,19 @@
     -fx-text-fill: -fx-clinic-header-text;
     -fx-padding: 10px;
     -fx-font-weight: bold;
+}
+
+/* Label styles specifically for diagnosis view */
+.label-field {
+    -fx-text-fill: #8f8e8e;
+    -fx-font-weight: bold;
+}
+
+.label-value {
+    -fx-text-fill: #676767;
+}
+
+/* Custom color for diagnosis view title */
+.view-title {
+    -fx-text-fill: #a0c4ff;  /* Light blue color that stands out on dark background */
 } 
