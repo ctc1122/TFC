@@ -12,7 +12,6 @@ import com.example.pruebamongodbcss.theme.ThemeToggleSwitch;
 import com.example.pruebamongodbcss.theme.ThemeUtil;
 import com.jfoenix.controls.JFXButton;
 
-import io.github.palexdev.materialfx.controls.MFXProgressSpinner;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
@@ -373,44 +372,24 @@ public class PanelInicioController implements Initializable {
      * Restaura la vista principal por defecto
      */
     private void restaurarVistaPrincipal() {
-        // Obtener el BorderPane central
-        BorderPane centerPane = (BorderPane) root.getCenter();
-        
-        // Restaurar contenido por defecto (un Pane con el spinner)
-        Pane defaultPane = new Pane();
-        defaultPane.setPrefHeight(400.0);
-        defaultPane.setPrefWidth(622.0);
-        defaultPane.getStylesheets().add("@app.css");
-        
-        // Añadir el spinner
         try {
-            MFXProgressSpinner spinner = new MFXProgressSpinner();
-            spinner.setLayoutX(188.0);
-            spinner.setLayoutY(225.0);
-            spinner.setProgress(0.0);
-            spinner.getStyleClass().add("mfx-progress-spinner");
-            spinner.getStylesheets().add("@MFXProgressSpinner.css");
-            defaultPane.getChildren().add(spinner);
-        } catch (Exception e) {
-            System.err.println("Error al crear el spinner: " + e.getMessage());
-        }
-        
-        // Reemplazar el contenido central
-        centerPane.setCenter(defaultPane);
-        
-        // Restaurar título
-        lblClinica.setText("Clínica Veterinaria");
-        
-        // Aplicar la lógica de visibilidad según el modo
-        if (isCarouselMode) {
+            // Cargar nueva vista home
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/home-view.fxml"));
+            Parent homeView = ThemeUtil.loadWithTheme(loader);
+            
+            // Obtener el BorderPane central y reemplazar su contenido
+            BorderPane centerPane = (BorderPane) root.getCenter();
+            centerPane.setCenter(homeView);
+            
+            // Actualizar el título
+            lblClinica.setText("Menú Principal");
+            
+            // Mantener visible el carrusel si está activo
             mantenerCarruselVisible();
-        } else {
-            // Si no estamos en modo carrusel, restaurar la barra lateral
-            if (root.getLeft() == null) {
-                root.setLeft(sidebarContainer);
-            }
-            sidebar.setVisible(true);
-            sidebarContainer.setVisible(true);
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Error al cargar la vista principal: " + e.getMessage());
         }
     }
 

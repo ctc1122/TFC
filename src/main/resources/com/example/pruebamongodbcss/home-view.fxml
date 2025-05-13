@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Rectangle?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.paint.LinearGradient?>
+<?import javafx.scene.paint.Stop?>
+<?import javafx.scene.control.ScrollPane?>
+
+<BorderPane fx:id="homeContainer" prefHeight="600.0" prefWidth="800.0" styleClass="home-container" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.HomeViewController">
+    <!-- Header section with title -->
+    <top>
+        <HBox alignment="CENTER_LEFT" styleClass="home-header">
+            <padding>
+                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+            </padding>
+            <Label styleClass="home-title" text="EMBRACE THE FUTURE OF ENERGY">
+                <font>
+                    <Font name="System Bold" size="24.0" />
+                </font>
+            </Label>
+        </HBox>
+    </top>
+    
+    <!-- Main content area with scrollable sections -->
+    <center>
+        <ScrollPane fx:id="scrollPane" fitToWidth="true" styleClass="home-scroll-pane" hbarPolicy="NEVER">
+            <content>
+                <VBox fx:id="contentContainer" spacing="0" styleClass="home-content-container">
+                    <!-- Page 1: Grid Cards -->
+                    <VBox fx:id="page1" styleClass="home-page">
+                        <GridPane fx:id="page1Grid" hgap="20.0" styleClass="home-grid" vgap="20.0">
+                            <padding>
+                                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                            </padding>
+                            
+                            <!-- Feature Card 1: Main image with text overlay -->
+                            <BorderPane styleClass="card, card-main" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="0">
+                                <center>
+                                    <StackPane>
+                                        <!-- Replace ImageView with gradient Rectangle as temporary placeholder -->
+                                        <Rectangle width="500.0" height="300.0" arcHeight="10.0" arcWidth="10.0">
+                                            <fill>
+                                                <LinearGradient endX="1.0" endY="1.0">
+                                                    <stops>
+                                                        <Stop color="#3d5af1" />
+                                                        <Stop color="#2c91d9" offset="1.0" />
+                                                    </stops>
+                                                </LinearGradient>
+                                            </fill>
+                                        </Rectangle>
+                                        <Rectangle arcHeight="10.0" arcWidth="10.0" fill="#00000066" height="300.0" width="500.0" />
+                                        <VBox alignment="BOTTOM_LEFT" spacing="10.0">
+                                            <padding>
+                                                <Insets bottom="20.0" left="20.0" right="20.0" />
+                                            </padding>
+                                            <Label styleClass="card-title" text="A FUSION OF INNOVATION AND ELEGANCE">
+                                                <font>
+                                                    <Font name="System Bold" size="18.0" />
+                                                </font>
+                                            </Label>
+                                            <Label styleClass="card-subtitle" text="DESIGNED FOR THE FUTURE OF DRIVING">
+                                                <font>
+                                                    <Font size="14.0" />
+                                                </font>
+                                            </Label>
+                                            <JFXButton styleClass="btn-card" text="LEARN MORE" />
+                                        </VBox>
+                                    </StackPane>
+                                </center>
+                            </BorderPane>
+                            
+                            <!-- Feature Card 2: Secondary card with placeholder rectangle instead of image -->
+                            <BorderPane styleClass="card, card-secondary" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                                <center>
+                                    <VBox alignment="TOP_CENTER" spacing="10.0">
+                                        <!-- Replace ImageView with Rectangle as placeholder -->
+                                        <Rectangle width="160.0" height="120.0" arcHeight="10.0" arcWidth="10.0">
+                                            <fill>
+                                                <LinearGradient endX="1.0" endY="1.0">
+                                                    <stops>
+                                                        <Stop color="#4d7eff" />
+                                                        <Stop color="#3fd9fb" offset="1.0" />
+                                                    </stops>
+                                                </LinearGradient>
+                                            </fill>
+                                        </Rectangle>
+                                        <Label styleClass="card-title-secondary" text="ELECTRIC PERFORMANCE">
+                                            <font>
+                                                <Font name="System Bold" size="14.0" />
+                                            </font>
+                                        </Label>
+                                        <Label styleClass="card-text" text="Experience the power of zero emissions with exceptional acceleration and range." textAlignment="CENTER" wrapText="true" />
+                                    </VBox>
+                                </center>
+                            </BorderPane>
+                            
+                            <!-- Feature Card 3: Charging stations card with placeholder rectangle -->
+                            <BorderPane styleClass="card, card-secondary" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                <center>
+                                    <VBox alignment="TOP_CENTER" spacing="10.0">
+                                        <!-- Replace ImageView with Rectangle as placeholder -->
+                                        <Rectangle width="160.0" height="120.0" arcHeight="10.0" arcWidth="10.0">
+                                            <fill>
+                                                <LinearGradient endX="1.0" endY="1.0">
+                                                    <stops>
+                                                        <Stop color="#50e3b9" />
+                                                        <Stop color="#1cc88a" offset="1.0" />
+                                                    </stops>
+                                                </LinearGradient>
+                                            </fill>
+                                        </Rectangle>
+                                        <Label styleClass="card-title-secondary" text="CHARGING SOLUTIONS">
+                                            <font>
+                                                <Font name="System Bold" size="14.0" />
+                                            </font>
+                                        </Label>
+                                        <Label styleClass="card-text" text="Innovative charging network provides quick and convenient power for your journey." textAlignment="CENTER" wrapText="true" />
+                                    </VBox>
+                                </center>
+                            </BorderPane>
+                        </GridPane>
+                        
+                        <!-- Page indicator -->
+                        <HBox alignment="CENTER" spacing="10.0" styleClass="page-indicator">
+                            <padding>
+                                <Insets top="20.0" bottom="20.0" />
+                            </padding>
+                            <Rectangle fx:id="indicator1" width="30.0" height="8.0" arcWidth="8.0" arcHeight="8.0" styleClass="indicator-active" />
+                            <Rectangle fx:id="indicator2" width="30.0" height="8.0" arcWidth="8.0" arcHeight="8.0" styleClass="indicator-inactive" />
+                        </HBox>
+                    </VBox>
+                    
+                    <!-- Page 2: Feature details -->
+                    <VBox fx:id="page2" styleClass="home-page">
+                        <padding>
+                            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                        </padding>
+                        
+                        <VBox alignment="CENTER" spacing="30.0">
+                            <Label styleClass="page-title" text="EXPLORE OUR FEATURES">
+                                <font>
+                                    <Font name="System Bold" size="22.0" />
+                                </font>
+                            </Label>
+                            
+                            <!-- Feature Rows -->
+                            <HBox styleClass="feature-row" spacing="20.0">
+                                <Rectangle width="80.0" height="80.0" arcWidth="20.0" arcHeight="20.0">
+                                    <fill>
+                                        <LinearGradient endX="1.0" endY="1.0">
+                                            <stops>
+                                                <Stop color="#4d7eff" />
+                                                <Stop color="#3fd9fb" offset="1.0" />
+                                            </stops>
+                                        </LinearGradient>
+                                    </fill>
+                                </Rectangle>
+                                <VBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                                    <Label styleClass="feature-title" text="SUPERIOR RANGE">
+                                        <font>
+                                            <Font name="System Bold" size="16.0" />
+                                        </font>
+                                    </Label>
+                                    <Label styleClass="feature-description" text="Travel up to 500 miles on a single charge with our advanced battery technology."
+                                           wrapText="true" />
+                                </VBox>
+                            </HBox>
+                            
+                            <HBox styleClass="feature-row" spacing="20.0">
+                                <Rectangle width="80.0" height="80.0" arcWidth="20.0" arcHeight="20.0">
+                                    <fill>
+                                        <LinearGradient endX="1.0" endY="1.0">
+                                            <stops>
+                                                <Stop color="#50e3b9" />
+                                                <Stop color="#1cc88a" offset="1.0" />
+                                            </stops>
+                                        </LinearGradient>
+                                    </fill>
+                                </Rectangle>
+                                <VBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                                    <Label styleClass="feature-title" text="QUICK CHARGING">
+                                        <font>
+                                            <Font name="System Bold" size="16.0" />
+                                        </font>
+                                    </Label>
+                                    <Label styleClass="feature-description" text="Reach 80% battery capacity in just 30 minutes with our supercharging network."
+                                           wrapText="true" />
+                                </VBox>
+                            </HBox>
+                            
+                            <HBox styleClass="feature-row" spacing="20.0">
+                                <Rectangle width="80.0" height="80.0" arcWidth="20.0" arcHeight="20.0">
+                                    <fill>
+                                        <LinearGradient endX="1.0" endY="1.0">
+                                            <stops>
+                                                <Stop color="#f1c40f" />
+                                                <Stop color="#e67e22" offset="1.0" />
+                                            </stops>
+                                        </LinearGradient>
+                                    </fill>
+                                </Rectangle>
+                                <VBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                                    <Label styleClass="feature-title" text="INTELLIGENT SOFTWARE">
+                                        <font>
+                                            <Font name="System Bold" size="16.0" />
+                                        </font>
+                                    </Label>
+                                    <Label styleClass="feature-description" text="Experience next-level driving with our AI-powered software that learns your preferences and optimizes your journey."
+                                           wrapText="true" />
+                                </VBox>
+                            </HBox>
+                        </VBox>
+                        
+                        <!-- Page indicator -->
+                        <HBox alignment="CENTER" spacing="10.0" styleClass="page-indicator">
+                            <padding>
+                                <Insets top="20.0" bottom="20.0" />
+                            </padding>
+                            <Rectangle fx:id="indicator1Copy" width="30.0" height="8.0" arcWidth="8.0" arcHeight="8.0" styleClass="indicator-inactive" />
+                            <Rectangle fx:id="indicator2Copy" width="30.0" height="8.0" arcWidth="8.0" arcHeight="8.0" styleClass="indicator-active" />
+                        </HBox>
+                    </VBox>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </center>
+    
+    <!-- Bottom section with additional controls -->
+    <bottom>
+        <HBox alignment="CENTER" spacing="15.0" styleClass="home-footer">
+            <padding>
+                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+            </padding>
+            <JFXButton styleClass="btn-footer, btn-primary" text="SOLUTIONS" />
+            <JFXButton styleClass="btn-footer, btn-secondary" text="ABOUT US" />
+            <JFXButton styleClass="btn-footer, btn-info" text="PRICING" />
+        </HBox>
+    </bottom>
+</BorderPane> 

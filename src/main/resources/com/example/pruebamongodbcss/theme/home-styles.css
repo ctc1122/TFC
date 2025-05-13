@@ -1,0 +1,245 @@
+/* Home View Styles - Modern Energy Theme with Light/Dark Theme Support */
+
+/* ================= COMMON STYLES ================= */
+.home-container {
+    -fx-background-color: -fx-secondary-color;
+}
+
+.home-header {
+    -fx-background-color: -fx-primary-color;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 5, 0, 0, 2);
+}
+
+.home-title {
+    -fx-text-fill: -fx-text-color;
+    -fx-font-weight: bold;
+    -fx-font-size: 24px;
+}
+
+.home-scroll-pane {
+    -fx-background: -fx-secondary-color;
+    -fx-background-color: -fx-secondary-color;
+    -fx-padding: 0;
+    -fx-border-width: 0;
+}
+
+.home-scroll-pane > .viewport {
+    -fx-background-color: -fx-secondary-color;
+}
+
+.home-scroll-pane > .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-opacity: 0;
+}
+
+.home-content-container {
+    -fx-background-color: -fx-secondary-color;
+    -fx-padding: 0;
+}
+
+.home-page {
+    -fx-min-height: 500px;
+    -fx-max-height: 500px;
+    -fx-background-color: -fx-secondary-color;
+}
+
+.home-grid {
+    -fx-alignment: center;
+}
+
+.home-footer {
+    -fx-background-color: -fx-primary-color;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 5, 0, 0, -2);
+}
+
+/* Card Styles */
+.card {
+    -fx-background-color: -fx-primary-color;
+    -fx-background-radius: 10px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 10, 0, 0, 4);
+    -fx-padding: 0;
+}
+
+.card-main {
+    -fx-min-height: 300px;
+}
+
+.card-secondary {
+    -fx-min-height: 250px;
+    -fx-padding: 15px;
+}
+
+.card-title {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 18px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 2, 0, 0, 1);
+}
+
+.card-subtitle {
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 2, 0, 0, 1);
+}
+
+.card-title-secondary {
+    -fx-text-fill: -fx-accent-color;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-padding: 10px 0 5px 0;
+}
+
+.card-text {
+    -fx-text-fill: -fx-text-color;
+    -fx-font-size: 13px;
+    -fx-padding: 0 10px;
+    -fx-alignment: center;
+}
+
+/* Button Styles */
+.btn-card {
+    -fx-background-color: -fx-accent-color;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-padding: 8px 16px;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+.btn-card:hover {
+    -fx-background-color: derive(-fx-accent-color, 15%);
+}
+
+.btn-footer {
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-padding: 10px 20px;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+/* Page Indicators */
+.page-indicator {
+    -fx-background-color: transparent;
+}
+
+.indicator-active {
+    -fx-fill: -fx-accent-color;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 3, 0, 0, 2);
+}
+
+.indicator-inactive {
+    -fx-fill: #cccccc;
+}
+
+/* Feature Styles for Page 2 */
+.page-title {
+    -fx-text-fill: -fx-text-color;
+    -fx-font-weight: bold;
+    -fx-font-size: 22px;
+    -fx-padding: 0 0 20px 0;
+}
+
+.feature-row {
+    -fx-background-color: -fx-primary-color;
+    -fx-background-radius: 10px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 10, 0, 0, 4);
+    -fx-padding: 15px;
+}
+
+.feature-title {
+    -fx-text-fill: -fx-accent-color;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+}
+
+.feature-description {
+    -fx-text-fill: -fx-text-color;
+    -fx-font-size: 14px;
+    -fx-padding: 5px 0 0 0;
+}
+
+/* ================= LIGHT THEME SPECIFIC ================= */
+/* These styles automatically apply when using light theme */
+.home-header {
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: #e0e0e0;
+}
+
+.card-main {
+    -fx-border-width: 1px;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 10px;
+}
+
+.card-secondary {
+    -fx-border-width: 1px;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 10px;
+}
+
+.feature-row {
+    -fx-border-width: 1px;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 10px;
+}
+
+.home-footer {
+    -fx-border-width: 1 0 0 0;
+    -fx-border-color: #e0e0e0;
+}
+
+/* ================= DARK THEME SPECIFIC ================= */
+/* These styles apply when the .dark-theme class is present on a parent element */
+.dark-theme .home-header {
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: -fx-light-accent;
+}
+
+.dark-theme .home-title {
+    -fx-text-fill: -fx-text-color;
+}
+
+.dark-theme .card {
+    -fx-background-color: -fx-secondary-color;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 10, 0, 0, 4);
+}
+
+.dark-theme .feature-row {
+    -fx-background-color: -fx-secondary-color;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 10, 0, 0, 4);
+}
+
+.dark-theme .card-title-secondary,
+.dark-theme .feature-title {
+    -fx-text-fill: -fx-accent-color;
+}
+
+.dark-theme .card-text,
+.dark-theme .feature-description {
+    -fx-text-fill: -fx-light-text-color;
+}
+
+.dark-theme .card-main,
+.dark-theme .card-secondary,
+.dark-theme .feature-row {
+    -fx-border-color: -fx-light-accent;
+}
+
+.dark-theme .home-footer {
+    -fx-border-width: 1 0 0 0;
+    -fx-border-color: -fx-light-accent;
+}
+
+.dark-theme .btn-card {
+    -fx-background-color: -fx-accent-color;
+}
+
+.dark-theme .btn-card:hover {
+    -fx-background-color: derive(-fx-accent-color, 15%);
+}
+
+.dark-theme .indicator-inactive {
+    -fx-fill: #666666;
+} 
