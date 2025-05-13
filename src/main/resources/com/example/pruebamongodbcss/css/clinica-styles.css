@@ -195,13 +195,23 @@
 }
 
 /* Corregir problemas con el popup del DatePicker */
+.mfx-date-picker .popup-content {
+    -fx-background-color: white;
+    -fx-border-color: #ccc;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 8, 0, 0, 8);
+    -fx-min-width: 320px;
+    -fx-min-height: 380px;
+    -fx-padding: 10px;
+}
+
 .mfx-date-picker .date-picker-popup {
     -fx-background-color: white;
     -fx-border-color: #ccc;
     -fx-border-width: 1px;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 8, 0, 0, 8);
-    -fx-min-width: 280px;
-    -fx-min-height: 300px;
+    -fx-min-width: 320px;
+    -fx-min-height: 380px;
     -fx-padding: 10px;
 }
 
@@ -209,38 +219,44 @@
 .mfx-date-picker .calendar-grid {
     -fx-background-color: white;
     -fx-padding: 10px;
-    -fx-hgap: 4px;
-    -fx-vgap: 4px;
-    -fx-min-width: 260px;
-    -fx-min-height: 260px;
-    -fx-pref-width: 260px;
-    -fx-pref-height: 260px;
+    -fx-hgap: 5px;
+    -fx-vgap: 5px;
+    -fx-min-width: 300px;
+    -fx-min-height: 300px;
+    -fx-pref-width: 300px;
+    -fx-pref-height: 300px;
 }
 
 /* Mejorar selector de mes y año */
 .mfx-date-picker .month-year-selector {
     -fx-background-color: #4CAF50;
-    -fx-padding: 8px;
+    -fx-padding: 10px;
     -fx-alignment: center;
+    -fx-min-height: 40px;
 }
 
 .mfx-date-picker .month-year-selector .label {
     -fx-text-fill: white;
     -fx-font-weight: bold;
-    -fx-font-size: 14px;
+    -fx-font-size: 16px;
 }
 
 /* Mejorar botones de navegación */
-.mfx-date-picker .month-year-selector .mfx-button {
+.mfx-date-picker .month-year-selector .mfx-button,
+.mfx-date-picker .month-year-selector .mfx-icon-wrapper,
+.mfx-date-picker .month-year-selector .mfx-ripple-generator {
     -fx-background-color: transparent;
     -fx-text-fill: white;
-    -fx-min-width: 30px;
-    -fx-min-height: 30px;
-    -fx-padding: 5px;
+    -fx-min-width: 36px;
+    -fx-min-height: 36px;
+    -fx-padding: 8px;
+    -fx-cursor: hand;
 }
 
-.mfx-date-picker .month-year-selector .mfx-button:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.2);
+.mfx-date-picker .month-year-selector .mfx-button:hover,
+.mfx-date-picker .month-year-selector .mfx-icon-wrapper:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.3);
+    -fx-background-radius: 18px;
 }
 
 /* Mejorar las celdas del día */
@@ -248,12 +264,15 @@
     -fx-background-color: transparent;
     -fx-text-fill: black;
     -fx-padding: 8px;
-    -fx-min-width: 36px;
-    -fx-min-height: 36px;
-    -fx-font-size: 13px;
+    -fx-min-width: 40px;
+    -fx-min-height: 40px;
+    -fx-pref-width: 40px;
+    -fx-pref-height: 40px;
+    -fx-font-size: 14px;
     -fx-alignment: center;
-    -fx-border-radius: 18px;
-    -fx-background-radius: 18px;
+    -fx-border-radius: 20px;
+    -fx-background-radius: 20px;
+    -fx-cursor: hand;
 }
 
 .mfx-date-picker .day-cell:hover {
@@ -263,20 +282,25 @@
 .mfx-date-picker .day-cell.selected {
     -fx-background-color: #4CAF50;
     -fx-text-fill: white;
+    -fx-font-weight: bold;
 }
 
 .mfx-date-picker .day-cell.today {
     -fx-border-color: #4CAF50;
-    -fx-border-width: 1px;
-    -fx-border-radius: 18px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 20px;
+    -fx-font-weight: bold;
 }
 
 /* Mejoras para la visualización del calendario */
 .mfx-date-picker .calendar-grid .week-day {
     -fx-font-weight: bold;
     -fx-text-fill: #4CAF50;
-    -fx-font-size: 12px;
-    -fx-padding: 5px;
+    -fx-font-size: 14px;
+    -fx-padding: 8px;
+    -fx-min-width: 40px;
+    -fx-min-height: 30px;
+    -fx-alignment: center;
 }
 
 /* Estilos para las filas de edición */

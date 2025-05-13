@@ -1,10 +1,11 @@
 package com.example.pruebamongodbcss.Modulos.Clinica;
 
-import org.bson.Document;
-import org.bson.types.ObjectId;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.ArrayList;
+
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
 /**
  * Modelo que representa a un propietario de pacientes en la clínica veterinaria.
@@ -21,8 +22,12 @@ public class ModeloPropietario {
     private Date fechaAlta;
     private String observaciones;
     
+    // Propiedad para control de edición en la UI (transient)
+    private transient boolean editando;
+    
     public ModeloPropietario() {
         this.mascotas = new ArrayList<>();
+        this.editando = false;
     }
     
     // Constructor a partir de un documento de MongoDB
@@ -40,6 +45,9 @@ public class ModeloPropietario {
         
         this.fechaAlta = doc.getDate("fechaAlta");
         this.observaciones = doc.getString("observaciones");
+        
+        // La propiedad editando es transient, no se carga de la BD
+        this.editando = false;
     }
     
     // Convertir a documento para MongoDB
@@ -156,5 +164,14 @@ public class ModeloPropietario {
     // Método para obtener el nombre completo
     public String getNombreCompleto() {
         return nombre + " " + apellidos;
+    }
+    
+    // Getters y setters para la propiedad editando
+    public boolean isEditando() {
+        return editando;
+    }
+    
+    public void setEditando(boolean editando) {
+        this.editando = editando;
     }
 } 

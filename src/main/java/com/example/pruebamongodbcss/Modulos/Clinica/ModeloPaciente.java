@@ -29,10 +29,14 @@ public class ModeloPaciente {
     private Date ultimaVisita;
     private String estadoPaciente;
     
+    // Propiedad para control de edición en la UI (transient)
+    private transient boolean editando;
+    
     public ModeloPaciente() {
         this.alergias = new ArrayList<>();
         this.vacunas = new ArrayList<>();
         this.estadoPaciente = "Activo";
+        this.editando = false;
     }
     
     // Constructor a partir de un documento de MongoDB
@@ -64,6 +68,9 @@ public class ModeloPaciente {
         if (this.estadoPaciente == null) {
             this.estadoPaciente = "Activo";
         }
+        
+        // La propiedad editando es transient, no se carga de la BD
+        this.editando = false;
     }
     
     // Convertir a documento para MongoDB
@@ -226,5 +233,14 @@ public class ModeloPaciente {
     
     public void setEstadoPaciente(String estadoPaciente) {
         this.estadoPaciente = estadoPaciente;
+    }
+    
+    // Getters y setters para la propiedad editando
+    public boolean isEditando() {
+        return editando;
+    }
+    
+    public void setEditando(boolean editando) {
+        this.editando = editando;
     }
 } 

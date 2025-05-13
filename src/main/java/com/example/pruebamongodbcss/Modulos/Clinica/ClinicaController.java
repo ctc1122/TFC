@@ -13,6 +13,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.bson.types.ObjectId;
 
@@ -37,6 +39,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Tab;
@@ -59,6 +62,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
+import javafx.scene.input.KeyCode;
 
 /**
  * Controlador principal para la gestión clínica veterinaria.
@@ -198,218 +202,1042 @@ public class ClinicaController implements Initializable {
     // ********** CONFIGURACIÓN DE TABLAS **********
     
     private void configurarTablaPacientes() {
+        // Configurar la tabla para ser editable
+        tablaPacientes.setEditable(true);
+        
+        // Columna Nombre (editable con TextField)
         colNombrePaciente.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getNombre()));
+        colNombrePaciente.setCellFactory(tc -> {
+            TableCell<ModeloPaciente, String> cell = new TableCell<>() {
+                private TextField textField;
+                
+                @Override
+                public void startEdit() {
+                    if (isEmpty() || !getTableView().getItems().get(getIndex()).isEditando()) {
+                        return;
+                    }
+                    
+                    super.startEdit();
+                    
+                    if (textField == null) {
+                        createTextField();
+                    }
+                    
+                    setText(null);
+                    setGraphic(textField);
+                    textField.selectAll();
+                }
+                
+                @Override
+                public void cancelEdit() {
+                    super.cancelEdit();
+                    setText(getItem());
+                    setGraphic(null);
+                }
+                
+                @Override
+                public void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    
+                    if (empty) {
+                        setText(null);
+                        setGraphic(null);
+                    } else {
+                        if (isEditing()) {
+                            if (textField != null) {
+                                textField.setText(getString());
+                            }
+                            setText(null);
+                            setGraphic(textField);
+                        } else {
+                            setText(getString());
+                            setGraphic(null);
+                            
+                            // Si está en modo edición, permitir doble clic para editar
+                            ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                            if (paciente.isEditando()) {
+                                setOnMouseClicked(e -> {
+                                    if (e.getClickCount() == 2) {
+                                        startEdit();
+                                    }
+                                });
+                            } else {
+                                setOnMouseClicked(null);
+                            }
+                        }
+                    }
+                }
+                
+                private void createTextField() {
+                    textField = new TextField(getString());
+                    textField.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
+                    
+                    textField.setOnAction(e -> {
+                        commitEdit(textField.getText());
+                    });
+                    
+                    textField.setOnKeyPressed(e -> {
+                        if (e.getCode() == KeyCode.ESCAPE) {
+                            cancelEdit();
+                        }
+                    });
+                    
+                    textField.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
+                        if (!isNowFocused) {
+                            commitEdit(textField.getText());
+                        }
+                    });
+                }
+                
+                private String getString() {
+                    return getItem() == null ? "" : getItem();
+                }
+                
+                @Override
+                public void commitEdit(String newValue) {
+                    super.commitEdit(newValue);
+                    
+                    ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                    paciente.setNombre(newValue);
+                }
+            };
+            
+            return cell;
+        });
+        
+        // Columna Especie (editable con TextField)
         colEspecie.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getEspecie()));
+        colEspecie.setCellFactory(tc -> {
+            TableCell<ModeloPaciente, String> cell = new TableCell<>() {
+                private TextField textField;
+                
+                @Override
+                public void startEdit() {
+                    if (isEmpty() || !getTableView().getItems().get(getIndex()).isEditando()) {
+                        return;
+                    }
+                    
+                    super.startEdit();
+                    
+                    if (textField == null) {
+                        createTextField();
+                    }
+                    
+                    setText(null);
+                    setGraphic(textField);
+                    textField.selectAll();
+                }
+                
+                @Override
+                public void cancelEdit() {
+                    super.cancelEdit();
+                    setText(getItem());
+                    setGraphic(null);
+                }
+                
+                @Override
+                public void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    
+                    if (empty) {
+                        setText(null);
+                        setGraphic(null);
+                    } else {
+                        if (isEditing()) {
+                            if (textField != null) {
+                                textField.setText(getString());
+                            }
+                            setText(null);
+                            setGraphic(textField);
+                        } else {
+                            setText(getString());
+                            setGraphic(null);
+                            
+                            // Si está en modo edición, permitir doble clic para editar
+                            ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                            if (paciente.isEditando()) {
+                                setOnMouseClicked(e -> {
+                                    if (e.getClickCount() == 2) {
+                                        startEdit();
+                                    }
+                                });
+                            } else {
+                                setOnMouseClicked(null);
+                            }
+                        }
+                    }
+                }
+                
+                private void createTextField() {
+                    textField = new TextField(getString());
+                    textField.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
+                    
+                    textField.setOnAction(e -> {
+                        commitEdit(textField.getText());
+                    });
+                    
+                    textField.setOnKeyPressed(e -> {
+                        if (e.getCode() == KeyCode.ESCAPE) {
+                            cancelEdit();
+                        }
+                    });
+                    
+                    textField.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
+                        if (!isNowFocused) {
+                            commitEdit(textField.getText());
+                        }
+                    });
+                }
+                
+                private String getString() {
+                    return getItem() == null ? "" : getItem();
+                }
+                
+                @Override
+                public void commitEdit(String newValue) {
+                    super.commitEdit(newValue);
+                    
+                    ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                    paciente.setEspecie(newValue);
+                }
+            };
+            
+            return cell;
+        });
+        
+        // Columna Raza (editable con TextField)
         colRaza.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getRaza()));
+        colRaza.setCellFactory(tc -> {
+            TableCell<ModeloPaciente, String> cell = new TableCell<>() {
+                private TextField textField;
+                
+                @Override
+                public void startEdit() {
+                    if (isEmpty() || !getTableView().getItems().get(getIndex()).isEditando()) {
+                        return;
+                    }
+                    
+                    super.startEdit();
+                    
+                    if (textField == null) {
+                        createTextField();
+                    }
+                    
+                    setText(null);
+                    setGraphic(textField);
+                    textField.selectAll();
+                }
+                
+                @Override
+                public void cancelEdit() {
+                    super.cancelEdit();
+                    setText(getItem());
+                    setGraphic(null);
+                }
+                
+                @Override
+                public void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    
+                    if (empty) {
+                        setText(null);
+                        setGraphic(null);
+                    } else {
+                        if (isEditing()) {
+                            if (textField != null) {
+                                textField.setText(getString());
+                            }
+                            setText(null);
+                            setGraphic(textField);
+                        } else {
+                            setText(getString());
+                            setGraphic(null);
+                            
+                            // Si está en modo edición, permitir doble clic para editar
+                            ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                            if (paciente.isEditando()) {
+                                setOnMouseClicked(e -> {
+                                    if (e.getClickCount() == 2) {
+                                        startEdit();
+                                    }
+                                });
+                            } else {
+                                setOnMouseClicked(null);
+                            }
+                        }
+                    }
+                }
+                
+                private void createTextField() {
+                    textField = new TextField(getString());
+                    textField.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
+                    
+                    textField.setOnAction(e -> {
+                        commitEdit(textField.getText());
+                    });
+                    
+                    textField.setOnKeyPressed(e -> {
+                        if (e.getCode() == KeyCode.ESCAPE) {
+                            cancelEdit();
+                        }
+                    });
+                    
+                    textField.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
+                        if (!isNowFocused) {
+                            commitEdit(textField.getText());
+                        }
+                    });
+                }
+                
+                private String getString() {
+                    return getItem() == null ? "" : getItem();
+                }
+                
+                @Override
+                public void commitEdit(String newValue) {
+                    super.commitEdit(newValue);
+                    
+                    ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                    paciente.setRaza(newValue);
+                }
+            };
+            
+            return cell;
+        });
+        
+        // Columna Propietario (editable con botón selector)
         colPropietario.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getNombrePropietario()));
+        colPropietario.setCellFactory(tc -> new TableCell<ModeloPaciente, String>() {
+            private final TextField textField = new TextField();
+            private final Button btnSeleccionar = new Button("+");
+            private final HBox hbox = new HBox(5);
+            
+            {
+                textField.setEditable(false);
+                btnSeleccionar.setMinWidth(30);
+                btnSeleccionar.getStyleClass().add("btn-secondary");
+                
+                btnSeleccionar.setOnAction(e -> {
+                    ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                    seleccionarPropietario(paciente);
+                });
+                
+                hbox.setAlignment(Pos.CENTER_LEFT);
+                hbox.getChildren().addAll(textField, btnSeleccionar);
+                textField.setMaxWidth(Double.MAX_VALUE);
+            }
+            
+            @Override
+            public void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                
+                if (empty) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                    
+                    if (paciente.isEditando()) {
+                        textField.setText(paciente.getNombrePropietario());
+                        setGraphic(hbox);
+                        setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+                    } else {
+                        setText(paciente.getNombrePropietario());
+                        setGraphic(null);
+                        setContentDisplay(ContentDisplay.TEXT_ONLY);
+                    }
+                }
+            }
+        });
         
         tablaPacientes.setItems(pacientesObservable);
         
-        // Manejar doble clic en un paciente
-        tablaPacientes.setOnMouseClicked(event -> {
-            if (event.getClickCount() == 2 && tablaPacientes.getSelectionModel().getSelectedItem() != null) {
-                habilitarEdicionPaciente(tablaPacientes.getSelectionModel().getSelectedItem(), false);
-            }
-        });
-        
-        // Añadir botones de acción en cada fila
+        // Añadir columna para botones de acciones
         TableColumn<ModeloPaciente, Void> colAcciones = new TableColumn<>("Acciones");
         colAcciones.setPrefWidth(200);
         
-        Callback<TableColumn<ModeloPaciente, Void>, TableCell<ModeloPaciente, Void>> cellFactory = 
-            new Callback<>() {
-                @Override
-                public TableCell<ModeloPaciente, Void> call(final TableColumn<ModeloPaciente, Void> param) {
-                    return new TableCell<>() {
-                        private final Button btnEditar = new Button("Editar");
-                        private final Button btnCitas = new Button("Citas");
-                        private final Button btnGuardar = new Button("Guardar");
-                        private final Button btnCancelar = new Button("Cancelar");
-                        private final HBox botonesEdicion = new HBox(5);
-                        private final HBox botonesNormales = new HBox(5);
-                        
-                        {
-                            // Configurar estilos y propiedades
-                            btnEditar.getStyleClass().add("btn-secondary");
-                            btnEditar.setMinWidth(60);
-                            
-                            btnCitas.getStyleClass().add("btn-info");
-                            btnCitas.setMinWidth(60);
-                            
-                            btnGuardar.getStyleClass().add("btn-primary");
-                            btnGuardar.setMinWidth(60);
-                            
-                            btnCancelar.getStyleClass().add("btn-danger");
-                            btnCancelar.setMinWidth(60);
-                            
-                            botonesNormales.getChildren().addAll(btnEditar, btnCitas);
-                            botonesEdicion.getChildren().addAll(btnGuardar, btnCancelar);
-                            
-                            // Configurar eventos
-                            btnEditar.setOnAction(event -> {
-                                ModeloPaciente paciente = getTableView().getItems().get(getIndex());
-                                habilitarEdicionPaciente(paciente, false);
-                            });
-                            
-                            btnCitas.setOnAction(event -> {
-                                ModeloPaciente paciente = getTableView().getItems().get(getIndex());
-                                verCitasPaciente(paciente);
-                            });
-                            
-                            // Para implementación futura (modo de edición en la fila)
-                            btnGuardar.setOnAction(event -> {
-                                // Implementar guardar cambios
-                            });
-                            
-                            btnCancelar.setOnAction(event -> {
-                                // Implementar cancelar cambios
-                            });
-                        }
-                        
-                        @Override
-                        public void updateItem(Void item, boolean empty) {
-                            super.updateItem(item, empty);
-                            if (empty) {
-                                setGraphic(null);
-                            } else {
-                                // Para implementación futura: verificar si la fila está en modo edición
-                                // Por ahora, siempre mostrar los botones normales
-                                setGraphic(botonesNormales);
-                            }
-                        }
-                    };
-                }
-            };
-        
-        colAcciones.setCellFactory(cellFactory);
-        tablaPacientes.getColumns().add(colAcciones);
-    }
-    
-    /**
-     * Muestra las citas de un paciente
-     */
-    private void verCitasPaciente(ModeloPaciente paciente) {
-        if (paciente != null) {
-            // Navegar a la pestaña de citas
-            tabPane.getSelectionModel().select(tabCitas);
+        colAcciones.setCellFactory(col -> new TableCell<>() {
+            private final Button btnEditar = new Button("Editar");
+            private final Button btnGuardar = new Button("Guardar");
+            private final Button btnCancelar = new Button("Cancelar");
+            private final Button btnCitas = new Button("Citas");
+            private final HBox botonesNormales = new HBox(5);
+            private final HBox botonesEdicion = new HBox(5);
             
-            // Filtrar citas por paciente (implementar esta función en CitasController)
-            if (citasController != null) {
-                // TODO: Implementar método en CitasController
-                // Por ahora mostrar mensaje
-                mostrarMensaje("Citas del paciente", "Filtrar citas", 
-                        "Mostrando citas para el paciente: " + paciente.getNombre());
+            {
+                // Configurar estilos y propiedades
+                btnEditar.getStyleClass().add("btn-secondary");
+                btnEditar.setMinWidth(60);
+                
+                btnCitas.getStyleClass().add("btn-info");
+                btnCitas.setMinWidth(60);
+                
+                btnGuardar.getStyleClass().add("btn-primary");
+                btnGuardar.setMinWidth(60);
+                
+                btnCancelar.getStyleClass().add("btn-danger");
+                btnCancelar.setMinWidth(60);
+                
+                botonesNormales.getChildren().addAll(btnEditar, btnCitas);
+                botonesEdicion.getChildren().addAll(btnGuardar, btnCancelar);
+                
+                // Configurar eventos
+                btnEditar.setOnAction(event -> {
+                    ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                    paciente.setEditando(true);
+                    getTableView().refresh();
+                });
+                
+                btnCitas.setOnAction(event -> {
+                    ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                    verCitasPaciente(paciente);
+                });
+                
+                btnGuardar.setOnAction(event -> {
+                    ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                    guardarPaciente(paciente);
+                    paciente.setEditando(false);
+                    getTableView().refresh();
+                });
+                
+                btnCancelar.setOnAction(event -> {
+                    ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                    if (paciente.getId() == null) {
+                        // Si es nuevo, eliminarlo de la lista
+                        pacientesObservable.remove(paciente);
+                    } else {
+                        // Si es existente, recargar sus datos
+                        ModeloPaciente pacienteOriginal = servicioClinica.obtenerPacientePorId(paciente.getId());
+                        int index = pacientesObservable.indexOf(paciente);
+                        if (index >= 0 && pacienteOriginal != null) {
+                            pacientesObservable.set(index, pacienteOriginal);
+                        }
+                    }
+                    getTableView().refresh();
+                });
             }
-        }
-    }
-    
-    private void configurarTablaPropietarios() {
-        colNombrePropietario.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getNombreCompleto()));
-        colDNI.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDni()));
-        colTelefono.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getTelefono()));
-        colEmail.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getEmail()));
-        
-        tablaPropietarios.setItems(propietariosObservable);
-        
-        // Manejar doble clic en un propietario
-        tablaPropietarios.setOnMouseClicked(event -> {
-            if (event.getClickCount() == 2 && tablaPropietarios.getSelectionModel().getSelectedItem() != null) {
-                habilitarEdicionPropietario(tablaPropietarios.getSelectionModel().getSelectedItem(), false);
+            
+            @Override
+            public void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                    setGraphic(paciente.isEditando() ? botonesEdicion : botonesNormales);
+                }
             }
         });
         
-        // Añadir botones de acción en cada fila
-        TableColumn<ModeloPropietario, Void> colAcciones = new TableColumn<>("Acciones");
-        colAcciones.setPrefWidth(200);
+        tablaPacientes.getColumns().add(colAcciones);
         
-        Callback<TableColumn<ModeloPropietario, Void>, TableCell<ModeloPropietario, Void>> cellFactory = 
-            new Callback<>() {
-                @Override
-                public TableCell<ModeloPropietario, Void> call(final TableColumn<ModeloPropietario, Void> param) {
-                    return new TableCell<>() {
-                        private final Button btnEditar = new Button("Editar");
-                        private final Button btnVerMascotas = new Button("Mascotas");
-                        private final Button btnGuardar = new Button("Guardar");
-                        private final Button btnCancelar = new Button("Cancelar");
-                        private final HBox botonesEdicion = new HBox(5);
-                        private final HBox botonesNormales = new HBox(5);
-                        
-                        {
-                            // Configurar estilos y propiedades
-                            btnEditar.getStyleClass().add("btn-secondary");
-                            btnEditar.setMinWidth(60);
-                            
-                            btnVerMascotas.getStyleClass().add("btn-info");
-                            btnVerMascotas.setMinWidth(60);
-                            
-                            btnGuardar.getStyleClass().add("btn-primary");
-                            btnGuardar.setMinWidth(60);
-                            
-                            btnCancelar.getStyleClass().add("btn-danger");
-                            btnCancelar.setMinWidth(60);
-                            
-                            botonesNormales.getChildren().addAll(btnEditar, btnVerMascotas);
-                            botonesEdicion.getChildren().addAll(btnGuardar, btnCancelar);
-                            
-                            // Configurar eventos
-                            btnEditar.setOnAction(event -> {
-                                ModeloPropietario propietario = getTableView().getItems().get(getIndex());
-                                habilitarEdicionPropietario(propietario, false);
-                            });
-                            
-                            btnVerMascotas.setOnAction(event -> {
-                                ModeloPropietario propietario = getTableView().getItems().get(getIndex());
-                                verMascotasPropietario(propietario);
-                            });
-                            
-                            // Para implementación futura (modo de edición en la fila)
-                            btnGuardar.setOnAction(event -> {
-                                // Implementar guardar cambios
-                            });
-                            
-                            btnCancelar.setOnAction(event -> {
-                                // Implementar cancelar cambios
-                            });
-                        }
-                        
-                        @Override
-                        public void updateItem(Void item, boolean empty) {
-                            super.updateItem(item, empty);
-                            if (empty) {
-                                setGraphic(null);
-                            } else {
-                                // Para implementación futura: verificar si la fila está en modo edición
-                                // Por ahora, siempre mostrar los botones normales
-                                setGraphic(botonesNormales);
-                            }
-                        }
-                    };
+        // Añadir botón para nuevo paciente
+        Button btnAgregar = new Button("+");
+        btnAgregar.getStyleClass().add("btn-success");
+        btnAgregar.setOnAction(e -> onNuevoPaciente(new ActionEvent()));
+        
+        VBox headerBox = new VBox(btnAgregar);
+        headerBox.setAlignment(Pos.CENTER);
+        headerBox.setPadding(new Insets(10));
+        tablaPacientes.setPlaceholder(headerBox);
+        
+        // Añadir detección de doble clic para activar edición
+        tablaPacientes.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2 && tablaPacientes.getSelectionModel().getSelectedItem() != null) {
+                ModeloPaciente paciente = tablaPacientes.getSelectionModel().getSelectedItem();
+                if (!paciente.isEditando()) {
+                    paciente.setEditando(true);
+                    tablaPacientes.refresh();
                 }
-            };
-        
-        colAcciones.setCellFactory(cellFactory);
-        tablaPropietarios.getColumns().add(colAcciones);
+            }
+        });
     }
     
     /**
-     * Muestra las mascotas de un propietario
+     * Crea una nueva fila para un paciente y activa el modo de edición
      */
-    private void verMascotasPropietario(ModeloPropietario propietario) {
-        if (propietario != null) {
-            // Navegar a la pestaña de pacientes
-            tabPane.getSelectionModel().select(tabPacientes);
-            
-            // Buscar los pacientes de este propietario
-            pacientesObservable.clear();
-            List<ModeloPaciente> mascotas = servicioClinica.buscarPacientesPorPropietario(propietario.getId());
-            pacientesObservable.addAll(mascotas);
-            
-            // Si no hay mascotas, mostrar mensaje
-            if (mascotas.isEmpty()) {
-                mostrarMensaje("Sin mascotas", "No hay mascotas para este propietario", 
-                        "El propietario " + propietario.getNombreCompleto() + " no tiene mascotas registradas.");
+    private void crearNuevoPaciente() {
+        ModeloPaciente nuevoPaciente = new ModeloPaciente();
+        nuevoPaciente.setEditando(true);
+        pacientesObservable.add(0, nuevoPaciente);
+        tablaPacientes.setEditable(true);
+        tablaPacientes.refresh();
+        tablaPacientes.getSelectionModel().select(0);
+        tablaPacientes.scrollTo(0);
+    }
+    
+    /**
+     * Guarda un paciente
+     */
+    private void guardarPaciente(ModeloPaciente paciente) {
+        try {
+            if (paciente.getId() == null) {
+                // Nuevo paciente
+                if (servicioClinica.agregarPaciente(paciente)) {
+                    mostrarMensaje("Éxito", "Paciente agregado", 
+                            "El paciente ha sido agregado correctamente.");
+                } else {
+                    mostrarAlerta("Error", "Error al agregar paciente", 
+                            "No se pudo agregar el paciente. Inténtelo de nuevo.");
+                }
+            } else {
+                // Actualizar paciente existente
+                if (servicioClinica.actualizarPaciente(paciente)) {
+                    mostrarMensaje("Éxito", "Paciente actualizado", 
+                            "El paciente ha sido actualizado correctamente.");
+                } else {
+                    mostrarAlerta("Error", "Error al actualizar paciente", 
+                            "No se pudo actualizar el paciente. Inténtelo de nuevo.");
+                }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al guardar paciente", 
+                    "Ha ocurrido un error al intentar guardar el paciente: " + e.getMessage());
         }
+    }
+    
+    /**
+     * Actualiza el modo de edición de un paciente
+     */
+    private void actualizarModoPaciente(ModeloPaciente paciente) {
+        pacientesObservable.set(pacientesObservable.indexOf(paciente), paciente);
+        tablaPacientes.refresh();
+    }
+    
+    private void configurarTablaPropietarios() {
+        // Configurar la tabla para ser editable
+        tablaPropietarios.setEditable(true);
+        
+        // Añadir celdas editables para cada columna
+        colNombrePropietario.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getNombreCompleto()));
+        colNombrePropietario.setCellFactory(column -> new TableCell<ModeloPropietario, String>() {
+            private TextField textField;
+            private final TextField tfNombre = new TextField();
+            private final TextField tfApellidos = new TextField();
+            private final HBox hbox = new HBox(5, new Label("Nombre:"), tfNombre, new Label("Apellidos:"), tfApellidos);
+            
+            {
+                hbox.setAlignment(Pos.CENTER_LEFT);
+            }
+            
+            @Override
+            public void startEdit() {
+                ModeloPropietario propietario = getTableView().getItems().get(getIndex());
+                
+                if (!propietario.isEditando()) {
+                    return;
+                }
+                
+                super.startEdit();
+                
+                tfNombre.setText(propietario.getNombre());
+                tfApellidos.setText(propietario.getApellidos());
+                
+                setGraphic(hbox);
+                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+                tfNombre.requestFocus();
+            }
+            
+            @Override
+            public void cancelEdit() {
+                super.cancelEdit();
+                setText(getItem());
+                setGraphic(null);
+                setContentDisplay(ContentDisplay.TEXT_ONLY);
+            }
+            
+            @Override
+            public void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                
+                if (empty) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    ModeloPropietario propietario = getTableView().getItems().get(getIndex());
+                    
+                    if (propietario.isEditando()) {
+                        if (isEditing()) {
+                            tfNombre.setText(propietario.getNombre());
+                            tfApellidos.setText(propietario.getApellidos());
+                            setGraphic(hbox);
+                            setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+                        } else {
+                            setText(propietario.getNombreCompleto());
+                            setGraphic(null);
+                            setContentDisplay(ContentDisplay.TEXT_ONLY);
+                            setOnMouseClicked(e -> startEdit());
+                        }
+                    } else {
+                        setText(propietario.getNombreCompleto());
+                        setGraphic(null);
+                        setContentDisplay(ContentDisplay.TEXT_ONLY);
+                        setOnMouseClicked(null);
+                    }
+                }
+            }
+            
+            @Override
+            public void commitEdit(String newValue) {
+                super.commitEdit(newValue);
+                
+                ModeloPropietario propietario = getTableView().getItems().get(getIndex());
+                propietario.setNombre(tfNombre.getText());
+                propietario.setApellidos(tfApellidos.getText());
+                
+                tablaPropietarios.refresh();
+            }
+        });
+        
+        colDNI.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDni()));
+        colDNI.setCellFactory(tc -> {
+            TableCell<ModeloPropietario, String> cell = new TableCell<>() {
+                private TextField textField;
+                
+                @Override
+                public void startEdit() {
+                    if (isEmpty() || !getTableView().getItems().get(getIndex()).isEditando()) {
+                        return;
+                    }
+                    
+                    super.startEdit();
+                    
+                    if (textField == null) {
+                        createTextField();
+                    }
+                    
+                    setText(null);
+                    setGraphic(textField);
+                    textField.selectAll();
+                }
+                
+                @Override
+                public void cancelEdit() {
+                    super.cancelEdit();
+                    setText(getItem());
+                    setGraphic(null);
+                }
+                
+                @Override
+                public void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    
+                    if (empty) {
+                        setText(null);
+                        setGraphic(null);
+                    } else {
+                        if (isEditing()) {
+                            if (textField != null) {
+                                textField.setText(getString());
+                            }
+                            setText(null);
+                            setGraphic(textField);
+                        } else {
+                            setText(getString());
+                            setGraphic(null);
+                            
+                            // Si está en modo edición, permitir doble clic para editar
+                            ModeloPropietario propietario = getTableView().getItems().get(getIndex());
+                            if (propietario.isEditando()) {
+                                setOnMouseClicked(e -> {
+                                    if (e.getClickCount() == 2) {
+                                        startEdit();
+                                    }
+                                });
+                            } else {
+                                setOnMouseClicked(null);
+                            }
+                        }
+                    }
+                }
+                
+                private void createTextField() {
+                    textField = new TextField(getString());
+                    textField.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
+                    
+                    textField.setOnAction(e -> {
+                        commitEdit(textField.getText());
+                    });
+                    
+                    textField.setOnKeyPressed(e -> {
+                        if (e.getCode() == KeyCode.ESCAPE) {
+                            cancelEdit();
+                        }
+                    });
+                    
+                    textField.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
+                        if (!isNowFocused) {
+                            commitEdit(textField.getText());
+                        }
+                    });
+                }
+                
+                private String getString() {
+                    return getItem() == null ? "" : getItem();
+                }
+                
+                @Override
+                public void commitEdit(String newValue) {
+                    super.commitEdit(newValue);
+                    
+                    ModeloPropietario propietario = getTableView().getItems().get(getIndex());
+                    propietario.setDni(newValue);
+                }
+            };
+            
+            return cell;
+        });
+        
+        colTelefono.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getTelefono()));
+        colTelefono.setCellFactory(tc -> {
+            TableCell<ModeloPropietario, String> cell = new TableCell<>() {
+                private TextField textField;
+                
+                @Override
+                public void startEdit() {
+                    if (isEmpty() || !getTableView().getItems().get(getIndex()).isEditando()) {
+                        return;
+                    }
+                    
+                    super.startEdit();
+                    
+                    if (textField == null) {
+                        createTextField();
+                    }
+                    
+                    setText(null);
+                    setGraphic(textField);
+                    textField.selectAll();
+                }
+                
+                @Override
+                public void cancelEdit() {
+                    super.cancelEdit();
+                    setText(getItem());
+                    setGraphic(null);
+                }
+                
+                @Override
+                public void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    
+                    if (empty) {
+                        setText(null);
+                        setGraphic(null);
+                    } else {
+                        if (isEditing()) {
+                            if (textField != null) {
+                                textField.setText(getString());
+                            }
+                            setText(null);
+                            setGraphic(textField);
+                        } else {
+                            setText(getString());
+                            setGraphic(null);
+                            
+                            // Si está en modo edición, permitir doble clic para editar
+                            ModeloPropietario propietario = getTableView().getItems().get(getIndex());
+                            if (propietario.isEditando()) {
+                                setOnMouseClicked(e -> {
+                                    if (e.getClickCount() == 2) {
+                                        startEdit();
+                                    }
+                                });
+                            } else {
+                                setOnMouseClicked(null);
+                            }
+                        }
+                    }
+                }
+                
+                private void createTextField() {
+                    textField = new TextField(getString());
+                    textField.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
+                    
+                    textField.setOnAction(e -> {
+                        commitEdit(textField.getText());
+                    });
+                    
+                    textField.setOnKeyPressed(e -> {
+                        if (e.getCode() == KeyCode.ESCAPE) {
+                            cancelEdit();
+                        }
+                    });
+                    
+                    textField.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
+                        if (!isNowFocused) {
+                            commitEdit(textField.getText());
+                        }
+                    });
+                }
+                
+                private String getString() {
+                    return getItem() == null ? "" : getItem();
+                }
+                
+                @Override
+                public void commitEdit(String newValue) {
+                    super.commitEdit(newValue);
+                    
+                    ModeloPropietario propietario = getTableView().getItems().get(getIndex());
+                    propietario.setTelefono(newValue);
+                }
+            };
+            
+            return cell;
+        });
+        
+        colEmail.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getEmail()));
+        colEmail.setCellFactory(tc -> {
+            TableCell<ModeloPropietario, String> cell = new TableCell<>() {
+                private TextField textField;
+                
+                @Override
+                public void startEdit() {
+                    if (isEmpty() || !getTableView().getItems().get(getIndex()).isEditando()) {
+                        return;
+                    }
+                    
+                    super.startEdit();
+                    
+                    if (textField == null) {
+                        createTextField();
+                    }
+                    
+                    setText(null);
+                    setGraphic(textField);
+                    textField.selectAll();
+                }
+                
+                @Override
+                public void cancelEdit() {
+                    super.cancelEdit();
+                    setText(getItem());
+                    setGraphic(null);
+                }
+                
+                @Override
+                public void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    
+                    if (empty) {
+                        setText(null);
+                        setGraphic(null);
+                    } else {
+                        if (isEditing()) {
+                            if (textField != null) {
+                                textField.setText(getString());
+                            }
+                            setText(null);
+                            setGraphic(textField);
+                        } else {
+                            setText(getString());
+                            setGraphic(null);
+                            
+                            // Si está en modo edición, permitir doble clic para editar
+                            ModeloPropietario propietario = getTableView().getItems().get(getIndex());
+                            if (propietario.isEditando()) {
+                                setOnMouseClicked(e -> {
+                                    if (e.getClickCount() == 2) {
+                                        startEdit();
+                                    }
+                                });
+                            } else {
+                                setOnMouseClicked(null);
+                            }
+                        }
+                    }
+                }
+                
+                private void createTextField() {
+                    textField = new TextField(getString());
+                    textField.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
+                    
+                    textField.setOnAction(e -> {
+                        commitEdit(textField.getText());
+                    });
+                    
+                    textField.setOnKeyPressed(e -> {
+                        if (e.getCode() == KeyCode.ESCAPE) {
+                            cancelEdit();
+                        }
+                    });
+                    
+                    textField.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
+                        if (!isNowFocused) {
+                            commitEdit(textField.getText());
+                        }
+                    });
+                }
+                
+                private String getString() {
+                    return getItem() == null ? "" : getItem();
+                }
+                
+                @Override
+                public void commitEdit(String newValue) {
+                    super.commitEdit(newValue);
+                    
+                    ModeloPropietario propietario = getTableView().getItems().get(getIndex());
+                    propietario.setEmail(newValue);
+                }
+            };
+            
+            return cell;
+        });
+        
+        tablaPropietarios.setItems(propietariosObservable);
+        
+        // Añadir columna para botones de acciones
+        TableColumn<ModeloPropietario, Void> colAcciones = new TableColumn<>("Acciones");
+        colAcciones.setPrefWidth(200);
+        
+        colAcciones.setCellFactory(col -> new TableCell<>() {
+            private final Button btnEditar = new Button("Editar");
+            private final Button btnVerMascotas = new Button("Mascotas");
+            private final Button btnGuardar = new Button("Guardar");
+            private final Button btnCancelar = new Button("Cancelar");
+            private final HBox botonesEdicion = new HBox(5);
+            private final HBox botonesNormales = new HBox(5);
+            
+            {
+                // Configurar estilos y propiedades
+                btnEditar.getStyleClass().add("btn-secondary");
+                btnEditar.setMinWidth(60);
+                
+                btnVerMascotas.getStyleClass().add("btn-info");
+                btnVerMascotas.setMinWidth(60);
+                
+                btnGuardar.getStyleClass().add("btn-primary");
+                btnGuardar.setMinWidth(60);
+                
+                btnCancelar.getStyleClass().add("btn-danger");
+                btnCancelar.setMinWidth(60);
+                
+                botonesNormales.getChildren().addAll(btnEditar, btnVerMascotas);
+                botonesEdicion.getChildren().addAll(btnGuardar, btnCancelar);
+                
+                // Configurar eventos
+                btnEditar.setOnAction(event -> {
+                    ModeloPropietario propietario = getTableView().getItems().get(getIndex());
+                    tablaPropietarios.setEditable(true);
+                    propietario.setEditando(true);
+                    actualizarModoPropietario(propietario);
+                });
+                
+                btnVerMascotas.setOnAction(event -> {
+                    ModeloPropietario propietario = getTableView().getItems().get(getIndex());
+                    verMascotasPropietario(propietario);
+                });
+                
+                btnGuardar.setOnAction(event -> {
+                    ModeloPropietario propietario = getTableView().getItems().get(getIndex());
+                    guardarPropietario(propietario);
+                    propietario.setEditando(false);
+                    actualizarModoPropietario(propietario);
+                    tablaPropietarios.setEditable(false);
+                    tablaPropietarios.refresh();
+                });
+                
+                btnCancelar.setOnAction(event -> {
+                    ModeloPropietario propietario = getTableView().getItems().get(getIndex());
+                    if (propietario.getId() == null) {
+                        // Si es nuevo, eliminarlo de la lista
+                        propietariosObservable.remove(propietario);
+                    } else {
+                        // Si es existente, recargar sus datos
+                        ModeloPropietario propietarioOriginal = servicioClinica.obtenerPropietarioPorId(propietario.getId());
+                        int index = propietariosObservable.indexOf(propietario);
+                        if (index >= 0 && propietarioOriginal != null) {
+                            propietariosObservable.set(index, propietarioOriginal);
+                        }
+                    }
+                    tablaPropietarios.setEditable(false);
+                    tablaPropietarios.refresh();
+                });
+            }
+            
+            @Override
+            public void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    ModeloPropietario propietario = getTableView().getItems().get(getIndex());
+                    setGraphic(propietario.isEditando() ? botonesEdicion : botonesNormales);
+                }
+            }
+        });
+        
+        tablaPropietarios.getColumns().add(colAcciones);
+        
+        // Añadir botón para nuevo propietario como primera fila
+        Button btnAgregar = new Button("+");
+        btnAgregar.getStyleClass().add("btn-success");
+        btnAgregar.setOnAction(e -> crearNuevoPropietario());
+        
+        VBox headerBox = new VBox(btnAgregar);
+        headerBox.setAlignment(Pos.CENTER);
+        tablaPropietarios.setPlaceholder(headerBox);
+    }
+    
+    /**
+     * Crea una nueva fila para un propietario y activa el modo de edición
+     */
+    private void crearNuevoPropietario() {
+        ModeloPropietario nuevoPropietario = new ModeloPropietario();
+        nuevoPropietario.setEditando(true);
+        nuevoPropietario.setFechaAlta(new Date());
+        
+        // Añadir al inicio de la lista y seleccionarlo
+        propietariosObservable.add(0, nuevoPropietario);
+        tablaPropietarios.setEditable(true);
+        tablaPropietarios.refresh();
+        tablaPropietarios.getSelectionModel().select(0);
+        tablaPropietarios.scrollTo(0);
+        
+        // Activar la celda del nombre para empezar a editar inmediatamente
+        Platform.runLater(() -> {
+            tablaPropietarios.edit(0, colNombrePropietario);
+        });
+    }
+    
+    /**
+     * Guarda un propietario
+     */
+    private void guardarPropietario(ModeloPropietario propietario) {
+        try {
+            if (propietario.getId() == null) {
+                // Nuevo propietario
+                ObjectId id = servicioClinica.guardarPropietario(propietario);
+                propietario.setId(id);
+                
+                mostrarMensaje("Éxito", "Propietario agregado", 
+                        "El propietario ha sido agregado correctamente.");
+            } else {
+                // Actualizar propietario existente
+                if (servicioClinica.actualizarPropietario(propietario)) {
+                    mostrarMensaje("Éxito", "Propietario actualizado", 
+                            "El propietario ha sido actualizado correctamente.");
+                } else {
+                    mostrarAlerta("Error", "Error al actualizar propietario", 
+                            "No se pudo actualizar el propietario. Inténtelo de nuevo.");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al guardar propietario", 
+                    "Ha ocurrido un error al intentar guardar el propietario: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Actualiza el modo de edición de un propietario
+     */
+    private void actualizarModoPropietario(ModeloPropietario propietario) {
+        propietariosObservable.set(propietariosObservable.indexOf(propietario), propietario);
+        tablaPropietarios.refresh();
     }
     
     private void configurarTablaDiagnosticos() {
@@ -681,18 +1509,19 @@ public class ClinicaController implements Initializable {
     private void onNuevoPaciente(ActionEvent event) {
         // Crear un nuevo paciente vacío y añadirlo al final de la tabla
         ModeloPaciente nuevoPaciente = new ModeloPaciente();
+        nuevoPaciente.setEditando(true);
         
-        // Añadir al final de la lista
-        pacientesObservable.add(nuevoPaciente);
-        int lastIndex = pacientesObservable.size() - 1;
+        // Añadir al inicio de la lista y seleccionarlo
+        pacientesObservable.add(0, nuevoPaciente);
+        tablaPacientes.setEditable(true);
+        tablaPacientes.refresh();
+        tablaPacientes.getSelectionModel().select(0);
+        tablaPacientes.scrollTo(0);
         
-        // Seleccionar y hacer scroll hasta la nueva fila
-        tablaPacientes.getSelectionModel().select(lastIndex);
-        tablaPacientes.scrollTo(lastIndex);
-        
-        // Habilitar edición directa en la tabla
-        // En lugar de abrir un diálogo
-        habilitarEdicionFilaPaciente(nuevoPaciente, true);
+        // Activar la celda del nombre para empezar a editar inmediatamente
+        Platform.runLater(() -> {
+            tablaPacientes.edit(0, colNombrePaciente);
+        });
     }
     
     @FXML
@@ -759,20 +1588,22 @@ public class ClinicaController implements Initializable {
     
     @FXML
     private void onNuevoPropietario(ActionEvent event) {
-        // Crear un nuevo propietario vacío y añadirlo al final de la tabla
+        // Crear un nuevo propietario vacío y añadirlo al inicio de la tabla
         ModeloPropietario nuevoPropietario = new ModeloPropietario();
+        nuevoPropietario.setEditando(true);
+        nuevoPropietario.setFechaAlta(new Date());
         
-        // Añadir al final de la lista
-        propietariosObservable.add(nuevoPropietario);
-        int lastIndex = propietariosObservable.size() - 1;
+        // Añadir al inicio de la lista y seleccionarlo
+        propietariosObservable.add(0, nuevoPropietario);
+        tablaPropietarios.setEditable(true);
+        tablaPropietarios.refresh();
+        tablaPropietarios.getSelectionModel().select(0);
+        tablaPropietarios.scrollTo(0);
         
-        // Seleccionar y hacer scroll hasta la nueva fila
-        tablaPropietarios.getSelectionModel().select(lastIndex);
-        tablaPropietarios.scrollTo(lastIndex);
-        
-        // Habilitar edición directa en la tabla
-        // En lugar de abrir un diálogo
-        habilitarEdicionFilaPropietario(nuevoPropietario, true);
+        // Activar la celda del nombre para empezar a editar inmediatamente
+        Platform.runLater(() -> {
+            tablaPropietarios.edit(0, colNombrePropietario);
+        });
     }
     
     @FXML
@@ -816,7 +1647,7 @@ public class ClinicaController implements Initializable {
     private void onVerMascotas(ActionEvent event) {
         ModeloPropietario propietario = tablaPropietarios.getSelectionModel().getSelectedItem();
         if (propietario != null) {
-            // Navegar a la pestaña de pacientes y filtrar por este propietario
+            // Navegar a la pestaña de pacientes
             tabPane.getSelectionModel().select(tabPacientes);
             
             // Buscar los pacientes de este propietario
@@ -829,9 +1660,6 @@ public class ClinicaController implements Initializable {
                 mostrarMensaje("Sin mascotas", "No hay mascotas para este propietario", 
                         "El propietario " + propietario.getNombreCompleto() + " no tiene mascotas registradas.");
             }
-        } else {
-            mostrarAlerta("Selección requerida", "No hay propietario seleccionado", 
-                    "Por favor, seleccione un propietario para ver sus mascotas.");
         }
     }
     
@@ -1228,6 +2056,77 @@ public class ClinicaController implements Initializable {
             e.printStackTrace();
             mostrarAlerta("Error", "Error al habilitar edición", 
                 "Ha ocurrido un error al intentar habilitar la edición: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Muestra las citas de un paciente
+     */
+    private void verCitasPaciente(ModeloPaciente paciente) {
+        if (paciente != null) {
+            // Navegar a la pestaña de citas
+            tabPane.getSelectionModel().select(tabCitas);
+            
+            // Filtrar citas por paciente (implementar esta función en CitasController)
+            if (citasController != null) {
+                citasController.filtrarPorPaciente(paciente.getId());
+            } else {
+                // Mostrar mensaje si el controlador no está disponible
+                mostrarMensaje("Citas del paciente", "Filtrar citas", 
+                        "Mostrando citas para el paciente: " + paciente.getNombre());
+            }
+        }
+    }
+
+    /**
+     * Muestra las mascotas de un propietario
+     */
+    private void verMascotasPropietario(ModeloPropietario propietario) {
+        if (propietario != null) {
+            // Navegar a la pestaña de pacientes
+            tabPane.getSelectionModel().select(tabPacientes);
+            
+            // Buscar los pacientes de este propietario
+            pacientesObservable.clear();
+            List<ModeloPaciente> mascotas = servicioClinica.buscarPacientesPorPropietario(propietario.getId());
+            pacientesObservable.addAll(mascotas);
+            
+            // Si no hay mascotas, mostrar mensaje
+            if (mascotas.isEmpty()) {
+                mostrarMensaje("Sin mascotas", "No hay mascotas para este propietario", 
+                        "El propietario " + propietario.getNombreCompleto() + " no tiene mascotas registradas.");
+            }
+        }
+    }
+
+    /**
+     * Abre el selector de propietarios para asignar a un paciente
+     */
+    private void seleccionarPropietario(ModeloPaciente paciente) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/propietario-selector.fxml"));
+            Parent root = loader.load();
+            
+            PropietarioSelectorController controller = loader.getController();
+            controller.setServicio(servicioClinica);
+            
+            controller.setPropietarioSeleccionadoCallback(propietario -> {
+                // Asignar el propietario al paciente
+                paciente.setPropietarioId(propietario.getId());
+                paciente.setNombrePropietario(propietario.getNombreCompleto());
+                tablaPacientes.refresh();
+            });
+            
+            Stage stage = new Stage();
+            stage.setTitle("Seleccionar Propietario");
+            stage.setScene(new Scene(root));
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.showAndWait();
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al abrir selector de propietarios", 
+                    "Ha ocurrido un error al intentar abrir el selector de propietarios: " + e.getMessage());
         }
     }
 } 

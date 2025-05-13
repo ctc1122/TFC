@@ -393,43 +393,39 @@ public class CitasController implements Initializable {
     }
     
     /**
-     * Filtrar citas por paciente
+     * Filtra las citas para mostrar solo las de un paciente específico
      * @param pacienteId ID del paciente
      */
     public void filtrarPorPaciente(org.bson.types.ObjectId pacienteId) {
-        if (pacienteId != null) {
-            // Limpiar tabla y cargar solo las citas del paciente
-            citasObservable.clear();
-            List<ModeloCita> citas = servicio.buscarCitasPorPaciente(pacienteId);
-            citasObservable.addAll(citas);
-            
-            // Seleccionar la pestaña de lista
+        if (pacienteId == null) {
+            return;
+        }
+        
+        try {
+            // Cambiar a la pestaña de lista de citas
             tabPane.getSelectionModel().select(tabListaCitas);
             
-            // Limpiar filtros
-            txtBuscarCita.clear();
-            cmbEstadoFiltro.getSelectionModel().select(0);
+            // Buscar las citas del paciente
+            List<ModeloCita> citasPaciente = servicio.buscarCitasPorPaciente(pacienteId);
             
-            // Ajustar fechas para abarcar las citas encontradas
-            if (!citas.isEmpty()) {
-                // Encontrar la cita más antigua y más reciente
-                LocalDate fechaInicio = citas.stream()
-                    .map(cita -> cita.getFechaHora().toLocalDate())
-                    .min(LocalDate::compareTo)
-                    .orElse(LocalDate.now());
-                
-                LocalDate fechaFin = citas.stream()
-                    .map(cita -> cita.getFechaHora().toLocalDate())
-                    .max(LocalDate::compareTo)
-                    .orElse(LocalDate.now());
-                
-                // Establecer los valores en los DatePickers
-                dpFechaInicio.setValue(fechaInicio);
-                dpFechaFin.setValue(fechaFin);
+            // Actualizar la tabla
+            citasObservable.clear();
+            citasObservable.addAll(citasPaciente);
+            
+            // Mostrar mensaje informativo
+            if (citasPaciente.isEmpty()) {
+                mostrarMensaje("Sin citas", "No hay citas", 
+                        "No hay citas registradas para este paciente.");
+            } else {
+                // Obtener el nombre del paciente de la primera cita
+                String nombrePaciente = citasPaciente.get(0).getNombrePaciente();
+                mostrarMensaje("Citas filtradas", "Mostrando citas del paciente", 
+                        "Se muestran las citas para el paciente: " + nombrePaciente);
             }
-            
-            // Actualizar calendario
-            generarCalendario();
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al filtrar citas", 
+                    "Ha ocurrido un error al intentar filtrar las citas: " + e.getMessage());
         }
     }
     
