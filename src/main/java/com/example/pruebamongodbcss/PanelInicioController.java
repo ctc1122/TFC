@@ -83,6 +83,9 @@ public class PanelInicioController implements Initializable {
         carouselContainer.setPrefWidth(200);
         carouselContainer.setStyle("-fx-background-color: transparent;");
         
+        // Configurar iconos personalizados para los ThemeToggleSwitch
+        configurarThemeToggles();
+        
         // Inicializar el gestor de temas y registrar la escena actual
         // Se hace de forma postergada ya que la escena aún no está disponible
         javafx.application.Platform.runLater(() -> {
@@ -799,6 +802,21 @@ public class PanelInicioController implements Initializable {
                     boton.toFront();
                 }
             }
+        }
+    }
+
+    /**
+     * Configura los interruptores de tema con iconos personalizados
+     */
+    private void configurarThemeToggles() {
+        // Cargar los iconos para los modos claro y oscuro
+        String iconoClaro = "/Iconos/iconClaro.png";
+        String iconoOscuro = "/Iconos/iconDark.png";
+        
+        // Configurar el toggle de tema en la interfaz
+        if (themeToggle != null) {
+            themeToggle.setLightModeIcon(iconoClaro);
+            themeToggle.setDarkModeIcon(iconoOscuro);
         }
     }
 }

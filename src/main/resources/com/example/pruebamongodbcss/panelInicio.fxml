@@ -27,7 +27,7 @@
                      <Separator />
                      <HBox alignment="CENTER_LEFT" spacing="10.0">
                         <JFXButton fx:id="btnToggleSidebar" text="≡" />
-                        <ThemeToggleSwitch fx:id="themeToggle" />
+                        <!-- <ThemeToggleSwitch fx:id="themeToggle" /> -->
                      </HBox>
                      <JFXButton fx:id="btnMenuPrincipal" text="Menú Principal" />
                      <JFXButton fx:id="btnAnimales" text="Animales" />
@@ -39,6 +39,15 @@
                </VBox>
             </VBox>
          </center>
+         <bottom>
+            <VBox alignment="BOTTOM_LEFT">
+               <padding>
+                  <Insets bottom="25.0" left="20.0" />
+               </padding>
+                  <ThemeToggleSwitch fx:id="themeToggle" />
+            </VBox>
+         </bottom>
+         
       </BorderPane>
    </left>
    <center>
