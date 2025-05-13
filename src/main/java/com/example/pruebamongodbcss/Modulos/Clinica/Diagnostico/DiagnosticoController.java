@@ -120,6 +120,8 @@ public class DiagnosticoController implements Initializable {
         // Configurar eventos de la interfaz de usuario
         btnAgregarDiagnostico.setOnAction(event -> agregarDiagnostico());
         btnQuitarDiagnostico.setOnAction(event -> quitarDiagnostico());
+        btnGuardar.setOnAction(event -> guardarDiagnostico());
+        btnCancelar.setOnAction(event -> cancelar());
         
         // Configurar lista de diagnósticos seleccionados
         lstDiagnosticosSeleccionados.setItems(diagnosticosSeleccionados);
@@ -517,6 +519,7 @@ public class DiagnosticoController implements Initializable {
             mostrarInformacion("Diagnóstico guardado", 
                     "El diagnóstico ha sido guardado correctamente");
             
+            // Llamar al callback si está configurado
             if (onGuardarCallback != null) {
                 onGuardarCallback.run();
             }
@@ -693,13 +696,9 @@ public class DiagnosticoController implements Initializable {
     public void setOnGuardarCallback(Runnable callback) {
         this.onGuardarCallback = callback;
         
-        // Sobreescribir la acción del botón guardar
-        btnGuardar.setOnAction(event -> {
-            guardarDiagnostico();
-            if (onGuardarCallback != null) {
-                onGuardarCallback.run();
-            }
-        });
+        // En caso de que este método sea llamado después de initialize(),
+        // no sobreescribimos la acción del botón, solo actualizamos el callback
+        // que será llamado después de guardar
     }
     
     /**
@@ -709,12 +708,9 @@ public class DiagnosticoController implements Initializable {
     public void setOnCancelarCallback(Runnable callback) {
         this.onCancelarCallback = callback;
         
-        // Sobreescribir la acción del botón cancelar
-        btnCancelar.setOnAction(event -> {
-            if (onCancelarCallback != null) {
-                onCancelarCallback.run();
-            }
-        });
+        // En caso de que este método sea llamado después de initialize(),
+        // no sobreescribimos la acción del botón, solo actualizamos el callback
+        // que será llamado después de cancelar
     }
     
     /**
