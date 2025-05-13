@@ -18,7 +18,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane fx:id="mainPane" prefHeight="700.0" prefWidth="1024.0" stylesheets="@../css/clinica-styles.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.CitasController">
+<BorderPane fx:id="mainPane" prefHeight="700.0" prefWidth="1024.0" stylesheets="@../css/clinica-styles.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.Citas.CitasController">
    <top>
       <!--
       <HBox alignment="CENTER_LEFT" prefHeight="60.0" style="-fx-background-color: #3f51b5;" BorderPane.alignment="CENTER">

@@ -6,7 +6,6 @@ import java.util.ResourceBundle;
 
 import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.Data.Usuario;
-import com.example.pruebamongodbcss.Modulos.Clinica.ClinicaController;
 import com.example.pruebamongodbcss.theme.ThemeManager;
 import com.example.pruebamongodbcss.theme.ThemeToggleSwitch;
 import com.example.pruebamongodbcss.theme.ThemeUtil;
@@ -268,7 +267,7 @@ public class PanelInicioController implements Initializable {
             desmarcaTodosLosBotones();
             btnAnimales.getStyleClass().add("menu-button-selected");
             
-            // Cargar la vista de la clínica
+            // Cargar la vista de citas (nueva ubicación)
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/clinica-view.fxml"));
             Parent contenido = ThemeUtil.loadWithTheme(loader);
             
@@ -283,7 +282,7 @@ public class PanelInicioController implements Initializable {
             javafx.application.Platform.runLater(ThemeUtil::applyThemeToAllOpenWindows);
             
             // Actualizar el título (opcional)
-            lblClinica.setText("Gestión Clínica");
+            lblClinica.setText("Gestión de Citas");
             
             // Mantener visible el carrusel
             mantenerCarruselVisible();
@@ -303,15 +302,9 @@ public class PanelInicioController implements Initializable {
             desmarcaTodosLosBotones();
             but_clientes.getStyleClass().add("menu-button-selected");
             
-            // Cargar la vista de la clínica con citas
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/clinica-view.fxml"));
+            // Cargar la vista de citas (nueva ubicación)
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Citas/citas-standalone.fxml"));
             Parent contenido = ThemeUtil.loadWithTheme(loader);
-            
-            // Obtener el controlador y configurar la pestaña de citas
-            ClinicaController controller = loader.getController();
-            if (controller != null) {
-                controller.seleccionarTabCitas();
-            }
             
             // Obtener el BorderPane central y reemplazar su contenido
             BorderPane centerPane = (BorderPane) root.getCenter();

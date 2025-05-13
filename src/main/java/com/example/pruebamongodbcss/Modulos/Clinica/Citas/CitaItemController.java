@@ -1,6 +1,11 @@
-package com.example.pruebamongodbcss.Modulos.Clinica;
+package com.example.pruebamongodbcss.Modulos.Clinica.Citas;
 
-import com.example.pruebamongodbcss.Data.EstadoCita;
+import java.net.URL;
+import java.time.format.DateTimeFormatter;
+import java.util.ResourceBundle;
+
+import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
+
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
@@ -8,10 +13,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-
-import java.net.URL;
-import java.time.format.DateTimeFormatter;
-import java.util.ResourceBundle;
 
 /**
  * Controlador para un ítem de cita en el calendario

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.shape.Circle?>
+
+<HBox fx:id="container" alignment="CENTER_LEFT" spacing="5.0" style="-fx-background-color: #e3f2fd; -fx-background-radius: 5px;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.Citas.CitaItemController">
+   <children>
+      <Circle fx:id="circuloEstado" fill="#4caf50" radius="5.0" stroke="WHITE" strokeType="INSIDE" strokeWidth="0.0" />
+      <VBox>
+         <children>
+            <Label fx:id="lblHora" style="-fx-font-weight: bold;" text="10:00">
+               <font>
+                  <Font size="10.0" />
+               </font>
+            </Label>
+            <Label fx:id="lblPaciente" text="Nombre Paciente">
+               <font>
+                  <Font size="10.0" />
+               </font>
+            </Label>
+         </children>
+      </VBox>
+   </children>
+   <padding>
+      <Insets bottom="3.0" left="5.0" right="5.0" top="3.0" />
+   </padding>
+</HBox> 

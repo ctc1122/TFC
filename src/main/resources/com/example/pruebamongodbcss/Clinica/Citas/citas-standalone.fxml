@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.StackPane?>
+
+<BorderPane fx:id="mainPane" prefHeight="600.0" prefWidth="800.0" styleClass="bg-panel" stylesheets="@../../app.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.Citas.CitasStandaloneController">
+   <center>
+      <StackPane BorderPane.alignment="CENTER">
+         <children>
+            <BorderPane fx:id="contentPane">
+               <center>
+                  <fx:include source="citas-view.fxml" />
+               </center>
+            </BorderPane>
+         </children>
+      </StackPane>
+   </center>
+</BorderPane> 

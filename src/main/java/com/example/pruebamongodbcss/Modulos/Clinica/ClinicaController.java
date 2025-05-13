@@ -16,6 +16,8 @@ import java.util.ResourceBundle;
 
 import org.bson.types.ObjectId;
 
+import com.example.pruebamongodbcss.Modulos.Clinica.Citas.CitasController;
+
 import io.github.palexdev.materialfx.controls.MFXDatePicker;
 import io.github.palexdev.materialfx.controls.MFXProgressSpinner;
 import javafx.application.Platform;
@@ -176,7 +178,7 @@ public class ClinicaController implements Initializable {
         try {
             // Solo cargar si no está ya cargada
             if (citasContainer.getCenter() == null) {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/citas-view.fxml"));
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Citas/citas-view.fxml"));
                 Parent root = loader.load();
                 citasController = loader.getController();
                 

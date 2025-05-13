@@ -1,6 +1,12 @@
-package com.example.pruebamongodbcss.Modulos.Clinica;
+package com.example.pruebamongodbcss.Modulos.Clinica.Citas;
 
 import com.example.pruebamongodbcss.Data.EstadoCita;
+import com.example.pruebamongodbcss.Data.ServicioUsuarios;
+import com.example.pruebamongodbcss.Data.Usuario;
+import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
+import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
+import com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica;
+
 import io.github.palexdev.materialfx.controls.MFXDatePicker;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -50,6 +56,8 @@ public class CitaFormularioController implements Initializable {
     
     // Listas observables
     private ObservableList<ModeloPaciente> pacientesObservable;
+    private ObservableList<Usuario> veterinariosObservable;
+    private java.util.Map<String, ObjectId> mapaVeterinariosId = new java.util.HashMap<>();
     
     // Constantes
     private static final int DURACION_CITA_MINUTOS = 30;
@@ -188,12 +196,25 @@ public class CitaFormularioController implements Initializable {
     private void cargarVeterinarios() {
         if (servicio != null) {
             List<String> veterinarios = new ArrayList<>();
+            mapaVeterinariosId.clear();
             
-            // Aquí deberíamos cargar los veterinarios desde el servicio
-            // Por ahora, usamos algunos nombres de ejemplo
-            veterinarios.add("Dr. Juan Pérez");
-            veterinarios.add("Dra. María González");
-            veterinarios.add("Dr. Carlos Rodríguez");
+            // Cargar veterinarios desde la base de datos
+            ServicioUsuarios servicioUsuarios = new ServicioUsuarios();
+            List<Usuario> listaVeterinarios = servicioUsuarios.buscarVeterinarios();
+            
+            // Convertir la lista de objetos Usuario a una lista de nombres
+            for (Usuario veterinario : listaVeterinarios) {
+                String nombreCompleto = "Dr. " + veterinario.getNombre() + " " + veterinario.getApellido();
+                veterinarios.add(nombreCompleto);
+                mapaVeterinariosId.put(nombreCompleto, veterinario.getId());
+            }
+            
+            // Si no hay veterinarios en la base de datos, usar datos de ejemplo
+            if (veterinarios.isEmpty()) {
+                veterinarios.add("Dr. Juan Pérez");
+                veterinarios.add("Dra. María González");
+                veterinarios.add("Dr. Carlos Rodríguez");
+            }
             
             cmbVeterinario.setItems(FXCollections.observableArrayList(veterinarios));
             
@@ -329,8 +350,14 @@ public class CitaFormularioController implements Initializable {
             cita.setTipoAnimal(paciente.getEspecie());
             cita.setRazaAnimal(paciente.getRaza());
             
-            // El veterinario debería ser un objeto con ID, pero por simplicidad usamos solo el nombre
-            cita.setNombreVeterinario(cmbVeterinario.getValue());
+            // Obtener el veterinario seleccionado
+            String nombreVeterinario = cmbVeterinario.getValue();
+            cita.setNombreVeterinario(nombreVeterinario);
+            
+            // Si existe el ID del veterinario en el mapa, asignarlo
+            if (mapaVeterinariosId.containsKey(nombreVeterinario)) {
+                cita.setVeterinarioId(mapaVeterinariosId.get(nombreVeterinario));
+            }
             
             cita.setFechaHora(obtenerFechaHoraSeleccionada());
             cita.setMotivo(txtMotivo.getText().trim());

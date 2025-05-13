@@ -1,23 +1,4 @@
-package com.example.pruebamongodbcss.Modulos.Clinica;
-
-import com.example.pruebamongodbcss.Data.EstadoCita;
-import io.github.palexdev.materialfx.controls.MFXDatePicker;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.fxml.Initializable;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
-import org.bson.types.ObjectId;
+package com.example.pruebamongodbcss.Modulos.Clinica.Citas;
 
 import java.io.IOException;
 import java.net.URL;
@@ -28,7 +9,38 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
+
+import com.example.pruebamongodbcss.Data.EstadoCita;
+import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
+import com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica;
+
+import io.github.palexdev.materialfx.controls.MFXDatePicker;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 /**
  * Controlador para la gestión de citas
@@ -410,7 +422,7 @@ public class CitasController implements Initializable {
         
         try {
             // Cargar el componente de celda
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/celda-calendario.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Citas/celda-calendario.fxml"));
             
             // Generar celdas para cada día del mes
             int dia = 1;
@@ -424,7 +436,7 @@ public class CitasController implements Initializable {
                     }
                     
                     // Crear celda para este día
-                    FXMLLoader celdaLoader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/celda-calendario.fxml"));
+                    FXMLLoader celdaLoader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Citas/celda-calendario.fxml"));
                     Parent celdaRoot = celdaLoader.load();
                     CeldaCalendarioController celdaController = celdaLoader.getController();
                     
@@ -458,7 +470,7 @@ public class CitasController implements Initializable {
      */
     private void abrirFormularioCita(ModeloCita cita) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/cita-formulario.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Citas/cita-formulario.fxml"));
             Parent root = loader.load();
             
             CitaFormularioController controller = loader.getController();
