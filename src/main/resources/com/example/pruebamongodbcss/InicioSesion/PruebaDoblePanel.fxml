@@ -143,7 +143,7 @@
     </VBox>
 
     <!-- PANEL DERECHO: ANIMACIONES Y TEXTO -->
-    <StackPane fx:id="recommendationPane" alignment="CENTER" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" style="-fx-background-color: #1976d2;" HBox.hgrow="NEVER">
+    <StackPane fx:id="recommendationPane" alignment="CENTER" maxWidth="500.0" minWidth="500.0" prefWidth="500.0" style="-fx-background-color: #283618;" HBox.hgrow="NEVER">
         <VBox fx:id="slideContainer" alignment="CENTER" maxHeight="450.0" maxWidth="500.0" minHeight="450.0" minWidth="500.0" prefHeight="450.0" prefWidth="500.0">
             <padding>
                 <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />

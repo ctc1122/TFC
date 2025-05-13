@@ -6,17 +6,28 @@
 
 /* Colores principales */
 * {
-    -fx-primary: #3f51b5;
-    -fx-primary-light: #757de8;
-    -fx-primary-dark: #002984;
-    -fx-secondary: #4caf50;
-    -fx-secondary-light: #80e27e;
-    -fx-secondary-dark: #087f23;
-    -fx-danger: #f44336;
-    -fx-warning: #ff9800;
-    -fx-info: #2196f3;
-    -fx-info-light: #6ec6ff;
-    -fx-info-dark: #0069c0;
+    -fx-primary: #283618;
+    -fx-primary-light: #606C38;
+    -fx-primary-dark: #131A0B;
+    -fx-secondary: #606C38;
+    -fx-secondary-light: #7c8b4d;
+    -fx-secondary-dark: #404a26;
+    -fx-danger: #BC6C25;
+    -fx-warning: #DDA15E;
+    -fx-info: #FEFAE0;
+    -fx-info-light: #ffffff;
+    -fx-info-dark: #dcd8b7;
+}
+
+/* Estilo para la cabecera del panel */
+.panel-header {
+    -fx-background-color: linear-gradient(to right, #606C38, #283618, #131A0B);
+    -fx-padding: 10px;
+}
+
+.panel-header .label {
+    -fx-text-fill: #FEFAE0;
+    -fx-font-weight: bold;
 }
 
 /* Estilos para pestañas */

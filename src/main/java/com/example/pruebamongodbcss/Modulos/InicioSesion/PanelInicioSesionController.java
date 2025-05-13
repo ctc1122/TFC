@@ -266,7 +266,7 @@ public class PanelInicioSesionController extends Application implements Initiali
         vbox.setPrefSize(500, 450);
         vbox.setMaxSize(500, 450);
         vbox.setMinSize(500, 450);
-        vbox.setStyle("-fx-background-color: #1976d2;");
+        vbox.setStyle("-fx-background-color: #283618;");
 
         // Crear un StackPane para la imagen y el overlay
         StackPane imagePane = new StackPane();
