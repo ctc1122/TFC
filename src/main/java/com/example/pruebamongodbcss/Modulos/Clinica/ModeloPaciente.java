@@ -1,10 +1,11 @@
 package com.example.pruebamongodbcss.Modulos.Clinica;
 
-import org.bson.Document;
-import org.bson.types.ObjectId;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.ArrayList;
+
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
 /**
  * Modelo que representa a un paciente (animal) en la clínica veterinaria.
@@ -26,10 +27,12 @@ public class ModeloPaciente {
     private List<String> vacunas;
     private String observaciones;
     private Date ultimaVisita;
+    private String estadoPaciente;
     
     public ModeloPaciente() {
         this.alergias = new ArrayList<>();
         this.vacunas = new ArrayList<>();
+        this.estadoPaciente = "Activo";
     }
     
     // Constructor a partir de un documento de MongoDB
@@ -55,6 +58,12 @@ public class ModeloPaciente {
         
         this.observaciones = doc.getString("observaciones");
         this.ultimaVisita = doc.getDate("ultimaVisita");
+        this.estadoPaciente = doc.getString("estadoPaciente");
+        
+        // Si no hay estado, asignar "Activo" por defecto
+        if (this.estadoPaciente == null) {
+            this.estadoPaciente = "Activo";
+        }
     }
     
     // Convertir a documento para MongoDB
@@ -77,7 +86,8 @@ public class ModeloPaciente {
            .append("alergias", alergias)
            .append("vacunas", vacunas)
            .append("observaciones", observaciones)
-           .append("ultimaVisita", ultimaVisita);
+           .append("ultimaVisita", ultimaVisita)
+           .append("estadoPaciente", estadoPaciente);
         return doc;
     }
 
@@ -208,5 +218,13 @@ public class ModeloPaciente {
 
     public void setUltimaVisita(Date ultimaVisita) {
         this.ultimaVisita = ultimaVisita;
+    }
+    
+    public String getEstadoPaciente() {
+        return estadoPaciente;
+    }
+    
+    public void setEstadoPaciente(String estadoPaciente) {
+        this.estadoPaciente = estadoPaciente;
     }
 } 

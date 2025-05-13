@@ -1,5 +1,18 @@
 package com.example.pruebamongodbcss.Modulos.Clinica;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.bson.Document;
+import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
+
+import com.example.pruebamongodbcss.Data.EstadoCita;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -9,20 +22,8 @@ import com.mongodb.client.model.Sorts;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
-import org.bson.Document;
-import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 import Utilidades.GestorConexion;
-import com.example.pruebamongodbcss.Data.EstadoCita;
 
 /**
  * Servicio para gestionar la interacción con la base de datos de la clínica veterinaria.
@@ -183,6 +184,49 @@ public class ServicioClinica {
         return result.getDeletedCount() > 0;
     }
     
+    /**
+     * Agregar un nuevo paciente a la base de datos.
+     * @param paciente El paciente a agregar
+     * @return true si se agregó correctamente, false en caso contrario
+     */
+    public boolean agregarPaciente(ModeloPaciente paciente) {
+        try {
+            // Asegurarse de que no tenga un ID (es un nuevo registro)
+            paciente.setId(null);
+            
+            // Guardar en la base de datos
+            ObjectId id = guardarPaciente(paciente);
+            
+            // Actualizar el ID en el modelo
+            paciente.setId(id);
+            
+            return id != null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Actualizar un paciente existente en la base de datos.
+     * @param paciente El paciente a actualizar
+     * @return true si se actualizó correctamente, false en caso contrario
+     */
+    public boolean actualizarPaciente(ModeloPaciente paciente) {
+        try {
+            if (paciente.getId() == null) {
+                return false; // No podemos actualizar sin ID
+            }
+            
+            // Guardar en la base de datos
+            ObjectId id = guardarPaciente(paciente);
+            return id != null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
     // ********** MÉTODOS PARA PROPIETARIOS **********
     
     /**
@@ -278,6 +322,26 @@ public class ServicioClinica {
         
         DeleteResult result = propietariosCollection.deleteOne(Filters.eq("_id", id));
         return result.getDeletedCount() > 0;
+    }
+    
+    /**
+     * Actualizar un propietario existente en la base de datos.
+     * @param propietario El propietario a actualizar
+     * @return true si se actualizó correctamente, false en caso contrario
+     */
+    public boolean actualizarPropietario(ModeloPropietario propietario) {
+        try {
+            if (propietario.getId() == null) {
+                return false; // No podemos actualizar sin ID
+            }
+            
+            // Guardar en la base de datos
+            ObjectId id = guardarPropietario(propietario);
+            return id != null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
     
     // ********** MÉTODOS PARA DIAGNÓSTICOS **********

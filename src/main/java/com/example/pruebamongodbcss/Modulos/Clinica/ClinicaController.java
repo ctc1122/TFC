@@ -32,6 +32,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -40,6 +41,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -47,6 +49,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -55,6 +58,7 @@ import javafx.geometry.Pos;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 
 /**
  * Controlador principal para la gestión clínica veterinaria.
@@ -204,9 +208,99 @@ public class ClinicaController implements Initializable {
         // Manejar doble clic en un paciente
         tablaPacientes.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2 && tablaPacientes.getSelectionModel().getSelectedItem() != null) {
-                abrirDetallesPaciente(tablaPacientes.getSelectionModel().getSelectedItem());
+                habilitarEdicionPaciente(tablaPacientes.getSelectionModel().getSelectedItem(), false);
             }
         });
+        
+        // Añadir botones de acción en cada fila
+        TableColumn<ModeloPaciente, Void> colAcciones = new TableColumn<>("Acciones");
+        colAcciones.setPrefWidth(200);
+        
+        Callback<TableColumn<ModeloPaciente, Void>, TableCell<ModeloPaciente, Void>> cellFactory = 
+            new Callback<>() {
+                @Override
+                public TableCell<ModeloPaciente, Void> call(final TableColumn<ModeloPaciente, Void> param) {
+                    return new TableCell<>() {
+                        private final Button btnEditar = new Button("Editar");
+                        private final Button btnCitas = new Button("Citas");
+                        private final Button btnGuardar = new Button("Guardar");
+                        private final Button btnCancelar = new Button("Cancelar");
+                        private final HBox botonesEdicion = new HBox(5);
+                        private final HBox botonesNormales = new HBox(5);
+                        
+                        {
+                            // Configurar estilos y propiedades
+                            btnEditar.getStyleClass().add("btn-secondary");
+                            btnEditar.setMinWidth(60);
+                            
+                            btnCitas.getStyleClass().add("btn-info");
+                            btnCitas.setMinWidth(60);
+                            
+                            btnGuardar.getStyleClass().add("btn-primary");
+                            btnGuardar.setMinWidth(60);
+                            
+                            btnCancelar.getStyleClass().add("btn-danger");
+                            btnCancelar.setMinWidth(60);
+                            
+                            botonesNormales.getChildren().addAll(btnEditar, btnCitas);
+                            botonesEdicion.getChildren().addAll(btnGuardar, btnCancelar);
+                            
+                            // Configurar eventos
+                            btnEditar.setOnAction(event -> {
+                                ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                                habilitarEdicionPaciente(paciente, false);
+                            });
+                            
+                            btnCitas.setOnAction(event -> {
+                                ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                                verCitasPaciente(paciente);
+                            });
+                            
+                            // Para implementación futura (modo de edición en la fila)
+                            btnGuardar.setOnAction(event -> {
+                                // Implementar guardar cambios
+                            });
+                            
+                            btnCancelar.setOnAction(event -> {
+                                // Implementar cancelar cambios
+                            });
+                        }
+                        
+                        @Override
+                        public void updateItem(Void item, boolean empty) {
+                            super.updateItem(item, empty);
+                            if (empty) {
+                                setGraphic(null);
+                            } else {
+                                // Para implementación futura: verificar si la fila está en modo edición
+                                // Por ahora, siempre mostrar los botones normales
+                                setGraphic(botonesNormales);
+                            }
+                        }
+                    };
+                }
+            };
+        
+        colAcciones.setCellFactory(cellFactory);
+        tablaPacientes.getColumns().add(colAcciones);
+    }
+    
+    /**
+     * Muestra las citas de un paciente
+     */
+    private void verCitasPaciente(ModeloPaciente paciente) {
+        if (paciente != null) {
+            // Navegar a la pestaña de citas
+            tabPane.getSelectionModel().select(tabCitas);
+            
+            // Filtrar citas por paciente (implementar esta función en CitasController)
+            if (citasController != null) {
+                // TODO: Implementar método en CitasController
+                // Por ahora mostrar mensaje
+                mostrarMensaje("Citas del paciente", "Filtrar citas", 
+                        "Mostrando citas para el paciente: " + paciente.getNombre());
+            }
+        }
     }
     
     private void configurarTablaPropietarios() {
@@ -220,9 +314,102 @@ public class ClinicaController implements Initializable {
         // Manejar doble clic en un propietario
         tablaPropietarios.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2 && tablaPropietarios.getSelectionModel().getSelectedItem() != null) {
-                abrirDetallesPropietario(tablaPropietarios.getSelectionModel().getSelectedItem());
+                habilitarEdicionPropietario(tablaPropietarios.getSelectionModel().getSelectedItem(), false);
             }
         });
+        
+        // Añadir botones de acción en cada fila
+        TableColumn<ModeloPropietario, Void> colAcciones = new TableColumn<>("Acciones");
+        colAcciones.setPrefWidth(200);
+        
+        Callback<TableColumn<ModeloPropietario, Void>, TableCell<ModeloPropietario, Void>> cellFactory = 
+            new Callback<>() {
+                @Override
+                public TableCell<ModeloPropietario, Void> call(final TableColumn<ModeloPropietario, Void> param) {
+                    return new TableCell<>() {
+                        private final Button btnEditar = new Button("Editar");
+                        private final Button btnVerMascotas = new Button("Mascotas");
+                        private final Button btnGuardar = new Button("Guardar");
+                        private final Button btnCancelar = new Button("Cancelar");
+                        private final HBox botonesEdicion = new HBox(5);
+                        private final HBox botonesNormales = new HBox(5);
+                        
+                        {
+                            // Configurar estilos y propiedades
+                            btnEditar.getStyleClass().add("btn-secondary");
+                            btnEditar.setMinWidth(60);
+                            
+                            btnVerMascotas.getStyleClass().add("btn-info");
+                            btnVerMascotas.setMinWidth(60);
+                            
+                            btnGuardar.getStyleClass().add("btn-primary");
+                            btnGuardar.setMinWidth(60);
+                            
+                            btnCancelar.getStyleClass().add("btn-danger");
+                            btnCancelar.setMinWidth(60);
+                            
+                            botonesNormales.getChildren().addAll(btnEditar, btnVerMascotas);
+                            botonesEdicion.getChildren().addAll(btnGuardar, btnCancelar);
+                            
+                            // Configurar eventos
+                            btnEditar.setOnAction(event -> {
+                                ModeloPropietario propietario = getTableView().getItems().get(getIndex());
+                                habilitarEdicionPropietario(propietario, false);
+                            });
+                            
+                            btnVerMascotas.setOnAction(event -> {
+                                ModeloPropietario propietario = getTableView().getItems().get(getIndex());
+                                verMascotasPropietario(propietario);
+                            });
+                            
+                            // Para implementación futura (modo de edición en la fila)
+                            btnGuardar.setOnAction(event -> {
+                                // Implementar guardar cambios
+                            });
+                            
+                            btnCancelar.setOnAction(event -> {
+                                // Implementar cancelar cambios
+                            });
+                        }
+                        
+                        @Override
+                        public void updateItem(Void item, boolean empty) {
+                            super.updateItem(item, empty);
+                            if (empty) {
+                                setGraphic(null);
+                            } else {
+                                // Para implementación futura: verificar si la fila está en modo edición
+                                // Por ahora, siempre mostrar los botones normales
+                                setGraphic(botonesNormales);
+                            }
+                        }
+                    };
+                }
+            };
+        
+        colAcciones.setCellFactory(cellFactory);
+        tablaPropietarios.getColumns().add(colAcciones);
+    }
+    
+    /**
+     * Muestra las mascotas de un propietario
+     */
+    private void verMascotasPropietario(ModeloPropietario propietario) {
+        if (propietario != null) {
+            // Navegar a la pestaña de pacientes
+            tabPane.getSelectionModel().select(tabPacientes);
+            
+            // Buscar los pacientes de este propietario
+            pacientesObservable.clear();
+            List<ModeloPaciente> mascotas = servicioClinica.buscarPacientesPorPropietario(propietario.getId());
+            pacientesObservable.addAll(mascotas);
+            
+            // Si no hay mascotas, mostrar mensaje
+            if (mascotas.isEmpty()) {
+                mostrarMensaje("Sin mascotas", "No hay mascotas para este propietario", 
+                        "El propietario " + propietario.getNombreCompleto() + " no tiene mascotas registradas.");
+            }
+        }
     }
     
     private void configurarTablaDiagnosticos() {
@@ -492,17 +679,31 @@ public class ClinicaController implements Initializable {
     
     @FXML
     private void onNuevoPaciente(ActionEvent event) {
-        // Implementar apertura de formulario de nuevo paciente
+        // Crear un nuevo paciente vacío y añadirlo al final de la tabla
+        ModeloPaciente nuevoPaciente = new ModeloPaciente();
+        
+        // Añadir al final de la lista
+        pacientesObservable.add(nuevoPaciente);
+        int lastIndex = pacientesObservable.size() - 1;
+        
+        // Seleccionar y hacer scroll hasta la nueva fila
+        tablaPacientes.getSelectionModel().select(lastIndex);
+        tablaPacientes.scrollTo(lastIndex);
+        
+        // Habilitar edición directa en la tabla
+        // En lugar de abrir un diálogo
+        habilitarEdicionFilaPaciente(nuevoPaciente, true);
     }
     
     @FXML
     private void onEditarPaciente(ActionEvent event) {
-        ModeloPaciente paciente = tablaPacientes.getSelectionModel().getSelectedItem();
-        if (paciente != null) {
-            abrirDetallesPaciente(paciente);
+        ModeloPaciente pacienteSeleccionado = tablaPacientes.getSelectionModel().getSelectedItem();
+        
+        if (pacienteSeleccionado != null) {
+            habilitarEdicionPaciente(pacienteSeleccionado, false);
         } else {
-            mostrarAlerta("Selección requerida", "No hay paciente seleccionado", 
-                    "Por favor, seleccione un paciente para editar.");
+            mostrarAlerta("Selección requerida", "Seleccione un paciente", 
+                    "Debe seleccionar un paciente de la tabla para editarlo.");
         }
     }
     
@@ -558,17 +759,31 @@ public class ClinicaController implements Initializable {
     
     @FXML
     private void onNuevoPropietario(ActionEvent event) {
-        // Implementar apertura de formulario de nuevo propietario
+        // Crear un nuevo propietario vacío y añadirlo al final de la tabla
+        ModeloPropietario nuevoPropietario = new ModeloPropietario();
+        
+        // Añadir al final de la lista
+        propietariosObservable.add(nuevoPropietario);
+        int lastIndex = propietariosObservable.size() - 1;
+        
+        // Seleccionar y hacer scroll hasta la nueva fila
+        tablaPropietarios.getSelectionModel().select(lastIndex);
+        tablaPropietarios.scrollTo(lastIndex);
+        
+        // Habilitar edición directa en la tabla
+        // En lugar de abrir un diálogo
+        habilitarEdicionFilaPropietario(nuevoPropietario, true);
     }
     
     @FXML
     private void onEditarPropietario(ActionEvent event) {
-        ModeloPropietario propietario = tablaPropietarios.getSelectionModel().getSelectedItem();
-        if (propietario != null) {
-            abrirDetallesPropietario(propietario);
+        ModeloPropietario propietarioSeleccionado = tablaPropietarios.getSelectionModel().getSelectedItem();
+        
+        if (propietarioSeleccionado != null) {
+            habilitarEdicionPropietario(propietarioSeleccionado, false);
         } else {
-            mostrarAlerta("Selección requerida", "No hay propietario seleccionado", 
-                    "Por favor, seleccione un propietario para editar.");
+            mostrarAlerta("Selección requerida", "Seleccione un propietario", 
+                    "Debe seleccionar un propietario de la tabla para editarlo.");
         }
     }
     
@@ -836,5 +1051,183 @@ public class ClinicaController implements Initializable {
         alert.setHeaderText(encabezado);
         alert.setContentText(contenido);
         return alert.showAndWait();
+    }
+    
+    /**
+     * Habilita o deshabilita la edición en línea de un paciente
+     * @param paciente El paciente a editar
+     * @param esNuevo Indica si es un registro nuevo o existente
+     */
+    private void habilitarEdicionPaciente(ModeloPaciente paciente, boolean esNuevo) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/paciente-edit-row.fxml"));
+            Parent contenido = loader.load();
+            
+            PacienteEditRowController controlador = loader.getController();
+            controlador.configurar(servicioClinica, paciente, esNuevo, (pacienteEditado, confirmado) -> {
+                if (confirmado) {
+                    // Si se confirmó la edición, guardar el paciente
+                    try {
+                        ObjectId pacienteId = servicioClinica.guardarPaciente(pacienteEditado);
+                        if (pacienteId != null) {
+                            // Refrescar datos
+                            cargarPacientes();
+                            mostrarMensaje("Éxito", "Paciente guardado", 
+                                "El paciente ha sido guardado correctamente.");
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        mostrarAlerta("Error", "Error al guardar", 
+                            "Ha ocurrido un error al guardar el paciente: " + e.getMessage());
+                    }
+                } else {
+                    // Si se canceló, eliminar de la lista si era nuevo
+                    if (esNuevo) {
+                        pacientesObservable.remove(paciente);
+                    } else {
+                        // Si no era nuevo, refrescar para descartar cambios
+                        cargarPacientes();
+                    }
+                }
+            });
+            
+            // Crear y mostrar diálogo
+            Stage dialogStage = new Stage();
+            dialogStage.initModality(Modality.APPLICATION_MODAL);
+            dialogStage.setTitle(esNuevo ? "Nuevo Paciente" : "Editar Paciente");
+            dialogStage.setScene(new Scene(contenido));
+            
+            // Mostrar y esperar
+            dialogStage.showAndWait();
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al abrir editor", 
+                "Ha ocurrido un error al abrir el editor de paciente: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Habilita o deshabilita la edición en línea de un propietario
+     * @param propietario El propietario a editar
+     * @param esNuevo Indica si es un registro nuevo o existente
+     */
+    private void habilitarEdicionPropietario(ModeloPropietario propietario, boolean esNuevo) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/propietario-edit-row.fxml"));
+            Parent contenido = loader.load();
+            
+            PropietarioEditRowController controlador = loader.getController();
+            controlador.configurar(servicioClinica, propietario, esNuevo, (propietarioEditado, confirmado) -> {
+                if (confirmado) {
+                    // Si se confirmó la edición, guardar el propietario
+                    try {
+                        ObjectId propietarioId = servicioClinica.guardarPropietario(propietarioEditado);
+                        if (propietarioId != null) {
+                            // Refrescar datos
+                            cargarPropietarios();
+                            mostrarMensaje("Éxito", "Propietario guardado", 
+                                "El propietario ha sido guardado correctamente.");
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        mostrarAlerta("Error", "Error al guardar", 
+                            "Ha ocurrido un error al guardar el propietario: " + e.getMessage());
+                    }
+                } else {
+                    // Si se canceló, eliminar de la lista si era nuevo
+                    if (esNuevo) {
+                        propietariosObservable.remove(propietario);
+                    } else {
+                        // Si no era nuevo, refrescar para descartar cambios
+                        cargarPropietarios();
+                    }
+                }
+            });
+            
+            // Crear y mostrar diálogo
+            Stage dialogStage = new Stage();
+            dialogStage.initModality(Modality.APPLICATION_MODAL);
+            dialogStage.setTitle(esNuevo ? "Nuevo Propietario" : "Editar Propietario");
+            dialogStage.setScene(new Scene(contenido));
+            
+            // Mostrar y esperar
+            dialogStage.showAndWait();
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al abrir editor", 
+                "Ha ocurrido un error al abrir el editor de propietario: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Habilita la edición directamente en la fila de la tabla para un paciente
+     * @param paciente El paciente a editar
+     * @param esNuevo Indica si es un registro nuevo o existente
+     */
+    private void habilitarEdicionFilaPaciente(ModeloPaciente paciente, boolean esNuevo) {
+        try {
+            // Aquí implementaremos la edición en la fila directamente
+            // en lugar de abrir un diálogo
+            
+            // Identificar la fila en la tabla
+            int index = -1;
+            for (int i = 0; i < pacientesObservable.size(); i++) {
+                if (pacientesObservable.get(i) == paciente) {
+                    index = i;
+                    break;
+                }
+            }
+            
+            if (index >= 0) {
+                // Seleccionar la fila para edición
+                tablaPacientes.getSelectionModel().select(index);
+                tablaPacientes.scrollTo(index);
+                
+                // Idealmente, aquí activaríamos un modo de edición especial en la fila
+                // Por ahora, seguimos usando el formulario como solución temporal
+                habilitarEdicionPaciente(paciente, esNuevo);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al habilitar edición", 
+                "Ha ocurrido un error al intentar habilitar la edición: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Habilita la edición directamente en la fila de la tabla para un propietario
+     * @param propietario El propietario a editar
+     * @param esNuevo Indica si es un registro nuevo o existente
+     */
+    private void habilitarEdicionFilaPropietario(ModeloPropietario propietario, boolean esNuevo) {
+        try {
+            // Aquí implementaremos la edición en la fila directamente
+            // en lugar de abrir un diálogo
+            
+            // Identificar la fila en la tabla
+            int index = -1;
+            for (int i = 0; i < propietariosObservable.size(); i++) {
+                if (propietariosObservable.get(i) == propietario) {
+                    index = i;
+                    break;
+                }
+            }
+            
+            if (index >= 0) {
+                // Seleccionar la fila para edición
+                tablaPropietarios.getSelectionModel().select(index);
+                tablaPropietarios.scrollTo(index);
+                
+                // Idealmente, aquí activaríamos un modo de edición especial en la fila
+                // Por ahora, seguimos usando el formulario como solución temporal
+                habilitarEdicionPropietario(propietario, esNuevo);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al habilitar edición", 
+                "Ha ocurrido un error al intentar habilitar la edición: " + e.getMessage());
+        }
     }
 } 

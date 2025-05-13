@@ -393,75 +393,179 @@ public class CitasController implements Initializable {
     }
     
     /**
-     * Genera el calendario del mes actual
+     * Filtrar citas por paciente
+     * @param pacienteId ID del paciente
+     */
+    public void filtrarPorPaciente(org.bson.types.ObjectId pacienteId) {
+        if (pacienteId != null) {
+            // Limpiar tabla y cargar solo las citas del paciente
+            citasObservable.clear();
+            List<ModeloCita> citas = servicio.buscarCitasPorPaciente(pacienteId);
+            citasObservable.addAll(citas);
+            
+            // Seleccionar la pestaña de lista
+            tabPane.getSelectionModel().select(tabListaCitas);
+            
+            // Limpiar filtros
+            txtBuscarCita.clear();
+            cmbEstadoFiltro.getSelectionModel().select(0);
+            
+            // Ajustar fechas para abarcar las citas encontradas
+            if (!citas.isEmpty()) {
+                // Encontrar la cita más antigua y más reciente
+                LocalDate fechaInicio = citas.stream()
+                    .map(cita -> cita.getFechaHora().toLocalDate())
+                    .min(LocalDate::compareTo)
+                    .orElse(LocalDate.now());
+                
+                LocalDate fechaFin = citas.stream()
+                    .map(cita -> cita.getFechaHora().toLocalDate())
+                    .max(LocalDate::compareTo)
+                    .orElse(LocalDate.now());
+                
+                // Establecer los valores en los DatePickers
+                dpFechaInicio.setValue(fechaInicio);
+                dpFechaFin.setValue(fechaFin);
+            }
+            
+            // Actualizar calendario
+            generarCalendario();
+        }
+    }
+    
+    /**
+     * Genera el calendario visual para el mes actual
      */
     private void generarCalendario() {
         // Limpiar el grid
         gridCalendario.getChildren().clear();
         
-        // Configurar el grid
-        int numColumnas = 7; // 7 días de la semana
-        int numFilas = 6;    // Máximo 6 semanas en un mes
+        // Aplicar estilo al grid
+        gridCalendario.getStyleClass().add("calendario-grid");
         
-        // Agregar etiquetas de días de la semana
+        // Añadir encabezados de días de la semana
         String[] diasSemana = {"Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"};
-        for (int i = 0; i < diasSemana.length; i++) {
-            Label lblDia = new Label(diasSemana[i]);
-            lblDia.setStyle("-fx-font-weight: bold;");
-            gridCalendario.add(lblDia, i, 0);
+        for (int i = 0; i < 7; i++) {
+            Label lblDiaSemana = new Label(diasSemana[i]);
+            lblDiaSemana.getStyleClass().add("week-day");
+            lblDiaSemana.setMaxWidth(Double.MAX_VALUE);
+            lblDiaSemana.setAlignment(javafx.geometry.Pos.CENTER);
+            gridCalendario.add(lblDiaSemana, i, 0);
         }
         
-        // Obtener el primer día del mes y ajustar para que lunes sea 0
-        LocalDate primerDia = mesActual.atDay(1);
-        int diaSemana = primerDia.getDayOfWeek().getValue() - 1; // Lunes = 0, Domingo = 6
+        // Mes actual
+        YearMonth mes = mesActual;
         
-        // Obtener las citas para este mes
+        // Primer día del mes
+        LocalDate primerDia = mes.atDay(1);
+        
+        // Día de la semana del primer día (0 = Lunes, 6 = Domingo)
+        int diaSemana = primerDia.getDayOfWeek().getValue() - 1; // Ajustar para que lunes sea 0
+        
+        // Número de días en el mes
+        int diasEnMes = mes.lengthOfMonth();
+        
+        // Cargar las citas del mes actual
         List<ModeloCita> citasDelMes = servicio.buscarCitasPorRangoFechas(
-            mesActual.atDay(1), 
-            mesActual.atEndOfMonth());
+                mes.atDay(1), 
+                mes.atDay(mes.lengthOfMonth()));
         
-        try {
-            // Cargar el componente de celda
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Citas/celda-calendario.fxml"));
+        // Añadir días del mes anterior para completar la primera semana
+        LocalDate diaAnterior = primerDia.minusDays(1);
+        for (int i = diaSemana - 1; i >= 0; i--) {
+            LocalDate fecha = diaAnterior;
             
-            // Generar celdas para cada día del mes
-            int dia = 1;
-            int ultimoDia = mesActual.lengthOfMonth();
+            // Filtrar citas para este día
+            List<ModeloCita> citasDelDia = citasDelMes.stream()
+                    .filter(cita -> cita.getFechaHora().toLocalDate().equals(fecha))
+                    .toList();
             
-            for (int semana = 1; semana <= numFilas; semana++) {
-                for (int columna = 0; columna < numColumnas; columna++) {
-                    if ((semana == 1 && columna < diaSemana) || dia > ultimoDia) {
-                        // Celda vacía (antes del primer día o después del último)
-                        continue;
-                    }
-                    
-                    // Crear celda para este día
-                    FXMLLoader celdaLoader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Citas/celda-calendario.fxml"));
-                    Parent celdaRoot = celdaLoader.load();
-                    CeldaCalendarioController celdaController = celdaLoader.getController();
-                    
-                    // Configurar la celda con el día y las citas
-                    LocalDate fechaCelda = mesActual.atDay(dia);
-                    celdaController.setDia(dia);
-                    
-                    // Agregar citas del día a la celda
-                    for (ModeloCita cita : citasDelMes) {
-                        LocalDate fechaCita = cita.getFechaHora().toLocalDate();
-                        if (fechaCita.equals(fechaCelda)) {
-                            celdaController.agregarCita(cita);
-                        }
-                    }
-                    
-                    // Agregar la celda al grid
-                    gridCalendario.add(celdaRoot, columna, semana);
-                    
-                    dia++;
-                }
+            // Crear celda de calendario para este día
+            crearCeldaCalendario(fecha, citasDelDia, i, 1);
+            
+            diaAnterior = diaAnterior.minusDays(1);
+        }
+        
+        // Crear celdas para todos los días del mes
+        int row = 1; // Fila 0 son los encabezados
+        int col = diaSemana;
+        
+        for (int dia = 1; dia <= diasEnMes; dia++) {
+            LocalDate fecha = mes.atDay(dia);
+            
+            // Filtrar citas para este día
+            List<ModeloCita> citasDelDia = citasDelMes.stream()
+                    .filter(cita -> cita.getFechaHora().toLocalDate().equals(fecha))
+                    .toList();
+            
+            // Crear celda de calendario para este día
+            crearCeldaCalendario(fecha, citasDelDia, col, row);
+            
+            // Avanzar a la siguiente columna
+            col++;
+            if (col > 6) {
+                col = 0;
+                row++;
             }
+        }
+        
+        // Añadir días del mes siguiente para completar la última semana
+        LocalDate diaSiguiente = mes.atEndOfMonth().plusDays(1);
+        while (col <= 6 && col > 0) {
+            LocalDate fecha = diaSiguiente;
+            
+            // Filtrar citas para este día
+            List<ModeloCita> citasDelDia = citasDelMes.stream()
+                    .filter(cita -> cita.getFechaHora().toLocalDate().equals(fecha))
+                    .toList();
+            
+            // Crear celda de calendario para este día
+            crearCeldaCalendario(fecha, citasDelDia, col, row);
+            
+            diaSiguiente = diaSiguiente.plusDays(1);
+            col++;
+        }
+        
+        // Si terminamos en la última columna, añadir una fila más con días del mes siguiente
+        if (col == 0 && row < 6) {
+            for (col = 0; col <= 6; col++) {
+                LocalDate fecha = diaSiguiente;
+                
+                // Filtrar citas para este día
+                List<ModeloCita> citasDelDia = citasDelMes.stream()
+                        .filter(cita -> cita.getFechaHora().toLocalDate().equals(fecha))
+                        .toList();
+                
+                // Crear celda de calendario para este día
+                crearCeldaCalendario(fecha, citasDelDia, col, row + 1);
+                
+                diaSiguiente = diaSiguiente.plusDays(1);
+            }
+        }
+    }
+    
+    /**
+     * Crea una celda de calendario y la añade al grid
+     * 
+     * @param fecha Fecha para la celda
+     * @param citas Citas para esta fecha
+     * @param columna Columna en el grid
+     * @param fila Fila en el grid
+     */
+    private void crearCeldaCalendario(LocalDate fecha, List<ModeloCita> citas, int columna, int fila) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Citas/celda-calendario.fxml"));
+            Parent celda = loader.load();
+            
+            CeldaCalendarioController controlador = loader.getController();
+            controlador.configurar(fecha, citas, cita -> abrirFormularioCita(cita));
+            
+            // Añadir al grid
+            gridCalendario.add(celda, columna, fila);
         } catch (IOException e) {
             e.printStackTrace();
-            mostrarAlerta("Error", "Error al generar calendario", 
-                "Ha ocurrido un error al intentar generar el calendario: " + e.getMessage());
+            mostrarAlerta("Error", "Error al crear celda", 
+                "No se pudo crear la celda del calendario: " + e.getMessage());
         }
     }
     

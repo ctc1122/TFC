@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import io.github.palexdev.materialfx.controls.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<HBox fx:id="rowContainer" spacing="10" styleClass="edit-row" xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.PropietarioEditRowController">
+    
+    <padding>
+        <Insets top="10" right="10" bottom="10" left="10"/>
+    </padding>
+    
+    <VBox spacing="5" HBox.hgrow="ALWAYS">
+        <HBox spacing="10">
+            <!-- Nombre -->
+            <VBox spacing="2">
+                <Label text="Nombre *" />
+                <MFXTextField fx:id="txtNombre" prefWidth="150" />
+            </VBox>
+            
+            <!-- Apellidos -->
+            <VBox spacing="2">
+                <Label text="Apellidos *" />
+                <MFXTextField fx:id="txtApellidos" prefWidth="180" />
+            </VBox>
+            
+            <!-- DNI -->
+            <VBox spacing="2">
+                <Label text="DNI/NIF *" />
+                <MFXTextField fx:id="txtDni" prefWidth="120" />
+            </VBox>
+        </HBox>
+        
+        <HBox spacing="10" layoutY="50">
+            <!-- Dirección -->
+            <VBox spacing="2">
+                <Label text="Dirección" />
+                <MFXTextField fx:id="txtDireccion" prefWidth="250" />
+            </VBox>
+            
+            <!-- Teléfono -->
+            <VBox spacing="2">
+                <Label text="Teléfono *" />
+                <MFXTextField fx:id="txtTelefono" prefWidth="120" />
+            </VBox>
+            
+            <!-- Email -->
+            <VBox spacing="2">
+                <Label text="Email" />
+                <MFXTextField fx:id="txtEmail" prefWidth="180" />
+            </VBox>
+        </HBox>
+    </VBox>
+    
+    <!-- Botones de acción -->
+    <VBox spacing="10" alignment="CENTER">
+        <MFXButton fx:id="btnGuardar" text="Guardar" styleClass="btn-primary" prefWidth="90" />
+        <MFXButton fx:id="btnCancelar" text="Cancelar" styleClass="btn-secondary" prefWidth="90" />
+    </VBox>
+    
+</HBox> 

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import io.github.palexdev.materialfx.controls.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<HBox fx:id="rowContainer" spacing="10" styleClass="edit-row" xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.PacienteEditRowController">
+    
+    <padding>
+        <Insets top="10" right="10" bottom="10" left="10"/>
+    </padding>
+    
+    <VBox spacing="5" HBox.hgrow="ALWAYS">
+        <HBox spacing="10">
+            <!-- Nombre -->
+            <VBox spacing="2">
+                <Label text="Nombre *" />
+                <MFXTextField fx:id="txtNombre" prefWidth="150" />
+            </VBox>
+            
+            <!-- Especie -->
+            <VBox spacing="2">
+                <Label text="Especie *" />
+                <MFXTextField fx:id="txtEspecie" prefWidth="150" />
+            </VBox>
+            
+            <!-- Raza -->
+            <VBox spacing="2">
+                <Label text="Raza" />
+                <MFXTextField fx:id="txtRaza" prefWidth="150" />
+            </VBox>
+            
+            <!-- Color -->
+            <VBox spacing="2">
+                <Label text="Color" />
+                <MFXTextField fx:id="txtColor" prefWidth="120" />
+            </VBox>
+        </HBox>
+        
+        <HBox spacing="10" layoutY="50">
+            <!-- Sexo -->
+            <VBox spacing="2">
+                <Label text="Sexo *" />
+                <MFXComboBox fx:id="cmbSexo" prefWidth="120" />
+            </VBox>
+            
+            <!-- Fecha de nacimiento -->
+            <VBox spacing="2">
+                <Label text="F. Nacimiento *" />
+                <MFXDatePicker fx:id="dpFechaNacimiento" prefWidth="150" />
+            </VBox>
+            
+            <!-- Estado -->
+            <VBox spacing="2">
+                <Label text="Estado" />
+                <MFXComboBox fx:id="cmbEstado" prefWidth="120" />
+            </VBox>
+            
+            <!-- Peso -->
+            <VBox spacing="2">
+                <Label text="Peso (kg)" />
+                <MFXTextField fx:id="txtPeso" prefWidth="100" />
+            </VBox>
+        </HBox>
+        
+        <HBox spacing="10" layoutY="100">
+            <!-- Propietario -->
+            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                <Label text="Propietario *" />
+                <HBox spacing="5" alignment="CENTER_LEFT">
+                    <Label fx:id="lblPropietario" text="Sin propietario" HBox.hgrow="ALWAYS" prefHeight="30" />
+                    <MFXButton fx:id="btnBuscarPropietario" text="+" 
+                              minWidth="30" minHeight="30" 
+                              styleClass="btn-buscar-propietario"/>
+                </HBox>
+            </VBox>
+        </HBox>
+    </VBox>
+    
+    <!-- Botones de acción -->
+    <VBox spacing="10" alignment="CENTER">
+        <MFXButton fx:id="btnGuardar" text="Guardar" styleClass="btn-primary" prefWidth="90" />
+        <MFXButton fx:id="btnCancelar" text="Cancelar" styleClass="btn-secondary" prefWidth="90" />
+    </VBox>
+    
+</HBox> 
