@@ -216,7 +216,7 @@
                      <StackPane>
                         <children>
                            <BorderPane fx:id="citasContainer">
-                              <!-- El contenido será cargado desde citas-view.fxml -->
+                              
                            </BorderPane>
                         </children>
                      </StackPane>

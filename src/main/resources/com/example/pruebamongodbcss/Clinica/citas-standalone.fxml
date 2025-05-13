@@ -9,7 +9,7 @@
          <children>
             <BorderPane fx:id="contentPane">
                <center>
-                  <fx:include source="citas-view.fxml" />
+                  <fx:include source="Citas/citas-view.fxml" />
                </center>
             </BorderPane>
          </children>

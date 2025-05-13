@@ -303,7 +303,7 @@ public class PanelInicioController implements Initializable {
             but_clientes.getStyleClass().add("menu-button-selected");
             
             // Cargar la vista de citas (nueva ubicación)
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Citas/citas-standalone.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/citas-standalone.fxml"));
             Parent contenido = ThemeUtil.loadWithTheme(loader);
             
             // Obtener el BorderPane central y reemplazar su contenido
