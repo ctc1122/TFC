@@ -40,7 +40,7 @@
             <HBox alignment="CENTER" prefHeight="45.0" prefWidth="230.0" spacing="10.0">
                 <ImageView fitHeight="22.0" fitWidth="22.0">
                     <image>
-                        <Image url="@../../../../PanelLogin/UsuarioIcono.png" />
+                        <Image url="@../../../../PanelLogin/UsuarioIcono2.png" />
                     </image>
                 </ImageView>
                 <TextField fx:id="campoUsuario" alignment="CENTER" minHeight="35.0" prefHeight="35.0" prefWidth="180.0" promptText="Username">
@@ -64,7 +64,7 @@
             <HBox alignment="CENTER" prefHeight="45.0" prefWidth="230.0" spacing="10.0">
                 <ImageView fitHeight="22.0" fitWidth="22.0">
                     <image>
-                        <Image url="@../../../../PanelLogin/CandadoLogin.png" />
+                        <Image url="@../../../../PanelLogin/CandadoLogin2.png" />
                     </image>
                 </ImageView>
                 <StackPane>

@@ -18,7 +18,7 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.layout.Region?>
 
-<BorderPane fx:id="mainPane" prefHeight="700.0" prefWidth="1024.0" styleClass="panel-content" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.ClinicaController">
+<BorderPane fx:id="mainPane" prefHeight="700.0" prefWidth="1024.0" styleClass="panel-content" stylesheets="@../css/clinica-styles.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.ClinicaController">
    <top>
       <HBox alignment="CENTER_LEFT" prefHeight="60.0" styleClass="panel-header" BorderPane.alignment="CENTER">
          <children>
