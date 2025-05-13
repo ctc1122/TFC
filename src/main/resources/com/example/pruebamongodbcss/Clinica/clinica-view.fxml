@@ -70,6 +70,9 @@
                                              <TableColumn fx:id="colEspecie" prefWidth="150.0" text="Especie" />
                                              <TableColumn fx:id="colRaza" prefWidth="150.0" text="Raza" />
                                              <TableColumn fx:id="colPropietario" prefWidth="250.0" text="Propietario" />
+                                             <TableColumn fx:id="colSexoPaciente" prefWidth="100.0" text="Sexo" />
+                                             <TableColumn fx:id="colPesoPaciente" prefWidth="100.0" text="Peso" />
+                                             <TableColumn fx:id="colFechaNacPaciente" prefWidth="150.0" text="Fecha de Nacimiento" />
                                           </columns>
                                        </TableView>
                                     </content>

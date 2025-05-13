@@ -79,6 +79,9 @@ public class ClinicaController implements Initializable {
     @FXML private TableColumn<ModeloPaciente, String> colEspecie;
     @FXML private TableColumn<ModeloPaciente, String> colRaza;
     @FXML private TableColumn<ModeloPaciente, String> colPropietario;
+    @FXML private TableColumn<ModeloPaciente, String> colSexoPaciente;
+    @FXML private TableColumn<ModeloPaciente, String> colPesoPaciente;
+    @FXML private TableColumn<ModeloPaciente, String> colFechaNacPaciente;
     @FXML private TextField txtBuscarPaciente;
     @FXML private Button btnNuevoPaciente;
     @FXML private Button btnEditarPaciente;
@@ -305,11 +308,11 @@ public class ClinicaController implements Initializable {
             return cell;
         });
         
-        // Columna Especie (editable con TextField)
+        // Columna Especie (editable con ComboBox)
         colEspecie.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getEspecie()));
         colEspecie.setCellFactory(tc -> {
             TableCell<ModeloPaciente, String> cell = new TableCell<>() {
-                private TextField textField;
+                private ComboBox<String> comboBox;
                 
                 @Override
                 public void startEdit() {
@@ -319,13 +322,13 @@ public class ClinicaController implements Initializable {
                     
                     super.startEdit();
                     
-                    if (textField == null) {
-                        createTextField();
+                    if (comboBox == null) {
+                        createComboBox();
                     }
                     
                     setText(null);
-                    setGraphic(textField);
-                    textField.selectAll();
+                    setGraphic(comboBox);
+                    comboBox.requestFocus();
                 }
                 
                 @Override
@@ -344,11 +347,11 @@ public class ClinicaController implements Initializable {
                         setGraphic(null);
                     } else {
                         if (isEditing()) {
-                            if (textField != null) {
-                                textField.setText(getString());
+                            if (comboBox != null) {
+                                comboBox.setValue(getString());
                             }
                             setText(null);
-                            setGraphic(textField);
+                            setGraphic(comboBox);
                         } else {
                             setText(getString());
                             setGraphic(null);
@@ -368,23 +371,26 @@ public class ClinicaController implements Initializable {
                     }
                 }
                 
-                private void createTextField() {
-                    textField = new TextField(getString());
-                    textField.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
+                private void createComboBox() {
+                    comboBox = new ComboBox<>();
+                    comboBox.getItems().addAll("Perro", "Gato", "Ave", "Conejo", "Reptil", "Otro");
+                    // Permitir edición para ingresar valores personalizados
+                    comboBox.setEditable(true);
+                    comboBox.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
                     
-                    textField.setOnAction(e -> {
-                        commitEdit(textField.getText());
-                    });
-                    
-                    textField.setOnKeyPressed(e -> {
-                        if (e.getCode() == KeyCode.ESCAPE) {
-                            cancelEdit();
+                    comboBox.setOnAction(e -> {
+                        String value = comboBox.getValue();
+                        if (value != null && !value.isEmpty()) {
+                            commitEdit(value);
                         }
                     });
                     
-                    textField.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
+                    comboBox.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
                         if (!isNowFocused) {
-                            commitEdit(textField.getText());
+                            String value = comboBox.getValue();
+                            if (value != null && !value.isEmpty()) {
+                                commitEdit(value);
+                            }
                         }
                     });
                 }
@@ -399,6 +405,8 @@ public class ClinicaController implements Initializable {
                     
                     ModeloPaciente paciente = getTableView().getItems().get(getIndex());
                     paciente.setEspecie(newValue);
+                    // Forzar actualización de la vista
+                    getTableView().refresh();
                 }
             };
             
@@ -550,6 +558,355 @@ public class ClinicaController implements Initializable {
             }
         });
         
+        // Columna Sexo del Paciente
+        colSexoPaciente.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getSexo()));
+        colSexoPaciente.setCellFactory(tc -> {
+            TableCell<ModeloPaciente, String> cell = new TableCell<>() {
+                private ComboBox<String> comboBox;
+                
+                @Override
+                public void startEdit() {
+                    if (isEmpty() || !getTableView().getItems().get(getIndex()).isEditando()) {
+                        return;
+                    }
+                    
+                    super.startEdit();
+                    
+                    if (comboBox == null) {
+                        createComboBox();
+                    }
+                    
+                    setText(null);
+                    setGraphic(comboBox);
+                    comboBox.requestFocus();
+                }
+                
+                @Override
+                public void cancelEdit() {
+                    super.cancelEdit();
+                    setText(getItem());
+                    setGraphic(null);
+                }
+                
+                @Override
+                public void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    
+                    if (empty) {
+                        setText(null);
+                        setGraphic(null);
+                    } else {
+                        if (isEditing()) {
+                            if (comboBox != null) {
+                                comboBox.setValue(getString());
+                            }
+                            setText(null);
+                            setGraphic(comboBox);
+                        } else {
+                            setText(getString());
+                            setGraphic(null);
+                            
+                            // Si está en modo edición, permitir doble clic para editar
+                            ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                            if (paciente.isEditando()) {
+                                setOnMouseClicked(e -> {
+                                    if (e.getClickCount() == 2) {
+                                        startEdit();
+                                    }
+                                });
+                            } else {
+                                setOnMouseClicked(null);
+                            }
+                        }
+                    }
+                }
+                
+                private void createComboBox() {
+                    comboBox = new ComboBox<>();
+                    comboBox.getItems().addAll("Macho", "Hembra");
+                    comboBox.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
+                    
+                    comboBox.setOnAction(e -> {
+                        commitEdit(comboBox.getSelectionModel().getSelectedItem());
+                    });
+                    
+                    comboBox.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
+                        if (!isNowFocused) {
+                            commitEdit(comboBox.getSelectionModel().getSelectedItem());
+                        }
+                    });
+                }
+                
+                private String getString() {
+                    return getItem() == null ? "" : getItem();
+                }
+                
+                @Override
+                public void commitEdit(String newValue) {
+                    super.commitEdit(newValue);
+                    
+                    ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                    paciente.setSexo(newValue);
+                    // Forzar actualización de la vista
+                    getTableView().refresh();
+                }
+            };
+            
+            return cell;
+        });
+        
+        // Columna Peso del Paciente
+        colPesoPaciente.setCellValueFactory(data -> {
+            double peso = data.getValue().getPeso();
+            return new SimpleStringProperty(peso > 0 ? String.valueOf(peso) : "");
+        });
+        colPesoPaciente.setCellFactory(tc -> {
+            TableCell<ModeloPaciente, String> cell = new TableCell<>() {
+                private TextField textField;
+                
+                @Override
+                public void startEdit() {
+                    if (isEmpty() || !getTableView().getItems().get(getIndex()).isEditando()) {
+                        return;
+                    }
+                    
+                    super.startEdit();
+                    
+                    if (textField == null) {
+                        createTextField();
+                    }
+                    
+                    setText(null);
+                    setGraphic(textField);
+                    textField.selectAll();
+                }
+                
+                @Override
+                public void cancelEdit() {
+                    super.cancelEdit();
+                    setText(getItem());
+                    setGraphic(null);
+                }
+                
+                @Override
+                public void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    
+                    if (empty) {
+                        setText(null);
+                        setGraphic(null);
+                    } else {
+                        if (isEditing()) {
+                            if (textField != null) {
+                                textField.setText(getString());
+                            }
+                            setText(null);
+                            setGraphic(textField);
+                        } else {
+                            setText(getString());
+                            setGraphic(null);
+                            
+                            // Si está en modo edición, permitir doble clic para editar
+                            ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                            if (paciente.isEditando()) {
+                                setOnMouseClicked(e -> {
+                                    if (e.getClickCount() == 2) {
+                                        startEdit();
+                                    }
+                                });
+                            } else {
+                                setOnMouseClicked(null);
+                            }
+                        }
+                    }
+                }
+                
+                private void createTextField() {
+                    textField = new TextField(getString());
+                    textField.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
+                    
+                    // Solo permitir valores numéricos
+                    textField.textProperty().addListener((observable, oldValue, newValue) -> {
+                        if (!newValue.matches("\\d*\\.?\\d*")) {
+                            textField.setText(oldValue);
+                        }
+                    });
+                    
+                    textField.setOnAction(e -> {
+                        commitEdit(textField.getText());
+                    });
+                    
+                    textField.setOnKeyPressed(e -> {
+                        if (e.getCode() == KeyCode.ESCAPE) {
+                            cancelEdit();
+                        }
+                    });
+                    
+                    textField.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
+                        if (!isNowFocused) {
+                            commitEdit(textField.getText());
+                        }
+                    });
+                }
+                
+                private String getString() {
+                    return getItem() == null ? "" : getItem();
+                }
+                
+                @Override
+                public void commitEdit(String newValue) {
+                    super.commitEdit(newValue);
+                    
+                    try {
+                        double peso = newValue.isEmpty() ? 0.0 : Double.parseDouble(newValue);
+                        ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                        paciente.setPeso(peso);
+                        // Forzar actualización de la vista
+                        getTableView().refresh();
+                    } catch (NumberFormatException e) {
+                        // Mostrar error si el texto no es un número válido
+                        mostrarAlerta("Error de formato", "Peso inválido", 
+                                "El peso debe ser un número decimal válido.");
+                    }
+                }
+            };
+            
+            return cell;
+        });
+        
+        // Columna Fecha de Nacimiento del Paciente
+        colFechaNacPaciente.setCellValueFactory(data -> {
+            Date fecha = data.getValue().getFechaNacimiento();
+            return new SimpleStringProperty(fecha != null ? formatoFecha.format(fecha) : "");
+        });
+        colFechaNacPaciente.setCellFactory(tc -> {
+            TableCell<ModeloPaciente, String> cell = new TableCell<>() {
+                private MFXDatePicker datePicker;
+                
+                @Override
+                public void startEdit() {
+                    if (isEmpty() || !getTableView().getItems().get(getIndex()).isEditando()) {
+                        return;
+                    }
+                    
+                    super.startEdit();
+                    
+                    if (datePicker == null) {
+                        createDatePicker();
+                    }
+                    
+                    setText(null);
+                    setGraphic(datePicker);
+                    datePicker.requestFocus();
+                }
+                
+                @Override
+                public void cancelEdit() {
+                    super.cancelEdit();
+                    setText(getItem());
+                    setGraphic(null);
+                }
+                
+                @Override
+                public void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    
+                    if (empty) {
+                        setText(null);
+                        setGraphic(null);
+                    } else {
+                        if (isEditing()) {
+                            if (datePicker != null) {
+                                // Intentar configurar la fecha actual en el DatePicker
+                                if (getItem() != null && !getItem().isEmpty()) {
+                                    try {
+                                        Date date = formatoFecha.parse(getItem());
+                                        LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                                        datePicker.setValue(localDate);
+                                    } catch (Exception e) {
+                                        // En caso de error, dejar el datepicker vacío
+                                        datePicker.setValue(null);
+                                    }
+                                }
+                            }
+                            setText(null);
+                            setGraphic(datePicker);
+                        } else {
+                            setText(getString());
+                            setGraphic(null);
+                            
+                            // Si está en modo edición, permitir doble clic para editar
+                            ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                            if (paciente.isEditando()) {
+                                setOnMouseClicked(e -> {
+                                    if (e.getClickCount() == 2) {
+                                        startEdit();
+                                    }
+                                });
+                            } else {
+                                setOnMouseClicked(null);
+                            }
+                        }
+                    }
+                }
+                
+                private void createDatePicker() {
+                    datePicker = new MFXDatePicker();
+                    datePicker.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
+                    
+                    // Actualizar el valor cuando se selecciona una fecha
+                    datePicker.valueProperty().addListener((obs, oldVal, newVal) -> {
+                        if (newVal != null) {
+                            // Convertir LocalDate a Date y luego a String
+                            Date date = Date.from(newVal.atStartOfDay(ZoneId.systemDefault()).toInstant());
+                            String fechaStr = formatoFecha.format(date);
+                            commitEdit(fechaStr);
+                        }
+                    });
+                    
+                    // Capturar el evento cuando se pierde el foco
+                    datePicker.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
+                        if (!isNowFocused) {
+                            // Solo actualizar si hay una fecha seleccionada
+                            if (datePicker.getValue() != null) {
+                                Date date = Date.from(datePicker.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant());
+                                String fechaStr = formatoFecha.format(date);
+                                commitEdit(fechaStr);
+                            }
+                        }
+                    });
+                }
+                
+                private String getString() {
+                    return getItem() == null ? "" : getItem();
+                }
+                
+                @Override
+                public void commitEdit(String newValue) {
+                    super.commitEdit(newValue);
+                    
+                    try {
+                        ModeloPaciente paciente = getTableView().getItems().get(getIndex());
+                        if (newValue != null && !newValue.isEmpty()) {
+                            // Convertir el string a Date
+                            Date fecha = formatoFecha.parse(newValue);
+                            paciente.setFechaNacimiento(fecha);
+                        } else {
+                            paciente.setFechaNacimiento(null);
+                        }
+                        // Forzar actualización de la vista
+                        getTableView().refresh();
+                    } catch (Exception e) {
+                        // Mostrar error si hay un problema con el formato
+                        mostrarAlerta("Error de formato", "Fecha inválida", 
+                                "La fecha debe tener el formato dd/MM/yyyy.");
+                    }
+                }
+            };
+            
+            return cell;
+        });
+        
         tablaPacientes.setItems(pacientesObservable);
         
         // Añadir columna para botones de acciones
@@ -583,37 +940,72 @@ public class ClinicaController implements Initializable {
                 
                 // Configurar eventos
                 btnEditar.setOnAction(event -> {
-                    ModeloPaciente paciente = getTableView().getItems().get(getIndex());
-                    paciente.setEditando(true);
-                    getTableView().refresh();
+                    int index = getIndex();
+                    if (index >= 0 && index < getTableView().getItems().size()) {
+                        ModeloPaciente paciente = getTableView().getItems().get(index);
+                        paciente.setEditando(true);
+                        getTableView().refresh();
+                    }
                 });
                 
                 btnCitas.setOnAction(event -> {
-                    ModeloPaciente paciente = getTableView().getItems().get(getIndex());
-                    verCitasPaciente(paciente);
+                    int index = getIndex();
+                    if (index >= 0 && index < getTableView().getItems().size()) {
+                        ModeloPaciente paciente = getTableView().getItems().get(index);
+                        verCitasPaciente(paciente);
+                    }
                 });
                 
                 btnGuardar.setOnAction(event -> {
-                    ModeloPaciente paciente = getTableView().getItems().get(getIndex());
-                    guardarPaciente(paciente);
-                    paciente.setEditando(false);
-                    getTableView().refresh();
+                    int index = getIndex();
+                    if (index >= 0 && index < getTableView().getItems().size()) {
+                        ModeloPaciente paciente = getTableView().getItems().get(index);
+                        
+                        // Validar campos obligatorios antes de guardar
+                        if (paciente.getNombre() == null || paciente.getNombre().trim().isEmpty()) {
+                            mostrarAlerta("Error de validación", "Nombre requerido", 
+                                "El nombre del paciente es obligatorio.");
+                            return;
+                        }
+                        
+                        if (paciente.getEspecie() == null || paciente.getEspecie().trim().isEmpty()) {
+                            mostrarAlerta("Error de validación", "Especie requerida", 
+                                "La especie del paciente es obligatoria.");
+                            return;
+                        }
+                        
+                        if (paciente.getPropietarioId() == null) {
+                            mostrarAlerta("Error de validación", "Propietario requerido", 
+                                "Debe asignar un propietario al paciente.");
+                            return;
+                        }
+                        
+                        // Guardar el paciente
+                        guardarPaciente(paciente);
+                        
+                        // Desactivar modo edición
+                        paciente.setEditando(false);
+                        getTableView().refresh();
+                    }
                 });
                 
                 btnCancelar.setOnAction(event -> {
-                    ModeloPaciente paciente = getTableView().getItems().get(getIndex());
-                    if (paciente.getId() == null) {
-                        // Si es nuevo, eliminarlo de la lista
-                        pacientesObservable.remove(paciente);
-                    } else {
-                        // Si es existente, recargar sus datos
-                        ModeloPaciente pacienteOriginal = servicioClinica.obtenerPacientePorId(paciente.getId());
-                        int index = pacientesObservable.indexOf(paciente);
-                        if (index >= 0 && pacienteOriginal != null) {
-                            pacientesObservable.set(index, pacienteOriginal);
+                    int index = getIndex();
+                    if (index >= 0 && index < getTableView().getItems().size()) {
+                        ModeloPaciente paciente = getTableView().getItems().get(index);
+                        if (paciente.getId() == null) {
+                            // Si es nuevo, eliminarlo de la lista
+                            getTableView().getItems().remove(index);
+                        } else {
+                            // Si es existente, recargar sus datos
+                            ModeloPaciente pacienteOriginal = servicioClinica.obtenerPacientePorId(paciente.getId());
+                            if (pacienteOriginal != null) {
+                                pacientesObservable.set(index, pacienteOriginal);
+                            }
+                            paciente.setEditando(false);
                         }
+                        getTableView().refresh();
                     }
-                    getTableView().refresh();
                 });
             }
             
@@ -623,8 +1015,13 @@ public class ClinicaController implements Initializable {
                 if (empty) {
                     setGraphic(null);
                 } else {
-                    ModeloPaciente paciente = getTableView().getItems().get(getIndex());
-                    setGraphic(paciente.isEditando() ? botonesEdicion : botonesNormales);
+                    int index = getIndex();
+                    if (index >= 0 && index < getTableView().getItems().size()) {
+                        ModeloPaciente paciente = getTableView().getItems().get(index);
+                        setGraphic(paciente.isEditando() ? botonesEdicion : botonesNormales);
+                    } else {
+                        setGraphic(null);
+                    }
                 }
             }
         });
@@ -671,11 +1068,38 @@ public class ClinicaController implements Initializable {
      */
     private void guardarPaciente(ModeloPaciente paciente) {
         try {
+            // Validar datos requeridos
+            if (paciente.getNombre() == null || paciente.getNombre().trim().isEmpty()) {
+                mostrarAlerta("Error de validación", "Nombre requerido", 
+                        "El nombre del paciente es obligatorio.");
+                return;
+            }
+            
+            if (paciente.getEspecie() == null || paciente.getEspecie().trim().isEmpty()) {
+                mostrarAlerta("Error de validación", "Especie requerida", 
+                        "La especie del paciente es obligatoria.");
+                return;
+            }
+            
+            if (paciente.getPropietarioId() == null) {
+                mostrarAlerta("Error de validación", "Propietario requerido", 
+                        "Debe asignar un propietario al paciente.");
+                return;
+            }
+            
+            if (paciente.getSexo() == null || paciente.getSexo().trim().isEmpty()) {
+                mostrarAlerta("Error de validación", "Sexo requerido", 
+                        "El sexo del paciente es obligatorio.");
+                return;
+            }
+            
             if (paciente.getId() == null) {
                 // Nuevo paciente
                 if (servicioClinica.agregarPaciente(paciente)) {
                     mostrarMensaje("Éxito", "Paciente agregado", 
                             "El paciente ha sido agregado correctamente.");
+                    // Recargar datos
+                    cargarPacientes();
                 } else {
                     mostrarAlerta("Error", "Error al agregar paciente", 
                             "No se pudo agregar el paciente. Inténtelo de nuevo.");
@@ -685,6 +1109,8 @@ public class ClinicaController implements Initializable {
                 if (servicioClinica.actualizarPaciente(paciente)) {
                     mostrarMensaje("Éxito", "Paciente actualizado", 
                             "El paciente ha sido actualizado correctamente.");
+                    // Refrescar la tabla para mostrar datos actualizados
+                    cargarPacientes();
                 } else {
                     mostrarAlerta("Error", "Error al actualizar paciente", 
                             "No se pudo actualizar el paciente. Inténtelo de nuevo.");
@@ -1208,6 +1634,25 @@ public class ClinicaController implements Initializable {
      */
     private void guardarPropietario(ModeloPropietario propietario) {
         try {
+            // Validar datos requeridos
+            if (propietario.getNombre() == null || propietario.getNombre().trim().isEmpty()) {
+                mostrarAlerta("Error de validación", "Nombre requerido", 
+                        "El nombre del propietario es obligatorio.");
+                return;
+            }
+            
+            if (propietario.getDni() == null || propietario.getDni().trim().isEmpty()) {
+                mostrarAlerta("Error de validación", "DNI requerido", 
+                        "El DNI del propietario es obligatorio.");
+                return;
+            }
+            
+            if (propietario.getTelefono() == null || propietario.getTelefono().trim().isEmpty()) {
+                mostrarAlerta("Error de validación", "Teléfono requerido", 
+                        "El teléfono del propietario es obligatorio.");
+                return;
+            }
+            
             if (propietario.getId() == null) {
                 // Nuevo propietario
                 ObjectId id = servicioClinica.guardarPropietario(propietario);
@@ -1229,139 +1674,6 @@ public class ClinicaController implements Initializable {
             e.printStackTrace();
             mostrarAlerta("Error", "Error al guardar propietario", 
                     "Ha ocurrido un error al intentar guardar el propietario: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * Actualiza el modo de edición de un propietario
-     */
-    private void actualizarModoPropietario(ModeloPropietario propietario) {
-        propietariosObservable.set(propietariosObservable.indexOf(propietario), propietario);
-        tablaPropietarios.refresh();
-    }
-    
-    private void configurarTablaDiagnosticos() {
-        colFechaDiagnostico.setCellValueFactory(data -> {
-            Date fecha = data.getValue().getFecha();
-            return new SimpleStringProperty(fecha != null ? formatoFecha.format(fecha) : "");
-        });
-        colPacienteDiagnostico.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getNombrePaciente()));
-        colMotivo.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getMotivo()));
-        colDiagnostico.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDiagnostico()));
-        colVeterinario.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getVeterinario()));
-        
-        tablaDiagnosticos.setItems(diagnosticosObservable);
-        
-        // Manejar doble clic en un diagnóstico
-        tablaDiagnosticos.setOnMouseClicked(event -> {
-            if (event.getClickCount() == 2 && tablaDiagnosticos.getSelectionModel().getSelectedItem() != null) {
-                abrirDetallesDiagnostico(tablaDiagnosticos.getSelectionModel().getSelectedItem());
-            }
-        });
-        
-        // Configurar ComboBox de pacientes
-        configurarComboBoxPacientes();
-    }
-    
-    /**
-     * Configura el ComboBox de pacientes para filtrar diagnósticos
-     */
-    private void configurarComboBoxPacientes() {
-        // Personalizar la visualización de los pacientes en el ComboBox
-        cmbPacientesDiagnostico.setCellFactory(lv -> new ListCell<ModeloPaciente>() {
-            @Override
-            protected void updateItem(ModeloPaciente item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item.getNombre() + " (" + item.getEspecie() + " - " + item.getRaza() + ")");
-                }
-            }
-        });
-        
-        // Configurar celda del botón
-        cmbPacientesDiagnostico.setButtonCell(new ListCell<ModeloPaciente>() {
-            @Override
-            protected void updateItem(ModeloPaciente item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item.getNombre() + " (" + item.getEspecie() + " - " + item.getRaza() + ")");
-                }
-            }
-        });
-        
-        // Cargar todos los pacientes en el ComboBox
-        List<ModeloPaciente> pacientes = servicioClinica.obtenerTodosPacientes();
-        cmbPacientesDiagnostico.setItems(FXCollections.observableArrayList(pacientes));
-        
-        // Manejar cambio de selección en el ComboBox
-        cmbPacientesDiagnostico.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null) {
-                filtrarDiagnosticosPorPaciente(newVal.getId());
-            }
-        });
-    }
-    
-    /**
-     * Limpia el filtro de pacientes y muestra todos los diagnósticos
-     */
-    @FXML
-    private void onLimpiarFiltroDiagnostico() {
-        cmbPacientesDiagnostico.getSelectionModel().clearSelection();
-        buscarDiagnosticos();
-    }
-    
-    /**
-     * Filtra los diagnósticos por el paciente seleccionado
-     * @param pacienteId ID del paciente para filtrar
-     */
-    private void filtrarDiagnosticosPorPaciente(ObjectId pacienteId) {
-        if (pacienteId != null) {
-            diagnosticosObservable.clear();
-            List<ModeloDiagnostico> diagnosticos = servicioClinica.buscarDiagnosticosPorPaciente(pacienteId);
-            diagnosticosObservable.addAll(diagnosticos);
-        }
-    }
-    
-    /**
-     * Exporta los diagnósticos seleccionados o visibles a un archivo PDF (o texto)
-     */
-    @FXML
-    private void onExportarPDFDiagnostico() {
-        ModeloDiagnostico diagnostico = tablaDiagnosticos.getSelectionModel().getSelectedItem();
-        if (diagnostico == null) {
-            mostrarAlerta("Selección requerida", "No hay diagnóstico seleccionado", 
-                    "Por favor, seleccione un diagnóstico para exportar a PDF.");
-            return;
-        }
-        
-        try {
-            // Abrir la vista de diagnóstico para exportación
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Diagnostico/diagnostico-view.fxml"));
-            Parent root = loader.load();
-            
-            // Obtener el controlador y configurarlo con el diagnóstico seleccionado
-            com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico.DiagnosticoController controller = loader.getController();
-            
-            // Buscar el paciente asociado al diagnóstico
-            ModeloPaciente paciente = servicioClinica.obtenerPacientePorId(diagnostico.getPacienteId());
-            if (paciente != null) {
-                controller.setPaciente(paciente);
-                controller.setDiagnostico(diagnostico);
-                
-                // Llamar al método de exportación a PDF
-                exportarDiagnosticoPDF(controller);
-            } else {
-                mostrarAlerta("Error", "Paciente no encontrado", 
-                        "No se pudo encontrar el paciente asociado a este diagnóstico.");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            mostrarAlerta("Error", "Error al exportar", 
-                    "Ha ocurrido un error al intentar exportar el diagnóstico a PDF: " + e.getMessage());
         }
     }
     
@@ -1434,6 +1746,45 @@ public class ClinicaController implements Initializable {
                 mostrarAlerta("Error", "Error al exportar", 
                         "Ha ocurrido un error al intentar exportar los diagnósticos a CSV: " + e.getMessage());
             }
+        }
+    }
+    
+    /**
+     * Exporta los diagnósticos seleccionados o visibles a un archivo PDF
+     */
+    @FXML
+    private void onExportarPDFDiagnostico(ActionEvent event) {
+        ModeloDiagnostico diagnostico = tablaDiagnosticos.getSelectionModel().getSelectedItem();
+        if (diagnostico == null) {
+            mostrarAlerta("Selección requerida", "No hay diagnóstico seleccionado", 
+                    "Por favor, seleccione un diagnóstico para exportar a PDF.");
+            return;
+        }
+        
+        try {
+            // Abrir la vista de diagnóstico para exportación
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Diagnostico/diagnostico-view.fxml"));
+            Parent root = loader.load();
+            
+            // Obtener el controlador y configurarlo con el diagnóstico seleccionado
+            com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico.DiagnosticoController controller = loader.getController();
+            
+            // Buscar el paciente asociado al diagnóstico
+            ModeloPaciente paciente = servicioClinica.obtenerPacientePorId(diagnostico.getPacienteId());
+            if (paciente != null) {
+                controller.setPaciente(paciente);
+                controller.setDiagnostico(diagnostico);
+                
+                // Llamar al método de exportación a PDF
+                exportarDiagnosticoPDF(controller);
+            } else {
+                mostrarAlerta("Error", "Paciente no encontrado", 
+                        "No se pudo encontrar el paciente asociado a este diagnóstico.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al exportar", 
+                    "Ha ocurrido un error al intentar exportar el diagnóstico a PDF: " + e.getMessage());
         }
     }
     
@@ -2127,6 +2478,103 @@ public class ClinicaController implements Initializable {
             e.printStackTrace();
             mostrarAlerta("Error", "Error al abrir selector de propietarios", 
                     "Ha ocurrido un error al intentar abrir el selector de propietarios: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Actualiza el modo de edición de un propietario
+     */
+    private void actualizarModoPropietario(ModeloPropietario propietario) {
+        propietariosObservable.set(propietariosObservable.indexOf(propietario), propietario);
+        tablaPropietarios.refresh();
+    }
+    
+    /**
+     * Configura la tabla de diagnósticos
+     */
+    private void configurarTablaDiagnosticos() {
+        colFechaDiagnostico.setCellValueFactory(data -> {
+            Date fecha = data.getValue().getFecha();
+            return new SimpleStringProperty(fecha != null ? formatoFecha.format(fecha) : "");
+        });
+        colPacienteDiagnostico.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getNombrePaciente()));
+        colMotivo.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getMotivo()));
+        colDiagnostico.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDiagnostico()));
+        colVeterinario.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getVeterinario()));
+        
+        tablaDiagnosticos.setItems(diagnosticosObservable);
+        
+        // Manejar doble clic en un diagnóstico
+        tablaDiagnosticos.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2 && tablaDiagnosticos.getSelectionModel().getSelectedItem() != null) {
+                abrirDetallesDiagnostico(tablaDiagnosticos.getSelectionModel().getSelectedItem());
+            }
+        });
+        
+        // Configurar ComboBox de pacientes
+        configurarComboBoxPacientes();
+    }
+    
+    /**
+     * Configura el ComboBox de pacientes para filtrar diagnósticos
+     */
+    private void configurarComboBoxPacientes() {
+        // Personalizar la visualización de los pacientes en el ComboBox
+        cmbPacientesDiagnostico.setCellFactory(lv -> new ListCell<ModeloPaciente>() {
+            @Override
+            protected void updateItem(ModeloPaciente item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.getNombre() + " (" + item.getEspecie() + " - " + item.getRaza() + ")");
+                }
+            }
+        });
+        
+        // Configurar celda del botón
+        cmbPacientesDiagnostico.setButtonCell(new ListCell<ModeloPaciente>() {
+            @Override
+            protected void updateItem(ModeloPaciente item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.getNombre() + " (" + item.getEspecie() + " - " + item.getRaza() + ")");
+                }
+            }
+        });
+        
+        // Cargar todos los pacientes en el ComboBox
+        List<ModeloPaciente> pacientes = servicioClinica.obtenerTodosPacientes();
+        cmbPacientesDiagnostico.setItems(FXCollections.observableArrayList(pacientes));
+        
+        // Manejar cambio de selección en el ComboBox
+        cmbPacientesDiagnostico.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                filtrarDiagnosticosPorPaciente(newVal.getId());
+            }
+        });
+    }
+    
+    /**
+     * Limpia el filtro de pacientes y muestra todos los diagnósticos
+     */
+    @FXML
+    private void onLimpiarFiltroDiagnostico() {
+        cmbPacientesDiagnostico.getSelectionModel().clearSelection();
+        buscarDiagnosticos();
+    }
+    
+    /**
+     * Filtra los diagnósticos por el paciente seleccionado
+     * @param pacienteId ID del paciente para filtrar
+     */
+    private void filtrarDiagnosticosPorPaciente(ObjectId pacienteId) {
+        if (pacienteId != null) {
+            diagnosticosObservable.clear();
+            List<ModeloDiagnostico> diagnosticos = servicioClinica.buscarDiagnosticosPorPaciente(pacienteId);
+            diagnosticosObservable.addAll(diagnosticos);
         }
     }
 } 
