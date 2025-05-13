@@ -17,7 +17,9 @@ import java.util.ResourceBundle;
 import org.bson.types.ObjectId;
 
 import io.github.palexdev.materialfx.controls.MFXDatePicker;
+import io.github.palexdev.materialfx.controls.MFXProgressSpinner;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -40,8 +42,14 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -615,21 +623,76 @@ public class ClinicaController implements Initializable {
     @FXML
     private void onNuevoDiagnostico(ActionEvent event) {
         try {
-            // Mostrar un indicador de carga para mejorar la experiencia de usuario
-            VBox loadingBox = new VBox();
-            loadingBox.setSpacing(10);
-            loadingBox.setStyle("-fx-alignment: center; -fx-padding: 20px;");
+            // Crear un contenedor para el spinner y la imagen
+            StackPane loadingPane = new StackPane();
+            // Configurar para que use todo el espacio disponible
+            loadingPane.setMinSize(200, 200);
+            loadingPane.setPrefSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
+            loadingPane.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+            loadingPane.setStyle("-fx-background-color: transparent;");
             
-            Label cargandoLabel = new Label("Cargando formulario de diagnóstico...");
-            cargandoLabel.setStyle("-fx-font-size: 14px;");
+            // Imagen de fondo para el área de carga
+            ImageView backgroundImage = new ImageView();
+            try {
+                Image image = new Image(getClass().getResourceAsStream("/ImagenCarga/carga1.png"));
+                backgroundImage.setImage(image);
+                
+                // Vinculamos las dimensiones de la imagen al contenedor para que se ajuste automáticamente
+                backgroundImage.fitWidthProperty().bind(loadingPane.widthProperty());
+                backgroundImage.fitHeightProperty().bind(loadingPane.heightProperty());
+                backgroundImage.setPreserveRatio(false); // Para que ocupe todo el espacio
+                backgroundImage.setSmooth(true); // Para mejor calidad
+                
+                // Centrar en el panel
+                StackPane.setAlignment(backgroundImage, Pos.CENTER);
+            } catch (Exception e) {
+                System.err.println("Error al cargar la imagen de fondo: " + e.getMessage());
+            }
             
-            loadingBox.getChildren().add(cargandoLabel);
+            // Crear el spinner circular con tamaño proporcional
+            MFXProgressSpinner spinner = new MFXProgressSpinner();
+            spinner.minWidthProperty().bind(loadingPane.widthProperty().multiply(0.10));  // 10% del ancho
+            spinner.minHeightProperty().bind(loadingPane.heightProperty().multiply(0.10)); // 10% del alto
+            spinner.prefWidthProperty().bind(loadingPane.widthProperty().multiply(0.15));  // 15% del ancho
+            spinner.prefHeightProperty().bind(loadingPane.heightProperty().multiply(0.15)); // 15% del alto
+            spinner.setProgress(-1); // Animación continua
+            spinner.setStyle("-fx-stroke: white;"); // Color blanco para mejor visibilidad
+            
+            // Etiqueta de "Cargando..." con tamaño proporcional y color verde
+            Label cargandoLabel = new Label("Cargando...");
+            cargandoLabel.styleProperty().bind(Bindings.concat(
+                "-fx-font-size: ", loadingPane.widthProperty().multiply(0.035).asString(), "px; ",
+                "-fx-font-weight: bold; -fx-text-fill: #0F9D58;"
+            ));
+            
+            // Añadir un fondo semi-transparente detrás del spinner y texto para mejor visibilidad
+            StackPane spinnerBackground = new StackPane();
+            spinnerBackground.setStyle("-fx-background-color: rgba(0, 0, 0, 0.5);"); // Quitar el borde redondeado
+            // El contenedor del spinner también se redimensiona proporcionalmente
+            spinnerBackground.prefWidthProperty().bind(loadingPane.widthProperty().multiply(0.3));  // 30% del ancho
+            spinnerBackground.prefHeightProperty().bind(loadingPane.heightProperty().multiply(0.3)); // 30% del alto
+            
+            // Organizar elementos verticalmente
+            VBox spinnerBox = new VBox();
+            spinnerBox.setAlignment(Pos.CENTER);
+            spinnerBox.spacingProperty().bind(loadingPane.heightProperty().multiply(0.02)); // 2% del alto
+            spinnerBox.setPadding(new Insets(20));
+            spinnerBox.getChildren().addAll(spinner, cargandoLabel);
+            
+            // Añadir el panel de spinner al panel con fondo semi-transparente
+            spinnerBackground.getChildren().add(spinnerBox);
+            
+            // Añadir todos los elementos al panel de carga
+            loadingPane.getChildren().addAll(backgroundImage, spinnerBackground);
+            
+            // Asegurar que el spinner esté en el centro
+            StackPane.setAlignment(spinnerBackground, Pos.CENTER);
             
             // Guardar el contenido original del tab
             Node contenidoOriginal = tabDiagnosticos.getContent();
             
-            // Mostrar el indicador de carga
-            tabDiagnosticos.setContent(loadingBox);
+            // Mostrar el panel de carga
+            tabDiagnosticos.setContent(loadingPane);
             
             // Cargar el formulario en un hilo separado para no bloquear la interfaz
             new Thread(() -> {
