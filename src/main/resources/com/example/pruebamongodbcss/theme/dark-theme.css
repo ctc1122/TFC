@@ -1,9 +1,10 @@
-/* Dark Theme CSS - Inspirado en diseño minimalista y profesional (modo oscuro) */
+/* Dark Theme CSS - Midnight City Theme */
 
 /* Base Colors */
 * {
-    -fx-primary-color: #1b1d21;
-    -fx-secondary-color: #25272c;
+    -fx-primary-color: #1e1e1e; /* Dark background like in the image */
+    -fx-primary-gradient: linear-gradient(to right, #232526 0%, #353637 50%, #414345 100%);
+    -fx-secondary-color: #2d2d2d;
     -fx-accent-color: #4d7eff;
     -fx-light-accent: #383b45;
     -fx-text-color: #e0e0e0;
@@ -12,6 +13,8 @@
     -fx-warning-color: #f1c40f;
     -fx-error-color: #e74c3c;
     -fx-info-color: #3498db;
+    -fx-header-bg: rgba(20, 20, 20, 0.9);
+    -fx-nav-button-bg: rgba(50, 50, 50, 0.7);
 
     /* Chart Colors */
     -fx-chart-primary: #4d7eff;
@@ -26,28 +29,60 @@
     -fx-sidebar-button-hover: rgba(77, 126, 255, 0.2);
     
     /* Específicos de la clínica veterinaria */
-    -fx-clinic-tab-bg: #25272c;
+    -fx-clinic-tab-bg: #2d2d2d;
     -fx-clinic-header-bg: #2d3748;
     -fx-clinic-header-text: #e0e0e0;
-    -fx-clinic-content-bg: #1b1d21;
+    -fx-clinic-content-bg: -fx-primary-color;
 }
 
 /* Root elements */
 .root {
-    -fx-background-color: -fx-primary-color;
+    -fx-background-color: -fx-primary-gradient;
     -fx-font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Header styling like "Midnight City" in the image */
+.header-title {
+    -fx-background-color: linear-gradient(to right, #1a1a1a 0%, #232526 30%, #353637 70%, #414345 100%);
+    -fx-text-fill: -fx-text-color;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 0px;
+    -fx-alignment: center;
+}
+
+/* Navigation buttons like in the image */
+.nav-button {
+    -fx-background-color: -fx-nav-button-bg;
+    -fx-text-fill: -fx-text-color;
+    -fx-font-size: 16px;
+    -fx-padding: 15px;
+    -fx-background-radius: 0;
+    -fx-cursor: hand;
+}
+
+.nav-button:hover {
+    -fx-background-color: rgba(77, 126, 255, 0.3);
+}
+
+.left-nav-button {
+    -fx-background-radius: 0 5 5 0;
+}
+
+.right-nav-button {
+    -fx-background-radius: 5 0 0 5;
 }
 
 /* Main panels and containers */
 .panel-azul-fondo {
-    -fx-background-color: -fx-primary-color;
+    -fx-background-color: -fx-primary-gradient;
 }
 
 .glass-panel, .content-panel {
     -fx-background-color: -fx-secondary-color;
-    -fx-background-radius: 10px;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 10, 0, 0, 4);
-    -fx-padding: 15px;
+    -fx-background-radius: 5px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 5, 0, 0, 2);
+    -fx-padding: 10px;
 }
 
 .title-panel {
@@ -406,7 +441,7 @@
 
 /* Panel específico de la clínica - Versión oscura */
 .clinic-main-panel {
-    -fx-background-color: -fx-clinic-content-bg;
+    -fx-background-color: -fx-primary-gradient;
 }
 
 /* Headers específicos de la clínica - Versión oscura */
@@ -430,4 +465,37 @@
 /* Custom color for diagnosis view title */
 .view-title {
     -fx-text-fill: #a0c4ff;  /* Light blue color that stands out on dark background */
+}
+
+/* Image container for the main content area like in the image */
+.image-container {
+    -fx-background-color: -fx-primary-gradient;
+    -fx-background-radius: 0;
+    -fx-padding: 0;
+}
+
+/* Footer styling like in the image */
+.footer {
+    -fx-background-color: -fx-primary-gradient;
+    -fx-text-fill: -fx-light-text-color;
+    -fx-font-size: 11px;
+    -fx-padding: 5px 0px;
+    -fx-alignment: center;
+}
+
+/* Carousel styling for the image slider like in the reference */
+.carousel {
+    -fx-background-color: -fx-primary-gradient;
+    -fx-padding: 0;
+}
+
+.carousel-content {
+    -fx-background-color: transparent;
+}
+
+.carousel-title {
+    -fx-text-fill: -fx-text-color;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 0;
 } 

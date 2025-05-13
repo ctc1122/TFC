@@ -2,7 +2,8 @@
 
 /* Base Colors */
 * {
-    -fx-primary-color: #ffffff;
+    -fx-primary-color: #FFEFBA; /* fallback for old browsers */
+    -fx-primary-gradient: linear-gradient(to right, #FFFFFF 0%, #FFFFFF 60%, #d0d0d09d 95%); /* More white percentage */
     -fx-secondary-color: #f8f9fa;
     -fx-accent-color: #4a6fd1;
     -fx-light-accent: #e8f0ff;
@@ -12,6 +13,7 @@
     -fx-warning-color: #ffc107;
     -fx-error-color: #dc3545;
     -fx-info-color: #17a2b8;
+    -fx-header-bg: rgba(255, 255, 255, 0.9);
 
     /* Chart Colors */
     -fx-chart-primary: #3a7ff6;
@@ -29,22 +31,63 @@
     -fx-clinic-tab-bg: #f8f9fa;
     -fx-clinic-header-bg: #4a6fd1;
     -fx-clinic-header-text: white;
-    -fx-clinic-content-bg: #ffffff;
+    -fx-clinic-content-bg: -fx-primary-gradient;
 }
 
 /* Root elements */
 .root {
-    -fx-background-color: -fx-secondary-color;
+    -fx-background-color: #FFFFFF;
     -fx-font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Header styling */
+.header-title {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: -fx-text-color;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 0px;
+    -fx-alignment: center;
+}
+
+/* Navigation buttons */
+.nav-button {
+    -fx-background-color: rgba(255, 239, 186, 0.3);
+    -fx-text-fill: -fx-text-color;
+    -fx-font-size: 16px;
+    -fx-padding: 15px;
+    -fx-background-radius: 0;
+    -fx-cursor: hand;
+}
+
+.nav-button:hover {
+    -fx-background-color: rgba(74, 111, 209, 0.2);
+}
+
+.left-nav-button {
+    -fx-background-radius: 0 5 5 0;
+}
+
+.right-nav-button {
+    -fx-background-radius: 5 0 0 5;
 }
 
 /* Main panels and containers */
 .panel-azul-fondo {
-    -fx-background-color: -fx-secondary-color;
+    -fx-background-color: #FFFFFF;
 }
 
-.glass-panel, .content-panel {
-    -fx-background-color: -fx-primary-color;
+/* Glass panel keeps the gradient for navigation */
+.glass-panel {
+    -fx-background-color: -fx-primary-gradient;
+    -fx-background-radius: 10px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 10, 0, 0, 4);
+    -fx-padding: 15px;
+}
+
+/* Content panel goes back to white */
+.content-panel {
+    -fx-background-color: #FFFFFF;
     -fx-background-radius: 10px;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 10, 0, 0, 4);
     -fx-padding: 15px;
@@ -60,7 +103,7 @@
 
 /* Cards */
 .card {
-    -fx-background-color: -fx-primary-color;
+    -fx-background-color: #FFFFFF;
     -fx-background-radius: 8px;
     -fx-padding: 15px;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.07), 10, 0, 0, 4);
@@ -228,7 +271,7 @@
 
 /* Text fields */
 .text-field {
-    -fx-background-color: -fx-primary-color;
+    -fx-background-color: #FFFFFF;
     -fx-background-radius: 5px;
     -fx-border-color: derive(-fx-secondary-color, -10%);
     -fx-border-radius: 5px;
@@ -365,7 +408,7 @@
 
 /* Date pickers y combos */
 .date-picker, .combo-box {
-    -fx-background-color: -fx-primary-color;
+    -fx-background-color: #FFFFFF;
     -fx-border-color: derive(-fx-secondary-color, -10%);
     -fx-border-radius: 5px;
 }
@@ -374,13 +417,23 @@
     -fx-background-color: -fx-secondary-color;
 }
 
+.date-picker .text-field, .combo-box .text-field {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: -fx-text-color;
+}
+
+.date-picker .cell, .combo-box .cell, .combo-box-popup .list-cell {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: -fx-text-color;
+}
+
 .date-picker:focused, .combo-box:focused {
     -fx-border-color: -fx-accent-color;
 }
 
 /* Panel específico de la clínica */
 .clinic-main-panel {
-    -fx-background-color: -fx-clinic-content-bg;
+    -fx-background-color: -fx-primary-gradient;
 }
 
 /* Headers específicos de la clínica */
@@ -389,4 +442,37 @@
     -fx-text-fill: -fx-clinic-header-text;
     -fx-padding: 10px;
     -fx-font-weight: bold;
+}
+
+/* Image container for carousel */
+.image-container {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 0;
+    -fx-padding: 0;
+}
+
+/* Footer styling */
+.footer {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: -fx-light-text-color;
+    -fx-font-size: 11px;
+    -fx-padding: 5px 0px;
+    -fx-alignment: center;
+}
+
+/* Carousel styling */
+.carousel {
+    -fx-background-color: #FFFFFF;
+    -fx-padding: 0;
+}
+
+.carousel-content {
+    -fx-background-color: transparent;
+}
+
+.carousel-title {
+    -fx-text-fill: -fx-text-color;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 0;
 } 
