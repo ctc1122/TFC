@@ -61,6 +61,7 @@
                   <JFXButton fx:id="btnAnimalesCarousel" layoutX="311.0" layoutY="200.0" visible="false" />
                   <JFXButton fx:id="but_clientesCarousel" layoutX="311.0" layoutY="200.0" visible="false" />
                   <JFXButton fx:id="btnFichajeCarousel" layoutX="311.0" layoutY="200.0" visible="false" />
+                  <JFXButton fx:id="btnEmpresaCarousel" layoutX="311.0" layoutY="200.0" visible="false" />
                   <JFXButton fx:id="btnSalirCarousel" layoutX="311.0" layoutY="200.0" visible="false" />
                </children>
             </Pane>

@@ -47,7 +47,7 @@ public class PanelInicioController implements Initializable {
     private JFXButton btnMenuPrincipal, btnAnimales, btnFichaje, btnSalir, btnToggleSidebar, but_clientes, btnEmpresa, btnChicha;
 
     @FXML
-    private JFXButton btnMenuPrincipalCarousel, btnAnimalesCarousel, btnFichajeCarousel, btnSalirCarousel, but_clientesCarousel;
+    private JFXButton btnMenuPrincipalCarousel, btnAnimalesCarousel, btnFichajeCarousel, btnSalirCarousel, but_clientesCarousel, btnEmpresaCarousel;
 
     @FXML
     private Label lblClinica;
@@ -109,6 +109,7 @@ public class PanelInicioController implements Initializable {
         setButtonIcon(btnAnimales, "/Iconos/iconPet2.png", 32, 32);
         setButtonIcon(but_clientes, "/Iconos/IconPruebaClientes.png", 32, 32);
         setButtonIcon(btnFichaje, "/Iconos/iconClock2.png", 32, 32);
+        setButtonIcon(btnEmpresa, "/Iconos/iconAdministrador2.png", 32, 32);
         setButtonIcon(btnSalir, "/Iconos/iconSalir.png", 32, 32);
 
         // Configurar iconos y tooltips para los botones del carrusel
@@ -116,6 +117,7 @@ public class PanelInicioController implements Initializable {
         setButtonIcon(btnAnimalesCarousel, "/Iconos/iconPet2.png", 32, 32);
         setButtonIcon(but_clientesCarousel, "/Iconos/IconPruebaClientes.png", 32, 32);
         setButtonIcon(btnFichajeCarousel, "/Iconos/iconClock2.png", 32, 32);
+        setButtonIcon(btnEmpresaCarousel, "/Iconos/iconAdministrador2.png", 32, 32);
         setButtonIcon(btnSalirCarousel, "/Iconos/iconSalir.png", 32, 32);
 
         // Tooltips para los botones del carrusel
@@ -223,7 +225,7 @@ public class PanelInicioController implements Initializable {
             // Corregir icono del botón Empresa
             try {
                 ImageView empresaIcon = new ImageView(new javafx.scene.image.Image(
-                    getClass().getResourceAsStream("/Iconos/iconEmpresa.png")));
+                    getClass().getResourceAsStream("/Iconos/iconAdministrador2.png")));
                 empresaIcon.setFitHeight(22.0);
                 empresaIcon.setFitWidth(20.0);
                 empresaIcon.setPreserveRatio(true);

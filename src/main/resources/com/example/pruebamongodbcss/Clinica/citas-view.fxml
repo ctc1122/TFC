@@ -20,6 +20,7 @@
 
 <BorderPane fx:id="mainPane" prefHeight="700.0" prefWidth="1024.0" stylesheets="@../css/clinica-styles.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.CitasController">
    <top>
+      <!--
       <HBox alignment="CENTER_LEFT" prefHeight="60.0" style="-fx-background-color: #3f51b5;" BorderPane.alignment="CENTER">
          <children>
             <Label text="Gestión de Citas Veterinarias" textFill="WHITE">
@@ -32,6 +33,7 @@
             </Label>
          </children>
       </HBox>
+      -->
    </top>
    <center>
       <TabPane fx:id="tabPane" style="-fx-background-color: white;" BorderPane.alignment="CENTER">
