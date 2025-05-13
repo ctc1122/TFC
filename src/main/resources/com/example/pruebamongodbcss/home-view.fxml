@@ -8,6 +8,8 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.shape.Rectangle?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.paint.LinearGradient?>
@@ -16,11 +18,11 @@
 <BorderPane fx:id="homeContainer" prefHeight="600.0" prefWidth="800.0" styleClass="home-container" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.HomeViewController">
     <!-- Header section with title -->
     <top>
-        <HBox alignment="CENTER_LEFT" styleClass="home-header">
+        <HBox alignment="CENTER_LEFT" styleClass="home-header" fillHeight="true" HBox.hgrow="ALWAYS">
             <padding>
                 <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
             </padding>
-            <Label styleClass="home-title" text="EMBRACE THE FUTURE OF ENERGY">
+            <Label styleClass="home-title" text="EMBRACE THE FUTURE OF ENERGY" wrapText="true">
                 <font>
                     <Font name="System Bold" size="24.0" />
                 </font>
@@ -30,10 +32,10 @@
     
     <!-- Main content area with stacked pages -->
     <center>
-        <BorderPane>
+        <BorderPane VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
             <!-- Page indicators -->
             <top>
-                <HBox fx:id="pageIndicatorContainer" alignment="CENTER" spacing="10.0" styleClass="page-indicator-container">
+                <HBox fx:id="pageIndicatorContainer" alignment="CENTER" spacing="10.0" styleClass="page-indicator-container" HBox.hgrow="ALWAYS">
                     <padding>
                         <Insets top="10.0" bottom="10.0" />
                     </padding>
@@ -44,20 +46,28 @@
             
             <!-- Stack of pages -->
             <center>
-                <StackPane fx:id="pagesContainer">
+                <StackPane fx:id="pagesContainer" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
                     <!-- Page 1: Grid Cards -->
-                    <VBox fx:id="page1" styleClass="home-page" visible="true">
-                        <GridPane fx:id="page1Grid" hgap="20.0" styleClass="home-grid" vgap="20.0">
+                    <VBox fx:id="page1" styleClass="home-page" visible="true" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
+                        <GridPane fx:id="page1Grid" hgap="20.0" styleClass="home-grid" vgap="20.0" VBox.vgrow="ALWAYS" GridPane.hgrow="ALWAYS">
+                            <columnConstraints>
+                                <ColumnConstraints hgrow="ALWAYS" percentWidth="50" />
+                                <ColumnConstraints hgrow="ALWAYS" percentWidth="50" />
+                            </columnConstraints>
+                            <rowConstraints>
+                                <RowConstraints vgrow="ALWAYS" percentHeight="60" />
+                                <RowConstraints vgrow="ALWAYS" percentHeight="40" />
+                            </rowConstraints>
                             <padding>
                                 <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                             </padding>
                             
                             <!-- Feature Card 1: Main image with text overlay -->
-                            <BorderPane styleClass="card, card-main" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="0">
+                            <BorderPane styleClass="card, card-main" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="0" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
                                 <center>
-                                    <StackPane>
+                                    <StackPane VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
                                         <!-- Replace ImageView with gradient Rectangle as temporary placeholder -->
-                                        <Rectangle width="500.0" height="300.0" arcHeight="10.0" arcWidth="10.0">
+                                        <Rectangle width="500.0" height="300.0" arcHeight="10.0" arcWidth="10.0" StackPane.alignment="CENTER">
                                             <fill>
                                                 <LinearGradient endX="1.0" endY="1.0">
                                                     <stops>
@@ -67,17 +77,17 @@
                                                 </LinearGradient>
                                             </fill>
                                         </Rectangle>
-                                        <Rectangle arcHeight="10.0" arcWidth="10.0" fill="#00000066" height="300.0" width="500.0" />
-                                        <VBox alignment="BOTTOM_LEFT" spacing="10.0">
+                                        <Rectangle width="500.0" height="300.0" arcHeight="10.0" arcWidth="10.0" fill="#00000066" StackPane.alignment="CENTER" />
+                                        <VBox alignment="BOTTOM_LEFT" spacing="10.0" StackPane.alignment="BOTTOM_LEFT" VBox.vgrow="ALWAYS">
                                             <padding>
                                                 <Insets bottom="20.0" left="20.0" right="20.0" />
                                             </padding>
-                                            <Label styleClass="card-title" text="A FUSION OF INNOVATION AND ELEGANCE">
+                                            <Label styleClass="card-title" text="A FUSION OF INNOVATION AND ELEGANCE" wrapText="true">
                                                 <font>
                                                     <Font name="System Bold" size="18.0" />
                                                 </font>
                                             </Label>
-                                            <Label styleClass="card-subtitle" text="DESIGNED FOR THE FUTURE OF DRIVING">
+                                            <Label styleClass="card-subtitle" text="DESIGNED FOR THE FUTURE OF DRIVING" wrapText="true">
                                                 <font>
                                                     <Font size="14.0" />
                                                 </font>
@@ -89,11 +99,11 @@
                             </BorderPane>
                             
                             <!-- Feature Card 2: Secondary card with placeholder rectangle instead of image -->
-                            <BorderPane styleClass="card, card-secondary" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                            <BorderPane styleClass="card, card-secondary" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
                                 <center>
-                                    <VBox alignment="TOP_CENTER" spacing="10.0">
+                                    <VBox alignment="TOP_CENTER" spacing="10.0" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
                                         <!-- Replace ImageView with Rectangle as placeholder -->
-                                        <Rectangle width="160.0" height="120.0" arcHeight="10.0" arcWidth="10.0">
+                                        <Rectangle width="160.0" height="120.0" arcHeight="10.0" arcWidth="10.0" VBox.vgrow="ALWAYS">
                                             <fill>
                                                 <LinearGradient endX="1.0" endY="1.0">
                                                     <stops>
@@ -103,7 +113,7 @@
                                                 </LinearGradient>
                                             </fill>
                                         </Rectangle>
-                                        <Label styleClass="card-title-secondary" text="ELECTRIC PERFORMANCE">
+                                        <Label styleClass="card-title-secondary" text="ELECTRIC PERFORMANCE" wrapText="true">
                                             <font>
                                                 <Font name="System Bold" size="14.0" />
                                             </font>
@@ -114,11 +124,11 @@
                             </BorderPane>
                             
                             <!-- Feature Card 3: Charging stations card with placeholder rectangle -->
-                            <BorderPane styleClass="card, card-secondary" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                            <BorderPane styleClass="card, card-secondary" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
                                 <center>
-                                    <VBox alignment="TOP_CENTER" spacing="10.0">
+                                    <VBox alignment="TOP_CENTER" spacing="10.0" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
                                         <!-- Replace ImageView with Rectangle as placeholder -->
-                                        <Rectangle width="160.0" height="120.0" arcHeight="10.0" arcWidth="10.0">
+                                        <Rectangle width="160.0" height="120.0" arcHeight="10.0" arcWidth="10.0" VBox.vgrow="ALWAYS">
                                             <fill>
                                                 <LinearGradient endX="1.0" endY="1.0">
                                                     <stops>
@@ -128,7 +138,7 @@
                                                 </LinearGradient>
                                             </fill>
                                         </Rectangle>
-                                        <Label styleClass="card-title-secondary" text="CHARGING SOLUTIONS">
+                                        <Label styleClass="card-title-secondary" text="CHARGING SOLUTIONS" wrapText="true">
                                             <font>
                                                 <Font name="System Bold" size="14.0" />
                                             </font>
@@ -141,26 +151,26 @@
                     </VBox>
                     
                     <!-- Page 2: Feature details -->
-                    <VBox fx:id="page2" styleClass="home-page" visible="false">
-                        <VBox alignment="TOP_CENTER" spacing="15.0">
+                    <VBox fx:id="page2" styleClass="home-page" visible="false" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
+                        <VBox alignment="TOP_CENTER" spacing="15.0" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
                             <padding>
                                 <Insets top="15.0" bottom="15.0" left="20.0" right="20.0" />
                             </padding>
-                            <HBox alignment="CENTER_LEFT">
+                            <HBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
                                 <JFXButton fx:id="btnBack" styleClass="btn-back" text="← BACK" />
                             </HBox>
-                            <Label styleClass="page-title" text="EXPLORE OUR FEATURES">
+                            <Label styleClass="page-title" text="EXPLORE OUR FEATURES" wrapText="true">
                                 <font>
                                     <Font name="System Bold" size="22.0" />
                                 </font>
                             </Label>
                             
                             <!-- Feature Rows -->
-                            <HBox fx:id="featureRow1" styleClass="feature-row" spacing="20.0">
+                            <HBox fx:id="featureRow1" styleClass="feature-row" spacing="20.0" HBox.hgrow="ALWAYS">
                                 <padding>
                                     <Insets top="10.0" right="10.0" bottom="10.0" left="10.0" />
                                 </padding>
-                                <Rectangle width="60.0" height="60.0" arcWidth="15.0" arcHeight="15.0">
+                                <Rectangle width="60.0" height="60.0" arcWidth="15.0" arcHeight="15.0" HBox.hgrow="NEVER">
                                     <fill>
                                         <LinearGradient endX="1.0" endY="1.0">
                                             <stops>
@@ -171,7 +181,7 @@
                                     </fill>
                                 </Rectangle>
                                 <VBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
-                                    <Label styleClass="feature-title" text="SUPERIOR RANGE">
+                                    <Label styleClass="feature-title" text="SUPERIOR RANGE" wrapText="true">
                                         <font>
                                             <Font name="System Bold" size="16.0" />
                                         </font>
@@ -181,11 +191,11 @@
                                 </VBox>
                             </HBox>
                             
-                            <HBox fx:id="featureRow2" styleClass="feature-row" spacing="20.0">
+                            <HBox fx:id="featureRow2" styleClass="feature-row" spacing="20.0" HBox.hgrow="ALWAYS">
                                 <padding>
                                     <Insets top="10.0" right="10.0" bottom="10.0" left="10.0" />
                                 </padding>
-                                <Rectangle width="60.0" height="60.0" arcWidth="15.0" arcHeight="15.0">
+                                <Rectangle width="60.0" height="60.0" arcWidth="15.0" arcHeight="15.0" HBox.hgrow="NEVER">
                                     <fill>
                                         <LinearGradient endX="1.0" endY="1.0">
                                             <stops>
@@ -196,7 +206,7 @@
                                     </fill>
                                 </Rectangle>
                                 <VBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
-                                    <Label styleClass="feature-title" text="QUICK CHARGING">
+                                    <Label styleClass="feature-title" text="QUICK CHARGING" wrapText="true">
                                         <font>
                                             <Font name="System Bold" size="16.0" />
                                         </font>
@@ -206,11 +216,11 @@
                                 </VBox>
                             </HBox>
                             
-                            <HBox fx:id="featureRow3" styleClass="feature-row" spacing="20.0">
+                            <HBox fx:id="featureRow3" styleClass="feature-row" spacing="20.0" HBox.hgrow="ALWAYS">
                                 <padding>
                                     <Insets top="10.0" right="10.0" bottom="10.0" left="10.0" />
                                 </padding>
-                                <Rectangle width="60.0" height="60.0" arcWidth="15.0" arcHeight="15.0">
+                                <Rectangle width="60.0" height="60.0" arcWidth="15.0" arcHeight="15.0" HBox.hgrow="NEVER">
                                     <fill>
                                         <LinearGradient endX="1.0" endY="1.0">
                                             <stops>
@@ -221,7 +231,7 @@
                                     </fill>
                                 </Rectangle>
                                 <VBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
-                                    <Label styleClass="feature-title" text="INTELLIGENT SOFTWARE">
+                                    <Label styleClass="feature-title" text="INTELLIGENT SOFTWARE" wrapText="true">
                                         <font>
                                             <Font name="System Bold" size="16.0" />
                                         </font>
@@ -239,7 +249,7 @@
     
     <!-- Bottom section with additional controls -->
     <bottom>
-        <HBox alignment="CENTER" spacing="15.0" styleClass="home-footer">
+        <HBox alignment="CENTER" spacing="15.0" styleClass="home-footer" HBox.hgrow="ALWAYS">
             <padding>
                 <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
             </padding>

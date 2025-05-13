@@ -3,7 +3,7 @@
 /* Base Colors */
 * {
     -fx-primary-color: #FFEFBA; /* fallback for old browsers */
-    -fx-primary-gradient: linear-gradient(to right, #FFFFFF 0%, #FFFFFF 60%, #d0d0d09d 95%); /* More white percentage */
+    -fx-primary-gradient: linear-gradient(to right, #FFFFFF 0%, #FFFFFF 60%, #d0d0d066 95%); /* More white percentage */
     -fx-secondary-color: #f8f9fa;
     -fx-accent-color: #4a6fd1;
     -fx-light-accent: #e8f0ff;

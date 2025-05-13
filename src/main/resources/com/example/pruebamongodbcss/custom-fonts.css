@@ -27,7 +27,7 @@
 
 /* Ejemplo de uso de tu nueva fuente */
 .mi-fuente-personalizada {
-    -fx-font-family: 'MiFuente2';
+    -fx-font-family: 'MiFuente';
     -fx-font-size: 16px;
     -fx-font-weight: bold;
     -fx-text-fill: white;

@@ -181,7 +181,7 @@
 }
 
 .border-anim1 {
-    -fx-background-color: linear-gradient(90deg, transparent, white);
+    -fx-background-color: linear-gradient(90deg, rgba(0,0,0,0), white);
     -fx-pref-width: 120px;
     -fx-pref-height: 2px;
     -fx-translate-x: -120;
@@ -190,7 +190,7 @@
 }
 
 .border-anim2 {
-    -fx-background-color: linear-gradient(180deg, transparent, white);
+    -fx-background-color: linear-gradient(180deg, rgba(0,0,0,0), white);
     -fx-pref-width: 2px;
     -fx-pref-height: 45px;
     -fx-translate-x: 60;
@@ -199,7 +199,7 @@
 }
 
 .border-anim3 {
-    -fx-background-color: linear-gradient(270deg, transparent, white);
+    -fx-background-color: linear-gradient(270deg, rgba(0,0,0,0), white);
     -fx-pref-width: 120px;
     -fx-pref-height: 2px;
     -fx-translate-x: -120;
@@ -208,7 +208,7 @@
 }
 
 .border-anim4 {
-    -fx-background-color: linear-gradient(360deg, transparent, white);
+    -fx-background-color: linear-gradient(360deg, rgba(0,0,0,0), white);
     -fx-pref-width: 2px;
     -fx-pref-height: 45px;
     -fx-translate-x: -60;
