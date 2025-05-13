@@ -60,6 +60,7 @@
 
     /* Alineación del contenido al inicio */
     -fx-alignment: CENTER_LEFT;
+    -fx-transition: background-color 0.3s, text-fill 0.3s;
 }
 
 .itemMenu:hover {
@@ -68,6 +69,25 @@
     -fx-text-fill: white;
 }
 
+/* Estilo para el botón seleccionado en el menú */
+.menu-button-selected {
+    -fx-background-color: #3d5af1;
+    -fx-background-radius: 5;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(29, 42, 114, 0.4), 5, 0, 0, 1);
+}
+
+/* Versión del botón seleccionado para tema oscuro */
+.dark-theme .menu-button-selected {
+    -fx-background-color: #4362e1;
+}
+
+/* Mantener el estilo cuando el botón está colapsado */
+.collapsed .menu-button-selected {
+    -fx-background-color: #3d5af1;
+    -fx-background-radius: 5;
+}
 
 .panelBordeado{
 	-fx-background-color: rgba(15,28,33,0.85);

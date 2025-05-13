@@ -94,6 +94,9 @@ public class PanelInicioController implements Initializable {
                 
                 // Aplicar el tema a todas las ventanas abiertas
                 ThemeUtil.applyThemeToAllOpenWindows();
+                
+                // Cargar automáticamente la vista home
+                restaurarVistaPrincipal();
             }
         });
         
@@ -208,6 +211,11 @@ public class PanelInicioController implements Initializable {
 
         // Asegurarse de que el botón del carrusel siempre esté en primer plano
         btnChicha.setViewOrder(-1.0); // Valor negativo para estar más adelante en el orden de visualización
+        
+        // Marcar visualmente el botón de Menú Principal como seleccionado
+        if (btnMenuPrincipal != null) {
+            btnMenuPrincipal.getStyleClass().add("menu-button-selected");
+        }
     }
     
     /**
@@ -256,6 +264,10 @@ public class PanelInicioController implements Initializable {
      */
     private void abrirModuloClinica() {
         try {
+            // Desmarcar otros botones y marcar el seleccionado
+            desmarcaTodosLosBotones();
+            btnAnimales.getStyleClass().add("menu-button-selected");
+            
             // Cargar la vista de la clínica
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/clinica-view.fxml"));
             Parent contenido = ThemeUtil.loadWithTheme(loader);
@@ -287,6 +299,10 @@ public class PanelInicioController implements Initializable {
      */
     private void abrirModuloClinicaConCitas() {
         try {
+            // Desmarcar otros botones y marcar el seleccionado
+            desmarcaTodosLosBotones();
+            but_clientes.getStyleClass().add("menu-button-selected");
+            
             // Cargar la vista de la clínica con citas
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/clinica-view.fxml"));
             Parent contenido = ThemeUtil.loadWithTheme(loader);
@@ -318,6 +334,12 @@ public class PanelInicioController implements Initializable {
      */
     private void abrirModuloEmpresa() {
         try {
+            // Desmarcar otros botones y marcar el seleccionado
+            desmarcaTodosLosBotones();
+            if (btnEmpresa != null) {
+                btnEmpresa.getStyleClass().add("menu-button-selected");
+            }
+            
             // Verificar que el usuario tenga permisos de administrador
             if (usuarioActual == null || !usuarioActual.esAdmin()) {
                 mostrarError("Acceso denegado", "Solo los administradores pueden acceder al módulo de Empresa.");
@@ -373,6 +395,10 @@ public class PanelInicioController implements Initializable {
      */
     private void restaurarVistaPrincipal() {
         try {
+            // Desmarcar otros botones y marcar el botón de menú principal
+            desmarcaTodosLosBotones();
+            btnMenuPrincipal.getStyleClass().add("menu-button-selected");
+            
             // Cargar nueva vista home
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/home-view.fxml"));
             Parent homeView = ThemeUtil.loadWithTheme(loader);
@@ -390,6 +416,18 @@ public class PanelInicioController implements Initializable {
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Error al cargar la vista principal: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Desmarca todos los botones del menú lateral
+     */
+    private void desmarcaTodosLosBotones() {
+        JFXButton[] botones = {btnMenuPrincipal, btnAnimales, but_clientes, btnFichaje, btnEmpresa, btnSalir};
+        for (JFXButton boton : botones) {
+            if (boton != null) {
+                boton.getStyleClass().remove("menu-button-selected");
+            }
         }
     }
 
@@ -636,6 +674,10 @@ public class PanelInicioController implements Initializable {
 
     // Método placeholder para Fichaje
     private void abrirModuloFichaje() {
+        // Desmarcar otros botones y marcar el seleccionado
+        desmarcaTodosLosBotones();
+        btnFichaje.getStyleClass().add("menu-button-selected");
+        
         System.out.println("Abrir módulo de fichaje (implementa la lógica aquí)");
         
         // Mantener visible el carrusel
