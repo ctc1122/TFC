@@ -13,6 +13,7 @@ import javafx.animation.TranslateTransition;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.BorderPane;
@@ -266,6 +267,19 @@ public class HomeViewController implements Initializable {
         page2.setVisible(true);
         page1.getStyleClass().add("home-page-hiding");
         
+        // Ensure the page title starts hidden for animation
+        Label titleLabel = (Label) page2.lookup(".page-title");
+        if (titleLabel != null) {
+            titleLabel.setOpacity(0);
+            titleLabel.setTranslateY(20);
+        }
+        
+        // Hide feature rows initially
+        page2.lookupAll(".feature-row").forEach(node -> {
+            node.setOpacity(0);
+            node.setTranslateY(20);
+        });
+        
         // Create animation
         FadeTransition fadeOutPage1 = new FadeTransition(Duration.millis(300), page1);
         fadeOutPage1.setFromValue(1.0);
@@ -302,6 +316,26 @@ public class HomeViewController implements Initializable {
      * Animate feature rows with a staggered effect
      */
     private void animateFeatureRows() {
+        // Animate the title first
+        Label titleLabel = (Label) page2.lookup(".page-title");
+        if (titleLabel != null) {
+            // Set initial state
+            titleLabel.setOpacity(0);
+            titleLabel.setTranslateY(20);
+            
+            // Create animation
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(300), titleLabel);
+            fadeIn.setFromValue(0);
+            fadeIn.setToValue(1);
+            
+            TranslateTransition slideUp = new TranslateTransition(Duration.millis(300), titleLabel);
+            slideUp.setFromY(20);
+            slideUp.setToY(0);
+            
+            ParallelTransition animation = new ParallelTransition(fadeIn, slideUp);
+            animation.play();
+        }
+        
         // Find all feature rows
         page2.lookupAll(".feature-row").forEach(node -> {
             // Set initial state
@@ -325,7 +359,8 @@ public class HomeViewController implements Initializable {
             if (parent instanceof VBox) {
                 index = ((VBox) parent).getChildren().indexOf(node);
             }
-            animation.setDelay(Duration.millis(150 * index));
+            // Increment index to account for the title animation
+            animation.setDelay(Duration.millis(150 * (index + 1)));
             
             // Play animation
             animation.play();

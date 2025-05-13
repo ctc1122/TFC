@@ -1,0 +1,35 @@
+/* Custom font definitions */
+@font-face {
+    font-family: 'ClinicFont';
+    src: url('fonts/Montserrat-Bold.ttf');
+}
+
+@font-face {
+    font-family: 'MiFuente';
+    src: url('fonts/Synonym1.ttf');
+}
+@font-face {
+    font-family: 'MiFuente2';
+    src: url('fonts/DxLactos.otf');
+}
+
+/* Style for the clinic label 
+#lblClinica {
+    -fx-font-family: 'ClinicFont';
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 4, 0.2, 0, 1);
+}
+    */
+
+
+
+/* Ejemplo de uso de tu nueva fuente */
+.mi-fuente-personalizada {
+    -fx-font-family: 'MiFuente2';
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 5, 0.3, 0, 1)
+} 

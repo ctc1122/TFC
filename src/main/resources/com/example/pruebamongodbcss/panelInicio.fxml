@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import com.example.pruebamongodbcss.theme.ThemeToggleSwitch?>
 
-<BorderPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="436.0" prefWidth="781.0" styleClass="panel-azul-fondo" stylesheets="@../InicioSesion/PanelInicioSesionEstilo.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.PanelInicioController">
+<BorderPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="436.0" prefWidth="781.0" styleClass="panel-azul-fondo" stylesheets="@../InicioSesion/PanelInicioSesionEstilo.css, @custom-fonts.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.PanelInicioController">
    <left>
       <BorderPane fx:id="sidebarContainer" prefWidth="200.0">
          <BorderPane.margin>
@@ -23,7 +23,7 @@
             <VBox alignment="CENTER" spacing="10.0">
                <VBox fx:id="sidebar" prefWidth="200.0" styleClass="glass-panel" BorderPane.alignment="CENTER">
                   <children>
-                     <Label fx:id="lblClinica" text="Clínica Veterinaria" />
+                     <Label fx:id="lblClinica" text="Clínica Veterinaria" styleClass="mi-fuente-personalizada" style="-fx-font-weight: bold;" />
                      <Separator />
                      <HBox alignment="CENTER_LEFT" spacing="10.0">
                         <JFXButton fx:id="btnToggleSidebar" text="≡" />

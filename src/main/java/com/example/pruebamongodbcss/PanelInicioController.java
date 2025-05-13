@@ -114,7 +114,7 @@ public class PanelInicioController implements Initializable {
         setButtonIcon(btnAnimales, "/Iconos/iconPet2.png", 32, 32);
         setButtonIcon(but_clientes, "/Iconos/IconPruebaClientes.png", 32, 32);
         setButtonIcon(btnFichaje, "/Iconos/iconClock2.png", 32, 32);
-        setButtonIcon(btnEmpresa, "/Iconos/iconAdministrador2.png", 32, 32);
+        setButtonIcon(btnEmpresa, "/Iconos/iconAdministrador2.png", 35, 38);
         setButtonIcon(btnSalir, "/Iconos/iconSalir.png", 32, 32);
 
         // Configurar iconos y tooltips para los botones del carrusel
@@ -122,7 +122,7 @@ public class PanelInicioController implements Initializable {
         setButtonIcon(btnAnimalesCarousel, "/Iconos/iconPet2.png", 32, 32);
         setButtonIcon(but_clientesCarousel, "/Iconos/IconPruebaClientes.png", 32, 32);
         setButtonIcon(btnFichajeCarousel, "/Iconos/iconClock2.png", 32, 32);
-        setButtonIcon(btnEmpresaCarousel, "/Iconos/iconAdministrador2.png", 32, 32);
+        setButtonIcon(btnEmpresaCarousel, "/Iconos/iconAdministrador2.png", 35, 38);
         setButtonIcon(btnSalirCarousel, "/Iconos/iconSalir.png", 32, 32);
 
         // Tooltips para los botones del carrusel
@@ -236,8 +236,8 @@ public class PanelInicioController implements Initializable {
             try {
                 ImageView empresaIcon = new ImageView(new javafx.scene.image.Image(
                     getClass().getResourceAsStream("/Iconos/iconAdministrador2.png")));
-                empresaIcon.setFitHeight(22.0);
-                empresaIcon.setFitWidth(20.0);
+                empresaIcon.setFitHeight(38.0);
+                empresaIcon.setFitWidth(35.0);
                 empresaIcon.setPreserveRatio(true);
                 btnEmpresa.setGraphic(empresaIcon);
             } catch (Exception e) {
@@ -523,9 +523,17 @@ public class PanelInicioController implements Initializable {
         fade.setToValue(isCollapsed ? 1 : 0);
         fade.play();
 
-        TranslateTransition slide = new TranslateTransition(Duration.seconds(0.3), btnToggleSidebar);
-        slide.setToX(isCollapsed ? 0 : -1);
-        slide.play();
+        // Animar el botón de toggle
+        TranslateTransition slideBtnToggle = new TranslateTransition(Duration.seconds(0.3), btnToggleSidebar);
+        slideBtnToggle.setToX(isCollapsed ? 0 : -1);
+        slideBtnToggle.play();
+
+        // Animar el ThemeToggleSwitch
+        if (themeToggle != null) {
+            TranslateTransition slideThemeToggle = new TranslateTransition(Duration.seconds(0.3), themeToggle);
+            slideThemeToggle.setToX(isCollapsed ? 0 : -20);
+            slideThemeToggle.play();
+        }
 
         timeline.setOnFinished(event -> {
             if (isCollapsed) {
