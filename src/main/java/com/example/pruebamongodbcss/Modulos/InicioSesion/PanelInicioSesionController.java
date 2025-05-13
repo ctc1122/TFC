@@ -589,7 +589,7 @@ public class PanelInicioSesionController extends Application implements Initiali
             Stage currentStage = (Stage) btnInicioSesion.getScene().getWindow();
             
             // Crear una nueva escena con dimensiones específicas
-            Scene scene = new Scene(root, 1024, 700);
+            Scene scene = new Scene(root, 1200, 800);
             
             // Si necesitamos una ventana decorada, y la actual no lo es, crear una nueva
             if (currentStage.getStyle() == StageStyle.UNDECORATED) {
