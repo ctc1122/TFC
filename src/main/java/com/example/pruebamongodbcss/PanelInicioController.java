@@ -532,7 +532,7 @@ public class PanelInicioController implements Initializable {
     }
 
     private void toggleMenuRadial() {
-        JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel};
+        JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel,btnEmpresaCarousel ,btnSalirCarousel};
         double centerX = btnChicha.getLayoutX() + btnChicha.getWidth() / 2;
         double centerY = btnChicha.getLayoutY() + btnChicha.getHeight() / 2;
         double radio = 120; // Distancia desde el centro
@@ -639,7 +639,7 @@ public class PanelInicioController implements Initializable {
         btnChicha.toFront();
         
         // Asegurar que los botones del carrusel existen pero están inicialmente ocultos
-        JFXButton[] botonesCarousel = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel};
+        JFXButton[] botonesCarousel = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel,btnEmpresaCarousel , btnSalirCarousel};
         for (JFXButton boton : botonesCarousel) {
             if (!mainPane.getChildren().contains(boton)) {
                 mainPane.getChildren().add(boton);
@@ -765,7 +765,7 @@ public class PanelInicioController implements Initializable {
             
             // Si el menú está visible, asegurarse de que los botones del menú también estén visibles
             if (menuVisible) {
-                JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel};
+                JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel,btnEmpresaCarousel , btnSalirCarousel};
                 for (JFXButton boton : botones) {
                     if (!mainPane.getChildren().contains(boton)) {
                         mainPane.getChildren().add(boton);
@@ -794,7 +794,7 @@ public class PanelInicioController implements Initializable {
             
             // Si el menú está desplegado, traer también los botones al frente
             if (menuVisible) {
-                JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel};
+                JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel,btnEmpresaCarousel , btnSalirCarousel};
                 for (JFXButton boton : botones) {
                     boton.toFront();
                 }
