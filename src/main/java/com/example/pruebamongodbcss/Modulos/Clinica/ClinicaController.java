@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.ArrayList;
 
 import org.bson.types.ObjectId;
 
@@ -63,6 +64,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.scene.input.KeyCode;
+import javafx.scene.control.ListView;
 
 /**
  * Controlador principal para la gestión clínica veterinaria.
@@ -990,35 +992,63 @@ public class ClinicaController implements Initializable {
         
         // Añadir columna para botones de acciones
         TableColumn<ModeloPaciente, Void> colAcciones = new TableColumn<>("Acciones");
-        colAcciones.setMinWidth(120);
+        colAcciones.setMinWidth(150);
         colAcciones.setMaxWidth(5000);
         colAcciones.prefWidthProperty().bind(
-                tablaPacientes.widthProperty().multiply(0.14)); // 14%
+                tablaPacientes.widthProperty().multiply(0.20)); // Aumentado a 20%
         
         colAcciones.setCellFactory(col -> new TableCell<>() {
             private final Button btnEditar = new Button("Editar");
             private final Button btnGuardar = new Button("Guardar");
             private final Button btnCancelar = new Button("Cancelar");
             private final Button btnCitas = new Button("Citas");
-            private final HBox botonesNormales = new HBox(5);
+            private final Button btnVacunas = new Button("Vacunas");
+            private final Button btnAlergias = new Button("Alergias");
+            
+            // Separar los botones en dos filas para mejor visualización
+            private final HBox botonesFilaSuperior = new HBox(5);
+            private final HBox botonesFilaInferior = new HBox(5);
+            private final VBox botonesNormales = new VBox(5);
             private final HBox botonesEdicion = new HBox(5);
             
             {
                 // Configurar estilos y propiedades
                 btnEditar.getStyleClass().add("btn-secondary");
-                btnEditar.setMinWidth(60);
+                btnEditar.setMinWidth(70);
+                btnEditar.setPrefWidth(90);
                 
                 btnCitas.getStyleClass().add("btn-info");
-                btnCitas.setMinWidth(60);
+                btnCitas.setMinWidth(70);
+                btnCitas.setPrefWidth(90);
+                
+                btnVacunas.getStyleClass().add("btn-success");
+                btnVacunas.setMinWidth(70);
+                btnVacunas.setPrefWidth(90);
+                
+                btnAlergias.getStyleClass().add("btn-warning");
+                btnAlergias.setMinWidth(70);
+                btnAlergias.setPrefWidth(90);
                 
                 btnGuardar.getStyleClass().add("btn-primary");
-                btnGuardar.setMinWidth(60);
+                btnGuardar.setMinWidth(70);
+                btnGuardar.setPrefWidth(90);
                 
                 btnCancelar.getStyleClass().add("btn-danger");
-                btnCancelar.setMinWidth(60);
+                btnCancelar.setMinWidth(70);
+                btnCancelar.setPrefWidth(90);
                 
-                botonesNormales.getChildren().addAll(btnEditar, btnCitas);
+                // Configurar el layout de dos filas
+                botonesFilaSuperior.getChildren().addAll(btnEditar, btnCitas);
+                botonesFilaInferior.getChildren().addAll(btnVacunas, btnAlergias);
+                
+                botonesFilaSuperior.setAlignment(Pos.CENTER);
+                botonesFilaInferior.setAlignment(Pos.CENTER);
+                
+                botonesNormales.getChildren().addAll(botonesFilaSuperior, botonesFilaInferior);
+                botonesNormales.setAlignment(Pos.CENTER);
+                
                 botonesEdicion.getChildren().addAll(btnGuardar, btnCancelar);
+                botonesEdicion.setAlignment(Pos.CENTER);
                 
                 // Configurar eventos
                 btnEditar.setOnAction(event -> {
@@ -1035,6 +1065,22 @@ public class ClinicaController implements Initializable {
                     if (index >= 0 && index < getTableView().getItems().size()) {
                         ModeloPaciente paciente = getTableView().getItems().get(index);
                         verCitasPaciente(paciente);
+                    }
+                });
+                
+                btnVacunas.setOnAction(event -> {
+                    int index = getIndex();
+                    if (index >= 0 && index < getTableView().getItems().size()) {
+                        ModeloPaciente paciente = getTableView().getItems().get(index);
+                        mostrarVacunasPaciente(paciente);
+                    }
+                });
+                
+                btnAlergias.setOnAction(event -> {
+                    int index = getIndex();
+                    if (index >= 0 && index < getTableView().getItems().size()) {
+                        ModeloPaciente paciente = getTableView().getItems().get(index);
+                        mostrarAlergiasPaciente(paciente);
                     }
                 });
                 
@@ -2730,5 +2776,183 @@ public class ClinicaController implements Initializable {
         tablaPacientes.refresh();
         tablaPropietarios.refresh();
         tablaDiagnosticos.refresh();
+    }
+
+    /**
+     * Muestra un diálogo para gestionar las vacunas de un paciente
+     */
+    private void mostrarVacunasPaciente(ModeloPaciente paciente) {
+        try {
+            // Crear una lista observable de las vacunas
+            ObservableList<String> vacunasObservable = FXCollections.observableArrayList(paciente.getVacunas());
+            
+            // Crear el diálogo
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("Vacunas de " + paciente.getNombre());
+            dialogStage.initModality(Modality.APPLICATION_MODAL);
+            
+            // Crear los componentes de la interfaz
+            ListView<String> listView = new ListView<>(vacunasObservable);
+            listView.setEditable(true);
+            listView.setPrefHeight(300);
+            listView.setPrefWidth(400);
+            
+            TextField txtNuevaVacuna = new TextField();
+            txtNuevaVacuna.setPromptText("Nueva vacuna");
+            txtNuevaVacuna.setPrefWidth(300);
+            
+            Button btnAgregar = new Button("Agregar");
+            btnAgregar.getStyleClass().add("btn-primary");
+            Button btnEliminar = new Button("Eliminar seleccionada");
+            btnEliminar.getStyleClass().add("btn-danger");
+            Button btnGuardar = new Button("Guardar cambios");
+            btnGuardar.getStyleClass().add("btn-success");
+            
+            // Configurar eventos
+            btnAgregar.setOnAction(e -> {
+                String nuevaVacuna = txtNuevaVacuna.getText().trim();
+                if (!nuevaVacuna.isEmpty() && !vacunasObservable.contains(nuevaVacuna)) {
+                    vacunasObservable.add(nuevaVacuna);
+                    txtNuevaVacuna.clear();
+                }
+            });
+            
+            btnEliminar.setOnAction(e -> {
+                int selectedIndex = listView.getSelectionModel().getSelectedIndex();
+                if (selectedIndex >= 0) {
+                    vacunasObservable.remove(selectedIndex);
+                }
+            });
+            
+            btnGuardar.setOnAction(e -> {
+                // Actualizar la lista de vacunas del paciente
+                paciente.setVacunas(new ArrayList<>(vacunasObservable));
+                
+                // Guardar el paciente en la base de datos
+                boolean actualizado = servicioClinica.actualizarPaciente(paciente);
+                if (actualizado) {
+                    mostrarMensaje("Éxito", "Vacunas guardadas", 
+                        "Las vacunas del paciente han sido actualizadas correctamente.");
+                    // Actualizar la vista
+                    cargarPacientes();
+                } else {
+                    mostrarAlerta("Error", "Error al guardar vacunas", 
+                        "No se pudieron guardar las vacunas del paciente.");
+                }
+                
+                dialogStage.close();
+            });
+            
+            // Crear el layout
+            HBox hboxInput = new HBox(10, txtNuevaVacuna, btnAgregar);
+            hboxInput.setPadding(new Insets(10));
+            hboxInput.setAlignment(Pos.CENTER_LEFT);
+            
+            HBox hboxButtons = new HBox(10, btnEliminar, btnGuardar);
+            hboxButtons.setPadding(new Insets(10));
+            hboxButtons.setAlignment(Pos.CENTER_RIGHT);
+            
+            VBox vbox = new VBox(10, new Label("Vacunas"), listView, hboxInput, hboxButtons);
+            vbox.setPadding(new Insets(15));
+            
+            // Configurar y mostrar el diálogo
+            Scene scene = new Scene(vbox);
+            dialogStage.setScene(scene);
+            dialogStage.showAndWait();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al mostrar vacunas", 
+                    "Ha ocurrido un error al intentar mostrar las vacunas: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Muestra un diálogo para gestionar las alergias de un paciente
+     */
+    private void mostrarAlergiasPaciente(ModeloPaciente paciente) {
+        try {
+            // Crear una lista observable de las alergias
+            ObservableList<String> alergiasObservable = FXCollections.observableArrayList(paciente.getAlergias());
+            
+            // Crear el diálogo
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("Alergias de " + paciente.getNombre());
+            dialogStage.initModality(Modality.APPLICATION_MODAL);
+            
+            // Crear los componentes de la interfaz
+            ListView<String> listView = new ListView<>(alergiasObservable);
+            listView.setEditable(true);
+            listView.setPrefHeight(300);
+            listView.setPrefWidth(400);
+            
+            TextField txtNuevaAlergia = new TextField();
+            txtNuevaAlergia.setPromptText("Nueva alergia");
+            txtNuevaAlergia.setPrefWidth(300);
+            
+            Button btnAgregar = new Button("Agregar");
+            btnAgregar.getStyleClass().add("btn-primary");
+            Button btnEliminar = new Button("Eliminar seleccionada");
+            btnEliminar.getStyleClass().add("btn-danger");
+            Button btnGuardar = new Button("Guardar cambios");
+            btnGuardar.getStyleClass().add("btn-success");
+            
+            // Configurar eventos
+            btnAgregar.setOnAction(e -> {
+                String nuevaAlergia = txtNuevaAlergia.getText().trim();
+                if (!nuevaAlergia.isEmpty() && !alergiasObservable.contains(nuevaAlergia)) {
+                    alergiasObservable.add(nuevaAlergia);
+                    txtNuevaAlergia.clear();
+                }
+            });
+            
+            btnEliminar.setOnAction(e -> {
+                int selectedIndex = listView.getSelectionModel().getSelectedIndex();
+                if (selectedIndex >= 0) {
+                    alergiasObservable.remove(selectedIndex);
+                }
+            });
+            
+            btnGuardar.setOnAction(e -> {
+                // Actualizar la lista de alergias del paciente
+                paciente.setAlergias(new ArrayList<>(alergiasObservable));
+                
+                // Guardar el paciente en la base de datos
+                boolean actualizado = servicioClinica.actualizarPaciente(paciente);
+                if (actualizado) {
+                    mostrarMensaje("Éxito", "Alergias guardadas", 
+                        "Las alergias del paciente han sido actualizadas correctamente.");
+                    // Actualizar la vista
+                    cargarPacientes();
+                } else {
+                    mostrarAlerta("Error", "Error al guardar alergias", 
+                        "No se pudieron guardar las alergias del paciente.");
+                }
+                
+                dialogStage.close();
+            });
+            
+            // Crear el layout
+            HBox hboxInput = new HBox(10, txtNuevaAlergia, btnAgregar);
+            hboxInput.setPadding(new Insets(10));
+            hboxInput.setAlignment(Pos.CENTER_LEFT);
+            
+            HBox hboxButtons = new HBox(10, btnEliminar, btnGuardar);
+            hboxButtons.setPadding(new Insets(10));
+            hboxButtons.setAlignment(Pos.CENTER_RIGHT);
+            
+            VBox vbox = new VBox(10, new Label("Alergias"), listView, hboxInput, hboxButtons);
+            vbox.setPadding(new Insets(15));
+            
+            // Configurar y mostrar el diálogo
+            Scene scene = new Scene(vbox);
+            dialogStage.setScene(scene);
+            dialogStage.showAndWait();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al mostrar alergias", 
+                    "Ha ocurrido un error al intentar mostrar las alergias: " + e.getMessage());
+        }
     }
 } 
