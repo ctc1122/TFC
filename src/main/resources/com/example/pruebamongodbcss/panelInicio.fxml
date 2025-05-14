@@ -23,8 +23,16 @@
             <VBox alignment="CENTER" spacing="10.0">
                <VBox fx:id="sidebar" prefWidth="200.0" styleClass="glass-panel" BorderPane.alignment="CENTER">
                   <children>
-                     <Label fx:id="lblClinica" text="Clínica Veterinaria" styleClass="mi-fuente-personalizada" style="-fx-font-weight: bold;" />
-                     <Separator />
+                     <Label fx:id="lblClinica" text="Clínica Veterinaria" styleClass="mi-fuente-personalizada" style="-fx-font-weight: bold;">
+                        <padding>
+                           <Insets top="10.0"  bottom="10.0"  />
+                        </padding>
+                     </Label>
+                     <Separator fx:id="separator">
+                        <padding>
+                           <Insets bottom="5.0" />
+                        </padding>
+                     </Separator>
                      <HBox alignment="CENTER_LEFT" spacing="10.0">
                         <JFXButton fx:id="btnToggleSidebar" text="≡" />
                         <!-- <ThemeToggleSwitch fx:id="themeToggle" /> -->

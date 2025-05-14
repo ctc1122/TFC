@@ -24,6 +24,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.Separator;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -50,6 +51,8 @@ public class PanelInicioController implements Initializable {
     @FXML
     private Label lblClinica;
 
+    @FXML
+    private Separator separator;
     @FXML
     private ThemeToggleSwitch themeToggle;
 
@@ -515,6 +518,13 @@ public class PanelInicioController implements Initializable {
         FadeTransition fade = new FadeTransition(Duration.seconds(0.3), lblClinica);
         fade.setToValue(isCollapsed ? 1 : 0);
         fade.play();
+        
+        // Animar el separador
+        if (separator != null) {
+            FadeTransition fadeSeparator = new FadeTransition(Duration.seconds(0.3), separator);
+            fadeSeparator.setToValue(isCollapsed ? 1 : 0);
+            fadeSeparator.play();
+        }
 
         // Animar el botón de toggle
         TranslateTransition slideBtnToggle = new TranslateTransition(Duration.seconds(0.3), btnToggleSidebar);
@@ -535,6 +545,9 @@ public class PanelInicioController implements Initializable {
                 btnFichaje.setText("Fichaje");
                 btnSalir.setText("SALIR");
                 but_clientes.setText("Clientes");
+                if (separator != null) {
+                    separator.setVisible(true);
+                }
                 if (btnEmpresa != null) {
                     btnEmpresa.setText("Empresa");
                 }
@@ -544,6 +557,9 @@ public class PanelInicioController implements Initializable {
                 btnFichaje.setText("");
                 btnSalir.setText("");
                 but_clientes.setText("");
+                if (separator != null) {
+                    separator.setVisible(false);
+                }
                 if (btnEmpresa != null) {
                     btnEmpresa.setText("");
                 }
