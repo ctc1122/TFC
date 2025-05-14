@@ -98,6 +98,21 @@ public class GestionUsuariosController implements Initializable {
     // Formato para fechas
     private final SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy");
 
+    // Add a new field for the current user
+    private Usuario usuarioActual;
+    
+    /**
+     * Establece el usuario actual (generalmente un administrador)
+     * @param usuario Usuario actual de la sesión
+     */
+    public void setUsuarioActual(Usuario usuario) {
+        this.usuarioActual = usuario;
+        if (servicio != null && usuario != null) {
+            servicio.setUsuarioActual(usuario);
+            System.out.println("Usuario actual establecido: " + usuario.getUsuario() + " (Rol: " + usuario.getRol() + ")");
+        }
+    }
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         try {
@@ -105,6 +120,15 @@ public class GestionUsuariosController implements Initializable {
             
             // Inicializar servicio
             servicio = new ServicioUsuarios();
+            
+            // Verificar si hay un usuario actual
+            if (usuarioActual != null) {
+                servicio.setUsuarioActual(usuarioActual);
+                System.out.println("Usuario actual establecido: " + usuarioActual.getUsuario() + 
+                                   " (Rol: " + usuarioActual.getRol().getDescripcion() + ")");
+            } else {
+                System.out.println("ADVERTENCIA: No hay usuario actual establecido para GestionUsuariosController");
+            }
             
             // Configurar listas observables
             usuariosObservable = FXCollections.observableArrayList();
@@ -544,8 +568,20 @@ public class GestionUsuariosController implements Initializable {
                 return;
             }
             
-            // Establecer el servicio
-            controller.setServicio(servicio);
+            // Establecer el servicio y asegurar que tenga el usuario actual
+            ServicioUsuarios servicioForm = new ServicioUsuarios();
+            if (usuarioActual != null) {
+                servicioForm.setUsuarioActual(usuarioActual);
+                System.out.println("Estableciendo usuario actual en formulario: " + 
+                                  usuarioActual.getUsuario() + " (Rol: " + usuarioActual.getRol().getDescripcion() + ")");
+            } else if (servicio != null && servicio.getUsuarioActual() != null) {
+                servicioForm.setUsuarioActual(servicio.getUsuarioActual());
+                System.out.println("Estableciendo usuario actual desde servicio principal: " + 
+                                  servicio.getUsuarioActual().getUsuario());
+            } else {
+                System.out.println("ADVERTENCIA: No hay usuario actual establecido para el formulario");
+            }
+            controller.setServicio(servicioForm);
             
             // Preparar usuario para edición/creación
             Usuario usuarioEdicion = null;
@@ -554,12 +590,9 @@ public class GestionUsuariosController implements Initializable {
                 // Nuevo veterinario - crear un objeto vacío con rol VETERINARIO
                 usuarioEdicion = new Usuario();
                 usuarioEdicion.setRol(Rol.VETERINARIO);
-                // No establecer valores por defecto vacíos, dejar que el formulario maneje los campos vacíos
             } else if (usuario == null) {
-                // Nuevo usuario normal
-                usuarioEdicion = new Usuario();
-                usuarioEdicion.setRol(Rol.NORMAL);
-                // No establecer valores por defecto vacíos, dejar que el formulario maneje los campos vacíos
+                // Nuevo usuario normal - dejamos que el controlador cree el objeto
+                usuarioEdicion = null;
             } else {
                 // Editar usuario existente
                 usuarioEdicion = usuario;

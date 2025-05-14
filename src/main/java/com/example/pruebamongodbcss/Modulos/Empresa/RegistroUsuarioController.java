@@ -170,6 +170,16 @@ public class RegistroUsuarioController implements Initializable {
      */
     public void setUsuarioParaEditar(Usuario usuario) {
         if (usuario == null) {
+            // Si recibimos null, crear un usuario nuevo
+            this.usuario = new Usuario();
+            this.modoEdicion = false;
+            
+            // Configurar título para usuario nuevo
+            lblTitulo.setText("Nuevo Usuario");
+            
+            // Asegurarse de habilitar el campo usuario en modo creación
+            txtUsuario.setDisable(false);
+            
             return;
         }
         
@@ -252,6 +262,10 @@ public class RegistroUsuarioController implements Initializable {
                 // Actualizar usuario existente
                 usuario.setNombre(txtNombre.getText());
                 usuario.setApellido(txtApellido.getText());
+                // Importante: En modo edición no actualizamos el usuario porque está deshabilitado
+                if (!modoEdicion) {
+                    usuario.setUsuario(txtUsuario.getText());
+                }
                 usuario.setPassword(txtPassword.getText());
                 usuario.setEmail(txtEmail.getText());
                 usuario.setTelefono(txtTelefono.getText());
@@ -271,6 +285,12 @@ public class RegistroUsuarioController implements Initializable {
                     usuario.setHoraFin(txtHoraFin.getText());
                     usuario.setDisponible(chkDisponible.isSelected());
                 }
+            }
+            
+            // Asegurarse de que el nombre de usuario no sea nulo antes de guardar
+            if (usuario.getUsuario() == null || usuario.getUsuario().isEmpty()) {
+                mostrarError("Error", "El nombre de usuario no puede estar vacío");
+                return;
             }
             
             // Guardar en la base de datos
@@ -389,14 +409,8 @@ public class RegistroUsuarioController implements Initializable {
                 }
             }
             
-            // Validar contraseña de admin si aplica
-            if (chkAdmin != null && chkAdmin.isSelected() && !modoEdicion) {
-                // Verificar que el usuario actual tiene permisos de administrador
-                if (servicio != null && !servicio.esUsuarioAdmin()) {
-                    mostrarError("Permisos insuficientes", "Solo los administradores pueden crear nuevos usuarios administradores.");
-                    return false;
-                }
-            }
+            // Nota: La validación para creación de administradores se eliminó intencionalmente.
+            // Ahora un usuario administrador puede crear otros administradores sin restricciones adicionales.
             
             return true;
         } catch (Exception e) {
