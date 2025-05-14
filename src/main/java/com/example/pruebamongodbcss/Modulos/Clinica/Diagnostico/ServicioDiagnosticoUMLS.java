@@ -26,7 +26,14 @@ public class ServicioDiagnosticoUMLS {
      * @throws SQLException si hay un error de conexión
      */
     private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(URL, USERNAME, PASSWORD);
+        try {
+            // Cargar el driver de forma explícita
+            Class.forName("org.mariadb.jdbc.Driver");
+            return DriverManager.getConnection(URL, USERNAME, PASSWORD);
+        } catch (ClassNotFoundException e) {
+            System.err.println("Error al cargar el driver de MariaDB: " + e.getMessage());
+            throw new SQLException("Error al cargar el driver: " + e.getMessage(), e);
+        }
     }
     
     /**
@@ -204,10 +211,20 @@ public class ServicioDiagnosticoUMLS {
      * @return true si la conexión se estableció correctamente, false en caso contrario
      */
     public boolean comprobarConexion() {
-        try (Connection conn = getConnection()) {
-            return conn != null && !conn.isClosed();
+        try {
+            System.out.println("Intentando conectar a: " + URL);
+            Connection conn = getConnection();
+            boolean conectado = conn != null && !conn.isClosed();
+            if (conectado) {
+                System.out.println("Conexión establecida correctamente!");
+            }
+            if (conn != null) {
+                conn.close();
+            }
+            return conectado;
         } catch (SQLException e) {
             System.err.println("Error al comprobar conexión: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
