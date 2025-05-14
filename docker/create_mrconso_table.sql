@@ -25,3 +25,14 @@ CREATE TABLE IF NOT EXISTS MRCONSO (
     INDEX idx_cui (CUI),
     INDEX idx_str (STR(255))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci; 
+
+-- Para cargar los datos, es necesario usar un volumen o copiar el archivo al contenedor
+-- Por ejemplo, si se monta el directorio de UMLS como volumen en docker-compose.yml:
+-- Se podría usar: LOAD DATA INFILE '/var/lib/mysql-files/MRCONSO.RRF'
+
+-- Alternativamente, se puede cargar desde el cliente usando LOCAL:
+-- LOAD DATA LOCAL INFILE '/path/to/UMLS/2024AB/META/MRCONSO.RRF' 
+-- INTO TABLE MRCONSO
+-- FIELDS TERMINATED BY '|'
+-- LINES TERMINATED BY '\n'
+-- (CUI, LAT, TS, LUI, STT, SUI, ISPREF, AUI, SAUI, SCUI, SDUI, SAB, TTY, CODE, STR, SRL, SUPPRESS, CVF); 
