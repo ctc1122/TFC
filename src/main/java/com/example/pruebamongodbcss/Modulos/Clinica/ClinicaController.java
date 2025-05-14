@@ -154,6 +154,45 @@ public class ClinicaController implements Initializable {
         configurarTablaPropietarios();
         configurarTablaDiagnosticos();
         
+        // Hacer que las tablas se ajusten al tamaño del contenedor padre
+        Platform.runLater(() -> {
+            // Aseguramos que los controles ya están renderizados para acceder a sus padres
+            if (tablaPacientes.getParent() != null) {
+                tablaPacientes.prefWidthProperty().bind(((Region)tablaPacientes.getParent()).widthProperty().subtract(20));
+            }
+            
+            if (tablaPropietarios.getParent() != null) {
+                tablaPropietarios.prefWidthProperty().bind(((Region)tablaPropietarios.getParent()).widthProperty().subtract(20));
+            }
+            
+            if (tablaDiagnosticos.getParent() != null) {
+                tablaDiagnosticos.prefWidthProperty().bind(((Region)tablaDiagnosticos.getParent()).widthProperty().subtract(20));
+            }
+            
+            // Aplicar listener para redimensionar columnas en cambio de tamaño de ventana
+            Scene scene = mainPane.getScene();
+            if (scene != null) {
+                scene.widthProperty().addListener((obs, oldVal, newVal) -> {
+                    ajustarTablasResponsivas();
+                });
+                scene.heightProperty().addListener((obs, oldVal, newVal) -> {
+                    ajustarTablasResponsivas();
+                });
+            } else {
+                // Si la escena aún no está disponible, esperar a que se establezca
+                mainPane.sceneProperty().addListener((obs, oldScene, newScene) -> {
+                    if (newScene != null) {
+                        newScene.widthProperty().addListener((obs2, oldVal, newVal) -> {
+                            ajustarTablasResponsivas();
+                        });
+                        newScene.heightProperty().addListener((obs2, oldVal, newVal) -> {
+                            ajustarTablasResponsivas();
+                        });
+                    }
+                });
+            }
+        });
+        
         // Cargar datos iniciales
         cargarPacientes();
         cargarPropietarios();
@@ -207,6 +246,46 @@ public class ClinicaController implements Initializable {
     private void configurarTablaPacientes() {
         // Configurar la tabla para ser editable
         tablaPacientes.setEditable(true);
+        
+        // Hacer que la tabla sea responsive
+        tablaPacientes.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        
+        // Configurar propiedades de columnas para que sean responsive
+        // Definir porcentajes de ancho para las columnas
+        colNombrePaciente.setMinWidth(100);
+        colNombrePaciente.setMaxWidth(5000);
+        colNombrePaciente.prefWidthProperty().bind(
+                tablaPacientes.widthProperty().multiply(0.15)); // 15%
+        
+        colEspecie.setMinWidth(80);
+        colEspecie.setMaxWidth(5000);
+        colEspecie.prefWidthProperty().bind(
+                tablaPacientes.widthProperty().multiply(0.12)); // 12%
+        
+        colRaza.setMinWidth(80);
+        colRaza.setMaxWidth(5000);
+        colRaza.prefWidthProperty().bind(
+                tablaPacientes.widthProperty().multiply(0.12)); // 12%
+        
+        colPropietario.setMinWidth(120);
+        colPropietario.setMaxWidth(5000);
+        colPropietario.prefWidthProperty().bind(
+                tablaPacientes.widthProperty().multiply(0.15)); // 15%
+        
+        colSexoPaciente.setMinWidth(60);
+        colSexoPaciente.setMaxWidth(5000);
+        colSexoPaciente.prefWidthProperty().bind(
+                tablaPacientes.widthProperty().multiply(0.1)); // 10%
+        
+        colPesoPaciente.setMinWidth(60);
+        colPesoPaciente.setMaxWidth(5000);
+        colPesoPaciente.prefWidthProperty().bind(
+                tablaPacientes.widthProperty().multiply(0.1)); // 10%
+        
+        colFechaNacPaciente.setMinWidth(100);
+        colFechaNacPaciente.setMaxWidth(5000);
+        colFechaNacPaciente.prefWidthProperty().bind(
+                tablaPacientes.widthProperty().multiply(0.12)); // 12%
         
         // Columna Nombre (editable con TextField)
         colNombrePaciente.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getNombre()));
@@ -911,7 +990,10 @@ public class ClinicaController implements Initializable {
         
         // Añadir columna para botones de acciones
         TableColumn<ModeloPaciente, Void> colAcciones = new TableColumn<>("Acciones");
-        colAcciones.setPrefWidth(200);
+        colAcciones.setMinWidth(120);
+        colAcciones.setMaxWidth(5000);
+        colAcciones.prefWidthProperty().bind(
+                tablaPacientes.widthProperty().multiply(0.14)); // 14%
         
         colAcciones.setCellFactory(col -> new TableCell<>() {
             private final Button btnEditar = new Button("Editar");
@@ -1134,6 +1216,30 @@ public class ClinicaController implements Initializable {
     private void configurarTablaPropietarios() {
         // Configurar la tabla para ser editable
         tablaPropietarios.setEditable(true);
+        
+        // Hacer que la tabla sea responsive
+        tablaPropietarios.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        
+        // Configurar propiedades de columnas para que sean responsive
+        colNombrePropietario.setMinWidth(150);
+        colNombrePropietario.setMaxWidth(5000);
+        colNombrePropietario.prefWidthProperty().bind(
+                tablaPropietarios.widthProperty().multiply(0.3)); // 30%
+        
+        colDNI.setMinWidth(100);
+        colDNI.setMaxWidth(5000);
+        colDNI.prefWidthProperty().bind(
+                tablaPropietarios.widthProperty().multiply(0.2)); // 20%
+        
+        colTelefono.setMinWidth(100);
+        colTelefono.setMaxWidth(5000);
+        colTelefono.prefWidthProperty().bind(
+                tablaPropietarios.widthProperty().multiply(0.2)); // 20%
+        
+        colEmail.setMinWidth(150);
+        colEmail.setMaxWidth(5000);
+        colEmail.prefWidthProperty().bind(
+                tablaPropietarios.widthProperty().multiply(0.3)); // 30%
         
         // Añadir celdas editables para cada columna
         colNombrePropietario.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getNombreCompleto()));
@@ -1517,7 +1623,10 @@ public class ClinicaController implements Initializable {
         
         // Añadir columna para botones de acciones
         TableColumn<ModeloPropietario, Void> colAcciones = new TableColumn<>("Acciones");
-        colAcciones.setPrefWidth(200);
+        colAcciones.setMinWidth(120);
+        colAcciones.setMaxWidth(5000);
+        colAcciones.prefWidthProperty().bind(
+                tablaPropietarios.widthProperty().multiply(0.2)); // 20%
         
         colAcciones.setCellFactory(col -> new TableCell<>() {
             private final Button btnEditar = new Button("Editar");
@@ -2493,6 +2602,35 @@ public class ClinicaController implements Initializable {
      * Configura la tabla de diagnósticos
      */
     private void configurarTablaDiagnosticos() {
+        // Hacer que la tabla sea responsive
+        tablaDiagnosticos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        
+        // Configurar propiedades de columnas para que sean responsive
+        colFechaDiagnostico.setMinWidth(100);
+        colFechaDiagnostico.setMaxWidth(5000);
+        colFechaDiagnostico.prefWidthProperty().bind(
+                tablaDiagnosticos.widthProperty().multiply(0.15)); // 15%
+        
+        colPacienteDiagnostico.setMinWidth(120);
+        colPacienteDiagnostico.setMaxWidth(5000);
+        colPacienteDiagnostico.prefWidthProperty().bind(
+                tablaDiagnosticos.widthProperty().multiply(0.2)); // 20%
+        
+        colMotivo.setMinWidth(150);
+        colMotivo.setMaxWidth(5000);
+        colMotivo.prefWidthProperty().bind(
+                tablaDiagnosticos.widthProperty().multiply(0.2)); // 20%
+        
+        colDiagnostico.setMinWidth(150);
+        colDiagnostico.setMaxWidth(5000);
+        colDiagnostico.prefWidthProperty().bind(
+                tablaDiagnosticos.widthProperty().multiply(0.3)); // 30%
+        
+        colVeterinario.setMinWidth(120);
+        colVeterinario.setMaxWidth(5000);
+        colVeterinario.prefWidthProperty().bind(
+                tablaDiagnosticos.widthProperty().multiply(0.15)); // 15%
+        
         colFechaDiagnostico.setCellValueFactory(data -> {
             Date fecha = data.getValue().getFecha();
             return new SimpleStringProperty(fecha != null ? formatoFecha.format(fecha) : "");
@@ -2576,5 +2714,21 @@ public class ClinicaController implements Initializable {
             List<ModeloDiagnostico> diagnosticos = servicioClinica.buscarDiagnosticosPorPaciente(pacienteId);
             diagnosticosObservable.addAll(diagnosticos);
         }
+    }
+
+    /**
+     * Ajusta las tablas cuando cambia el tamaño de la ventana para garantizar 
+     * que sean responsivas.
+     */
+    private void ajustarTablasResponsivas() {
+        // Aplicar el policy de redimensionamiento a todas las tablas
+        tablaPacientes.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tablaPropietarios.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tablaDiagnosticos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        
+        // Forzar actualización de las tablas
+        tablaPacientes.refresh();
+        tablaPropietarios.refresh();
+        tablaDiagnosticos.refresh();
     }
 } 
