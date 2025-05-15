@@ -2,6 +2,27 @@ package com.example.pruebamongodbcss;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Random;
+import java.util.Arrays;
+import java.util.List;
+
+// Eliminar las importaciones antiguas del calendario
+// import com.example.pruebamongodbcss.calendar.CalendarEvent;
+// import com.example.pruebamongodbcss.calendar.CalendarEventManager;
+// import com.example.pruebamongodbcss.calendar.JFXCalendar;
+
+// Nuevas importaciones para CalendarFX
+import com.calendarfx.model.Calendar;
+import com.calendarfx.model.Calendar.Style;
+import com.calendarfx.model.CalendarSource;
+import com.calendarfx.model.Entry;
+import com.calendarfx.view.CalendarView;
+import com.calendarfx.view.DayView;
+import com.calendarfx.view.MonthView;
+import com.calendarfx.view.WeekView;
 
 import com.example.pruebamongodbcss.theme.ThemeManager;
 import com.jfoenix.controls.JFXButton;
@@ -11,8 +32,10 @@ import javafx.animation.Interpolator;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.ScrollEvent;
@@ -23,6 +46,13 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
+import javafx.stage.Stage;
+import javafx.scene.Scene;
+import javafx.geometry.Insets;
+import javafx.application.Platform;
+
+import com.example.pruebamongodbcss.calendar.CalendarFXComponent;
+import com.example.pruebamongodbcss.calendar.CalendarPreview;
 
 /**
  * Controller for the home-view.fxml which displays the modern energy-themed home page
@@ -66,6 +96,10 @@ public class HomeViewController implements Initializable {
     private double lastScrollY = 0;
     private static final double SCROLL_THRESHOLD = 30.0;
     
+    // Componentes del calendario
+    private CalendarFXComponent calendarComponent;
+    private CalendarPreview calendarPreview;
+    
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Register the scene with the ThemeManager when it's available
@@ -85,6 +119,132 @@ public class HomeViewController implements Initializable {
         
         // Configure initial page state
         configurePageTransitions();
+        
+        // Inicializar la vista previa del calendario en la página 1
+        initializeCalendarPreview();
+        
+        // Inicializar el calendario completo en la página 2
+        initializeCalendar();
+    }
+    
+    /**
+     * Initialize the calendar component and add it to page2
+     */
+    private void initializeCalendar() {
+        try {
+            // Crear nuestro componente de calendario personalizado basado en CalendarFX
+            calendarComponent = new CalendarFXComponent();
+            
+            // Replace content in page2 with the calendar
+            if (page2 != null) {
+                // Find a suitable container in page2 to place the calendar
+                Node container = page2.lookup(".calendar-container");
+                if (container != null && container instanceof BorderPane) {
+                    BorderPane calendarContainer = (BorderPane) container;
+                    calendarContainer.setCenter(calendarComponent);
+                } else {
+                    // If no specific container is found, just add it to page2
+                    page2.getChildren().clear();
+                    page2.getChildren().add(calendarComponent);
+                    VBox.setVgrow(calendarComponent, javafx.scene.layout.Priority.ALWAYS);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Create sample calendar entries (appointments)
+     */
+    private void createSampleEntries(Calendar citasNormales, Calendar citasUrgentes, 
+                                  Calendar citasCompletadas, Calendar citasCanceladas) {
+        // Crear eventos para el mes actual
+        LocalDate today = LocalDate.now();
+        Random random = new Random();
+        
+        // Listas de títulos y ubicaciones de ejemplo
+        List<String> eventTitles = Arrays.asList(
+            "Consulta veterinaria", 
+            "Vacunación canina", 
+            "Control de salud",
+            "Revisión felina", 
+            "Cirugía menor", 
+            "Desparasitación",
+            "Análisis de sangre", 
+            "Consulta de seguimiento", 
+            "Limpieza dental",
+            "Tratamiento de heridas"
+        );
+        
+        List<String> eventLocations = Arrays.asList(
+            "Sala de consulta 1", 
+            "Sala de consulta 2", 
+            "Sala de tratamientos",
+            "Quirófano", 
+            "Laboratorio", 
+            "Área de rehabilitación"
+        );
+        
+        // Crear citas normales
+        for (int i = 0; i < 10; i++) {
+            Entry<String> entry = new Entry<>();
+            entry.setTitle(eventTitles.get(random.nextInt(eventTitles.size())));
+            entry.setLocation(eventLocations.get(random.nextInt(eventLocations.size())));
+            
+            LocalDate date = today.plusDays(random.nextInt(14)); // Próximos 14 días
+            LocalTime startTime = LocalTime.of(9 + random.nextInt(8), 15 * random.nextInt(4));
+            LocalTime endTime = startTime.plusMinutes(30 + random.nextInt(4) * 15);
+            
+            entry.setInterval(date, startTime, date, endTime);
+            
+            citasNormales.addEntry(entry);
+        }
+        
+        // Crear citas urgentes
+        for (int i = 0; i < 3; i++) {
+            Entry<String> entry = new Entry<>();
+            entry.setTitle("URGENTE: " + eventTitles.get(random.nextInt(eventTitles.size())));
+            entry.setLocation(eventLocations.get(random.nextInt(eventLocations.size())));
+            
+            LocalDate date = today.plusDays(random.nextInt(7)); // Próximos 7 días
+            LocalTime startTime = LocalTime.of(9 + random.nextInt(8), 15 * random.nextInt(4));
+            LocalTime endTime = startTime.plusMinutes(30 + random.nextInt(4) * 15);
+            
+            entry.setInterval(date, startTime, date, endTime);
+            
+            citasUrgentes.addEntry(entry);
+        }
+        
+        // Crear citas completadas
+        for (int i = 0; i < 5; i++) {
+            Entry<String> entry = new Entry<>();
+            entry.setTitle(eventTitles.get(random.nextInt(eventTitles.size())) + " (Completada)");
+            entry.setLocation(eventLocations.get(random.nextInt(eventLocations.size())));
+            
+            LocalDate date = today.minusDays(random.nextInt(7)); // Últimos 7 días
+            LocalTime startTime = LocalTime.of(9 + random.nextInt(8), 15 * random.nextInt(4));
+            LocalTime endTime = startTime.plusMinutes(30 + random.nextInt(4) * 15);
+            
+            entry.setInterval(date, startTime, date, endTime);
+            
+            citasCompletadas.addEntry(entry);
+        }
+        
+        // Crear citas canceladas
+        for (int i = 0; i < 2; i++) {
+            Entry<String> entry = new Entry<>();
+            entry.setTitle(eventTitles.get(random.nextInt(eventTitles.size())) + " (Cancelada)");
+            entry.setLocation(eventLocations.get(random.nextInt(eventLocations.size())));
+            
+            LocalDate date = today.plusDays(random.nextInt(10) - 5); // Entre -5 y +5 días
+            LocalTime startTime = LocalTime.of(9 + random.nextInt(8), 15 * random.nextInt(4));
+            LocalTime endTime = startTime.plusMinutes(30 + random.nextInt(4) * 15);
+            
+            entry.setInterval(date, startTime, date, endTime);
+            
+            citasCanceladas.addEntry(entry);
+        }
     }
     
     /**
@@ -143,13 +303,22 @@ public class HomeViewController implements Initializable {
      * Apply styles based on current theme
      */
     private void applyStyles() {
-        // Add custom stylesheet for home view
+        // Add custom stylesheets for home view
         String homeStylesheet = getClass().getResource("/com/example/pruebamongodbcss/theme/home-styles.css").toExternalForm();
+        String calendarStylesheet = getClass().getResource("/com/example/pruebamongodbcss/theme/calendar-styles.css").toExternalForm();
+        String jfxCalendarStylesheet = getClass().getResource("/com/example/pruebamongodbcss/theme/jfx-calendar-styles.css").toExternalForm();
         
-        // Apply stylesheet if not already present
-        if (homeContainer.getScene() != null && 
-            !homeContainer.getScene().getStylesheets().contains(homeStylesheet)) {
-            homeContainer.getScene().getStylesheets().add(homeStylesheet);
+        // Apply stylesheets if not already present
+        if (homeContainer.getScene() != null) {
+            if (!homeContainer.getScene().getStylesheets().contains(homeStylesheet)) {
+                homeContainer.getScene().getStylesheets().add(homeStylesheet);
+            }
+            if (!homeContainer.getScene().getStylesheets().contains(calendarStylesheet)) {
+                homeContainer.getScene().getStylesheets().add(calendarStylesheet);
+            }
+            if (!homeContainer.getScene().getStylesheets().contains(jfxCalendarStylesheet)) {
+                homeContainer.getScene().getStylesheets().add(jfxCalendarStylesheet);
+            }
         }
     }
     
@@ -385,9 +554,127 @@ public class HomeViewController implements Initializable {
                 System.out.println("Pricing clicked");
                 // Add functionality as needed
                 break;
+            case "DEMO CALENDAR":
+                // Mostrar la demostración del calendario en una nueva ventana
+                showCalendarDemo();
+                break;
             default:
                 System.out.println("Button clicked: " + button.getText());
                 break;
+        }
+    }
+    
+    /**
+     * Mostrar la demostración del calendario en una ventana nueva
+     */
+    private void showCalendarDemo() {
+        try {
+            // Crear un nuevo stage para la demostración del calendario
+            Stage demoStage = new Stage();
+            
+            // Crear nuestro componente de calendario personalizado
+            CalendarFXComponent calendarDemo = new CalendarFXComponent();
+            
+            // Crear el diseño raíz
+            BorderPane root = new BorderPane();
+            root.setCenter(calendarDemo);
+            
+            // Crear la escena
+            Scene scene = new Scene(root, 1200, 800);
+            
+            // Configurar el stage
+            demoStage.setTitle("Demostración Completa del Calendario");
+            demoStage.setScene(scene);
+            demoStage.show();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Añadir entradas de muestra para la demo
+     */
+    private void addSampleEntries(Calendar family, Calendar work, Calendar holiday) {
+        // Entry for family calendar
+        Entry<String> familyBirthday = new Entry<>("Cumpleaños de mamá");
+        familyBirthday.setLocation("Casa");
+        LocalDate birthdayDate = LocalDate.now().plusDays(2);
+        familyBirthday.setInterval(birthdayDate, LocalTime.of(12, 0), birthdayDate, LocalTime.of(14, 0));
+        family.addEntry(familyBirthday);
+        
+        Entry<String> familyDinner = new Entry<>("Cena familiar");
+        familyDinner.setLocation("Restaurante El Rincón");
+        LocalDate dinnerDate = LocalDate.now().plusDays(7);
+        familyDinner.setInterval(dinnerDate, LocalTime.of(20, 0), dinnerDate, LocalTime.of(22, 30));
+        family.addEntry(familyDinner);
+        
+        // Entry for work calendar
+        Entry<String> workMeeting = new Entry<>("Reunión de equipo");
+        workMeeting.setLocation("Sala de conferencias");
+        LocalDate meetingDate = LocalDate.now().plusDays(1);
+        workMeeting.setInterval(meetingDate, LocalTime.of(10, 0), meetingDate, LocalTime.of(11, 0));
+        work.addEntry(workMeeting);
+        
+        Entry<String> presentation = new Entry<>("Presentación de proyecto");
+        presentation.setLocation("Auditorio");
+        LocalDate presDate = LocalDate.now().plusDays(5);
+        presentation.setInterval(presDate, LocalTime.of(14, 0), presDate, LocalTime.of(15, 30));
+        work.addEntry(presentation);
+        
+        // Entry for holiday calendar
+        Entry<String> holiday1 = new Entry<>("Vacaciones de verano");
+        LocalDate holidayStart = LocalDate.now().plusDays(30);
+        LocalDate holidayEnd = holidayStart.plusDays(14);
+        holiday1.setInterval(holidayStart, holidayEnd);
+        holiday.addEntry(holiday1);
+    }
+    
+    /**
+     * Inicializar la vista previa del calendario en la página 1
+     */
+    private void initializeCalendarPreview() {
+        try {
+            // Crear el componente de vista previa
+            calendarPreview = new CalendarPreview();
+            
+            // Añadir a la página 1
+            if (page1 != null) {
+                // Buscar el contenedor del calendario en la página 1
+                BorderPane calendarContainer = null;
+                
+                // Buscar en el GridPane
+                if (page1Grid != null) {
+                    for (Node node : page1Grid.getChildren()) {
+                        if (node instanceof BorderPane && 
+                            node.getStyleClass().contains("card-main")) {
+                            calendarContainer = (BorderPane) node;
+                            break;
+                        }
+                    }
+                }
+                
+                // Si encontramos el contenedor, añadir el calendario
+                if (calendarContainer != null) {
+                    // Buscar el contenedor específico dentro del BorderPane
+                    Node innerContainer = null;
+                    for (Node node : calendarContainer.getChildren()) {
+                        if (node.getId() != null && node.getId().equals("calendarContainer")) {
+                            innerContainer = node;
+                            break;
+                        }
+                    }
+                    
+                    if (innerContainer instanceof BorderPane) {
+                        ((BorderPane) innerContainer).setCenter(calendarPreview);
+                    } else {
+                        // Si no encuentra el contenedor específico, usar el centro del BorderPane principal
+                        calendarContainer.setCenter(calendarPreview);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 } 

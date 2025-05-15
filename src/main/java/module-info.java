@@ -16,6 +16,9 @@ module com.example.pruebamongodbcss {
     requires java.sql;
     requires org.apache.pdfbox;
     
+    // CalendarFX requirements
+    requires com.calendarfx.view;
+    
     // Configuración básica del módulo principal
     exports com.example.pruebamongodbcss;
     opens com.example.pruebamongodbcss to javafx.fxml;
@@ -33,6 +36,7 @@ module com.example.pruebamongodbcss {
     exports com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico;
     exports com.example.pruebamongodbcss.theme;
     exports com.example.pruebamongodbcss.Modulos.Clinica.Citas;
+    exports com.example.pruebamongodbcss.calendar;
     
     // Apertura de submódulos para FXML
     opens com.example.pruebamongodbcss.Modulos.AppChat to javafx.fxml;
@@ -46,7 +50,8 @@ module com.example.pruebamongodbcss {
     opens com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico to javafx.fxml;
     opens com.example.pruebamongodbcss.theme to javafx.fxml;
     opens com.example.pruebamongodbcss.Modulos.Clinica.Citas to javafx.fxml;
-
+    opens com.example.pruebamongodbcss.calendar to javafx.fxml, javafx.graphics;
+    
     // IMPORTANTE: Cada vez que crees un nuevo paquete dentro de Modulos,
     // necesitarás añadir dos líneas como estas:
     // exports com.example.pruebamongodbcss.Modulos.TuNuevoPaquete;

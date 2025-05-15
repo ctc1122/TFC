@@ -132,6 +132,13 @@
         <version>2.0.30</version>
     </dependency>
     
+    <!-- Dependencia correcta para CalendarFX -->
+    <dependency>
+        <groupId>com.calendarfx</groupId>
+        <artifactId>view</artifactId>
+        <version>11.12.7</version>
+    </dependency>
+    
   </dependencies>
 
   <build>
