@@ -65,6 +65,7 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.scene.input.KeyCode;
 import javafx.scene.control.ListView;
+import javafx.scene.text.TextAlignment;
 
 /**
  * Controlador principal para la gestión clínica veterinaria.
@@ -245,6 +246,43 @@ public class ClinicaController implements Initializable {
     
     // ********** CONFIGURACIÓN DE TABLAS **********
     
+    /**
+     * Configura una columna con cabecera que permite múltiples líneas de texto
+     * @param columna La columna a configurar
+     * @param titulo El título que se mostrará en la cabecera
+     * @param porcentajeAncho Porcentaje del ancho de la tabla que ocupará
+     * @param tabla La tabla a la que pertenece la columna
+     */
+    private <T> void configurarColumnaCabecera(TableColumn<T, ?> columna, String titulo, double porcentajeAncho, TableView<T> tabla) {
+        // Configurar ancho mínimo y máximo
+        columna.setMinWidth(80);
+        columna.setMaxWidth(5000);
+        
+        // Configurar ancho proporcional
+        columna.prefWidthProperty().bind(
+                tabla.widthProperty().multiply(porcentajeAncho));
+        
+        // Limpiar el texto original para evitar duplicados
+        columna.setText("");
+        
+        // Crear un label que permita múltiples líneas
+        Label labelCabecera = new Label(titulo);
+        labelCabecera.setWrapText(true); // Permitir ajuste de texto
+        labelCabecera.setAlignment(Pos.CENTER);
+        labelCabecera.setTextAlignment(TextAlignment.CENTER);
+        labelCabecera.setMaxWidth(Double.MAX_VALUE);
+        
+        // Establecer el gráfico de la cabecera
+        columna.setGraphic(labelCabecera);
+    }
+    
+    /**
+     * Versión simplificada que utiliza la tabla de pacientes por defecto
+     */
+    private void configurarColumnaCabecera(TableColumn<ModeloPaciente, ?> columna, String titulo, double porcentajeAncho) {
+        configurarColumnaCabecera(columna, titulo, porcentajeAncho, tablaPacientes);
+    }
+    
     private void configurarTablaPacientes() {
         // Configurar la tabla para ser editable
         tablaPacientes.setEditable(true);
@@ -253,41 +291,14 @@ public class ClinicaController implements Initializable {
         tablaPacientes.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         
         // Configurar propiedades de columnas para que sean responsive
-        // Definir porcentajes de ancho para las columnas
-        colNombrePaciente.setMinWidth(100);
-        colNombrePaciente.setMaxWidth(5000);
-        colNombrePaciente.prefWidthProperty().bind(
-                tablaPacientes.widthProperty().multiply(0.15)); // 15%
-        
-        colEspecie.setMinWidth(80);
-        colEspecie.setMaxWidth(5000);
-        colEspecie.prefWidthProperty().bind(
-                tablaPacientes.widthProperty().multiply(0.12)); // 12%
-        
-        colRaza.setMinWidth(80);
-        colRaza.setMaxWidth(5000);
-        colRaza.prefWidthProperty().bind(
-                tablaPacientes.widthProperty().multiply(0.12)); // 12%
-        
-        colPropietario.setMinWidth(120);
-        colPropietario.setMaxWidth(5000);
-        colPropietario.prefWidthProperty().bind(
-                tablaPacientes.widthProperty().multiply(0.15)); // 15%
-        
-        colSexoPaciente.setMinWidth(60);
-        colSexoPaciente.setMaxWidth(5000);
-        colSexoPaciente.prefWidthProperty().bind(
-                tablaPacientes.widthProperty().multiply(0.1)); // 10%
-        
-        colPesoPaciente.setMinWidth(60);
-        colPesoPaciente.setMaxWidth(5000);
-        colPesoPaciente.prefWidthProperty().bind(
-                tablaPacientes.widthProperty().multiply(0.1)); // 10%
-        
-        colFechaNacPaciente.setMinWidth(100);
-        colFechaNacPaciente.setMaxWidth(5000);
-        colFechaNacPaciente.prefWidthProperty().bind(
-                tablaPacientes.widthProperty().multiply(0.12)); // 12%
+        // Definir porcentajes de ancho para las columnas y ajustar cabeceras para múltiples líneas
+        configurarColumnaCabecera(colNombrePaciente, "Nombre", 0.15);
+        configurarColumnaCabecera(colEspecie, "Especie", 0.12);
+        configurarColumnaCabecera(colRaza, "Raza", 0.12);
+        configurarColumnaCabecera(colPropietario, "Propietario", 0.15);
+        configurarColumnaCabecera(colSexoPaciente, "Sexo", 0.1);
+        configurarColumnaCabecera(colPesoPaciente, "Peso (kg)", 0.1);
+        configurarColumnaCabecera(colFechaNacPaciente, "Fecha de\nNacimiento", 0.12);
         
         // Columna Nombre (editable con TextField)
         colNombrePaciente.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getNombre()));
@@ -991,7 +1002,16 @@ public class ClinicaController implements Initializable {
         tablaPacientes.setItems(pacientesObservable);
         
         // Añadir columna para botones de acciones
-        TableColumn<ModeloPaciente, Void> colAcciones = new TableColumn<>("Acciones");
+        TableColumn<ModeloPaciente, Void> colAcciones = new TableColumn<>();
+        
+        // Configurar la cabecera para permitir ajuste de texto
+        Label labelAcciones = new Label("Acciones\nDisponibles");
+        labelAcciones.setWrapText(true);
+        labelAcciones.setAlignment(Pos.CENTER);
+        labelAcciones.setTextAlignment(TextAlignment.CENTER);
+        labelAcciones.setMaxWidth(Double.MAX_VALUE);
+        colAcciones.setGraphic(labelAcciones);
+        
         colAcciones.setMinWidth(150);
         colAcciones.setMaxWidth(5000);
         colAcciones.prefWidthProperty().bind(
@@ -1267,25 +1287,10 @@ public class ClinicaController implements Initializable {
         tablaPropietarios.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         
         // Configurar propiedades de columnas para que sean responsive
-        colNombrePropietario.setMinWidth(150);
-        colNombrePropietario.setMaxWidth(5000);
-        colNombrePropietario.prefWidthProperty().bind(
-                tablaPropietarios.widthProperty().multiply(0.3)); // 30%
-        
-        colDNI.setMinWidth(100);
-        colDNI.setMaxWidth(5000);
-        colDNI.prefWidthProperty().bind(
-                tablaPropietarios.widthProperty().multiply(0.2)); // 20%
-        
-        colTelefono.setMinWidth(100);
-        colTelefono.setMaxWidth(5000);
-        colTelefono.prefWidthProperty().bind(
-                tablaPropietarios.widthProperty().multiply(0.2)); // 20%
-        
-        colEmail.setMinWidth(150);
-        colEmail.setMaxWidth(5000);
-        colEmail.prefWidthProperty().bind(
-                tablaPropietarios.widthProperty().multiply(0.3)); // 30%
+        configurarColumnaCabecera(colNombrePropietario, "Nombre\nCompleto", 0.3, tablaPropietarios);
+        configurarColumnaCabecera(colDNI, "DNI/NIF", 0.2, tablaPropietarios);
+        configurarColumnaCabecera(colTelefono, "Teléfono", 0.2, tablaPropietarios);
+        configurarColumnaCabecera(colEmail, "Correo\nElectrónico", 0.3, tablaPropietarios);
         
         // Añadir celdas editables para cada columna
         colNombrePropietario.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getNombreCompleto()));
@@ -1668,7 +1673,16 @@ public class ClinicaController implements Initializable {
         tablaPropietarios.setItems(propietariosObservable);
         
         // Añadir columna para botones de acciones
-        TableColumn<ModeloPropietario, Void> colAcciones = new TableColumn<>("Acciones");
+        TableColumn<ModeloPropietario, Void> colAcciones = new TableColumn<>();
+        
+        // Configurar la cabecera para permitir ajuste de texto
+        Label labelAcciones = new Label("Acciones\nDisponibles");
+        labelAcciones.setWrapText(true);
+        labelAcciones.setAlignment(Pos.CENTER);
+        labelAcciones.setTextAlignment(TextAlignment.CENTER);
+        labelAcciones.setMaxWidth(Double.MAX_VALUE);
+        colAcciones.setGraphic(labelAcciones);
+        
         colAcciones.setMinWidth(120);
         colAcciones.setMaxWidth(5000);
         colAcciones.prefWidthProperty().bind(
@@ -2652,30 +2666,11 @@ public class ClinicaController implements Initializable {
         tablaDiagnosticos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         
         // Configurar propiedades de columnas para que sean responsive
-        colFechaDiagnostico.setMinWidth(100);
-        colFechaDiagnostico.setMaxWidth(5000);
-        colFechaDiagnostico.prefWidthProperty().bind(
-                tablaDiagnosticos.widthProperty().multiply(0.15)); // 15%
-        
-        colPacienteDiagnostico.setMinWidth(120);
-        colPacienteDiagnostico.setMaxWidth(5000);
-        colPacienteDiagnostico.prefWidthProperty().bind(
-                tablaDiagnosticos.widthProperty().multiply(0.2)); // 20%
-        
-        colMotivo.setMinWidth(150);
-        colMotivo.setMaxWidth(5000);
-        colMotivo.prefWidthProperty().bind(
-                tablaDiagnosticos.widthProperty().multiply(0.2)); // 20%
-        
-        colDiagnostico.setMinWidth(150);
-        colDiagnostico.setMaxWidth(5000);
-        colDiagnostico.prefWidthProperty().bind(
-                tablaDiagnosticos.widthProperty().multiply(0.3)); // 30%
-        
-        colVeterinario.setMinWidth(120);
-        colVeterinario.setMaxWidth(5000);
-        colVeterinario.prefWidthProperty().bind(
-                tablaDiagnosticos.widthProperty().multiply(0.15)); // 15%
+        configurarColumnaCabecera(colFechaDiagnostico, "Fecha", 0.15, tablaDiagnosticos);
+        configurarColumnaCabecera(colPacienteDiagnostico, "Paciente", 0.2, tablaDiagnosticos);
+        configurarColumnaCabecera(colMotivo, "Motivo\nConsulta", 0.2, tablaDiagnosticos);
+        configurarColumnaCabecera(colDiagnostico, "Diagnóstico", 0.3, tablaDiagnosticos);
+        configurarColumnaCabecera(colVeterinario, "Veterinario", 0.15, tablaDiagnosticos);
         
         colFechaDiagnostico.setCellValueFactory(data -> {
             Date fecha = data.getValue().getFecha();
