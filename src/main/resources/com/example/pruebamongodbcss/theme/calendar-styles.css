@@ -1,562 +1,308 @@
-/* Calendar Component Styles - Modern Minimalist Theme */
+/* Calendar Component Styles - Professional Accessibility Theme */
 
-/* ================= COLOR VARIABLES ================= */
+/* ================= GLOBAL STYLES ================= */
 .root {
-    /* Primary palette */
-    -app-primary: #3d5af1;
-    -app-primary-hover: #4e6af2;
-    -app-primary-light: #e8ecfd;
-    -app-primary-subtle: #f4f6ff;
-    
-    /* Secondary palette */
-    -app-secondary: #8c9eff;
-    -app-secondary-hover: #9dabff;
-    
-    /* Neutral palette */
-    -app-bg-color: #ffffff;
-    -app-text-color: #1a1a2b;
-    -app-text-light: #787891;
-    -app-border-color: #eaecf0;
-    -app-hover-bg: #f8f9fa;
-    
-    /* Appointment colors */
-    -appointment-pending: #f8e9dc;     /* Light orange */
-    -appointment-in-progress: #dcf8e9;  /* Light green */
-    -appointment-completed: #dce9f8;    /* Light blue */
-    -appointment-cancelled: #f8dce2;    /* Light red */
-    -appointment-rescheduled: #f8f6dc;  /* Light yellow */
-    -appointment-default: #f1f3f9;      /* Light gray */
-    
-    /* Secondary appointment colors */
-    -appointment-pending-border: #e8ac68;
-    -appointment-in-progress-border: #6fe8ac;
-    -appointment-completed-border: #68ace8;
-    -appointment-cancelled-border: #e86880;
-    -appointment-rescheduled-border: #e8d668;
-    
-    /* Grid colors - Updated for softer lines */
-    -grid-line-color: rgba(230, 232, 237, 0.7);
-    -grid-background: -app-bg-color;
-    -grid-header-bg: -app-bg-color;
-    -current-day-color: #3d5af1;
-    -current-time-color: #ee7070;
+    -fx-font-family: "Segoe UI", "Segoe UI Emoji", "Arial";
+    -fx-font-smoothing-type: gray;
 }
 
+/* ================= LIGHT THEME ================= */
+.root:not(.dark-theme) {
+    /* Primary Colors */
+    -app-primary: #4A6B2E;  /* Verde bosque accesible */
+    -app-primary-hover: #3A5824;
+    -app-primary-light: #E9F5DB;
+    
+    /* Secondary Colors */
+    -app-secondary: #B68D40;  /* Oro terroso */
+    -app-secondary-hover: #9B7636;
+    
+    /* Neutrals */
+    -app-bg-color: #FFFFFF;
+    -app-surface-color: #F8F9FA;
+    -app-text-primary: #2D3748;  /* Gris oscuro WCAG AAA */
+    -app-text-secondary: #4A5568;
+    -app-border-color: #E2E8F0;
+    -app-hover-bg: rgba(74, 107, 46, 0.08);
+    
+    /* Status Colors */
+    -app-success: #38A169;
+    -app-warning: #DD6B20;
+    -app-error: #C53030;
+    -app-info: #3182CE;
+    
+    /* Appointments */
+    -appointment-confirmed: #E9F5DB;
+    -appointment-confirmed-border: #4A6B2E;
+    -appointment-pending: #FEFCBF;
+    -appointment-pending-border: #B68D40;
+    -appointment-cancelled: #FED7D7;
+    -appointment-cancelled-border: #C53030;
+    -appointment-urgent: #FEB2B2;
+    -appointment-urgent-border: #C53030;
+    
+    /* Grid & Time */
+    -grid-line-color: #E2E8F0;
+    -current-time-color: #C53030;
+
+
+        /* Botones de vista (Día/Semana/Mes/Año) */
+        .toggle-button {
+            -fx-background-color: #E9F5DB;  /* Verde claro suave */
+            -fx-text-fill: #3A5824;         /* Verde oscuro contrastado */
+            -fx-border-color: #B68D40;      /* Borde dorado */
+            -fx-border-width: 1px;
+        }
+        
+        .toggle-button:selected {
+            -fx-background-color: #4A6B2E;  /* Verde principal */
+            -fx-text-fill: white;
+            -fx-border-width: 0;
+        }
+}
+
+/* ================= DARK THEME ================= */
 .dark-theme {
-    -app-primary: #4d6af1;
-    -app-primary-hover: #5d7af2;
-    -app-primary-light: #2c3858;
-    -app-primary-subtle: #212433;
+    /* Primary Colors */
+    -app-primary: #9BCB7D;  /* Verde claro legible */
+    -app-primary-hover: #B2D89E;
+    -app-primary-light: #2D3748;
     
-    -app-secondary: #7c8eff;
-    -app-secondary-hover: #8c9eff;
+    /* Secondary Colors */
+    -app-secondary: #D4B16A;  /* Oro suave */
+    -app-secondary-hover: #E5C786;
     
-    -app-bg-color: #1a1c25;
-    -app-text-color: #e8ecfd;
-    -app-text-light: #a0a5b9;
-    -app-border-color: #30334d;
-    -app-hover-bg: #272a3a;
+    /* Neutrals */
+    -app-bg-color: #1A202C;
+    -app-surface-color: #2D3748;
+    -app-text-primary: #FFFFFF;
+    -app-text-secondary: #CBD5E0;
+    -app-border-color: #4A5568;
+    -app-hover-bg: rgba(155, 203, 125, 0.15);
     
-    -grid-line-color: rgba(48, 51, 77, 0.6);
-    -grid-background: -app-bg-color;
-    -grid-header-bg: -app-bg-color;
-    -current-day-color: #4d6af1;
-    -current-time-color: #d45f5f;
+    /* Status Colors */
+    -app-success: #68D391;
+    -app-warning: #F6AD55;
+    -app-error: #FC8181;
+    -app-info: #63B3ED;
+    
+    /* Appointments */
+    -appointment-confirmed: #2D4A2E;
+    -appointment-confirmed-border: #9BCB7D;
+    -appointment-pending: #4A453D;
+    -appointment-pending-border: #D4B16A;
+    -appointment-cancelled: #4A2D2D;
+    -appointment-cancelled-border: #FC8181;
+    -appointment-urgent: #4A2D2D;
+    -appointment-urgent-border: #FC8181;
+    
+    /* Grid & Time */
+    -grid-line-color: #4A5568;
+    -current-time-color: #FC8181;
+
+
+    /* Header superior */
+    .calendar-header {
+        -fx-background-color: #2D4A2E;  /* Verde oscuro profundo */
+        -fx-border-color: #9BCB7D;      /* Borde verde claro */
+    }
+    
+    /* Botones de vista */
+    .toggle-button {
+        -fx-background-color: #4A5568;  /* Gris azulado */
+        -fx-text-fill: #CBD5E0;         /* Gris claro */
+        -fx-border-color: #9BCB7D;      /* Borde verde claro */
+    }
+    
+    .toggle-button:selected {
+        -fx-background-color: #9BCB7D;  /* Verde claro vibrante */
+        -fx-text-fill: #1A202C;         /* Texto oscuro */
+    }
+
+
 }
 
-/* ================= CALENDAR CONTAINER ================= */
+/* ================= COMPONENT STYLES ================= */
 .calendar-container {
     -fx-background-color: -app-bg-color;
-    -fx-background-radius: 14px;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 10, 0, 0, 2);
-    -fx-border-radius: 14px;
+    -fx-padding: 20px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0.12, 0, 4);
+    -fx-background-radius: 8px;
+}
+
+/* Header */
+.calendar-header {
+    -fx-background-color: -app-surface-color;
+    -fx-padding: 16px 24px;
+    -fx-border-color: -app-border-color;
+    -fx-border-width: 0 0 1px 0;
+    -fx-background-radius: 8px 8px 0 0;
+}
+
+.date-label {
+    -fx-text-fill: -app-text-primary;
+    -fx-font-size: 20px;
+    -fx-font-weight: 600;
+}
+
+/* Navigation Controls */
+.calendar-nav-button {
+    -fx-background-color: -app-primary;
+    -fx-text-fill: white;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 16px;
+    -fx-font-weight: 600;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 0, 4, 0, 1);
+}
+
+.calendar-nav-button:hover {
+    -fx-background-color: -app-primary-hover;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.16), 0, 6, 0, 2);
+}
+
+.today-button {
+    -fx-background-color: -app-surface-color;
+    -fx-text-fill: -app-text-primary;
     -fx-border-color: -app-border-color;
     -fx-border-width: 1px;
 }
 
-/* ================= CALENDAR SCROLLPANE ================= */
-.calendar-scrollpane {
-    -fx-background: transparent;
-    -fx-background-color: transparent;
-    -fx-padding: 0;
-    -fx-border-width: 0;
-}
-
-.calendar-scrollpane > .viewport {
-    -fx-background-color: transparent;
-}
-
-.calendar-scrollpane > .scroll-bar:vertical {
-    -fx-background-color: transparent;
-    -fx-background-radius: 0;
-    -fx-padding: 0 0 0 0;
-}
-
-.calendar-scrollpane > .scroll-bar:vertical > .track {
-    -fx-background-color: transparent;
-    -fx-background-radius: 8px;
-}
-
-.calendar-scrollpane > .scroll-bar:vertical > .thumb {
-    -fx-background-color: #e0e4f1;
-    -fx-background-radius: 8px;
-}
-
-.calendar-scrollpane > .scroll-bar:vertical > .thumb:hover {
-    -fx-background-color: #c8cfdf;
-}
-
-.dark-theme .calendar-scrollpane > .scroll-bar:vertical > .track {
-    -fx-background-color: #2a2a3a;
-}
-
-.dark-theme .calendar-scrollpane > .scroll-bar:vertical > .thumb {
-    -fx-background-color: #464767;
-}
-
-.dark-theme .calendar-scrollpane > .scroll-bar:vertical > .thumb:hover {
-    -fx-background-color: #5b5d84;
-}
-
-/* ================= CALENDAR SCROLL WRAPPER ================= */
-.calendar-scroll-wrapper {
-    -fx-background: transparent;
-    -fx-background-color: transparent;
-    -fx-padding: 0;
-    -fx-border-width: 0;
-}
-
-.calendar-scroll-wrapper > .viewport {
-    -fx-background-color: transparent;
-}
-
-.calendar-scroll-wrapper > .scroll-bar:vertical {
-    -fx-background-color: transparent;
-    -fx-background-radius: 0;
-    -fx-padding: 0 0 0 0;
-}
-
-.calendar-scroll-wrapper > .scroll-bar:vertical > .track {
-    -fx-background-color: transparent;
-    -fx-background-radius: 8px;
-}
-
-.calendar-scroll-wrapper > .scroll-bar:vertical > .thumb {
-    -fx-background-color: #e0e4f1;
-    -fx-background-radius: 8px;
-}
-
-.calendar-scroll-wrapper > .scroll-bar:vertical > .thumb:hover {
-    -fx-background-color: #c8cfdf;
-}
-
-/* ================= CALENDAR HEADER ================= */
-.calendar-header {
-    -fx-background-color: transparent;
-    -fx-padding: 20px 24px 12px 24px;
-    -fx-border-color: transparent transparent -app-border-color transparent;
-    -fx-border-width: 0 0 1px 0;
-}
-
-.calendar-date-range {
-    -fx-text-fill: -app-text-color;
-    -fx-font-weight: bold;
-    -fx-font-size: 20px;
-    -fx-font-family: "Segoe UI Semibold", "Arial";
-}
-
-.calendar-nav-button {
-    -fx-background-color: -app-primary-subtle;
-    -fx-background-radius: 10px;
-    -fx-text-fill: -app-primary;
-    -fx-font-weight: bold;
-    -fx-min-width: 40px;
-    -fx-min-height: 40px;
-    -fx-max-width: 40px;
-    -fx-max-height: 40px;
-    -fx-padding: 0;
-    -fx-cursor: hand;
-    -fx-border-radius: 10px;
-    -fx-font-size: 16px;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 4, 0, 0, 1);
-}
-
-.calendar-nav-button:hover {
-    -fx-background-color: derive(-app-primary-subtle, -5%);
-    -fx-text-fill: -app-primary;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.12), 6, 0, 0, 2);
-}
-
-.dark-theme .calendar-nav-button {
-    -fx-background-color: #30334d;
-    -fx-text-fill: -app-primary;
-}
-
-.dark-theme .calendar-nav-button:hover {
-    -fx-background-color: #3b3e5c;
-    -fx-text-fill: -app-primary;
-}
-
-.calendar-today-button {
-    -fx-background-color: -app-primary;
-    -fx-text-fill: white;
-    -fx-font-size: 14px;
-    -fx-background-radius: 10px;
-    -fx-min-width: 90px;
-    -fx-min-height: 40px;
-    -fx-cursor: hand;
-    -fx-font-weight: bold;
-    -fx-font-family: "Segoe UI Semibold", "Arial";
-    -fx-effect: dropshadow(gaussian, rgba(61, 90, 241, 0.25), 4, 0, 0, 1);
-}
-
-.calendar-today-button:hover {
-    -fx-background-color: -app-primary-hover;
-    -fx-effect: dropshadow(gaussian, rgba(61, 90, 241, 0.3), 6, 0, 0, 2);
-}
-
-/* ================= VIEW TOGGLE BUTTONS ================= */
+/* View Toggle */
 .view-toggle-container {
-    -fx-background-color: #f5f7fa;
-    -fx-background-radius: 12px;
-    -fx-padding: 5px;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 2, 0, 0, 1);
-    -fx-border-radius: 12px;
-    -fx-border-color: #ebedf1;
+    -fx-background-insets: 0;
+    -fx-border-radius: 6px;
+    -fx-border-color: -app-border-color;
     -fx-border-width: 1px;
-    -fx-spacing: 2px;
+    -fx-padding: 2px;
 }
 
-.dark-theme .view-toggle-container {
-    -fx-background-color: #30334d;
-    -fx-border-color: #3e4166;
-}
-
-.calendar-toggle-button {
+.toggle-button {
     -fx-background-color: transparent;
-    -fx-text-fill: -app-text-light;
-    -fx-font-size: 14px;
-    -fx-min-width: 80px;
-    -fx-min-height: 34px;
-    -fx-background-radius: 10px;
-    -fx-cursor: hand;
-    -fx-padding: 0 12px;
-    -fx-font-family: "Segoe UI", "Arial";
+    -fx-text-fill: -app-text-secondary;
+    -fx-padding: 8px 20px;
+    -fx-font-weight: 600;
 }
 
-.calendar-toggle-button:selected {
-    -fx-background-color: white;
-    -fx-text-fill: -app-primary;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 4, 0, 0, 2);
-    -fx-font-family: "Segoe UI Semibold", "Arial";
-    -fx-font-weight: bold;
-}
-
-.dark-theme .calendar-toggle-button {
-    -fx-text-fill: #cccccc;
-}
-
-.dark-theme .calendar-toggle-button:selected {
-    -fx-background-color: #24263a;
-    -fx-text-fill: -app-secondary;
-}
-
-/* ================= DAYS HEADER ================= */
-.calendar-days-header {
-    -fx-background-color: -grid-header-bg;
-    -fx-padding: 15px 12px 5px 12px;
-    -fx-alignment: center;
-    -fx-spacing: 8px;
-    -fx-min-height: 100px;
-    -fx-pref-height: 100px;
-    -fx-border-color: transparent transparent -grid-line-color transparent;
-    -fx-border-width: 0 0 1px 0;
-}
-
-.calendar-day-column {
-    -fx-alignment: top-center;
-    -fx-spacing: 4px;
-    -fx-min-width: 80px;
-    -fx-pref-width: 100px;
-    -fx-padding: 5px 4px;
-    -fx-background-color: transparent;
-    -fx-background-radius: 6px;
-}
-
-.calendar-day-name {
-    -fx-text-fill: -app-text-light;
-    -fx-font-size: 13px;
-    -fx-font-weight: normal;
-    -fx-font-family: "Segoe UI", "Arial";
-    -fx-padding: 0 0 2px 0;
-}
-
-.calendar-day-number-container {
-    -fx-alignment: center;
-    -fx-spacing: 3px;
-}
-
-.calendar-day-number {
-    -fx-text-fill: -app-text-color;
-    -fx-font-weight: bold;
-    -fx-font-size: 32px;
-    -fx-background-color: transparent;
-    -fx-background-radius: 50%;
-    -fx-padding: 8px 12px;
-    -fx-font-family: "Segoe UI Light", "Arial";
-}
-
-.calendar-current-day .calendar-day-number {
-    -fx-text-fill: -current-day-color;
-}
-
-.calendar-current-day-dot {
-    -fx-fill: -current-day-color;
-    -fx-stroke: transparent;
-    -fx-radius: 3px;
-}
-
-/* ================= CALENDAR GRID ================= */
-.calendar-grid {
-    -fx-background-color: -grid-background;
-    -fx-padding: 0;
-    -fx-vgap: 0;
-    -fx-hgap: 0;
-}
-
-.calendar-time-label {
-    -fx-text-fill: -app-text-light;
-    -fx-font-size: 13px;
-    -fx-padding: 8px 16px 8px 12px;
-    -fx-min-width: 65px;
-    -fx-pref-width: 65px;
-    -fx-font-family: "Segoe UI", "Arial";
-    -fx-background-color: -grid-background;
-}
-
-.calendar-time-marker {
-    -fx-stroke: -current-time-color;
-    -fx-stroke-width: 2px;
-}
-
-.calendar-time-slot {
-    -fx-background-color: -grid-background;
-    -fx-border-color: -grid-line-color;
-    -fx-border-width: 0 0 1px 1px;
-    -fx-min-height: 36px;
-    -fx-pref-height: 36px;
-}
-
-.calendar-time-slot-first-column {
-    -fx-border-width: 0 0 1px 0;
-}
-
-.calendar-time-slot-hour {
-    -fx-background-color: -grid-background;
-    -fx-opacity: 1.0;
-}
-
-.calendar-time-slot-half-hour {
-    -fx-background-color: derive(-grid-background, -0.5%);
-    -fx-border-width: 0 0 1px 1px;
-    -fx-border-color: derive(-grid-line-color, -2%);
-}
-
-.calendar-time-slot-first-column.calendar-time-slot-half-hour {
-    -fx-border-width: 0 0 1px 0;
-}
-
-.calendar-current-time-line {
-    -fx-stroke: -current-time-color;
-    -fx-stroke-width: 2;
-}
-
-.calendar-current-time-circle {
-    -fx-fill: -current-time-color;
-}
-
-/* ================= APPOINTMENT CARDS ================= */
-.calendar-appointment {
-    -fx-background-radius: 8px;
-    -fx-padding: 6px 10px;
-    -fx-spacing: 4px;
-    -fx-background-color: -appointment-default;
-    -fx-border-radius: 8px;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.04), 3, 0, 0, 1);
-    -fx-cursor: hand;
-    -fx-max-width: infinity;
-    -fx-border-width: 0 0 0 4px;
-    -fx-border-color: transparent;
-}
-
-.calendar-appointment:hover {
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 5, 0, 0, 2);
-}
-
-.calendar-appointment-title {
-    -fx-text-fill: -app-text-color;
-    -fx-font-size: 13px;
-    -fx-font-weight: bold;
-    -fx-wrap-text: true;
-    -fx-font-family: "Segoe UI Semibold", "Arial";
-}
-
-.calendar-appointment-time {
-    -fx-text-fill: -app-text-light;
-    -fx-font-size: 11px;
-    -fx-font-family: "Segoe UI", "Arial";
-    -fx-padding: 0 0 2px 0;
-}
-
-.calendar-appointment-subtitle {
-    -fx-text-fill: -app-text-light;
-    -fx-font-size: 12px;
-    -fx-wrap-text: true;
-    -fx-font-family: "Segoe UI", "Arial";
-}
-
-/* Placeholder for month view not implemented */
-.calendar-placeholder {
-    -fx-text-fill: -app-text-light;
-    -fx-font-size: 16px;
-    -fx-alignment: center;
-    -fx-padding: 50px;
-    -fx-font-family: "Segoe UI", "Arial";
-}
-
-/* Month View Grid */
-.calendar-month-grid {
-    -fx-vgap: 1;
-    -fx-hgap: 1;
-    -fx-background-color: -grid-background;
-    -fx-padding: 2;
-}
-
-.calendar-month-cell {
-    -fx-background-color: -app-bg-color;
-    -fx-border-color: -grid-line-color;
-    -fx-border-width: 0.5;
-    -fx-padding: 8;
-    -fx-min-height: 120;
-    -fx-pref-height: 120;
-}
-
-.calendar-month-cell-header {
-    -fx-padding: 2 0 10 0;
-    -fx-border-color: transparent transparent -grid-line-color transparent;
-    -fx-border-width: 0 0 1 0;
-    -fx-alignment: center;
-    -fx-min-height: 40px;
-    -fx-pref-height: 40px;
-}
-
-.calendar-month-day-number {
-    -fx-text-fill: -app-text-color;
-    -fx-font-size: 18px;
-    -fx-font-weight: bold;
-    -fx-padding: 6 8;
-    -fx-alignment: center;
-    -fx-font-family: "Segoe UI Semibold", "Arial";
-    -fx-text-alignment: center;
-    -fx-min-width: 32px;
-    -fx-min-height: 32px;
-}
-
-.calendar-month-other-month {
-    -fx-background-color: derive(-grid-background, -1%);
-}
-
-.calendar-month-other-month .calendar-month-day-number {
-    -fx-text-fill: -app-text-light;
-    -fx-opacity: 0.7;
-}
-
-.calendar-month-today {
-    -fx-background-color: derive(-app-primary-subtle, 2%);
-}
-
-.calendar-month-today .calendar-month-day-number {
+.toggle-button:selected {
     -fx-background-color: -app-primary;
     -fx-text-fill: white;
-    -fx-background-radius: 50%;
-    -fx-min-width: 32px;
-    -fx-min-height: 32px;
-    -fx-alignment: center;
-    -fx-padding: 6 8;
-}
-
-/* Appointment Status Colors */
-.appointment-pending {
-    -fx-background-color: -appointment-pending;
-    -fx-border-color: -appointment-pending-border transparent transparent transparent;
-    -fx-border-width: 0 0 0 4px;
-}
-
-.appointment-in-progress {
-    -fx-background-color: -appointment-in-progress;
-    -fx-border-color: -appointment-in-progress-border transparent transparent transparent;
-    -fx-border-width: 0 0 0 4px;
-}
-
-.appointment-completed {
-    -fx-background-color: -appointment-completed;
-    -fx-border-color: -appointment-completed-border transparent transparent transparent;
-    -fx-border-width: 0 0 0 4px;
-}
-
-.appointment-cancelled {
-    -fx-background-color: -appointment-cancelled;
-    -fx-border-color: -appointment-cancelled-border transparent transparent transparent;
-    -fx-border-width: 0 0 0 4px;
-}
-
-.appointment-rescheduled {
-    -fx-background-color: -appointment-rescheduled;
-    -fx-border-color: -appointment-rescheduled-border transparent transparent transparent;
-    -fx-border-width: 0 0 0 4px;
-}
-
-/* Micro indicator for appointment status at month view */
-.calendar-month-more-label {
-    -fx-text-fill: -app-text-light;
-    -fx-font-size: 11px;
-    -fx-font-style: italic;
-    -fx-padding: 2px 0;
-}
-
-.appointment-month-indicator {
     -fx-background-radius: 4px;
-    -fx-padding: 2px 6px;
-    -fx-font-size: 10px;
-    -fx-text-fill: -app-text-color;
-    -fx-background-color: -appointment-default;
-    -fx-border-width: 0 0 0 3px;
-    -fx-border-radius: 4px;
-    -fx-max-width: infinity;
-    -fx-font-family: "Segoe UI", "Arial";
 }
 
-.appointment-month-indicator.appointment-pending {
+/* Grid */
+.calendar-grid {
+    -fx-background-color: -app-bg-color;
+    -fx-border-color: -app-border-color;
+    -fx-border-width: 1px 0 0 0;
+}
+
+.day-of-week-label {
+    -fx-text-fill: -app-text-secondary;
+    -fx-font-weight: 600;
+    -fx-padding: 12px 0;
+    -fx-font-size: 14px;
+}
+
+.day-cell {
+    -fx-background-color: -app-bg-color;
+    -fx-border-color: -app-border-color;
+    -fx-border-width: 0 1px 1px 0;
+}
+
+.day-number {
+    -fx-text-fill: -app-text-primary;
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+}
+
+.current-day .day-number {
+    -fx-background-color: -app-primary;
+    -fx-text-fill: white;
+    -fx-background-radius: 12px;
+    -fx-padding: 4px 8px;
+}
+
+/* Appointments */
+.calendar-appointment {
+    -fx-background-color: -appointment-confirmed;
+    -fx-border-color: -appointment-confirmed-border;
+    -fx-border-width: 0 0 0 3px;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 4, 0.0, 0, 2);
+}
+
+.appointment-title {
+    -fx-text-fill: -app-text-primary;
+    -fx-font-weight: 600;
+    -fx-font-size: 13px;
+}
+
+.appointment-time {
+    -fx-text-fill: -app-text-secondary;
+    -fx-font-size: 12px;
+}
+
+/* Status Variations */
+.appointment-pending {
     -fx-background-color: -appointment-pending;
     -fx-border-color: -appointment-pending-border;
 }
 
-.appointment-month-indicator.appointment-in-progress {
-    -fx-background-color: -appointment-in-progress;
-    -fx-border-color: -appointment-in-progress-border;
-}
-
-.appointment-month-indicator.appointment-completed {
-    -fx-background-color: -appointment-completed;
-    -fx-border-color: -appointment-completed-border;
-}
-
-.appointment-month-indicator.appointment-cancelled {
+.appointment-cancelled {
     -fx-background-color: -appointment-cancelled;
     -fx-border-color: -appointment-cancelled-border;
 }
 
-.appointment-month-indicator.appointment-rescheduled {
-    -fx-background-color: -appointment-rescheduled;
-    -fx-border-color: -appointment-rescheduled-border;
-} 
+.appointment-urgent {
+    -fx-background-color: -appointment-urgent;
+    -fx-border-color: -appointment-urgent-border;
+    -fx-effect: dropshadow(three-pass-box, rgba(200,0,0,0.12), 6, 0.0, 0, 2);
+}
+
+/* Time Line */
+.current-time-line {
+    -fx-stroke: -current-time-color;
+    -fx-stroke-width: 2px;
+    -fx-stroke-dash-array: 4 4;
+}
+
+/* Scrollbar */
+.scroll-bar:vertical .thumb {
+    -fx-background-color: -app-border-color;
+    -fx-background-radius: 4px;
+}
+
+/* Dialogos */
+.dialog-pane {
+    -fx-background-color: -app-surface-color;
+    -fx-background-radius: 8px;
+}
+
+.dialog-pane .button {
+    -fx-background-radius: 6px;
+    -fx-font-weight: 600;
+    -fx-padding: 8px 16px;
+}
+
+/* Hover States */
+.calendar-appointment:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.16), 8, 0.0, 0, 3);
+    -fx-translate-y: -1px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .calendar-container {
+        -fx-padding: 12px;
+        -fx-background-radius: 0;
+    }
+    
+    .date-label {
+        -fx-font-size: 18px;
+    }
+    
+    .toggle-button {
+        -fx-padding: 6px 12px;
+    }
+}
