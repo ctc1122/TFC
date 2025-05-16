@@ -1,0 +1,98 @@
+/* Estilos para el menú contextual */
+.calendar-context-menu {
+    position: fixed;
+    z-index: 1100;
+    min-width: 180px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    padding: 8px 0;
+    font-family: 'Roboto', Arial, sans-serif;
+    font-size: 14px;
+    opacity: 1;
+    transform: scale(1);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.menu-header {
+    padding: 10px 16px;
+    font-weight: 500;
+    color: #5f6368;
+    border-bottom: 1px solid #f1f3f4;
+    margin-bottom: 8px;
+    font-size: 13px;
+    text-transform: capitalize;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 220px;
+}
+
+.menu-item {
+    padding: 9px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.1s ease;
+}
+
+.menu-item:hover {
+    background-color: #f1f3f4;
+}
+
+.menu-icon {
+    font-family: 'Material Icons';
+    font-size: 18px;
+    color: #5f6368;
+    margin-right: 12px;
+    width: 18px;
+    text-align: center;
+}
+
+.menu-text {
+    color: #3c4043;
+}
+
+.menu-separator {
+    height: 1px;
+    background-color: #f1f3f4;
+    margin: 8px 0;
+}
+
+/* Estilos para pantallas táctiles */
+@media (pointer: coarse) {
+    .menu-item {
+        padding: 12px 16px;
+    }
+    
+    .menu-icon {
+        font-size: 20px;
+    }
+}
+
+/* Tema oscuro */
+body.dark-theme .calendar-context-menu {
+    background: #2a2b2d;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-theme .menu-header {
+    color: #e8eaed;
+    border-bottom-color: #3c4043;
+}
+
+body.dark-theme .menu-item:hover {
+    background-color: #3c4043;
+}
+
+body.dark-theme .menu-icon {
+    color: #9aa0a6;
+}
+
+body.dark-theme .menu-text {
+    color: #e8eaed;
+}
+
+body.dark-theme .menu-separator {
+    background-color: #3c4043;
+} 

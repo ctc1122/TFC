@@ -12,11 +12,9 @@ import com.calendarfx.model.CalendarSource;
 import com.calendarfx.model.Entry;
 import com.calendarfx.view.CalendarView;
 import com.calendarfx.view.DateControl;
-import com.example.pruebamongodbcss.theme.ThemeManager;
 
 import javafx.application.Platform;
 import javafx.geometry.Insets;
-import javafx.scene.Scene;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
@@ -39,11 +37,8 @@ public class CalendarFXComponent extends BorderPane {
     private List<Calendar> calendars = new ArrayList<>();
     private CalendarSource calendarSource;
     
-    // Referencia al gestor de temas
-    private ThemeManager themeManager;
-    
     // Ruta al archivo CSS del calendario
-    private static final String CALENDAR_STYLES_PATH = "/com/example/pruebamongodbcss/theme/calendar-styles.css";
+    private static final String CALENDAR_DEFAULT_CSS = CalendarFXComponent.class.getResource("/com/example/pruebamongodbcss/theme/jfx-calendar-styles.css").toExternalForm();
     
     /**
      * Constructor que inicializa el componente del calendario.
@@ -57,19 +52,13 @@ public class CalendarFXComponent extends BorderPane {
      */
     private void initialize() {
         try {
-            // Obtener la instancia del gestor de temas
-            themeManager = ThemeManager.getInstance();
-            
             // Crear el componente principal de la vista
             calendarView = new CalendarView();
             
-            // Aplicar estilos de calendario
+            // Forzar el estilo predeterminado de CalendarFX
             applyCalendarStyles();
             
-            // Forzar la aplicación explícita de la clase del tema actual
-            updateCalendarThemeClass(themeManager.isDarkTheme());
-            
-            // Crear los calendarios por tipo de cita con colores personalizados
+            // Crear los calendarios por tipo de cita con colores predeterminados
             Calendar citasNormales = new Calendar("Citas normales");
             citasNormales.setStyle(Calendar.Style.STYLE1);
             
@@ -82,7 +71,7 @@ public class CalendarFXComponent extends BorderPane {
             Calendar citasCanceladas = new Calendar("Citas canceladas");
             citasCanceladas.setStyle(Calendar.Style.STYLE7);
             
-            // Configurar colores personalizados
+            // Configurar nombres cortos
             citasNormales.setShortName("CN");
             citasUrgentes.setShortName("CU");
             citasCompletadas.setShortName("CC");
@@ -117,31 +106,6 @@ public class CalendarFXComponent extends BorderPane {
             
             // Configurar el manejo de eventos del calendario
             configureCalendarHandlers();
-            
-            // Asegurar que el tema se aplique correctamente
-            Platform.runLater(() -> {
-                // Aplicar clase de tema
-                updateCalendarThemeClass(themeManager.isDarkTheme());
-                
-                // Forzar la actualización de los estilos
-                Scene scene = getScene();
-                if (scene != null) {
-                    scene.getStylesheets().forEach(style -> {
-                        // Recargar cada hoja de estilo para forzar actualización
-                        String stylesheet = style;
-                        scene.getStylesheets().remove(style);
-                        scene.getStylesheets().add(stylesheet);
-                    });
-                }
-                
-                // Aplicar colores de fondo explícitamente a los contenedores principales
-                String bgColor = themeManager.isDarkTheme() ? "#1e1e1e" : "#FEFAE0";
-                setStyle("-fx-background-color: " + bgColor + ";");
-                calendarView.setStyle("-fx-background-color: " + bgColor + ";");
-                
-                // Recorrer hijos para asegurar que tienen el color correcto
-                applyBackgroundColorToChildren(calendarView, bgColor);
-            });
             
             // Mostrar páginas relevantes
             calendarView.showDayPage();
@@ -180,73 +144,23 @@ public class CalendarFXComponent extends BorderPane {
             // Agregar el calendario a este BorderPane
             setCenter(calendarView);
             
-            // Aplicar estilo al contenedor
-            getStyleClass().add("calendar-container");
-            setPadding(new Insets(10));
-            
-            // Asegurarse de que cuando se añada a una escena, esta se registre
-            sceneProperty().addListener((obs, oldScene, newScene) -> {
-                if (newScene != null) {
-                    // Registrar la escena con el gestor de temas
-                    Platform.runLater(() -> {
-                        themeManager.registerScene(newScene);
-                        
-                        // Observar cambios en el tema y actualizar el calendario
-                        themeManager.darkThemeProperty().addListener((themeObs, oldVal, newVal) -> {
-                            updateCalendarThemeClass(newVal);
-                        });
-                        
-                        // Aplicar tema actual
-                        updateCalendarThemeClass(themeManager.isDarkTheme());
-                    });
-                }
-            });
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
     
     /**
-     * Aplica los estilos CSS específicos del calendario
+     * Aplica los estilos CSS por defecto del calendario
      */
     private void applyCalendarStyles() {
-        // Aplicar los estilos CSS del calendario
-        String calendarStylesheet = getClass().getResource(CALENDAR_STYLES_PATH).toExternalForm();
-        
-        // Verificar si ya existe el estilo para no duplicarlo
-        if (!calendarView.getStylesheets().contains(calendarStylesheet)) {
-            calendarView.getStylesheets().add(calendarStylesheet);
+        // Asegurarse de que estamos usando los estilos por defecto de CalendarFX
+        if (!calendarView.getStylesheets().contains(CALENDAR_DEFAULT_CSS)) {
+            calendarView.getStylesheets().add(CALENDAR_DEFAULT_CSS);
         }
         
-        // Limpiar estilos anteriores
-        calendarView.getStyleClass().removeAll("light-theme", "dark-theme");
-        
-        // Aplicar la clase de tema actual
-        if (themeManager != null) {
-            updateCalendarThemeClass(themeManager.isDarkTheme());
-        }
-    }
-    
-    /**
-     * Actualiza las clases CSS para aplicar el tema correcto
-     */
-    private void updateCalendarThemeClass(boolean isDarkTheme) {
-        // Remover clases de tema anteriores
-        calendarView.getStyleClass().removeAll("light-theme", "dark-theme");
-        getStyleClass().removeAll("light-theme", "dark-theme");
-        
-        // Agregar la clase del tema actual
-        if (isDarkTheme) {
-            calendarView.getStyleClass().add("dark-theme");
-            getStyleClass().add("dark-theme");
-        } else {
-            calendarView.getStyleClass().add("light-theme");
-            getStyleClass().add("light-theme");
-        }
-        
-        // Forzar actualización de estilos
-        calendarView.applyCss();
-        applyCss();
+        // Aplicar algunos estilos directos para mejor visualización
+        calendarView.setStyle("-fx-background-color: white;");
+        this.setStyle("-fx-background-color: white;");
     }
     
     /**
@@ -257,9 +171,6 @@ public class CalendarFXComponent extends BorderPane {
         calendarView.setShowAddCalendarButton(true);
         calendarView.setShowPrintButton(true);
         calendarView.setShowPageToolBarControls(true);
-        
-        // Aplicar clases CSS adicionales para mejorar el aspecto visual
-        calendarView.getStyleClass().add("calendar-container");
     }
     
     /**
@@ -271,9 +182,6 @@ public class CalendarFXComponent extends BorderPane {
             Dialog<ButtonType> dialog = new Dialog<>();
             dialog.setTitle("Detalles de Cita");
             dialog.setHeaderText("Información de la cita");
-            
-            // Aplicar estilo al diálogo - la clase dark-theme se aplica automáticamente por ThemeManager
-            dialog.getDialogPane().getStyleClass().add("modern-dialog");
             
             // Configurar botones
             dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
@@ -309,13 +217,6 @@ public class CalendarFXComponent extends BorderPane {
             startMinuteSpinner.setMaxWidth(70);
             endHourSpinner.setMaxWidth(70);
             endMinuteSpinner.setMaxWidth(70);
-            
-            // Aplicar estilos a los controles
-            titleField.getStyleClass().add("modern-text-field");
-            locationField.getStyleClass().add("modern-text-field");
-            startDatePicker.getStyleClass().add("modern-date-picker");
-            endDatePicker.getStyleClass().add("modern-date-picker");
-            calendarComboBox.getStyleClass().add("modern-combo-box");
             
             // Layouts para hora de inicio/fin
             HBox startTimeBox = new HBox(5, new Label("Hora:"), startHourSpinner, new Label(":"), startMinuteSpinner);
@@ -373,11 +274,6 @@ public class CalendarFXComponent extends BorderPane {
                 }
                 return ButtonType.CANCEL;
             });
-            
-            // Asegurarse de que el diálogo tenga los estilos de tema adecuados
-            if (themeManager.isDarkTheme()) {
-                dialog.getDialogPane().getStyleClass().add("dark-theme");
-            }
             
             dialog.showAndWait();
             
@@ -575,40 +471,5 @@ public class CalendarFXComponent extends BorderPane {
         Platform.runLater(() -> showEntryDetailsDialog(entry));
         
         return entry;
-    }
-    
-    /**
-     * Aplica un color de fondo a todos los elementos hijos
-     * @param parent Elemento padre
-     * @param bgColor Color de fondo a aplicar
-     */
-    private void applyBackgroundColorToChildren(javafx.scene.Parent parent, String bgColor) {
-        for (javafx.scene.Node child : parent.getChildrenUnmodifiable()) {
-            // Aplicar a elementos principales que necesitan fondo explícito
-            if (child instanceof javafx.scene.layout.Region) {
-                javafx.scene.layout.Region region = (javafx.scene.layout.Region) child;
-                
-                // Solo aplicar a contenedores principales, no a botones o elementos que ya tienen estilo
-                if (!region.getStyleClass().contains("button") && 
-                    !region.getStyleClass().contains("entry") && 
-                    !region.getStyleClass().contains("selected") &&
-                    !region.getStyleClass().contains("toggle-button") &&
-                    !region.getStyleClass().contains("today-button") &&
-                    !region.getStyleClass().contains("calendar-toggle-button") &&
-                    !region.getStyleClass().contains("calendar-today-button") &&
-                    !region.getStyleClass().contains("style1-entry") &&
-                    !region.getStyleClass().contains("style2-entry") &&
-                    !region.getStyleClass().contains("style3-entry") &&
-                    !region.getStyleClass().contains("style7-entry")) {
-                    
-                    region.setStyle("-fx-background-color: " + bgColor + ";");
-                }
-            }
-            
-            // Recursivamente aplicar a hijos
-            if (child instanceof javafx.scene.Parent) {
-                applyBackgroundColorToChildren((javafx.scene.Parent) child, bgColor);
-            }
-        }
     }
 }

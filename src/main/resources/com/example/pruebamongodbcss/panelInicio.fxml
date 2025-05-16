@@ -37,12 +37,13 @@
                         <JFXButton fx:id="btnToggleSidebar" text="≡" />
                         <!-- <ThemeToggleSwitch fx:id="themeToggle" /> -->
                      </HBox>
-                     <JFXButton fx:id="btnMenuPrincipal" text="Menú Principal" />
-                     <JFXButton fx:id="btnAnimales" text="Animales" />
-                     <JFXButton fx:id="but_clientes" text="Clientes" />
-                     <JFXButton fx:id="btnFichaje" text="Fichaje" />
-                     <JFXButton fx:id="btnEmpresa" text="Empresa" visible="false" />
-                     <JFXButton fx:id="btnSalir" text="SALIR" />
+                     <JFXButton fx:id="btnMenuPrincipal" styleClass="itemMenu" prefWidth="200" text="Inicio" alignment="BASELINE_LEFT" />
+                     <JFXButton fx:id="btnAnimales" styleClass="itemMenu" prefWidth="200" text="Módulo Clínica" alignment="BASELINE_LEFT" />
+                     <JFXButton fx:id="but_clientes" styleClass="itemMenu" prefWidth="200" text="Clientes" alignment="BASELINE_LEFT" />
+                     <JFXButton fx:id="btnFichaje" styleClass="itemMenu" prefWidth="200" text="Fichaje" alignment="BASELINE_LEFT" />
+                     <JFXButton fx:id="btnEmpresa" styleClass="itemMenu" prefWidth="200" text="Empresa" alignment="BASELINE_LEFT" />
+                     <JFXButton fx:id="btnGoogleCalendar" styleClass="itemMenu" prefWidth="200" text="Google Calendar" alignment="BASELINE_LEFT" />
+                     <JFXButton fx:id="btnSalir" styleClass="itemMenu,item-salir" prefWidth="200" text="Cerrar sesión" alignment="BASELINE_LEFT" />
                   </children>
                </VBox>
             </VBox>
@@ -74,12 +75,13 @@
                      </graphic>
                   </JFXButton>
                   <!-- Botones del carrusel (inicialmente ocultos) -->
-                  <JFXButton fx:id="btnMenuPrincipalCarousel" layoutX="311.0" layoutY="200.0" visible="false" />
-                  <JFXButton fx:id="btnAnimalesCarousel" layoutX="311.0" layoutY="200.0" visible="false" />
-                  <JFXButton fx:id="but_clientesCarousel" layoutX="311.0" layoutY="200.0" visible="false" />
-                  <JFXButton fx:id="btnFichajeCarousel" layoutX="311.0" layoutY="200.0" visible="false" />
-                  <JFXButton fx:id="btnEmpresaCarousel" layoutX="311.0" layoutY="200.0" visible="false" />
-                  <JFXButton fx:id="btnSalirCarousel" layoutX="311.0" layoutY="200.0" visible="false" />
+                  <JFXButton fx:id="btnMenuPrincipalCarousel" styleClass="boton-carrusel" prefWidth="50" prefHeight="50" visible="false" />
+                  <JFXButton fx:id="btnAnimalesCarousel" styleClass="boton-carrusel" prefWidth="50" prefHeight="50" visible="false" />
+                  <JFXButton fx:id="but_clientesCarousel" styleClass="boton-carrusel" prefWidth="50" prefHeight="50" visible="false" />
+                  <JFXButton fx:id="btnFichajeCarousel" styleClass="boton-carrusel" prefWidth="50" prefHeight="50" visible="false" />
+                  <JFXButton fx:id="btnEmpresaCarousel" styleClass="boton-carrusel" prefWidth="50" prefHeight="50" visible="false" />
+                  <JFXButton fx:id="btnGoogleCalendarCarousel" styleClass="boton-carrusel" prefWidth="50" prefHeight="50" visible="false" />
+                  <JFXButton fx:id="btnSalirCarousel" styleClass="boton-carrusel" prefWidth="50" prefHeight="50" visible="false" />
                </children>
             </Pane>
          </center>

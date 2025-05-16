@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario de Citas</title>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- FullCalendar Core - Using latest stable version -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales-all.min.js"></script>
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <!-- Componentes personalizados -->
+    <link href="components/event-form.css" rel="stylesheet">
+    <link href="components/context-menu.css" rel="stylesheet">
+    <script src="components/event-form.js"></script>
+    <script src="components/context-menu.js"></script>
+    
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #3c4043;
+            background-color: #fff;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+        
+        /* Contenedor principal */
+        #calendar-container {
+            display: flex;
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+        }
+        
+        /* Barra lateral de filtros */
+        #sidebar {
+            width: 250px;
+            padding: 20px;
+            border-right: 1px solid #e8eaed;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            z-index: 10;
+        }
+        
+        /* Contenedor del calendario */
+        #calendar-main {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            width: calc(100% - 290px); /* 250px sidebar + 40px padding */
+            height: 100%;
+            z-index: 5;
+            position: relative;
+            background-color: white;
+        }
+        
+        #calendar {
+            height: 100%;
+            width: 100%;
+            min-height: 600px;
+            background-color: white;
+        }
+        
+        /* Fix para FullCalendar */
+        .fc {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .fc-view-harness {
+            height: 700px !important;
+        }
+        
+        /* Estilos mejorados para eventos */
+        .fc-event {
+            border-radius: 4px !important;
+            border-left-width: 4px !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            margin-bottom: 2px;
+        }
+        
+        .fc-event:hover {
+            box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+            transform: translateY(-1px);
+            transition: all 0.2s ease;
+        }
+        
+        .fc-event-title {
+            font-weight: 500 !important;
+            padding: 2px;
+        }
+        
+        /* Estilos específicos por tipo */
+        .normal-event {
+            background-color: #1a73e8 !important;
+            border-left-color: #0d47a1 !important;
+            color: white !important;
+        }
+        
+        .urgent-event {
+            background-color: #ff9800 !important;
+            border-left-color: #e65100 !important;
+            color: white !important;
+            font-weight: bold !important;
+        }
+        
+        .completed-event {
+            background-color: #4caf50 !important;
+            border-left-color: #2e7d32 !important;
+            color: white !important;
+        }
+        
+        .cancelled-event {
+            background-color: #f44336 !important;
+            border-left-color: #b71c1c !important;
+            color: white !important;
+            text-decoration: line-through !important;
+            opacity: 0.8;
+        }
+        
+        /* Secciones de filtros */
+        .filter-section {
+            margin-bottom: 24px;
+        }
+        
+        .filter-title {
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: #3c4043;
+        }
+        
+        .filter-item {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+        
+        /* Checkbox personalizado */
+        .filter-item input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #5f6368;
+            border-radius: 3px;
+            margin-right: 10px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-item input[type="checkbox"]:checked {
+            background-color: #1a73e8;
+            border-color: #1a73e8;
+        }
+        
+        .filter-item input[type="checkbox"]:checked::after {
+            content: "";
+            position: absolute;
+            left: 5px;
+            top: 2px;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+        
+        .filter-item label {
+            cursor: pointer;
+        }
+        
+        /* Botones en la barra lateral */
+        .sidebar-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .action-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background-color: #1a73e8;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+            transition: all 0.2s ease;
+        }
+        
+        .action-button:hover {
+            background-color: #1557b0;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .action-button:active {
+            transform: scale(0.98);
+        }
+        
+        .action-button i {
+            margin-right: 8px;
+        }
+        
+        /* Tema oscuro */
+        body.dark-theme {
+            background-color: #202124;
+            color: #e8eaed;
+        }
+        
+        body.dark-theme #sidebar {
+            background-color: #2a2b2d;
+            border-right-color: #5f6368;
+        }
+        
+        body.dark-theme .filter-title {
+            color: #e8eaed;
+        }
+        
+        body.dark-theme .filter-item input[type="checkbox"] {
+            border-color: #9aa0a6;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="calendar-container">
+        <div id="sidebar">
+            <h3>Filtros</h3>
+            <div class="filter-section">
+                <div class="filter-title">Tipos de citas</div>
+                <div class="filter-item">
+                    <input type="checkbox" id="filter-normal" checked>
+                    <label for="filter-normal">Normales</label>
+                </div>
+                <div class="filter-item">
+                    <input type="checkbox" id="filter-urgent" checked>
+                    <label for="filter-urgent">Urgentes</label>
+                </div>
+                <div class="filter-item">
+                    <input type="checkbox" id="filter-completed" checked>
+                    <label for="filter-completed">Completadas</label>
+                </div>
+                <div class="filter-item">
+                    <input type="checkbox" id="filter-cancelled" checked>
+                    <label for="filter-cancelled">Canceladas</label>
+                </div>
+            </div>
+            
+            <div class="sidebar-actions">
+                <button id="btn-today" class="action-button">
+                    <i class="material-icons">today</i>
+                    Hoy
+                </button>
+                <button id="btn-refresh" class="action-button">
+                    <i class="material-icons">refresh</i>
+                    Actualizar
+                </button>
+                <button id="btn-new-event" class="action-button">
+                    <i class="material-icons">add</i>
+                    Nueva cita
+                </button>
+                <button id="btn-print" class="action-button">
+                    <i class="material-icons">print</i>
+                    Imprimir
+                </button>
+            </div>
+        </div>
+        <div id="calendar-main">
+            <div id="calendar"></div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let calendar;
+        let eventForm;
+        let contextMenu;
+        let localEvents = [];
+        
+        // Obtener el año actual
+        const currentYear = new Date().getFullYear();
+        
+        // NUEVO: Mejorar el formateo de fechas para depuración
+        function formatDateDebug(date) {
+            if (!date) return 'null';
+            if (typeof date === 'string') return `string: ${date}`;
+            if (date instanceof Date) {
+                return `Date: ${date.toISOString()} (${date.getDate()}/${date.getMonth()+1}/${date.getFullYear()})`;
+            }
+            return `unknown: ${date}`;
+        }
+        
+        // NUEVO: Función mejorada para validar fechas
+        function isValidDate(date) {
+            if (!date) return false;
+            
+            // Si es una cadena, intentar convertir
+            if (typeof date === 'string') {
+                try {
+                    const testDate = new Date(date);
+                    return !isNaN(testDate.getTime());
+                } catch (e) {
+                    console.error('Error validando fecha:', e);
+                    return false;
+                }
+            }
+            
+            // Si ya es un objeto Date
+            if (date instanceof Date) {
+                return !isNaN(date.getTime());
+            }
+            
+            return false;
+        }
+        
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Iniciando calendario...');
+            
+            // NUEVO: Verificación específica para citas del día 18
+            console.log('Verificando si hay citas para el día 18...');
+            const today = new Date();
+            const day18 = new Date(today.getFullYear(), today.getMonth(), 18);
+            console.log('Fecha del día 18:', day18.toISOString());
+            
+            // Verificar si estamos cerca del día 18 para facilitar la navegación
+            const dayDiff = Math.abs(day18.getDate() - today.getDate());
+            const shouldFocusDay18 = dayDiff <= 7; // Si estamos a 7 días o menos
+            console.log('Diferencia con día 18:', dayDiff, 'días. Enfocar día 18:', shouldFocusDay18);
+            
+            // Si estamos cerca del día 18, mostrar ese mes
+            let initialDate = today;
+            if (shouldFocusDay18) {
+                initialDate = day18;
+                console.log('Enfocando calendario en el día 18:', initialDate);
+            }
+            
+            // Inicializar el formulario de eventos
+            initEventForm();
+            
+            // Inicializar el menú contextual
+            initContextMenu();
+            
+            // Inicializar el calendario
+            initCalendar();
+            
+            // Configurar botones
+            setupButtons();
+            
+            // Configurar filtros
+            setupFilters();
+            
+            // Verificar si FullCalendar se cargó correctamente
+            console.log('DOM cargado, verificando dependencias...');
+            console.log('FullCalendar disponible:', typeof FullCalendar !== 'undefined');
+            console.log('jQuery disponible:', typeof jQuery !== 'undefined');
+            
+            if (typeof FullCalendar === 'undefined') {
+                alert('ERROR: No se pudo cargar FullCalendar. Verifica la conexión a internet.');
+            }
+        });
+        
+        // Inicializar el formulario de eventos
+        function initEventForm() {
+            eventForm = new EventForm();
+            
+            // Configurar callbacks
+            eventForm.onSave = function(eventData) {
+                saveEvent(eventData);
+            };
+            
+            eventForm.onDelete = function(eventId) {
+                deleteEvent(eventId);
+            };
+        }
+        
+        // Inicializar el menú contextual
+        function initContextMenu() {
+            contextMenu = new CalendarContextMenu();
+            
+            // Configurar callbacks
+            contextMenu.onNewEvent = function(date) {
+                openNewEventForm(date);
+            };
+            
+            contextMenu.onEditEvent = function(event) {
+                eventForm.open(event);
+            };
+            
+            contextMenu.onDeleteEvent = function(event) {
+                deleteEvent(event.id);
+            };
+            
+            contextMenu.onDayView = function(date) {
+                calendar.changeView('timeGridDay', date);
+            };
+        }
+        
+        // Inicializar el calendario
+        function initCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            console.log('Inicializando calendario en elemento:', calendarEl);
+            
+            if (!calendarEl) {
+                console.error('ERROR: No se encontró el elemento con id "calendar"');
+                return;
+            }
+            
+            try {
+                console.log('Creando objeto calendario con FullCalendar...');
+                
+                // Inicializar FullCalendar con configuración mínima
+                calendar = new FullCalendar.Calendar(calendarEl, {
+                    locale: 'es',
+                    initialView: 'dayGridMonth',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                    },
+                    events: [], // Iniciar con array vacío, los eventos reales se cargarán desde Java
+                    height: 'auto'
+                });
+                
+                console.log('Objeto calendario creado, renderizando...');
+                
+                // Renderizar el calendario explícitamente
+                calendar.render();
+                
+                console.log('Calendario renderizado correctamente');
+                
+                // Luego añadir la configuración adicional
+                setTimeout(function() {
+                    console.log('Configurando opciones adicionales del calendario');
+                    
+                    // Permitir edición después de la inicialización básica
+                    calendar.setOption('editable', true);
+                    calendar.setOption('selectable', true);
+                    calendar.setOption('businessHours', {
+                        daysOfWeek: [1, 2, 3, 4, 5],
+                        startTime: '08:00',
+                        endTime: '20:00'
+                    });
+                    
+                    // Configurar interacciones
+                    calendar.on('eventClick', function(info) {
+                        if (!contextMenu.visible) {
+                            eventForm.open(info.event);
+                        }
+                    });
+                    
+                    calendar.on('dateClick', function(info) {
+                        openNewEventForm(info.date);
+                    });
+                    
+                    console.log('Configuración adicional aplicada');
+                }, 500);
+                
+            } catch (error) {
+                console.error('ERROR al inicializar calendario:', error);
+            }
+        }
+        
+        // Configurar botones de la barra lateral
+        function setupButtons() {
+            document.getElementById('btn-today').addEventListener('click', function() {
+                calendar.today();
+            });
+            
+            document.getElementById('btn-refresh').addEventListener('click', function() {
+                refreshCalendar();
+            });
+            
+            document.getElementById('btn-new-event').addEventListener('click', function() {
+                openNewEventForm();
+            });
+            
+            document.getElementById('btn-print').addEventListener('click', function() {
+                printCalendar();
+            });
+        }
+        
+        // Configurar filtros
+        function setupFilters() {
+            const filterNormal = document.getElementById('filter-normal');
+            const filterUrgent = document.getElementById('filter-urgent');
+            const filterCompleted = document.getElementById('filter-completed');
+            const filterCancelled = document.getElementById('filter-cancelled');
+            
+            function applyFilters() {
+                const events = calendar.getEvents();
+                
+                events.forEach(event => {
+                    const type = event.extendedProps?.type || 'default';
+                    
+                    let visible = true;
+                    if (type === 'default' && !filterNormal.checked) visible = false;
+                    if (type === 'urgent' && !filterUrgent.checked) visible = false;
+                    if (type === 'completed' && !filterCompleted.checked) visible = false;
+                    if (type === 'cancelled' && !filterCancelled.checked) visible = false;
+                    
+                    // Actualizar visibilidad
+                    if (visible) {
+                        event.setProp('display', 'auto');
+                    } else {
+                        event.setProp('display', 'none');
+                    }
+                });
+            }
+            
+            // Añadir event listeners
+            filterNormal.addEventListener('change', applyFilters);
+            filterUrgent.addEventListener('change', applyFilters);
+            filterCompleted.addEventListener('change', applyFilters);
+            filterCancelled.addEventListener('change', applyFilters);
+        }
+        
+        // Abrir formulario para nuevo evento
+        function openNewEventForm(date = null) {
+            let eventData = null;
+            
+            if (date) {
+                // Si se proporciona una fecha, crear un evento a esa hora
+                const endDate = new Date(date);
+                endDate.setHours(endDate.getHours() + 1);
+                
+                eventData = {
+                    start: date,
+                    end: endDate
+                };
+            }
+            
+            eventForm.open(eventData);
+        }
+        
+        // Guardar evento
+        function saveEvent(eventData) {
+            // Si es una edición
+            if (eventData.id) {
+                // Encontrar el evento en el calendario
+                const existingEvent = calendar.getEventById(eventData.id);
+                
+                if (existingEvent) {
+                    // Actualizar propiedades
+                    existingEvent.setProp('title', eventData.title);
+                    existingEvent.setStart(eventData.start);
+                    existingEvent.setEnd(eventData.end);
+                    existingEvent.setProp('backgroundColor', eventData.backgroundColor);
+                    existingEvent.setProp('borderColor', eventData.borderColor);
+                    
+                    // Actualizar propiedades extendidas
+                    existingEvent.setExtendedProp('type', eventData.type);
+                    existingEvent.setExtendedProp('location', eventData.location);
+                    existingEvent.setExtendedProp('description', eventData.description);
+                    
+                    // Notificar a Java
+                    notifyJavaApp('update', eventData);
+                }
+            } else {
+                // Es un nuevo evento
+                eventData.id = 'local_' + new Date().getTime();
+                
+                // Añadir al calendario
+                calendar.addEvent(eventData);
+                
+                // Notificar a Java
+                notifyJavaApp('save', eventData);
+            }
+        }
+        
+        // Actualizar evento (usado después de arrastrar o redimensionar)
+        function updateEvent(event) {
+            // Crear objeto con los datos actualizados
+            const eventData = {
+                id: event.id,
+                title: event.title,
+                start: event.startStr,
+                end: event.endStr,
+                type: event.extendedProps.type || 'default',
+                location: event.extendedProps.location || '',
+                description: event.extendedProps.description || ''
+            };
+            
+            // Notificar a Java
+            notifyJavaApp('update', eventData);
+        }
+        
+        // Eliminar evento
+        function deleteEvent(eventId) {
+            // Encontrar y eliminar del calendario
+            const event = calendar.getEventById(eventId);
+            if (event) {
+                event.remove();
+                
+                // Notificar a Java
+                notifyJavaApp('delete', { id: eventId });
+            }
+        }
+        
+        // Refrescar calendario
+        function refreshCalendar() {
+            // Solicitar eventos a Java
+            notifyJavaApp('refresh', {
+                requestType: 'userAppointments',
+                timestamp: new Date().getTime()
+            });
+        }
+        
+        // Imprimir calendario
+        function printCalendar() {
+            window.print();
+        }
+        
+        // Notificar a la aplicación Java
+        function notifyJavaApp(action, data) {
+            try {
+                // Esta función será implementada por JavaFX
+                if (window.javaConnector) {
+                    console.log('Notificando a Java:', action, data);
+                    window.javaConnector.processEvent(action, JSON.stringify(data));
+                } else {
+                    console.log('JavaConnector no disponible, acción local:', action, data);
+                }
+            } catch (e) {
+                console.error('Error al notificar a Java:', e);
+            }
+        }
+        
+        // API para comunicación con Java
+        window.calendarApi = {
+            // Toggle del modo oscuro
+            toggleDarkMode: function(isDark) {
+                console.log('Toggling dark mode:', isDark);
+                if (isDark) {
+                    document.body.classList.add('dark-theme');
+                } else {
+                    document.body.classList.remove('dark-theme');
+                }
+                
+                // Verificar si el calendario está inicializado antes de llamar a render
+                if (typeof calendar !== 'undefined' && calendar !== null) {
+                    console.log('Rendering calendar after theme change');
+                    calendar.render();
+                } else {
+                    console.log('Calendar not initialized yet, theme will be applied when ready');
+                }
+            },
+            
+            // Actualizar todos los eventos
+            updateEvents: function(newEvents) {
+                console.log('updateEvents llamado con:', newEvents);
+                
+                // Validar parámetro
+                if (!newEvents) {
+                    console.error('updateEvents: No se proporcionaron eventos (null/undefined)');
+                    return false;
+                }
+                
+                // Asegurar que es un array
+                if (!Array.isArray(newEvents)) {
+                    console.error('updateEvents: el parámetro no es un array:', newEvents);
+                    try {
+                        // Intentar convertir a array si es posible
+                        if (typeof newEvents === 'string') {
+                            newEvents = JSON.parse(newEvents);
+                            if (!Array.isArray(newEvents)) {
+                                newEvents = [newEvents];
+                            }
+                        } else {
+                            newEvents = [newEvents];
+                        }
+                    } catch (e) {
+                        console.error('Error al convertir eventos:', e);
+                        return false;
+                    }
+                }
+                
+                console.log(`Actualizando calendario con ${newEvents.length} eventos`);
+                
+                // Validar y reparar eventos
+                let validEvents = [];
+                let invalidEvents = [];
+                
+                newEvents.forEach(event => {
+                    let isValid = true;
+                    let debugInfo = {};
+                    
+                    // NUEVO: Mejor validación y reparación de fechas
+                    debugInfo.id = event.id;
+                    debugInfo.title = event.title;
+                    
+                    // Validar y corregir fecha de inicio
+                    if (!event.start) {
+                        isValid = false;
+                        debugInfo.startError = "Sin fecha de inicio";
+                    } else {
+                        try {
+                            const startDate = new Date(event.start);
+                            if (isNaN(startDate.getTime())) {
+                                debugInfo.startError = `Fecha inválida: ${event.start}`;
+                                isValid = false;
+                            } else {
+                                debugInfo.startDate = formatDateDebug(startDate);
+                                // Mostrar día del mes para depuración
+                                debugInfo.startDay = startDate.getDate();
+                            }
+                        } catch (e) {
+                            debugInfo.startError = `Error: ${e.message}`;
+                            isValid = false;
+                        }
+                    }
+                    
+                    // Validar y corregir fecha de fin
+                    if (!event.end) {
+                        // Para eventos sin fin, usar inicio + 1 hora
+                        if (event.start) {
+                            try {
+                                const startDate = new Date(event.start);
+                                if (!isNaN(startDate.getTime())) {
+                                    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+                                    event.end = endDate.toISOString();
+                                }
+                            } catch (e) {
+                                debugInfo.endError = `Error al generar fecha fin: ${e.message}`;
+                            }
+                        }
+                    } else {
+                        try {
+                            const endDate = new Date(event.end);
+                            if (isNaN(endDate.getTime())) {
+                                debugInfo.endError = `Fecha fin inválida: ${event.end}`;
+                            } else {
+                                debugInfo.endDate = formatDateDebug(endDate);
+                            }
+                        } catch (e) {
+                            debugInfo.endError = `Error en fecha fin: ${e.message}`;
+                        }
+                    }
+                    
+                    // Decidir si añadir el evento
+                    if (isValid) {
+                        validEvents.push(event);
+                    } else {
+                        invalidEvents.push({ event, debugInfo });
+                    }
+                });
+                
+                // Informar sobre eventos válidos e inválidos
+                console.log(`Eventos válidos: ${validEvents.length}, Inválidos: ${invalidEvents.length}`);
+                
+                if (invalidEvents.length > 0) {
+                    console.warn("Eventos con problemas:", invalidEvents);
+                }
+                
+                // Mostrar específicamente evento del día 18 para depuración
+                const eventos18 = validEvents.filter(event => {
+                    try {
+                        const date = new Date(event.start);
+                        return date.getDate() === 18;
+                    } catch(e) {
+                        return false;
+                    }
+                });
+                
+                if (eventos18.length > 0) {
+                    console.log("EVENTOS DEL DÍA 18:", eventos18);
+                } else {
+                    console.warn("⚠️ NO HAY EVENTOS DEL DÍA 18");
+                }
+                
+                // Actualizar los eventos del calendario
+                events = validEvents;
+                calendar.removeAllEvents();
+                calendar.addEventSource(events);
+            },
+            
+            // Ir a hoy
+            goToToday: function() {
+                calendar.today();
+            },
+            
+            // Ir a una fecha específica
+            goToDate: function(dateStr) {
+                calendar.gotoDate(dateStr);
+            },
+            
+            // Cambiar vista
+            changeView: function(viewName) {
+                calendar.changeView(viewName);
+            },
+            
+            // Crear nuevo evento
+            createNewEvent: function() {
+                openNewEventForm();
+            },
+            
+            // Refrescar calendario
+            refreshCalendar: function() {
+                refreshCalendar();
+            }
+        };
+    </script>
+</body>
+</html> 
