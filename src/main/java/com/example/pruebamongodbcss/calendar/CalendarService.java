@@ -325,22 +325,55 @@ public class CalendarService {
             event.setAllDay(doc.getBoolean("allDay"));
         }
         
-        // Tipo de evento
+        // Campo eventType (para eventos creados por el usuario)
+        if (doc.containsKey("eventType")) {
+            event.setEventType(doc.getString("eventType"));
+        }
+        
+        // Estado de la cita (para los filtros)
         if (doc.containsKey("estado")) {
-            event.setType(doc.getString("estado").toLowerCase()); // pendiente, cancelada, etc.
+            String estadoStr = doc.getString("estado");
+            event.setEstado(estadoStr);
+            
+            // Determinar tipo basado en el estado
+            switch (estadoStr.toUpperCase()) {
+                case "PENDIENTE":
+                    event.setType("default");
+                    break;
+                case "EN_CURSO":
+                    event.setType("urgent");
+                    break;
+                case "COMPLETADA":
+                    event.setType("completed");
+                    break;
+                case "CANCELADA":
+                    event.setType("cancelled");
+                    break;
+                case "REPROGRAMADA":
+                    event.setType("default"); // Tipo personalizado para reprogramadas
+                    event.setColor("#9c27b0"); // Morado para reprogramadas
+                    break;
+                default:
+                    event.setType("default");
+            }
         } else if (doc.containsKey("type")) {
+            // Si hay tipo pero no estado, mantener el tipo
             event.setType(doc.getString("type"));
         } else {
             // Determinar tipo por el título para compatibilidad
             String title = doc.getString("title").toLowerCase();
             if (title.contains("urgente") || title.contains("urgencia")) {
                 event.setType("urgent");
+                event.setEstado("EN_CURSO");
             } else if (title.contains("completada") || title.contains("realizada")) {
                 event.setType("completed");
+                event.setEstado("COMPLETADA");
             } else if (title.contains("cancelada")) {
                 event.setType("cancelled");
+                event.setEstado("CANCELADA");
             } else {
                 event.setType("default");
+                event.setEstado("PENDIENTE");
             }
         }
         
@@ -358,244 +391,216 @@ public class CalendarService {
     
     /**
      * Convierte un documento de cita a un objeto CalendarEvent
-     * @param doc Documento de cita a convertir
-     * @return CalendarEvent o null si no se pudo convertir
+     * @param doc Documento de cita de la colección 'citas'
+     * @return CalendarEvent
      */
     private CalendarEvent citaDocumentToCalendarEvent(Document doc) {
         try {
             CalendarEvent event = new CalendarEvent();
             
-            // Asignar ID
-            String idCita = doc.getString("id");
-            if (idCita == null && doc.containsKey("_id")) {
-                // Si no tiene id pero tiene _id, usar ese
-                Object id = doc.get("_id");
-                if (id instanceof ObjectId) {
-                    idCita = "_" + ((ObjectId)id).toString();
-                } else {
-                    idCita = "_" + id.toString();
-                }
-            }
+            // ID con prefijo especial para diferenciar
+            event.setId("_" + doc.getObjectId("_id").toString());
             
-            event.setId(idCita != null ? idCita : "_cita_" + System.currentTimeMillis());
-            
-            // Datos del paciente y títulos
-            String nombrePaciente = doc.getString("nombrePaciente");
-            String tipoAnimal = doc.getString("tipoAnimal");
-            String nombreVeterinario = doc.getString("nombreVeterinario");
-            
-            // Crear un título descriptivo
-            StringBuilder title = new StringBuilder();
-            if (nombrePaciente != null && !nombrePaciente.isEmpty()) {
-                title.append(nombrePaciente);
-                if (tipoAnimal != null && !tipoAnimal.isEmpty()) {
-                    title.append(" (").append(tipoAnimal).append(")");
-                }
-            } else {
-                title.append("Cita");
-            }
+            // Extraer datos del documento de la cita
+            // Título: combinar el motivo y paciente si están disponibles
+            String titulo = "Cita";
             
             if (doc.containsKey("motivo") && doc.getString("motivo") != null) {
-                title.append(" - ").append(doc.getString("motivo"));
+                titulo = doc.getString("motivo");
             }
             
-            event.setTitle(title.toString());
-            
-            // Fechas
-            // Verificar el formato de fecha en la colección citas
-            if (doc.containsKey("fechaHora")) {
-                Object fechaHora = doc.get("fechaHora");
+            // Intentar extraer información del paciente para el título
+            Document pacienteDoc = (Document) doc.get("paciente");
+            if (pacienteDoc != null) {
+                String nombrePaciente = pacienteDoc.getString("nombre");
+                String especiePaciente = pacienteDoc.getString("especie");
                 
-                if (fechaHora instanceof Date) {
-                    // Si es un objeto Date
-                    Date startDate = (Date) fechaHora;
-                    DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-                    LocalDateTime dateTime = startDate.toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime();
-                    
-                    // Asignar fecha de inicio
-                    event.setStart(dateTime.format(formatter));
-                    
-                    // Calcular fecha fin (30 minutos después)
-                    LocalDateTime endDateTime = dateTime.plusMinutes(30);
-                    event.setEnd(endDateTime.format(formatter));
-                    
-                    System.out.println("📅 Cita con fecha: " + dateTime + " a " + endDateTime);
-                } else if (fechaHora instanceof String) {
-                    // Si es un string, intentar parsear
-                    String fechaStr = (String) fechaHora;
-                    
-                    // Varios formatos posibles
-                    LocalDateTime dateTime = null;
-                    try {
-                        // Intentar como ISO
-                        dateTime = LocalDateTime.parse(fechaStr);
-                    } catch (Exception e1) {
-                        try {
-                            // Intentar formato dd/MM/yyyy HH:mm
-                            dateTime = LocalDateTime.parse(fechaStr, 
-                                DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
-                        } catch (Exception e2) {
-                            // Como último recurso, usar la fecha actual
-                            dateTime = LocalDateTime.now();
-                            System.err.println("No se pudo parsear fecha: " + fechaStr);
-                        }
+                if (nombrePaciente != null) {
+                    titulo += " - " + nombrePaciente;
+                    if (especiePaciente != null) {
+                        titulo += " (" + especiePaciente + ")";
                     }
-                    
-                    // Asignar fechas
-                    event.setStart(dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-                    event.setEnd(dateTime.plusMinutes(30).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
                 }
-            } else {
-                // Si no hay fecha, usar valores por defecto
-                LocalDateTime now = LocalDateTime.now();
-                event.setStart(now.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-                event.setEnd(now.plusMinutes(30).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
             }
             
-            // Datos adicionales y descripción
-            StringBuilder description = new StringBuilder();
+            event.setTitle(titulo);
             
-            if (nombreVeterinario != null && !nombreVeterinario.isEmpty()) {
-                description.append("Veterinario: ").append(nombreVeterinario).append("\n");
+            // Intentar obtener la fecha de la cita
+            Date fechaCita = doc.getDate("fechaHora");
+            if (fechaCita != null) {
+                // Configurar inicio y fin con 1 hora de duración por defecto
+                DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
                 
-                // Buscar el usuario asociado
-                if (nombreVeterinario.contains("Juan V")) {
-                    event.setUsuario("jvazquez");
-                }
+                LocalDateTime fechaHoraInicio = fechaCita.toInstant()
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDateTime();
+                
+                event.setStart(fechaHoraInicio.format(formatter));
+                event.setEnd(fechaHoraInicio.plusHours(1).format(formatter));
+            } else {
+                event.setStart(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                event.setEnd(LocalDateTime.now().plusHours(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
             }
             
-            if (doc.containsKey("observaciones") && doc.getString("observaciones") != null) {
-                description.append("Observaciones: ").append(doc.getString("observaciones"));
+            // Información adicional
+            if (doc.containsKey("observaciones")) {
+                event.setDescription(doc.getString("observaciones"));
             }
             
-            event.setDescription(description.toString());
+            // Ubicación: consulta
+            event.setLocation("Consulta");
             
-            // Estado y colores
-            String estado = doc.containsKey("estado") ? doc.getString("estado") : "PENDIENTE";
-            if (estado != null) {
-                switch (estado) {
+            // Estado de la cita
+            if (doc.containsKey("estado")) {
+                String estadoStr = doc.getString("estado");
+                event.setEstado(estadoStr);
+                
+                // Determinar el color y tipo según el estado
+                switch (estadoStr.toUpperCase()) {
                     case "PENDIENTE":
                         event.setType("default");
-                        event.setColor("#1a73e8");
-                        break;
-                    case "COMPLETADA":
-                        event.setType("completed");
-                        event.setColor("#4caf50");
-                        break;
-                    case "CANCELADA":
-                        event.setType("cancelled");
-                        event.setColor("#f44336");
+                        event.setColor("#4285f4"); // Azul para pendientes
                         break;
                     case "EN_CURSO":
                         event.setType("urgent");
-                        event.setColor("#ff9800");
+                        event.setColor("#fbbc04"); // Amarillo para en curso
+                        break;
+                    case "COMPLETADA":
+                        event.setType("completed");
+                        event.setColor("#34a853"); // Verde para completadas
+                        break;
+                    case "CANCELADA":
+                        event.setType("cancelled");
+                        event.setColor("#ea4335"); // Rojo para canceladas
+                        break;
+                    case "REPROGRAMADA":
+                        event.setType("default");
+                        event.setColor("#9c27b0"); // Morado para reprogramadas
                         break;
                     default:
                         event.setType("default");
-                        event.setColor("#1a73e8");
+                        event.setColor("#4285f4"); // Azul por defecto
                 }
+            } else {
+                // Si no tiene estado, asignar pendiente por defecto
+                event.setType("default");
+                event.setEstado("PENDIENTE");
+                event.setColor("#4285f4");
             }
             
-            // Asignar el usuario (veterinario)
-            if (event.getUsuario() == null) {
-                event.setUsuario("jvazquez"); // Por defecto, asignar a jvazquez
+            // Usuario asignado (veterinario)
+            if (doc.containsKey("veterinario")) {
+                Document vetDoc = (Document) doc.get("veterinario");
+                if (vetDoc != null && vetDoc.containsKey("usuario")) {
+                    event.setUsuario(vetDoc.getString("usuario"));
+                }
+            } else if (doc.containsKey("usuarioAsignado")) {
+                event.setUsuario(doc.getString("usuarioAsignado"));
             }
             
             return event;
         } catch (Exception e) {
-            System.err.println("Error al convertir documento de cita: " + e.getMessage());
-            e.printStackTrace();
-            return null;
+            LOGGER.log(Level.SEVERE, "Error al convertir documento de cita a evento de calendario", e);
+            return new CalendarEvent();
         }
     }
     
     /**
      * Convierte un objeto CalendarEvent a un documento MongoDB
-     * @param event CalendarEvent a convertir
-     * @return Document
+     * @param event Evento a convertir
+     * @return Document para MongoDB
      */
     private Document calendarEventToDocument(CalendarEvent event) {
         Document doc = new Document();
         
-        // Si tiene un ID con el prefijo _, quitarlo para obtener el ObjectId
+        // Si ya tiene un ID válido (con prefijo _), quitarlo para guardar
         if (event.getId() != null && event.getId().startsWith("_")) {
+            // El ID empieza con _, quitar prefijo para la BD
+            doc.append("_id", new ObjectId(event.getId().substring(1)));
+        } else if (event.getId() != null && !event.getId().isEmpty() && !event.getId().startsWith("local_")) {
             try {
-                doc.put("_id", new ObjectId(event.getId().substring(1)));
-            } catch (IllegalArgumentException e) {
-                // Si no es un ObjectId válido, usar el ID tal cual
-                doc.put("_id", event.getId().substring(1));
-            }
-        } else if (event.getId() != null) {
-            // Si tiene un ID pero sin prefijo, intentar usarlo como ObjectId
-            try {
-                doc.put("_id", new ObjectId(event.getId()));
-            } catch (IllegalArgumentException e) {
-                // Si no es un ObjectId válido, generar uno nuevo
-                doc.put("_id", new ObjectId());
+                doc.append("_id", new ObjectId(event.getId()));
+            } catch (Exception e) {
+                doc.append("_id", new ObjectId());
             }
         } else {
-            // Si no tiene ID, generar uno nuevo
-            doc.put("_id", new ObjectId());
+            // Si no tiene ID o es local, generar uno nuevo
+            doc.append("_id", new ObjectId());
         }
         
         // Datos básicos
-        doc.put("title", event.getTitle());
+        doc.append("title", event.getTitle());
         
         // Fechas
-        doc.put("start", parseDate(event.getStart()));
-        doc.put("end", parseDate(event.getEnd()));
+        try {
+            doc.append("start", parseDate(event.getStart()));
+            doc.append("end", parseDate(event.getEnd()));
+        } catch (Exception e) {
+            LOGGER.warning("Error al parsear fechas: " + e.getMessage());
+            doc.append("start", new Date());
+            doc.append("end", new Date());
+        }
         
         // Datos adicionales
         if (event.getLocation() != null) {
-            doc.put("location", event.getLocation());
+            doc.append("location", event.getLocation());
         }
         
         if (event.getDescription() != null) {
-            doc.put("description", event.getDescription());
+            doc.append("description", event.getDescription());
         }
         
         // Propiedades visuales
         if (event.getColor() != null) {
-            doc.put("color", event.getColor());
+            doc.append("color", event.getColor());
         }
         
         if (event.getTextColor() != null) {
-            doc.put("textColor", event.getTextColor());
+            doc.append("textColor", event.getTextColor());
         }
         
-        doc.put("allDay", event.isAllDay());
+        doc.append("allDay", event.isAllDay());
         
         // Tipo de evento
         if (event.getType() != null) {
-            doc.put("type", event.getType());
+            doc.append("type", event.getType());
         } else {
-            // Determinar tipo por el título
-            String title = event.getTitle().toLowerCase();
-            if (title.contains("urgente") || title.contains("urgencia")) {
-                doc.put("type", "urgent");
-            } else if (title.contains("completada") || title.contains("realizada")) {
-                doc.put("type", "completed");
-            } else if (title.contains("cancelada")) {
-                doc.put("type", "cancelled");
+            doc.append("type", "default");
+        }
+        
+        // Tipo de evento creado por usuario (meeting, reminder, other)
+        if (event.getEventType() != null) {
+            doc.append("eventType", event.getEventType());
+        }
+        
+        // Estado de la cita (para filtros avanzados)
+        if (event.getEstado() != null) {
+            doc.append("estado", event.getEstado());
+        } else {
+            // Estado por defecto según el tipo
+            String tipo = event.getType();
+            if (tipo != null) {
+                switch (tipo) {
+                    case "urgent":
+                        doc.append("estado", "EN_CURSO");
+                        break;
+                    case "completed":
+                        doc.append("estado", "COMPLETADA");
+                        break;
+                    case "cancelled":
+                        doc.append("estado", "CANCELADA");
+                        break;
+                    default:
+                        doc.append("estado", "PENDIENTE");
+                }
             } else {
-                doc.put("type", "default");
+                doc.append("estado", "PENDIENTE");
             }
         }
         
-        // Usuario (usar usuarioAsignado como campo principal)
-        if (event.getUsuario() != null && !event.getUsuario().isEmpty()) {
-            doc.put("usuarioAsignado", event.getUsuario());
-            
-            // Para compatibilidad con el código antiguo, mantener los campos antiguos
-            doc.put("usuario", event.getUsuario());
-            doc.put("usuarioId", event.getUsuario());
-        } else {
-            // Usar valor predeterminado
-            doc.put("usuarioAsignado", "jvazquez");
-            doc.put("usuario", "jvazquez");
-            doc.put("usuarioId", "jvazquez");
+        // Usuario
+        if (event.getUsuario() != null) {
+            doc.append("usuarioAsignado", event.getUsuario());
         }
         
         return doc;

@@ -91,17 +91,56 @@
             border-left-width: 4px !important;
             box-shadow: 0 1px 3px rgba(0,0,0,0.12);
             margin-bottom: 2px;
+            transition: all 0.2s ease;
         }
         
         .fc-event:hover {
             box-shadow: 0 3px 6px rgba(0,0,0,0.16);
             transform: translateY(-1px);
-            transition: all 0.2s ease;
         }
         
         .fc-event-title {
             font-weight: 500 !important;
             padding: 2px;
+        }
+        
+        /* Estilos más parecidos a Google Calendar */
+        .fc-header-toolbar {
+            padding: 8px 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border-radius: 8px;
+            margin-bottom: 16px !important;
+            background-color: #f8f9fa;
+        }
+        
+        .fc-button {
+            border-radius: 20px !important;
+            text-transform: none !important;
+            box-shadow: none !important;
+            border: 1px solid #dadce0 !important;
+            background-color: white !important;
+            color: #3c4043 !important;
+            padding: 6px 16px !important;
+            font-weight: 500 !important;
+        }
+        
+        .fc-button:hover {
+            background-color: #f8f9fa !important;
+            border-color: #c1c3c7 !important;
+        }
+        
+        .fc-button-active {
+            background-color: #e8f0fe !important;
+            color: #1a73e8 !important;
+        }
+        
+        .fc-day-today {
+            background-color: #e8f0fe !important;
+        }
+        
+        .fc-daygrid-day-top {
+            justify-content: center !important;
+            margin-top: 5px !important;
         }
         
         /* Estilos específicos por tipo */
@@ -130,6 +169,79 @@
             color: white !important;
             text-decoration: line-through !important;
             opacity: 0.8;
+        }
+        
+        /* Estilos específicos por estado de cita */
+        .estado-pendiente {
+            background-color: #4285f4 !important;
+            border-left-color: #1a56db !important;
+            color: white !important;
+        }
+        
+        .estado-en-curso {
+            background-color: #fbbc04 !important;
+            border-left-color: #d69e2e !important;
+            color: white !important;
+        }
+        
+        .estado-completada {
+            background-color: #34a853 !important;
+            border-left-color: #276749 !important;
+            color: white !important;
+        }
+        
+        .estado-cancelada {
+            background-color: #ea4335 !important;
+            border-left-color: #9b2c2c !important;
+            color: white !important;
+            text-decoration: line-through !important;
+            opacity: 0.8;
+        }
+        
+        .estado-reprogramada {
+            background-color: #9c27b0 !important;
+            border-left-color: #6b46c1 !important;
+            color: white !important;
+        }
+        
+        /* Estilos para impresión */
+        @media print {
+            body {
+                background-color: white !important;
+                color: black !important;
+            }
+            
+            #sidebar, .context-menu {
+                display: none !important;
+            }
+            
+            #calendar-main {
+                width: 100% !important;
+                height: auto !important;
+                padding: 0 !important;
+                overflow: visible !important;
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+            }
+            
+            .fc-header-toolbar {
+                background-color: white !important;
+                box-shadow: none !important;
+                print-color-adjust: exact !important;
+                -webkit-print-color-adjust: exact !important;
+            }
+            
+            .fc-view-harness {
+                height: auto !important;
+                overflow: visible !important;
+            }
+            
+            .fc-event {
+                page-break-inside: avoid !important;
+                print-color-adjust: exact !important;
+                -webkit-print-color-adjust: exact !important;
+            }
         }
         
         /* Secciones de filtros */
@@ -188,7 +300,8 @@
         .sidebar-actions {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
+            margin-top: 24px;
         }
         
         .action-button {
@@ -196,27 +309,33 @@
             align-items: center;
             justify-content: center;
             border: none;
-            background-color: #1a73e8;
+            background: linear-gradient(135deg, #1a73e8, #0d47a1);
             color: white;
-            padding: 10px 16px;
-            border-radius: 4px;
+            padding: 14px 18px;
+            border-radius: 28px;
             font-weight: 500;
+            font-size: 15px;
             cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+            transition: all 0.3s ease;
+            width: 100%;
+            letter-spacing: 0.5px;
         }
         
         .action-button:hover {
-            background-color: #1557b0;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(135deg, #1557b0, #0a3d8f);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+            transform: translateY(-2px);
         }
         
         .action-button:active {
             transform: scale(0.98);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
         }
         
         .action-button i {
-            margin-right: 8px;
+            margin-right: 10px;
+            font-size: 22px;
         }
         
         /* Tema oscuro */
@@ -237,6 +356,220 @@
         body.dark-theme .filter-item input[type="checkbox"] {
             border-color: #9aa0a6;
         }
+        
+        /* Menú contextual para clic derecho */
+        .context-menu {
+            position: fixed;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 8px 0;
+            min-width: 220px;
+            z-index: 1000;
+            display: none;
+            animation: fadeIn 0.15s ease-out;
+            border: 1px solid rgba(0,0,0,0.08);
+            text-align: left; /* Ensure text is left-aligned */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Make sure context menu stays on screen */
+        .context-menu.right-side {
+            right: 10px;
+            left: auto !important;
+        }
+
+        .context-menu.bottom-side {
+            bottom: 10px;
+            top: auto !important;
+        }
+
+        .context-menu-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            color: #3c4043;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            text-align: left; /* Ensure text is left-aligned */
+            justify-content: flex-start; /* Align items to the start */
+            width: 100%; /* Take full width */
+        }
+
+        .context-menu-item:hover {
+            background-color: #f5f5f5;
+            color: #1a73e8;
+        }
+
+        .context-menu-divider {
+            height: 1px;
+            background-color: #e0e0e0;
+            margin: 6px 0;
+        }
+
+        .context-menu-item i {
+            margin-right: 12px;
+            color: #5f6368;
+            font-size: 18px;
+            transition: color 0.2s ease;
+        }
+
+        .context-menu-item:hover i {
+            color: #1a73e8;
+        }
+
+        /* EventForm CSS - Fix scrolling issues */
+        .event-form-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .event-form {
+            background: white;
+            border-radius: 12px;
+            width: 550px; /* Increased width */
+            max-width: 90%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Contains the scrolling */
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .event-form-header {
+            background: linear-gradient(135deg, #1a73e8, #1557b0);
+            color: white;
+            padding: 18px 24px; /* Increased padding */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            font-size: 20px; /* Increased font size */
+            letter-spacing: 0.2px;
+        }
+
+        .event-form-header .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px; /* Increased font size */
+            cursor: pointer;
+            padding: 0;
+            margin: 0;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .event-form-header .close-btn:hover {
+            opacity: 1;
+        }
+
+        .event-form-content {
+            padding: 24px 28px; /* Increased padding */
+            overflow-y: auto; /* Scrollable content */
+            max-height: calc(90vh - 65px - 80px); /* Viewport height minus header and footer */
+        }
+
+        .event-form-footer {
+            padding: 18px 24px; /* Increased padding */
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            border-top: 1px solid #e0e0e0;
+            background-color: #f8f9fa;
+        }
+
+        .event-form-group {
+            margin-bottom: 20px;
+        }
+
+        .event-form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #3c4043;
+            font-size: 15px;
+        }
+
+        .event-form-group input,
+        .event-form-group select,
+        .event-form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #dadce0;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #202124;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .event-form-group input:focus,
+        .event-form-group select:focus,
+        .event-form-group textarea:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+
+        .event-form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .event-form .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            font-size: 15px;
+            letter-spacing: 0.2px;
+        }
+
+        .event-form .btn-primary {
+            background: linear-gradient(135deg, #1a73e8, #1557b0);
+            color: white;
+        }
+
+        .event-form .btn-primary:hover {
+            background: linear-gradient(135deg, #1557b0, #0d47a1);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .event-form .btn-danger {
+            background: linear-gradient(135deg, #ea4335, #d32f2f);
+            color: white;
+        }
+
+        .event-form .btn-danger:hover {
+            background: linear-gradient(135deg, #d32f2f, #b71c1c);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-row > div {
+            flex: 1;
+        }
     </style>
 </head>
 
@@ -245,22 +578,42 @@
         <div id="sidebar">
             <h3>Filtros</h3>
             <div class="filter-section">
-                <div class="filter-title">Tipos de citas</div>
+                <div class="filter-title">Eventos</div>
                 <div class="filter-item">
-                    <input type="checkbox" id="filter-normal" checked>
-                    <label for="filter-normal">Normales</label>
+                    <input type="checkbox" id="filter-meeting" checked>
+                    <label for="filter-meeting">Reuniones</label>
                 </div>
                 <div class="filter-item">
-                    <input type="checkbox" id="filter-urgent" checked>
-                    <label for="filter-urgent">Urgentes</label>
+                    <input type="checkbox" id="filter-reminder" checked>
+                    <label for="filter-reminder">Recordatorios</label>
                 </div>
                 <div class="filter-item">
-                    <input type="checkbox" id="filter-completed" checked>
-                    <label for="filter-completed">Completadas</label>
+                    <input type="checkbox" id="filter-appointment" checked>
+                    <label for="filter-appointment">Otros eventos</label>
+                </div>
+            </div>
+            
+            <div class="filter-section">
+                <div class="filter-title">Citas</div>
+                <div class="filter-item">
+                    <input type="checkbox" id="filter-pendiente" checked>
+                    <label for="filter-pendiente">Pendientes</label>
                 </div>
                 <div class="filter-item">
-                    <input type="checkbox" id="filter-cancelled" checked>
-                    <label for="filter-cancelled">Canceladas</label>
+                    <input type="checkbox" id="filter-en-curso" checked>
+                    <label for="filter-en-curso">En curso</label>
+                </div>
+                <div class="filter-item">
+                    <input type="checkbox" id="filter-completada" checked>
+                    <label for="filter-completada">Completadas</label>
+                </div>
+                <div class="filter-item">
+                    <input type="checkbox" id="filter-cancelada" checked>
+                    <label for="filter-cancelada">Canceladas</label>
+                </div>
+                <div class="filter-item">
+                    <input type="checkbox" id="filter-reprogramada" checked>
+                    <label for="filter-reprogramada">Reprogramadas</label>
                 </div>
             </div>
             
@@ -270,11 +623,11 @@
                     Hoy
                 </button>
                 <button id="btn-refresh" class="action-button">
-                    <i class="material-icons">refresh</i>
+                    <i class="material-icons">sync</i>
                     Actualizar
                 </button>
                 <button id="btn-new-event" class="action-button">
-                    <i class="material-icons">add</i>
+                    <i class="material-icons">calendar_add_on</i>
                     Nueva cita
                 </button>
                 <button id="btn-print" class="action-button">
@@ -285,6 +638,29 @@
         </div>
         <div id="calendar-main">
             <div id="calendar"></div>
+        </div>
+    </div>
+    
+    <!-- Menú contextual para clic derecho -->
+    <div id="context-menu" class="context-menu">
+        <div class="context-menu-item" id="ctx-new-appointment">
+            <i class="material-icons">pets</i>Agendar cita médica
+        </div>
+        <div class="context-menu-item" id="ctx-new-meeting">
+            <i class="material-icons">groups</i>Agendar reunión
+        </div>
+        <div class="context-menu-item" id="ctx-new-reminder">
+            <i class="material-icons">notifications</i>Agendar recordatorio
+        </div>
+        <div class="context-menu-item" id="ctx-day-view">
+            <i class="material-icons">today</i>Ver día completo
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item ctx-event-only" id="ctx-edit-event">
+            <i class="material-icons">edit</i>Modificar cita
+        </div>
+        <div class="context-menu-item ctx-event-only" id="ctx-delete-event">
+            <i class="material-icons">delete</i>Eliminar cita
         </div>
     </div>
 
@@ -394,24 +770,106 @@
         
         // Inicializar el menú contextual
         function initContextMenu() {
-            contextMenu = new CalendarContextMenu();
-            
-            // Configurar callbacks
-            contextMenu.onNewEvent = function(date) {
-                openNewEventForm(date);
+            contextMenu = {
+                element: document.getElementById('context-menu'),
+                visible: false,
+                currentEvent: null,
+                currentDate: null,
+                
+                // Mostrar el menú
+                show: function(x, y, event = null, date = null) {
+                    // Check viewport boundaries
+                    const viewportWidth = window.innerWidth;
+                    const viewportHeight = window.innerHeight;
+                    const menuWidth = 220; // Ancho definido del menú
+                    const menuHeight = 280; // Altura aproximada del menú
+                    
+                    // Ajustar posición horizontal
+                    if (x > viewportWidth - menuWidth - 20) {
+                        this.element.classList.add('right-side');
+                        x = Math.min(x, viewportWidth - 20);
+                    } else {
+                        this.element.classList.remove('right-side');
+                    }
+                    
+                    // Ajustar posición vertical
+                    if (y > viewportHeight - menuHeight - 20) {
+                        this.element.classList.add('bottom-side');
+                        y = Math.min(y, viewportHeight - 20);
+                    } else {
+                        this.element.classList.remove('bottom-side');
+                    }
+                    
+                    this.element.style.left = x + 'px';
+                    this.element.style.top = y + 'px';
+                    this.element.style.display = 'block';
+                    this.visible = true;
+                    this.currentEvent = event;
+                    this.currentDate = date;
+                    
+                    // Mostrar/ocultar opciones específicas de eventos
+                    const eventOnlyItems = document.querySelectorAll('.ctx-event-only');
+                    eventOnlyItems.forEach(item => {
+                        item.style.display = event ? 'flex' : 'none';
+                    });
+                },
+                
+                // Ocultar el menú
+                hide: function() {
+                    this.element.style.display = 'none';
+                    this.visible = false;
+                    this.currentEvent = null;
+                    this.currentDate = null;
+                }
             };
             
-            contextMenu.onEditEvent = function(event) {
-                eventForm.open(event);
-            };
+            // Configurar eventos de click en opciones del menú
+            document.getElementById('ctx-new-appointment').addEventListener('click', function() {
+                // Abrir formulario de cita médica en ClinicaController
+                notifyJavaApp('openClinicaForm', {
+                    date: contextMenu.currentDate ? contextMenu.currentDate.toISOString() : new Date().toISOString(),
+                    type: 'appointment'
+                });
+                contextMenu.hide();
+            });
             
-            contextMenu.onDeleteEvent = function(event) {
-                deleteEvent(event.id);
-            };
+            document.getElementById('ctx-new-meeting').addEventListener('click', function() {
+                openNewEventForm(contextMenu.currentDate, 'meeting');
+                contextMenu.hide();
+            });
             
-            contextMenu.onDayView = function(date) {
-                calendar.changeView('timeGridDay', date);
-            };
+            document.getElementById('ctx-new-reminder').addEventListener('click', function() {
+                openNewEventForm(contextMenu.currentDate, 'reminder');
+                contextMenu.hide();
+            });
+            
+            document.getElementById('ctx-day-view').addEventListener('click', function() {
+                calendar.changeView('timeGridDay', contextMenu.currentDate);
+                contextMenu.hide();
+            });
+            
+            document.getElementById('ctx-edit-event').addEventListener('click', function() {
+                if (contextMenu.currentEvent) {
+                    eventForm.open(contextMenu.currentEvent);
+                    contextMenu.hide();
+                }
+            });
+            
+            document.getElementById('ctx-delete-event').addEventListener('click', function() {
+                if (contextMenu.currentEvent) {
+                    if (confirm('¿Estás seguro de eliminar esta cita?')) {
+                        deleteEvent(contextMenu.currentEvent.id);
+                        contextMenu.hide();
+                    }
+                }
+            });
+            
+            // Ocultar el menú al hacer clic fuera de él
+            document.addEventListener('click', function(e) {
+                if (contextMenu.visible && !contextMenu.element.contains(e.target)) {
+                    contextMenu.hide();
+                }
+            });
         }
         
         // Inicializar el calendario
@@ -437,7 +895,20 @@
                         right: 'dayGridMonth,timeGridWeek,timeGridDay'
                     },
                     events: [], // Iniciar con array vacío, los eventos reales se cargarán desde Java
-                    height: 'auto'
+                    height: 'auto',
+                    eventDidMount: function(info) {
+                        // Aplicar clases según tipo y estado
+                        const event = info.event;
+                        const tipo = event.extendedProps?.type || 'default';
+                        const estado = event.extendedProps?.estado || '';
+                        
+                        if (estado) {
+                            info.el.classList.add('estado-' + estado.toLowerCase());
+                        } else if (tipo) {
+                            // Aplicar clase según tipo si no hay estado
+                            info.el.classList.add(tipo + '-event');
+                        }
+                    }
                 });
                 
                 console.log('Objeto calendario creado, renderizando...');
@@ -471,6 +942,45 @@
                         openNewEventForm(info.date);
                     });
                     
+                    // Añadir evento para clic derecho
+                    calendarEl.addEventListener('contextmenu', function(e) {
+                        e.preventDefault();
+                        
+                        // Determinar si el clic fue sobre un evento o una fecha
+                        let eventTarget = e.target.closest('.fc-event');
+                        let dateTarget = e.target.closest('.fc-daygrid-day, .fc-timegrid-slot');
+                        
+                        if (eventTarget) {
+                            // Encontrar el evento FullCalendar por ID
+                            const eventId = eventTarget.fcSeg?.eventRange?.def?.publicId;
+                            if (eventId) {
+                                const fcEvent = calendar.getEventById(eventId);
+                                if (fcEvent) {
+                                    contextMenu.show(e.pageX, e.pageY, fcEvent);
+                                    return;
+                                }
+                            }
+                        }
+                        
+                        if (dateTarget) {
+                            // Obtener la fecha
+                            let date;
+                            if (dateTarget.dataset.date) {
+                                date = new Date(dateTarget.dataset.date);
+                            } else {
+                                // Para las celdas de tiempo
+                                const dayDate = document.querySelector('.fc-day-header.fc-today');
+                                if (dayDate && dayDate.dataset.date) {
+                                    date = new Date(dayDate.dataset.date);
+                                } else {
+                                    date = new Date();
+                                }
+                            }
+                            
+                            contextMenu.show(e.pageX, e.pageY, null, date);
+                        }
+                    });
+                    
                     console.log('Configuración adicional aplicada');
                 }, 500);
                 
@@ -500,22 +1010,43 @@
         
         // Configurar filtros
         function setupFilters() {
-            const filterNormal = document.getElementById('filter-normal');
-            const filterUrgent = document.getElementById('filter-urgent');
-            const filterCompleted = document.getElementById('filter-completed');
-            const filterCancelled = document.getElementById('filter-cancelled');
+            // Filtros por tipo de evento
+            const filterMeeting = document.getElementById('filter-meeting');
+            const filterReminder = document.getElementById('filter-reminder');
+            const filterAppointment = document.getElementById('filter-appointment');
+            
+            // Filtros por estado de cita
+            const filterPendiente = document.getElementById('filter-pendiente');
+            const filterEnCurso = document.getElementById('filter-en-curso');
+            const filterCompletada = document.getElementById('filter-completada');
+            const filterCancelada = document.getElementById('filter-cancelada');
+            const filterReprogramada = document.getElementById('filter-reprogramada');
             
             function applyFilters() {
                 const events = calendar.getEvents();
                 
                 events.forEach(event => {
-                    const type = event.extendedProps?.type || 'default';
+                    const eventType = event.extendedProps?.eventType || '';
+                    const estado = event.extendedProps?.estado?.toLowerCase() || '';
                     
                     let visible = true;
-                    if (type === 'default' && !filterNormal.checked) visible = false;
-                    if (type === 'urgent' && !filterUrgent.checked) visible = false;
-                    if (type === 'completed' && !filterCompleted.checked) visible = false;
-                    if (type === 'cancelled' && !filterCancelled.checked) visible = false;
+                    
+                    // Determine the category of event (user-created event vs. appointment)
+                    const isAppointment = estado !== '';
+                    
+                    if (isAppointment) {
+                        // This is a database appointment, apply cita filters
+                        if (estado === 'pendiente' && !filterPendiente.checked) visible = false;
+                        if (estado === 'en_curso' && !filterEnCurso.checked) visible = false;
+                        if (estado === 'completada' && !filterCompletada.checked) visible = false;
+                        if (estado === 'cancelada' && !filterCancelada.checked) visible = false;
+                        if (estado === 'reprogramada' && !filterReprogramada.checked) visible = false;
+                    } else {
+                        // This is a user-created event, apply event filters
+                        if (eventType === 'meeting' && !filterMeeting.checked) visible = false;
+                        if (eventType === 'reminder' && !filterReminder.checked) visible = false;
+                        if ((eventType === '' || eventType === 'other') && !filterAppointment.checked) visible = false;
+                    }
                     
                     // Actualizar visibilidad
                     if (visible) {
@@ -526,15 +1057,21 @@
                 });
             }
             
-            // Añadir event listeners
-            filterNormal.addEventListener('change', applyFilters);
-            filterUrgent.addEventListener('change', applyFilters);
-            filterCompleted.addEventListener('change', applyFilters);
-            filterCancelled.addEventListener('change', applyFilters);
+            // Añadir event listeners para filtros por tipo de evento
+            filterMeeting.addEventListener('change', applyFilters);
+            filterReminder.addEventListener('change', applyFilters);
+            filterAppointment.addEventListener('change', applyFilters);
+            
+            // Añadir event listeners para filtros por estado de cita
+            filterPendiente.addEventListener('change', applyFilters);
+            filterEnCurso.addEventListener('change', applyFilters);
+            filterCompletada.addEventListener('change', applyFilters);
+            filterCancelada.addEventListener('change', applyFilters);
+            filterReprogramada.addEventListener('change', applyFilters);
         }
         
         // Abrir formulario para nuevo evento
-        function openNewEventForm(date = null) {
+        function openNewEventForm(date = null, eventType = null) {
             let eventData = null;
             
             if (date) {
@@ -544,8 +1081,18 @@
                 
                 eventData = {
                     start: date,
-                    end: endDate
+                    end: endDate,
+                    eventType: eventType // Asignar tipo de evento si se proporciona
                 };
+                
+                // Preconfigurar título según tipo
+                if (eventType === 'meeting') {
+                    eventData.title = 'Nueva reunión';
+                    eventData.color = '#9c27b0'; // Morado para reuniones
+                } else if (eventType === 'reminder') {
+                    eventData.title = 'Nuevo recordatorio';
+                    eventData.color = '#ff9800'; // Naranja para recordatorios
+                }
             }
             
             eventForm.open(eventData);
@@ -553,6 +1100,22 @@
         
         // Guardar evento
         function saveEvent(eventData) {
+            // Determine if this is a user-created event or an appointment
+            if (!eventData.estado) {
+                // This is a user-created event, not a cita from the database
+                if (!eventData.eventType) {
+                    // Try to determine event type from title
+                    const title = eventData.title.toLowerCase();
+                    if (title.includes('reunión') || title.includes('reunion') || title.includes('meeting')) {
+                        eventData.eventType = 'meeting';
+                    } else if (title.includes('recordatorio') || title.includes('reminder')) {
+                        eventData.eventType = 'reminder';
+                    } else {
+                        eventData.eventType = 'other';
+                    }
+                }
+            }
+            
             // Si es una edición
             if (eventData.id) {
                 // Encontrar el evento en el calendario
@@ -568,6 +1131,7 @@
                     
                     // Actualizar propiedades extendidas
                     existingEvent.setExtendedProp('type', eventData.type);
+                    existingEvent.setExtendedProp('eventType', eventData.eventType);
                     existingEvent.setExtendedProp('location', eventData.location);
                     existingEvent.setExtendedProp('description', eventData.description);
                     
@@ -612,6 +1176,10 @@
                 
                 // Notificar a Java
                 notifyJavaApp('delete', { id: eventId });
+                
+                console.log('Evento eliminado:', eventId);
+            } else {
+                console.error('No se encontró el evento para eliminar:', eventId);
             }
         }
         
@@ -624,8 +1192,9 @@
             });
         }
         
-        // Imprimir calendario
+        // Imprimir calendario con vista previa
         function printCalendar() {
+            // Abrir directamente el cuadro de diálogo de impresión del navegador
             window.print();
         }
         
@@ -638,6 +1207,11 @@
                     window.javaConnector.processEvent(action, JSON.stringify(data));
                 } else {
                     console.log('JavaConnector no disponible, acción local:', action, data);
+                    
+                    // Caso especial para abrir el formulario de cita médica cuando no hay JavaConnector
+                    if (action === 'openClinicaForm') {
+                        alert('No se pudo abrir el formulario de cita médica. El conector Java no está disponible.');
+                    }
                 }
             } catch (e) {
                 console.error('Error al notificar a Java:', e);
@@ -770,22 +1344,6 @@
                     console.warn("Eventos con problemas:", invalidEvents);
                 }
                 
-                // Mostrar específicamente evento del día 18 para depuración
-                const eventos18 = validEvents.filter(event => {
-                    try {
-                        const date = new Date(event.start);
-                        return date.getDate() === 18;
-                    } catch(e) {
-                        return false;
-                    }
-                });
-                
-                if (eventos18.length > 0) {
-                    console.log("EVENTOS DEL DÍA 18:", eventos18);
-                } else {
-                    console.warn("⚠️ NO HAY EVENTOS DEL DÍA 18");
-                }
-                
                 // Actualizar los eventos del calendario
                 events = validEvents;
                 calendar.removeAllEvents();
@@ -819,4 +1377,4 @@
         };
     </script>
 </body>
-</html> 
+</html>

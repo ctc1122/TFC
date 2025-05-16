@@ -11,16 +11,24 @@ import org.json.JSONObject;
 
 import com.example.pruebamongodbcss.theme.ThemeManager;
 
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.concurrent.Worker;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import netscape.javascript.JSObject;
 
 /**
@@ -399,7 +407,9 @@ public class GoogleCalendarWebView extends BorderPane {
         
         // Añadir tipo de evento para clasificar en React
         String eventType = "default";
-        if (event.getTitle() != null) {
+        if (event.getType() != null) {
+            eventType = event.getType();
+        } else if (event.getTitle() != null) {
             String title = event.getTitle().toLowerCase();
             if (title.contains("urgente") || title.contains("urgencia")) {
                 eventType = "urgent";
@@ -410,6 +420,45 @@ public class GoogleCalendarWebView extends BorderPane {
             }
         }
         jsonEvent.put("type", eventType);
+        
+        // Añadir eventType para filtros de eventos vs citas
+        if (event.getEventType() != null) {
+            jsonEvent.put("eventType", event.getEventType());
+        } else {
+            // Si no tiene eventType pero tiene estado, es una cita, no un evento
+            if (event.getEstado() == null || event.getEstado().isEmpty()) {
+                // Determinar eventType según el título si parece un evento y no una cita
+                String title = event.getTitle().toLowerCase();
+                if (title.contains("reunión") || title.contains("reunion") || title.contains("meeting")) {
+                    jsonEvent.put("eventType", "meeting");
+                } else if (title.contains("recordatorio") || title.contains("reminder")) {
+                    jsonEvent.put("eventType", "reminder");
+                } else {
+                    jsonEvent.put("eventType", "other");
+                }
+            }
+        }
+        
+        // Añadir estado para filtros adicionales
+        if (event.getEstado() != null) {
+            jsonEvent.put("estado", event.getEstado());
+        } else {
+            // Determinar estado según el tipo si no hay estado asignado
+            switch (eventType) {
+                case "urgent":
+                    jsonEvent.put("estado", "EN_CURSO");
+                    break;
+                case "completed":
+                    jsonEvent.put("estado", "COMPLETADA");
+                    break;
+                case "cancelled":
+                    jsonEvent.put("estado", "CANCELADA");
+                    break;
+                default:
+                    jsonEvent.put("estado", "PENDIENTE");
+                    break;
+            }
+        }
         
         return jsonEvent;
     }
@@ -524,6 +573,40 @@ public class GoogleCalendarWebView extends BorderPane {
                 }
             }
             
+            // Acción para abrir el formulario de cita clínica
+            if ("openClinicaForm".equals(action)) {
+                try {
+                    JSONObject requestData = new JSONObject(eventData);
+                    String dateStr = requestData.optString("date", "");
+                    System.out.println("Solicitando apertura de formulario de cita para fecha: " + dateStr);
+                    
+                    // Informar al usuario que esta funcionalidad requiere integración adicional
+                    Platform.runLater(() -> {
+                        try {
+                            // Intentar notificar a la escena actual
+                            Scene scene = getScene();
+                            if (scene != null) {
+                                Node root = scene.getRoot();
+                                if (root != null) {
+                                    // Verificar si la raíz tiene un método para abrir el formulario de citas
+                                    boolean success = triggerFormOpeningInParent(dateStr);
+                                    if (!success) {
+                                        System.out.println("No se pudo abrir el formulario de citas automáticamente");
+                                    }
+                                }
+                            }
+                        } catch (Exception e) {
+                            System.err.println("Error al intentar abrir formulario de citas: " + e.getMessage());
+                            e.printStackTrace();
+                        }
+                    });
+                    return;
+                } catch (Exception e) {
+                    System.err.println("Error al procesar solicitud de apertura de formulario clínico: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+            
             // Para otras acciones, convertir JSON a objeto CalendarEvent
             CalendarEvent event = parseEventFromJson(eventData);
             
@@ -549,6 +632,294 @@ public class GoogleCalendarWebView extends BorderPane {
             System.err.println("Error al procesar evento: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+    
+    /**
+     * Intenta activar la apertura del formulario de citas en el componente padre
+     * Este método usa reflexión para intentar encontrar métodos relevantes
+     * @param dateStr Fecha para la cita
+     * @return true si se pudo abrir el formulario
+     */
+    private boolean triggerFormOpeningInParent(String dateStr) {
+        try {
+            // Convertir la fecha si está disponible
+            LocalDateTime dateTime;
+            
+            if (dateStr != null && !dateStr.isEmpty()) {
+                try {
+                    dateTime = LocalDateTime.parse(dateStr.replace("Z", ""));
+                } catch (Exception e) {
+                    System.err.println("Error al parsear fecha: " + e.getMessage());
+                    dateTime = LocalDateTime.now(); // Usar fecha actual como respaldo
+                }
+            } else {
+                dateTime = LocalDateTime.now(); // Usar fecha actual como respaldo
+            }
+            
+            // Crear una copia final para usarla en lambdas
+            final LocalDateTime date = dateTime;
+            
+            // Método DIRECTO: Intentar con clase conocida primero
+            try {
+                // Intentar abrir directamente el formulario clínico
+                openClinicaFormDirectly(date);
+                return true;
+            } catch (Exception e) {
+                System.err.println("Error al abrir formulario directamente: " + e.getMessage());
+            }
+            
+            // ALTERNATIVA: Intentar encontrar el controlador principal
+            Scene scene = getScene();
+            if (scene == null) return false;
+            
+            // Obtener la ventana (Stage)
+            Stage stage = (Stage) scene.getWindow();
+            if (stage == null) return false;
+            
+            // Buscar objetos útiles en las propiedades de la escena y ventana
+            Object mainController = scene.getUserData();
+            if (mainController == null) {
+                mainController = stage.getUserData();
+            }
+            
+            if (mainController != null) {
+                // Intentar varios métodos comunes para abrir un formulario de citas
+                final LocalDateTime finalDate = date;
+                Class<?> controllerClass = mainController.getClass();
+                
+                // Método 1: openClinicaForm o similar
+                try {
+                    java.lang.reflect.Method method = findSuitableMethod(controllerClass, 
+                            "openClinicaForm", "openAppointmentForm", "showClinicaForm", "mostrarFormularioCita");
+                    
+                    if (method != null) {
+                        System.out.println("Encontrado método para abrir formulario: " + method.getName());
+                        
+                        // Determinar los parámetros correctos
+                        Class<?>[] paramTypes = method.getParameterTypes();
+                        Object[] params = new Object[paramTypes.length];
+                        
+                        // Intentar llenar los parámetros con valores adecuados
+                        for (int i = 0; i < paramTypes.length; i++) {
+                            if (paramTypes[i].isAssignableFrom(LocalDateTime.class)) {
+                                params[i] = finalDate;
+                            } else if (paramTypes[i].isAssignableFrom(com.example.pruebamongodbcss.Data.Usuario.class)) {
+                                params[i] = usuarioActual;
+                            } else {
+                                params[i] = null;
+                            }
+                        }
+                        
+                        // Invocar el método
+                        method.invoke(mainController, params);
+                        return true;
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error intentando método 1: " + e.getMessage());
+                }
+                
+                // Método 2: navegar a una vista de citas
+                try {
+                    java.lang.reflect.Method method = findSuitableMethod(controllerClass,
+                            "navigate", "navigateTo", "showView", "mostrarVista");
+                    
+                    if (method != null) {
+                        System.out.println("Encontrado método de navegación: " + method.getName());
+                        
+                        // Intentar navegar a la vista de citas
+                        Class<?>[] paramTypes = method.getParameterTypes();
+                        if (paramTypes.length == 1 && paramTypes[0] == String.class) {
+                            // Probar diferentes nombres para la vista de citas
+                            String[] possibleViews = {"clinica", "citas", "appointments", "nuevaCita"};
+                            
+                            for (String viewName : possibleViews) {
+                                try {
+                                    method.invoke(mainController, viewName);
+                                    return true;
+                                } catch (Exception e) {
+                                    // Intentar con el siguiente nombre
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error intentando método 2: " + e.getMessage());
+                }
+            }
+            
+            // Si no funcionó nada, intentar con el método directo nuevamente
+            try {
+                openClinicaFormDirectly(date);
+                return true;
+            } catch (Exception e) {
+                System.err.println("Error al intentar abrir formulario directamente (segundo intento): " + e.getMessage());
+                
+                // Último recurso: Mostrar mensaje informativo
+                final LocalDateTime finalDate = date;
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Información");
+                    alert.setHeaderText("Formulario de Citas");
+                    alert.setContentText("Para agendar una cita médica, por favor utilice la sección de Clínica " +
+                                         "desde el menú principal. La fecha seleccionada es: " + 
+                                         (finalDate != null ? finalDate.toLocalDate().toString() : "hoy"));
+                    alert.showAndWait();
+                });
+            }
+            
+            return false;
+        } catch (Exception e) {
+            System.err.println("Error en triggerFormOpeningInParent: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Intenta abrir directamente el formulario de citas clínicas
+     * @param date Fecha de la cita
+     */
+    private void openClinicaFormDirectly(LocalDateTime date) throws Exception {
+        System.out.println("Intentando abrir formulario de citas directamente...");
+        
+        // Buscar la clase del controlador de clínica
+        Class<?> clinicaControllerClass = null;
+        try {
+            // Intentar diferentes nombres de paquete
+            String[] possiblePackages = {
+                "com.example.pruebamongodbcss.controllers",
+                "com.example.pruebamongodbcss.controller",
+                "com.example.pruebamongodbcss"
+            };
+            
+            for (String pkg : possiblePackages) {
+                try {
+                    clinicaControllerClass = Class.forName(pkg + ".ClinicaController");
+                    if (clinicaControllerClass != null) {
+                        System.out.println("Encontrada clase ClinicaController en paquete: " + pkg);
+                        break;
+                    }
+                } catch (ClassNotFoundException e) {
+                    // Intentar con el siguiente paquete
+                }
+            }
+            
+            if (clinicaControllerClass == null) {
+                throw new ClassNotFoundException("No se pudo encontrar la clase ClinicaController");
+            }
+            
+            // Intentar cargar el FXML
+            final Class<?> finalClinicaControllerClass = clinicaControllerClass;
+            
+            Platform.runLater(() -> {
+                try {
+                    // Intentar diferentes rutas para el FXML
+                    String[] possibleFxmlPaths = {
+                        "/com/example/pruebamongodbcss/clinica-view.fxml",
+                        "/com/example/pruebamongodbcss/views/clinica-view.fxml",
+                        "/com/example/pruebamongodbcss/fxml/clinica-view.fxml",
+                        "/fxml/clinica-view.fxml",
+                        "/clinica-view.fxml"
+                    };
+                    
+                    URL fxmlUrl = null;
+                    for (String path : possibleFxmlPaths) {
+                        fxmlUrl = getClass().getResource(path);
+                        if (fxmlUrl != null) {
+                            System.out.println("Encontrado FXML en ruta: " + path);
+                            break;
+                        }
+                    }
+                    
+                    if (fxmlUrl == null) {
+                        throw new Exception("No se pudo encontrar el archivo FXML para Clinica");
+                    }
+                    
+                    // Cargar el FXML
+                    FXMLLoader loader = new FXMLLoader(fxmlUrl);
+                    Parent root = loader.load();
+                    
+                    // Obtener el controlador
+                    Object controller = loader.getController();
+                    if (controller == null) {
+                        throw new Exception("No se pudo obtener el controlador del FXML");
+                    }
+                    
+                    // Configurar el controlador
+                    if (controller.getClass() == finalClinicaControllerClass) {
+                        // Usar reflexión para invocar métodos en el controlador
+                        try {
+                            // Intentar establecer el usuario
+                            if (usuarioActual != null) {
+                                java.lang.reflect.Method setUsuarioMethod = findSuitableMethod(
+                                    finalClinicaControllerClass, "setUsuarioActual", "setUsuario");
+                                
+                                if (setUsuarioMethod != null) {
+                                    setUsuarioMethod.invoke(controller, usuarioActual);
+                                }
+                            }
+                            
+                            // Intentar establecer la fecha
+                            java.lang.reflect.Method setFechaMethod = findSuitableMethod(
+                                finalClinicaControllerClass, "setFechaCitaDesdeCalendario", "setFechaCita");
+                            
+                            if (setFechaMethod != null && date != null) {
+                                setFechaMethod.invoke(controller, date);
+                            }
+                            
+                            // Intentar inicializar el formulario como nueva cita
+                            java.lang.reflect.Method prepararMethod = findSuitableMethod(
+                                finalClinicaControllerClass, "prepararNuevaCita", "nuevaCita", "initialize");
+                            
+                            if (prepararMethod != null) {
+                                prepararMethod.invoke(controller);
+                            }
+                        } catch (Exception e) {
+                            System.err.println("Error al configurar el controlador: " + e.getMessage());
+                        }
+                    }
+                    
+                    // Crear y mostrar una nueva ventana
+                    Stage stage = new Stage();
+                    stage.setTitle("Nueva Cita Médica");
+                    stage.setScene(new Scene(root));
+                    stage.initModality(Modality.APPLICATION_MODAL);
+                    stage.show();
+                    
+                } catch (Exception e) {
+                    System.err.println("Error al abrir formulario directamente: " + e.getMessage());
+                    e.printStackTrace();
+                    
+                    // Mostrar diálogo de error
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Error");
+                    alert.setHeaderText("No se pudo abrir el formulario de citas");
+                    alert.setContentText("Detalles: " + e.getMessage());
+                    alert.showAndWait();
+                }
+            });
+        } catch (Exception e) {
+            System.err.println("Error buscando el controlador: " + e.getMessage());
+            throw e;
+        }
+    }
+    
+    /**
+     * Busca un método adecuado por nombres posibles
+     * @param clazz Clase donde buscar
+     * @param possibleNames Nombres posibles del método
+     * @return El método encontrado o null
+     */
+    private java.lang.reflect.Method findSuitableMethod(Class<?> clazz, String... possibleNames) {
+        for (String name : possibleNames) {
+            java.lang.reflect.Method[] methods = clazz.getMethods();
+            for (java.lang.reflect.Method method : methods) {
+                if (method.getName().equals(name)) {
+                    return method;
+                }
+            }
+        }
+        return null;
     }
     
     /**
@@ -641,6 +1012,35 @@ public class GoogleCalendarWebView extends BorderPane {
                             event.setColor("#1a73e8");
                     }
                 }
+            }
+            
+            // Manejar eventType (meeting, reminder, other)
+            if (jsonEvent.has("eventType")) {
+                event.setEventType(jsonEvent.getString("eventType"));
+            }
+            
+            // Estado de la cita
+            if (jsonEvent.has("estado")) {
+                event.setEstado(jsonEvent.getString("estado"));
+            } else if (jsonEvent.has("type")) {
+                // Determinar estado según el tipo si no hay estado asignado
+                String tipo = jsonEvent.getString("type");
+                switch (tipo) {
+                    case "urgent":
+                        event.setEstado("EN_CURSO");
+                        break;
+                    case "completed":
+                        event.setEstado("COMPLETADA");
+                        break;
+                    case "cancelled":
+                        event.setEstado("CANCELADA");
+                        break;
+                    default:
+                        event.setEstado("PENDIENTE");
+                        break;
+                }
+            } else {
+                event.setEstado("PENDIENTE");
             }
             
             return event;

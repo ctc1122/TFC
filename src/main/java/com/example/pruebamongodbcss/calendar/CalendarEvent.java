@@ -17,6 +17,8 @@ public class CalendarEvent {
     private boolean allDay;
     private String type; // default, urgent, completed, cancelled
     private String usuario; // usuario propietario de la cita
+    private String estado; // PENDIENTE, EN_CURSO, COMPLETADA, CANCELADA, REPROGRAMADA
+    private String eventType; // meeting, reminder, other (para eventos creados por el usuario, no citas médicas)
 
     /**
      * Constructor por defecto
@@ -50,9 +52,12 @@ public class CalendarEvent {
      * @param textColor Color del texto (opcional)
      * @param allDay Si es un evento de todo el día
      * @param type Tipo de evento (default, urgent, completed, cancelled)
+     * @param estado Estado de la cita (PENDIENTE, EN_CURSO, COMPLETADA, CANCELADA, REPROGRAMADA)
+     * @param eventType Tipo de evento (meeting, reminder, other)
      */
     public CalendarEvent(String id, String title, String start, String end, 
-                         String location, String description, String color, String textColor, boolean allDay, String type) {
+                         String location, String description, String color, String textColor, 
+                         boolean allDay, String type, String estado, String eventType) {
         this.id = id;
         this.title = title;
         this.start = start;
@@ -63,6 +68,8 @@ public class CalendarEvent {
         this.textColor = textColor;
         this.allDay = allDay;
         this.type = type;
+        this.estado = estado;
+        this.eventType = eventType;
     }
 
     // Getters y setters
@@ -154,6 +161,22 @@ public class CalendarEvent {
     public void setUsuario(String usuario) {
         this.usuario = usuario;
     }
+    
+    public String getEstado() {
+        return estado;
+    }
+    
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
+    
+    public String getEventType() {
+        return eventType;
+    }
+    
+    public void setEventType(String eventType) {
+        this.eventType = eventType;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -182,6 +205,8 @@ public class CalendarEvent {
                 ", allDay=" + allDay +
                 ", type='" + type + '\'' +
                 ", usuario='" + usuario + '\'' +
+                ", estado='" + estado + '\'' +
+                ", eventType='" + eventType + '\'' +
                 '}';
     }
 } 

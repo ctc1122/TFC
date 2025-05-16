@@ -1,29 +1,17 @@
 package com.example.pruebamongodbcss;
 
 import java.net.URL;
-import java.util.ResourceBundle;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Random;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
+import java.util.ResourceBundle;
 
-// Eliminar las importaciones antiguas del calendario
-// import com.example.pruebamongodbcss.calendar.CalendarEvent;
-// import com.example.pruebamongodbcss.calendar.CalendarEventManager;
-// import com.example.pruebamongodbcss.calendar.JFXCalendar;
-
-// Nuevas importaciones para CalendarFX
 import com.calendarfx.model.Calendar;
-import com.calendarfx.model.Calendar.Style;
-import com.calendarfx.model.CalendarSource;
 import com.calendarfx.model.Entry;
-import com.calendarfx.view.CalendarView;
-import com.calendarfx.view.DayView;
-import com.calendarfx.view.MonthView;
-import com.calendarfx.view.WeekView;
-
+import com.example.pruebamongodbcss.calendar.CalendarFXComponent;
+import com.example.pruebamongodbcss.calendar.CalendarPreview;
 import com.example.pruebamongodbcss.theme.ThemeManager;
 import com.jfoenix.controls.JFXButton;
 
@@ -32,10 +20,9 @@ import javafx.animation.Interpolator;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
-import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.ScrollEvent;
@@ -45,14 +32,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
-import javafx.util.Duration;
 import javafx.stage.Stage;
-import javafx.scene.Scene;
-import javafx.geometry.Insets;
-import javafx.application.Platform;
-
-import com.example.pruebamongodbcss.calendar.CalendarFXComponent;
-import com.example.pruebamongodbcss.calendar.CalendarPreview;
+import javafx.util.Duration;
 
 /**
  * Controller for the home-view.fxml which displays the modern energy-themed home page
@@ -88,7 +69,7 @@ public class HomeViewController implements Initializable {
     
     @FXML
     private JFXButton btnBack;
-    
+   
     private boolean isPage1Visible = true;
     private boolean isAnimating = false;
     private ScrollPane scrollWrapper;
