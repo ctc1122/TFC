@@ -46,6 +46,13 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.scene.control.Control;
 import javafx.scene.control.ToolBar;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+
+import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
+import com.example.pruebamongodbcss.calendar.EventoFormularioController;
+import java.time.format.DateTimeFormatter;
+import org.bson.types.ObjectId;
 
 /**
  * Componente de calendario basado en CalendarFX.
@@ -698,176 +705,17 @@ public class CalendarFXComponent extends BorderPane {
      */
     private void showEntryDetailsDialog(Entry<?> entry) {
         try {
-            // Crear un diálogo para editar la cita
-            Dialog<ButtonType> dialog = new Dialog<>();
-            dialog.setTitle("Detalles de Cita");
+            // Convertir Entry a CalendarEvent para determinar el tipo
+            CalendarEvent event = entryToCalendarEvent(entry);
             
-            // Verificar si es edición o creación
-            boolean isNewEntry = entry.getCalendar() == null;
-            dialog.setHeaderText(isNewEntry ? "Nueva cita" : "Editar cita");
-            
-            // Configurar botones
-            ButtonType saveButtonType = new ButtonType("Guardar", ButtonType.OK.getButtonData());
-            ButtonType cancelButtonType = new ButtonType("Cancelar", ButtonType.CANCEL.getButtonData());
-            ButtonType deleteButtonType = new ButtonType("Eliminar", ButtonType.CANCEL.getButtonData());
-            
-            if (isNewEntry) {
-                dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, cancelButtonType);
+            // Decidir qué formulario mostrar según el tipo de evento
+            if (calendarService.esReunion(event) || calendarService.esRecordatorio(event)) {
+                // Si es reunión o recordatorio, mostrar el formulario de eventos
+                showEventoFormulario(event, entry);
             } else {
-                dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, cancelButtonType, deleteButtonType);
+                // Si es cita médica, mostrar el formulario de citas
+                showCitaFormulario(event, entry);
             }
-            
-            // Crear formulario
-            GridPane grid = new GridPane();
-            grid.setHgap(10);
-            grid.setVgap(10);
-            grid.setPadding(new Insets(20, 20, 10, 20));
-            
-            // Campos para el formulario
-            TextField titleField = new TextField(entry.getTitle());
-            titleField.setPromptText("Título");
-            
-            TextField locationField = new TextField(entry.getLocation());
-            locationField.setPromptText("Ubicación");
-            
-            DatePicker startDatePicker = new DatePicker(entry.getStartDate());
-            DatePicker endDatePicker = new DatePicker(entry.getEndDate());
-            
-            Spinner<Integer> startHourSpinner = new Spinner<>(0, 23, entry.getStartTime().getHour());
-            Spinner<Integer> startMinuteSpinner = new Spinner<>(0, 59, entry.getStartTime().getMinute());
-            
-            Spinner<Integer> endHourSpinner = new Spinner<>(0, 23, entry.getEndTime().getHour());
-            Spinner<Integer> endMinuteSpinner = new Spinner<>(0, 59, entry.getEndTime().getMinute());
-            
-            TextField descriptionField = new TextField();
-            if (entry.getId() != null && entryDescriptions.containsKey(entry.getId())) {
-                descriptionField.setText(entryDescriptions.get(entry.getId()));
-            }
-            descriptionField.setPromptText("Descripción");
-            
-            ComboBox<Calendar> calendarComboBox = new ComboBox<>();
-            calendarComboBox.getItems().addAll(calendars);
-            calendarComboBox.setValue(entry.getCalendar() != null ? entry.getCalendar() : calendars.get(0));
-            
-            // Configuración visual de los spinners
-            startHourSpinner.setMaxWidth(70);
-            startMinuteSpinner.setMaxWidth(70);
-            endHourSpinner.setMaxWidth(70);
-            endMinuteSpinner.setMaxWidth(70);
-            
-            // Layouts para hora de inicio/fin
-            HBox startTimeBox = new HBox(5, new Label("Hora:"), startHourSpinner, new Label(":"), startMinuteSpinner);
-            HBox endTimeBox = new HBox(5, new Label("Hora:"), endHourSpinner, new Label(":"), endMinuteSpinner);
-            
-            // Añadir campos al grid
-            int row = 0;
-            grid.add(new Label("Título:"), 0, row);
-            grid.add(titleField, 1, row, 2, 1);
-            
-            row++;
-            grid.add(new Label("Ubicación:"), 0, row);
-            grid.add(locationField, 1, row, 2, 1);
-            
-            row++;
-            grid.add(new Label("Fecha inicio:"), 0, row);
-            grid.add(startDatePicker, 1, row);
-            grid.add(startTimeBox, 2, row);
-            
-            row++;
-            grid.add(new Label("Fecha fin:"), 0, row);
-            grid.add(endDatePicker, 1, row);
-            grid.add(endTimeBox, 2, row);
-            
-            row++;
-            grid.add(new Label("Descripción:"), 0, row);
-            grid.add(descriptionField, 1, row, 2, 1);
-            
-            row++;
-            grid.add(new Label("Calendario:"), 0, row);
-            grid.add(calendarComboBox, 1, row, 2, 1);
-            
-            // Hacer los campos más anchos
-            titleField.setPrefWidth(300);
-            locationField.setPrefWidth(300);
-            descriptionField.setPrefWidth(300);
-            
-            dialog.getDialogPane().setContent(grid);
-            
-            // Estilos visuales para el diálogo
-            dialog.getDialogPane().getStyleClass().add("modern-dialog");
-            dialog.getDialogPane().setPrefSize(550, 400);
-            
-            // Focus al campo de título
-            Platform.runLater(titleField::requestFocus);
-            
-            // Establecer manejadores para los botones
-            final Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveButtonType);
-            final Button deleteButton = (Button) dialog.getDialogPane().lookupButton(deleteButtonType);
-            
-            // Aplicar estilos a los botones
-            if (saveButton != null) {
-                saveButton.getStyleClass().add("modern-button");
-                saveButton.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white;");
-            }
-            
-            if (deleteButton != null) {
-                deleteButton.getStyleClass().add("modern-button");
-                deleteButton.setStyle("-fx-background-color: #ea4335; -fx-text-fill: white;");
-            }
-            
-            // Manejar resultado del diálogo
-            Optional<ButtonType> result = dialog.showAndWait();
-            
-            if (result.isPresent()) {
-                if (result.get() == saveButtonType) {
-                    // Actualizar la entrada con los valores del formulario
-                    entry.setTitle(titleField.getText());
-                    entry.setLocation(locationField.getText());
-                    
-                    // Guardar la descripción
-                    String description = descriptionField.getText();
-                    if (entry.getId() != null && description != null && !description.isEmpty()) {
-                        entryDescriptions.put(entry.getId(), description);
-                    }
-                    
-                    LocalTime startTime = LocalTime.of(
-                            startHourSpinner.getValue(), 
-                            startMinuteSpinner.getValue());
-                    
-                    LocalTime endTime = LocalTime.of(
-                            endHourSpinner.getValue(), 
-                            endMinuteSpinner.getValue());
-                    
-                    entry.changeStartDate(startDatePicker.getValue());
-                    entry.changeStartTime(startTime);
-                    entry.changeEndDate(endDatePicker.getValue());
-                    entry.changeEndTime(endTime);
-                    
-                    // Cambiar el calendario si es necesario
-                    Calendar selectedCalendar = calendarComboBox.getValue();
-                    if (entry.getCalendar() != selectedCalendar) {
-                        if (entry.getCalendar() != null) {
-                            entry.getCalendar().removeEntry(entry);
-                        }
-                        entry.setCalendar(selectedCalendar);
-                        selectedCalendar.addEntry(entry);
-                    }
-                    
-                    // Guardar en la base de datos
-                    saveEntryToDatabase(entry);
-                } else if (result.get() == deleteButtonType) {
-                    // Eliminar la entrada
-                    if (entry.getCalendar() != null) {
-                        entry.getCalendar().removeEntry(entry);
-                        
-                        // Eliminar de la base de datos
-                        deleteEntryFromDatabase(entry);
-                    }
-                }
-            }
-            
-            // Refrescar el calendario
-            refreshCalendar();
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -876,137 +724,242 @@ public class CalendarFXComponent extends BorderPane {
     }
     
     /**
-     * Guarda una entrada en la base de datos
+     * Convierte un Entry a CalendarEvent
      */
-    private void saveEntryToDatabase(Entry<?> entry) {
+    private CalendarEvent entryToCalendarEvent(Entry<?> entry) {
+        CalendarEvent event = new CalendarEvent();
+        
+        // Asignar ID si lo tiene
+        event.setId(entry.getId());
+        
+        // Datos básicos
+        event.setTitle(entry.getTitle());
+        event.setLocation(entry.getLocation());
+        
+        // Fechas
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        LocalDateTime startDateTime = LocalDateTime.of(entry.getStartDate(), entry.getStartTime());
+        LocalDateTime endDateTime = LocalDateTime.of(entry.getEndDate(), entry.getEndTime());
+        event.setStart(startDateTime.format(formatter));
+        event.setEnd(endDateTime.format(formatter));
+        
+        // Descripción
+        if (entry.getId() != null && entryDescriptions.containsKey(entry.getId())) {
+            event.setDescription(entryDescriptions.get(entry.getId()));
+        }
+        
+        // Determinar tipo de evento según el calendario
+        if (entry.getCalendar() == calendars.get(0)) {
+            event.setEstado("PENDIENTE");
+            event.setType("default");
+            event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
+        } else if (entry.getCalendar() == calendars.get(1)) {
+            event.setEstado("EN_CURSO");
+            event.setType("urgent");
+            event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
+        } else if (entry.getCalendar() == calendars.get(2)) {
+            event.setEstado("COMPLETADA");
+            event.setType("completed");
+            event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
+        } else if (entry.getCalendar() == calendars.get(3)) {
+            event.setEstado("CANCELADA");
+            event.setType("cancelled");
+            event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
+        } else if (entry.getCalendar() == calendars.get(4)) {
+            event.setTipoEvento(CalendarEvent.EventoTipo.REUNION);
+        } else if (entry.getCalendar() == calendars.get(5)) {
+            event.setTipoEvento(CalendarEvent.EventoTipo.RECORDATORIO);
+        }
+        
+        return event;
+    }
+    
+    /**
+     * Muestra el formulario para citas médicas
+     */
+    private void showCitaFormulario(CalendarEvent event, Entry<?> entry) {
         try {
-            // Convertir la entrada a un objeto CalendarEvent
-            CalendarEvent event = new CalendarEvent();
-            
-            // Si ya tiene un ID, usarlo (para actualizaciones)
-            if (entry.getId() != null && !entry.getId().isEmpty()) {
-                event.setId(entry.getId());
+            // Si la entrada ya está en un calendario, eliminarla temporalmente
+            Calendar originalCalendar = entry.getCalendar();
+            if (originalCalendar != null) {
+                originalCalendar.removeEntry(entry);
             }
             
-            event.setTitle(entry.getTitle());
-            event.setLocation(entry.getLocation());
+            // Cargar el formulario de citas desde la ubicación correcta
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/clinica/citas/cita-formulario.fxml"));
+            Parent root = loader.load();
             
-            // Convertir LocalDateTime a String ISO
-            LocalDateTime startDateTime = LocalDateTime.of(entry.getStartDate(), entry.getStartTime());
-            LocalDateTime endDateTime = LocalDateTime.of(entry.getEndDate(), entry.getEndTime());
+            // Obtener el controlador
+            com.example.pruebamongodbcss.Modulos.Clinica.Citas.CitaFormularioController controller = loader.getController();
             
-            event.setStart(startDateTime.toString());
-            event.setEnd(endDateTime.toString());
+            // Configurar el controlador con el servicio de clínica
+            com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
+            controller.setServicio(servicioClinica);
             
-            // Descripción
-            if (entry.getId() != null && entryDescriptions.containsKey(entry.getId())) {
-                event.setDescription(entryDescriptions.get(entry.getId()));
-            }
+            // Configurar callback para refrescar el calendario
+            controller.setCitaGuardadaCallback(() -> {
+                refreshCalendarFromDatabase();
+            });
             
-            // Establecer estado y tipo según el calendario
-            if (entry.getCalendar() == calendars.get(0)) {
-                event.setEstado("PENDIENTE");
-                event.setType("default");
-            } else if (entry.getCalendar() == calendars.get(1)) {
-                event.setEstado("EN_CURSO");
-                event.setType("urgent");
-            } else if (entry.getCalendar() == calendars.get(2)) {
-                event.setEstado("COMPLETADA");
-                event.setType("completed");
-            } else if (entry.getCalendar() == calendars.get(3)) {
-                event.setEstado("CANCELADA");
-                event.setType("cancelled");
-            } else if (entry.getCalendar() == calendars.get(4)) {
-                event.setEventType("meeting");
-            } else if (entry.getCalendar() == calendars.get(5)) {
-                event.setEventType("reminder");
-            }
-            
-            // Asignar usuario actual si está disponible
-            if (usuarioActual != null) {
-                event.setUsuario(usuarioActual.getUsuario());
-            }
-            
-            // Guardar en la base de datos
+            // Si es edición, convertir el evento a cita y pasarla al controlador
             if (event.getId() != null && !event.getId().isEmpty()) {
-                // Actualizar
-                calendarService.updateAppointment(event);
-            } else {
-                // Crear nuevo
-                CalendarEvent savedEvent = calendarService.saveAppointment(event);
-                // Actualizar ID en la entrada
-                if (savedEvent != null && savedEvent.getId() != null) {
-                    entry.setId(savedEvent.getId());
+                com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = calendarEventToModeloCita(event);
+                if (cita != null) {
+                    controller.setCita(cita);
                 }
             }
             
+            // Mostrar el formulario en una ventana modal
+            Stage stage = new Stage();
+            stage.setTitle("Cita Médica");
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(root));
+            stage.showAndWait();
+            
+            // Refrescar el calendario después de cerrar, independientemente del resultado
+            refreshCalendarFromDatabase();
+            
         } catch (Exception e) {
             e.printStackTrace();
-            showErrorMessage("Error al guardar", "No se pudo guardar la cita: " + e.getMessage());
+            showErrorMessage("Error", "No se pudo abrir el formulario de citas: " + e.getMessage());
+            // Refrescar de todos modos para asegurar consistencia
+            refreshCalendarFromDatabase();
         }
     }
     
     /**
-     * Elimina una entrada de la base de datos
+     * Muestra el formulario para reuniones y recordatorios
      */
-    private void deleteEntryFromDatabase(Entry<?> entry) {
+    private void showEventoFormulario(CalendarEvent event, Entry<?> entry) {
         try {
-            if (entry.getId() != null && !entry.getId().isEmpty()) {
-                calendarService.deleteAppointment(entry.getId());
+            // Si la entrada ya está en un calendario, eliminarla temporalmente
+            Calendar originalCalendar = entry.getCalendar();
+            if (originalCalendar != null) {
+                originalCalendar.removeEntry(entry);
             }
+            
+            // Cargar el formulario de eventos
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/calendar/evento-formulario.fxml"));
+            Parent root = loader.load();
+            
+            // Obtener el controlador
+            EventoFormularioController controller = loader.getController();
+            
+            // Configurar el controlador
+            controller.setServicio(calendarService);
+            
+            // Configurar callback para refrescar el calendario
+            controller.setEventoGuardadoCallback(() -> {
+                refreshCalendarFromDatabase();
+            });
+            
+            // Si es edición, pasar el evento
+            if (event.getId() != null && !event.getId().isEmpty()) {
+                controller.setEvento(event);
+            }
+            
+            // Mostrar el formulario en una ventana modal
+            Stage stage = new Stage();
+            stage.setTitle(event.getTipoEvento() == CalendarEvent.EventoTipo.REUNION ? "Reunión" : "Recordatorio");
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(root));
+            stage.showAndWait();
+            
+            // Refrescar el calendario después de cerrar, independientemente del resultado
+            refreshCalendarFromDatabase();
+            
         } catch (Exception e) {
             e.printStackTrace();
-            showErrorMessage("Error al eliminar", "No se pudo eliminar la cita: " + e.getMessage());
+            showErrorMessage("Error", "No se pudo abrir el formulario de eventos: " + e.getMessage());
+            // Refrescar de todos modos para asegurar consistencia
+            refreshCalendarFromDatabase();
         }
     }
     
     /**
-     * Refresca el calendario
+     * Convierte un CalendarEvent a ModeloCita para el formulario de citas
      */
-    public void refreshCalendar() {
-        if (calendarView != null) {
-            calendarView.refreshData();
+    private com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita calendarEventToModeloCita(CalendarEvent event) {
+        try {
+            com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = 
+                new com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita();
+            
+            // ID (quitar el prefijo _ si lo tiene)
+            if (event.getId() != null && event.getId().startsWith("_")) {
+                cita.setId(new ObjectId(event.getId().substring(1)));
+            } else if (event.getId() != null && !event.getId().isEmpty()) {
+                cita.setId(new ObjectId(event.getId()));
+            }
+            
+            // Fechas
+            DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+            cita.setFechaHora(LocalDateTime.parse(event.getStart(), formatter));
+            
+            // Datos básicos
+            cita.setMotivo(event.getTitle());
+            cita.setObservaciones(event.getDescription());
+            
+            // Estado
+            if (event.getEstado() != null) {
+                String estadoStr = event.getEstado().toUpperCase();
+                try {
+                    cita.setEstado(com.example.pruebamongodbcss.Data.EstadoCita.valueOf(estadoStr));
+                } catch (Exception e) {
+                    // Estado por defecto
+                    cita.setEstado(com.example.pruebamongodbcss.Data.EstadoCita.PENDIENTE);
+                }
+            } else {
+                // Estado por defecto
+                cita.setEstado(com.example.pruebamongodbcss.Data.EstadoCita.PENDIENTE);
+            }
+            
+            // Veterinario
+            cita.setNombreVeterinario(event.getUsuario());
+            
+            return cita;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
     
     /**
-     * Agrega un nuevo evento al calendario y a la base de datos
-     * 
-     * @param title Título del evento
-     * @param location Ubicación
-     * @param startDateTime Fecha y hora de inicio
-     * @param endDateTime Fecha y hora de fin
-     * @param isUrgent Si es una cita urgente
+     * Crea una nueva entrada para el calendario
      */
-    public void addEvent(String title, String location, ZonedDateTime startDateTime, 
-                         ZonedDateTime endDateTime, boolean isUrgent) {
+    private Entry<?> createNewEntry(DateControl.CreateEntryParameter param) {
+        Entry<String> entry = new Entry<>("Nueva cita");
         
-        Calendar targetCalendar = isUrgent ? 
-                calendars.get(1) : calendars.get(0);
-                
-        Entry<String> entry = new Entry<>(title);
-        entry.setLocation(location);
+        // Configurar la fecha según el parámetro
+        entry.setInterval(param.getZonedDateTime(), param.getZonedDateTime().plusHours(1));
         
-        entry.changeStartDate(startDateTime.toLocalDate());
-        entry.changeStartTime(startDateTime.toLocalTime());
-        entry.changeEndDate(endDateTime.toLocalDate());
-        entry.changeEndTime(endDateTime.toLocalTime());
+        // Determinar el tipo de evento según dónde se hizo clic
+        // Si se hizo clic en los calendarios de reuniones o recordatorios, usar ese tipo
+        // De lo contrario, usar cita médica (predeterminado)
+        if (param.getCalendar() == calendars.get(4)) {
+            // Si se hizo clic en el calendario de reuniones
+            entry.setCalendar(calendars.get(4));
+        } else if (param.getCalendar() == calendars.get(5)) {
+            // Si se hizo clic en el calendario de recordatorios
+            entry.setCalendar(calendars.get(5));
+        } else {
+            // Si se hizo clic en cualquier otro calendario o en un área vacía, cita pendiente
+            entry.setCalendar(calendars.get(0));
+        }
         
-        targetCalendar.addEntry(entry);
+        // Mostrar el diálogo de detalles sin añadir la entrada al calendario permanentemente
+        // Se añadirá solo si el usuario guarda correctamente
         
-        // Guardar en la base de datos
-        saveEntryToDatabase(entry);
+        // Importante: No añadimos la entrada al calendario aquí, lo hacemos si se guarda correctamente
+        // Si la entrada ya está en un calendario, la quitamos temporalmente
+        Calendar calendar = entry.getCalendar();
+        if (calendar != null) {
+            calendar.removeEntry(entry);
+        }
         
-        refreshCalendar();
-    }
-    
-    /**
-     * Obtiene la vista principal del calendario
-     * 
-     * @return La vista del calendario
-     */
-    public CalendarView getCalendarView() {
-        return calendarView;
+        Platform.runLater(() -> showEntryDetailsDialog(entry));
+        
+        // Retornamos la entrada creada pero sin agregarla al calendario
+        return entry;
     }
     
     /**
@@ -1065,24 +1018,6 @@ public class CalendarFXComponent extends BorderPane {
                 return contextMenu;
             }
         });
-    }
-    
-    /**
-     * Crea una nueva entrada para el calendario
-     */
-    private Entry<?> createNewEntry(DateControl.CreateEntryParameter param) {
-        Entry<String> entry = new Entry<>("Nueva cita");
-        
-        // Configurar la fecha según el parámetro
-        entry.setInterval(param.getZonedDateTime(), param.getZonedDateTime().plusHours(1));
-        
-        // Configurar el calendario por defecto (citas normales)
-        entry.setCalendar(calendars.get(0));
-        
-        // Mostrar el diálogo de detalles
-        Platform.runLater(() -> showEntryDetailsDialog(entry));
-        
-        return entry;
     }
     
     /**
@@ -1187,5 +1122,23 @@ public class CalendarFXComponent extends BorderPane {
         } catch (Exception e) {
             System.err.println("Error al aplicar texto negro: " + e.getMessage());
         }
+    }
+    
+    /**
+     * Refresca el calendario
+     */
+    public void refreshCalendar() {
+        if (calendarView != null) {
+            calendarView.refreshData();
+        }
+    }
+    
+    /**
+     * Obtiene la vista principal del calendario
+     * 
+     * @return La vista del calendario
+     */
+    public CalendarView getCalendarView() {
+        return calendarView;
     }
 }

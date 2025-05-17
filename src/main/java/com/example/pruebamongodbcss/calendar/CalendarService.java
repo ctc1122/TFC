@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import com.example.pruebamongodbcss.calendar.CalendarEvent.EventoTipo;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -325,9 +326,24 @@ public class CalendarService {
             event.setAllDay(doc.getBoolean("allDay"));
         }
         
-        // Campo eventType (para eventos creados por el usuario)
+        // Campo eventType y tipoEvento (para eventos creados por el usuario)
         if (doc.containsKey("eventType")) {
-            event.setEventType(doc.getString("eventType"));
+            String eventTypeStr = doc.getString("eventType");
+            event.setEventType(eventTypeStr);
+            // El setter de eventType ya actualiza tipoEvento
+        } else if (doc.containsKey("tipoEvento")) {
+            // Si tenemos el campo tipoEvento directo, usarlo (casos más nuevos)
+            String tipoEventoStr = doc.getString("tipoEvento");
+            EventoTipo tipoEvento = null;
+            try {
+                tipoEvento = EventoTipo.valueOf(tipoEventoStr);
+            } catch (Exception e) {
+                tipoEvento = EventoTipo.fromString(tipoEventoStr);
+            }
+            event.setTipoEvento(tipoEvento);
+        } else {
+            // Por defecto, los eventos antiguos son citas médicas
+            event.setTipoEvento(EventoTipo.CITA_MEDICA);
         }
         
         // Estado de la cita (para los filtros)
@@ -450,6 +466,9 @@ public class CalendarService {
             // Ubicación: consulta
             event.setLocation("Consulta");
             
+            // Establecer explícitamente que es una cita médica
+            event.setTipoEvento(EventoTipo.CITA_MEDICA);
+            
             // Estado de la cita
             if (doc.containsKey("estado")) {
                 String estadoStr = doc.getString("estado");
@@ -568,9 +587,14 @@ public class CalendarService {
             doc.append("type", "default");
         }
         
-        // Tipo de evento creado por usuario (meeting, reminder, other)
+        // Tipo de evento: guardar tanto el string como el enum
         if (event.getEventType() != null) {
             doc.append("eventType", event.getEventType());
+        }
+        
+        // Guardar también el tipo de evento usando el enumerado (si está disponible)
+        if (event.getTipoEvento() != null) {
+            doc.append("tipoEvento", event.getTipoEvento().name());
         }
         
         // Estado de la cita (para filtros avanzados)
@@ -689,5 +713,32 @@ public class CalendarService {
             LOGGER.log(Level.SEVERE, "Error al actualizar citas para agregar usuario", e);
         }
         return contador;
+    }
+    
+    /**
+     * Determina si un evento es una cita médica
+     * @param event Evento a evaluar
+     * @return true si es una cita médica
+     */
+    public boolean esCitaMedica(CalendarEvent event) {
+        return event.getTipoEvento() == EventoTipo.CITA_MEDICA;
+    }
+    
+    /**
+     * Determina si un evento es una reunión
+     * @param event Evento a evaluar
+     * @return true si es una reunión
+     */
+    public boolean esReunion(CalendarEvent event) {
+        return event.getTipoEvento() == EventoTipo.REUNION;
+    }
+    
+    /**
+     * Determina si un evento es un recordatorio
+     * @param event Evento a evaluar
+     * @return true si es un recordatorio
+     */
+    public boolean esRecordatorio(CalendarEvent event) {
+        return event.getTipoEvento() == EventoTipo.RECORDATORIO;
     }
 } 

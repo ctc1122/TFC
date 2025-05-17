@@ -6,6 +6,44 @@ import java.util.Objects;
  * Clase que representa un evento en el calendario
  */
 public class CalendarEvent {
+    
+    /**
+     * Enumerado para los tipos de eventos
+     */
+    public enum EventoTipo {
+        CITA_MEDICA("Cita médica"),
+        REUNION("Reunión"),
+        RECORDATORIO("Recordatorio"),
+        OTRO("Otro");
+        
+        private final String descripcion;
+        
+        EventoTipo(String descripcion) {
+            this.descripcion = descripcion;
+        }
+        
+        public String getDescripcion() {
+            return descripcion;
+        }
+        
+        public static EventoTipo fromString(String text) {
+            if (text == null) {
+                return OTRO;
+            }
+            
+            text = text.toLowerCase();
+            if (text.contains("meeting") || text.contains("reunion") || text.contains("reunión")) {
+                return REUNION;
+            } else if (text.contains("reminder") || text.contains("recordatorio")) {
+                return RECORDATORIO;
+            } else if (text.contains("cita") || text.contains("medical") || text.contains("médica")) {
+                return CITA_MEDICA;
+            } else {
+                return OTRO;
+            }
+        }
+    }
+    
     private String id;
     private String title;
     private String start;
@@ -18,12 +56,14 @@ public class CalendarEvent {
     private String type; // default, urgent, completed, cancelled
     private String usuario; // usuario propietario de la cita
     private String estado; // PENDIENTE, EN_CURSO, COMPLETADA, CANCELADA, REPROGRAMADA
-    private String eventType; // meeting, reminder, other (para eventos creados por el usuario, no citas médicas)
+    private String eventType; // Para compatibilidad con código existente
+    private EventoTipo tipoEvento; // Nuevo campo para utilizar el enumerado
 
     /**
      * Constructor por defecto
      */
     public CalendarEvent() {
+        this.tipoEvento = EventoTipo.CITA_MEDICA; // Por defecto será cita médica
     }
 
     /**
@@ -38,6 +78,7 @@ public class CalendarEvent {
         this.title = title;
         this.start = start;
         this.end = end;
+        this.tipoEvento = EventoTipo.CITA_MEDICA; // Por defecto será cita médica
     }
 
     /**
@@ -70,6 +111,7 @@ public class CalendarEvent {
         this.type = type;
         this.estado = estado;
         this.eventType = eventType;
+        this.tipoEvento = EventoTipo.fromString(eventType); // Convertir eventType a enumerado
     }
 
     // Getters y setters
@@ -170,12 +212,52 @@ public class CalendarEvent {
         this.estado = estado;
     }
     
+    /**
+     * @return String representando el tipo de evento (legacy)
+     */
     public String getEventType() {
+        // Si no hay eventType pero sí hay tipoEvento, convertir tipoEvento a string para compatibilidad
+        if ((eventType == null || eventType.isEmpty()) && tipoEvento != null) {
+            return tipoEvento == EventoTipo.REUNION ? "meeting" : 
+                   tipoEvento == EventoTipo.RECORDATORIO ? "reminder" : 
+                   tipoEvento == EventoTipo.CITA_MEDICA ? "medical" : "other";
+        }
         return eventType;
     }
     
+    /**
+     * Establece el tipo de evento (legacy)
+     * También actualiza el tipoEvento usando el enumerado
+     */
     public void setEventType(String eventType) {
         this.eventType = eventType;
+        this.tipoEvento = EventoTipo.fromString(eventType);
+    }
+    
+    /**
+     * @return EventoTipo del evento utilizando el enumerado
+     */
+    public EventoTipo getTipoEvento() {
+        return tipoEvento;
+    }
+    
+    /**
+     * Establece el tipo de evento utilizando el enumerado
+     * También actualiza eventType para mantener compatibilidad
+     */
+    public void setTipoEvento(EventoTipo tipoEvento) {
+        this.tipoEvento = tipoEvento;
+        
+        // Actualizar eventType para mantener compatibilidad
+        if (tipoEvento == EventoTipo.REUNION) {
+            this.eventType = "meeting";
+        } else if (tipoEvento == EventoTipo.RECORDATORIO) {
+            this.eventType = "reminder";
+        } else if (tipoEvento == EventoTipo.CITA_MEDICA) {
+            this.eventType = "medical";
+        } else {
+            this.eventType = "other";
+        }
     }
 
     @Override
@@ -207,6 +289,7 @@ public class CalendarEvent {
                 ", usuario='" + usuario + '\'' +
                 ", estado='" + estado + '\'' +
                 ", eventType='" + eventType + '\'' +
+                ", tipoEvento=" + tipoEvento +
                 '}';
     }
 } 
