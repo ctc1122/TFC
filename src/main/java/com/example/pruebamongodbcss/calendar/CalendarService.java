@@ -118,15 +118,44 @@ public class CalendarService {
     public CalendarEvent saveAppointment(CalendarEvent event) {
         try {
             // Si no tiene ID, crear uno nuevo
-            if (event.getId() == null || event.getId().isEmpty() || !event.getId().startsWith("_")) {
+            if (event.getId() == null || event.getId().isEmpty()) {
                 event.setId("_" + new ObjectId().toString());
+                
+                // Insertar el documento (solo para nuevos eventos)
+                Document doc = calendarEventToDocument(event);
+                appointmentsCollection.insertOne(doc);
+                LOGGER.info("Cita nueva guardada correctamente: " + event.getId());
+            } else {
+                // Si ya tiene ID, actualizar en lugar de insertar
+                String eventId = event.getId();
+                if (!eventId.startsWith("_")) {
+                    eventId = "_" + eventId;
+                }
+                
+                // Crear documento con los datos a actualizar
+                Document doc = calendarEventToDocument(event);
+                // Remover el _id para evitar error de actualización
+                doc.remove("_id");
+                
+                // Actualizar utilizando el ID como filtro
+                ObjectId objectId = new ObjectId(event.getId().startsWith("_") ? 
+                                       event.getId().substring(1) : event.getId());
+                
+                UpdateResult result = appointmentsCollection.updateOne(
+                    Filters.eq("_id", objectId),
+                    new Document("$set", doc)
+                );
+                
+                if (result.getModifiedCount() == 0 && result.getMatchedCount() == 0) {
+                    LOGGER.warning("No se encontró la cita para actualizar. Intentando insertar.");
+                    // Si no existe, intentar insertarla (caso poco común)
+                    doc.put("_id", objectId);
+                    appointmentsCollection.insertOne(doc);
+                }
+                
+                LOGGER.info("Cita existente actualizada correctamente: " + event.getId());
             }
             
-            Document doc = calendarEventToDocument(event);
-            
-            // Insertar el documento
-            appointmentsCollection.insertOne(doc);
-            LOGGER.info("Cita guardada correctamente: " + event.getId());
             return event;
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error al guardar cita", e);

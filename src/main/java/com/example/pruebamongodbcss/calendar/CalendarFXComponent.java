@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.calendarfx.model.Calendar;
 import com.calendarfx.model.CalendarSource;
@@ -18,34 +19,33 @@ import com.calendarfx.view.DateControl;
 
 import javafx.application.Platform;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
+
 import javafx.scene.Node;
-import javafx.scene.Parent;
+
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.ComboBox;
+
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.Dialog;
+
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.Spinner;
+
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.scene.control.Control;
-import javafx.scene.control.ToolBar;
+
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
@@ -334,7 +334,7 @@ public class CalendarFXComponent extends BorderPane {
     }
     
     /**
-     * Carga las citas desde la base de datos
+     * Carga las citas desde la base de datos aplicando los filtros adecuados según el rol del usuario
      */
     private void loadAppointmentsFromDatabase() {
         try {
@@ -345,27 +345,58 @@ public class CalendarFXComponent extends BorderPane {
                 calendar.clear();
             }
             
-            List<CalendarEvent> events;
+            List<CalendarEvent> events = new ArrayList<>();
             
             // Cargar citas según el rol del usuario
             if (usuarioActual != null) {
                 String username = usuarioActual.getUsuario();
                 com.example.pruebamongodbcss.Data.Usuario.Rol rol = usuarioActual.getRol();
                 
-                if (rol != null && (rol == com.example.pruebamongodbcss.Data.Usuario.Rol.ADMINISTRADOR || 
-                                    rol == com.example.pruebamongodbcss.Data.Usuario.Rol.AUXILIAR)) {
-                    // Administradores y auxiliares ven todas las citas
+                System.out.println("Usuario actual: " + username + ", Rol: " + (rol != null ? rol.name() : "null"));
+                
+                if (rol == com.example.pruebamongodbcss.Data.Usuario.Rol.ADMINISTRADOR) {
+                    // Administradores ven absolutamente todo
                     events = calendarService.getAllAppointments();
-                } else {
-                    // Usuarios normales solo ven sus propias citas
+                    System.out.println("Administrador: Cargando todas las citas y eventos");
+                } 
+                else if (rol == com.example.pruebamongodbcss.Data.Usuario.Rol.AUXILIAR) {
+                    // Auxiliares ven todas las CITAS MÉDICAS de cualquier veterinario, pero no recordatorios ni reuniones
+                    events = calendarService.getAllAppointments().stream()
+                        .filter(event -> calendarService.esCitaMedica(event))
+                        .collect(Collectors.toList());
+                    System.out.println("Auxiliar: Cargando solo citas médicas (total: " + events.size() + ")");
+                } 
+                else if (rol == com.example.pruebamongodbcss.Data.Usuario.Rol.VETERINARIO) {
+                    // Los veterinarios ven:
+                    // 1. Sus propias citas médicas (donde usuarioAsignado == username)
+                    // 2. Sus propios recordatorios y reuniones
+                    List<CalendarEvent> allEvents = calendarService.getAllAppointments();
+                    
+                    for (CalendarEvent event : allEvents) {
+                        boolean isMine = username.equals(event.getUsuario());
+                        boolean isCitaMedica = calendarService.esCitaMedica(event);
+                        boolean isReunionOrRecordatorio = 
+                            calendarService.esReunion(event) || calendarService.esRecordatorio(event);
+                        
+                        // Si la cita está asignada a este veterinario o es un recordatorio/reunión suyo
+                        if (isMine && (isCitaMedica || isReunionOrRecordatorio)) {
+                            events.add(event);
+                        }
+                    }
+                    System.out.println("Veterinario: Cargando solo citas y eventos propios (total: " + events.size() + ")");
+                } 
+                else {
+                    // Otros usuarios solo ven sus propios eventos
                     events = calendarService.getAppointmentsByUser(username);
+                    System.out.println("Usuario estándar: Cargando solo eventos propios");
                 }
             } else {
                 // Si no hay usuario, mostrar todas las citas
                 events = calendarService.getAllAppointments();
+                System.out.println("Sin usuario: Cargando todas las citas");
             }
             
-            System.out.println("Se encontraron " + events.size() + " citas.");
+            System.out.println("Se encontraron " + events.size() + " eventos para mostrar.");
             
             // Convertir eventos a entradas del calendario
             for (CalendarEvent event : events) {
@@ -396,7 +427,7 @@ public class CalendarFXComponent extends BorderPane {
                 }
             }
             
-            System.out.println("Citas cargadas con éxito.");
+            System.out.println("Eventos cargados con éxito.");
             refreshCalendar();
             
         } catch (Exception e) {
@@ -701,25 +732,34 @@ public class CalendarFXComponent extends BorderPane {
     }
     
     /**
-     * Muestra un diálogo para editar los detalles de una entrada
+     * Muestra el diálogo de detalles según el tipo de entrada
      */
     private void showEntryDetailsDialog(Entry<?> entry) {
         try {
-            // Convertir Entry a CalendarEvent para determinar el tipo
+            // Convertir la entrada a un evento
             CalendarEvent event = entryToCalendarEvent(entry);
             
-            // Decidir qué formulario mostrar según el tipo de evento
-            if (calendarService.esReunion(event) || calendarService.esRecordatorio(event)) {
-                // Si es reunión o recordatorio, mostrar el formulario de eventos
-                showEventoFormulario(event, entry);
-            } else {
-                // Si es cita médica, mostrar el formulario de citas
-                showCitaFormulario(event, entry);
+            // Agregar descripción si existe
+            if (entryDescriptions.containsKey(entry.getId())) {
+                event.setDescription(entryDescriptions.get(entry.getId()));
             }
             
+            // Determinar tipo de evento y mostrar el formulario correspondiente
+            if (calendarService.esCitaMedica(event)) {
+                // Es una cita médica
+                System.out.println("Abriendo formulario de cita médica...");
+                showCitaFormulario(event, entry);
+            } else {
+                // Es otro tipo de evento (reunión o recordatorio)
+                System.out.println("Abriendo formulario de evento general...");
+                showEventoFormulario(event, entry);
+            }
+            
+            // Actualizar después de cerrar cualquier formulario para asegurar sincronización
+            refreshCalendarFromDatabase();
         } catch (Exception e) {
             e.printStackTrace();
-            showErrorMessage("Error", "No se pudo procesar la cita: " + e.getMessage());
+            showErrorMessage("Error al mostrar detalles", "No se pudieron mostrar los detalles: " + e.getMessage());
         }
     }
     
@@ -801,11 +841,38 @@ public class CalendarFXComponent extends BorderPane {
                 refreshCalendarFromDatabase();
             });
             
-            // Si es edición, convertir el evento a cita y pasarla al controlador
+            // Si es edición, obtener la cita completa de la base de datos y pasarla al controlador
             if (event.getId() != null && !event.getId().isEmpty()) {
-                com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = calendarEventToModeloCita(event);
-                if (cita != null) {
-                    controller.setCita(cita);
+                // Extraer el ID limpio (sin prefijo)
+                String idStr = event.getId();
+                if (idStr.startsWith("_")) {
+                    idStr = idStr.substring(1);
+                }
+                
+                try {
+                    // Cargar la cita directamente de la base de datos usando su ID
+                    org.bson.types.ObjectId citaId = new org.bson.types.ObjectId(idStr);
+                    com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = servicioClinica.obtenerCitaPorId(citaId);
+                    
+                    if (cita != null) {
+                        controller.setCita(cita);
+                    } else {
+                        // Si no se encuentra la cita, mostrar mensaje y cerrar
+                        Alert alert = new Alert(AlertType.ERROR);
+                        alert.setTitle("Error");
+                        alert.setHeaderText("Cita no encontrada");
+                        alert.setContentText("No se pudo encontrar la cita en la base de datos.");
+                        alert.showAndWait();
+                        return;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Alert alert = new Alert(AlertType.ERROR);
+                    alert.setTitle("Error");
+                    alert.setHeaderText("Error al cargar la cita");
+                    alert.setContentText("No se pudo cargar la cita: " + e.getMessage());
+                    alert.showAndWait();
+                    return;
                 }
             }
             
@@ -873,81 +940,6 @@ public class CalendarFXComponent extends BorderPane {
             showErrorMessage("Error", "No se pudo abrir el formulario de eventos: " + e.getMessage());
             // Refrescar de todos modos para asegurar consistencia
             refreshCalendarFromDatabase();
-        }
-    }
-    
-    /**
-     * Convierte un CalendarEvent a ModeloCita para el formulario de citas
-     */
-    private com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita calendarEventToModeloCita(CalendarEvent event) {
-        try {
-            com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = 
-                new com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita();
-            
-            // ID (quitar el prefijo _ si lo tiene)
-            if (event.getId() != null && event.getId().startsWith("_")) {
-                cita.setId(new ObjectId(event.getId().substring(1)));
-            } else if (event.getId() != null && !event.getId().isEmpty()) {
-                cita.setId(new ObjectId(event.getId()));
-            }
-            
-            // Fechas
-            DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-            cita.setFechaHora(LocalDateTime.parse(event.getStart(), formatter));
-            
-            // Datos básicos
-            cita.setMotivo(event.getTitle());
-            cita.setObservaciones(event.getDescription());
-            
-            // Estado
-            if (event.getEstado() != null) {
-                String estadoStr = event.getEstado().toUpperCase();
-                try {
-                    cita.setEstado(com.example.pruebamongodbcss.Data.EstadoCita.valueOf(estadoStr));
-                } catch (Exception e) {
-                    // Estado por defecto
-                    cita.setEstado(com.example.pruebamongodbcss.Data.EstadoCita.PENDIENTE);
-                }
-            } else {
-                // Estado por defecto
-                cita.setEstado(com.example.pruebamongodbcss.Data.EstadoCita.PENDIENTE);
-            }
-            
-            // Veterinario
-            cita.setNombreVeterinario(event.getUsuario());
-            
-            // Para citas médicas, el usuario asignado es el veterinario de la cita
-            // IMPORTANTE: Esto solo establece el valor inicial, el formulario lo actualizará
-            // cuando el usuario seleccione un veterinario
-            if (event.getUsuario() != null && !event.getUsuario().isEmpty()) {
-                // Extraer el nombre de usuario del nombre del veterinario
-                String nombreVeterinario = event.getUsuario();
-                // Intentamos extraer el username del formato "Dr. Nombre Apellido"
-                if (nombreVeterinario.startsWith("Dr. ") || nombreVeterinario.startsWith("Dra. ")) {
-                    nombreVeterinario = nombreVeterinario.substring(4);
-                }
-                // Convertir a formato de usuario simple (primera letra nombre + apellido en minúsculas)
-                String[] partes = nombreVeterinario.split(" ");
-                if (partes.length >= 2) {
-                    String posibleUsuario = (partes[0].substring(0, 1) + partes[1]).toLowerCase();
-                    cita.setUsuarioAsignado(posibleUsuario);
-                } else {
-                    cita.setUsuarioAsignado(nombreVeterinario.toLowerCase());
-                }
-            } 
-            // Si no hay veterinario, usamos el usuario actual
-            else if (usuarioActual != null) {
-                cita.setUsuarioAsignado(usuarioActual.getUsuario());
-            }
-            // Valor por defecto como último recurso
-            else {
-                cita.setUsuarioAsignado("sistema");
-            }
-            
-            return cita;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
         }
     }
     
