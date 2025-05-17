@@ -83,12 +83,61 @@ public class ServicioClinica {
      * @return El ID del paciente guardado
      */
     public ObjectId guardarPaciente(ModeloPaciente paciente) {
+        // Validar que los campos necesarios están presentes
+        if (paciente.getNombre() == null || paciente.getNombre().trim().isEmpty()) {
+            throw new IllegalArgumentException("El nombre del paciente es obligatorio");
+        }
+        
+        // Verificar que si hay propietario, exista en la base de datos
+        if (paciente.getPropietarioId() != null) {
+            ModeloPropietario propietario = obtenerPropietarioPorId(paciente.getPropietarioId());
+            if (propietario == null) {
+                throw new IllegalArgumentException("El propietario con ID " + paciente.getPropietarioId() + " no existe");
+            }
+            
+            // Asegurarse de que el paciente está en la lista de mascotas del propietario
+            boolean pacienteEncontrado = false;
+            if (propietario.getMascotas() != null) {
+                for (ObjectId mascotaId : propietario.getMascotas()) {
+                    if ((paciente.getId() != null && paciente.getId().equals(mascotaId)) ||
+                        (paciente.getId() == null && mascotaId == null)) {
+                        pacienteEncontrado = true;
+                        break;
+                    }
+                }
+            } else {
+                // Inicializar la lista de mascotas si es nula
+                propietario.setMascotas(new ArrayList<>());
+            }
+            
+            // Si es un nuevo paciente o no está en la lista, añadirlo
+            if (!pacienteEncontrado && paciente.getId() != null) {
+                propietario.getMascotas().add(paciente.getId());
+                guardarPropietario(propietario);
+            }
+        }
+        
         Document doc = paciente.toDocument();
         
         if (paciente.getId() == null) {
             // Nuevo paciente
             pacientesCollection.insertOne(doc);
-            return doc.getObjectId("_id");
+            ObjectId nuevoId = doc.getObjectId("_id");
+            
+            // Si tiene propietario, actualizar la referencia en el propietario
+            if (paciente.getPropietarioId() != null) {
+                // Obtener el propietario nuevamente para asegurarse de tener datos actualizados
+                ModeloPropietario propietario = obtenerPropietarioPorId(paciente.getPropietarioId());
+                if (propietario != null) {
+                    if (propietario.getMascotas() == null) {
+                        propietario.setMascotas(new ArrayList<>());
+                    }
+                    propietario.getMascotas().add(nuevoId);
+                    guardarPropietario(propietario);
+                }
+            }
+            
+            return nuevoId;
         } else {
             // Actualizar paciente existente
             pacientesCollection.replaceOne(
@@ -235,6 +284,46 @@ public class ServicioClinica {
      * @return El ID del propietario guardado
      */
     public ObjectId guardarPropietario(ModeloPropietario propietario) {
+        // Validar que los campos necesarios estén presentes
+        if (propietario.getNombreCompleto() == null || propietario.getNombreCompleto().trim().isEmpty()) {
+            throw new IllegalArgumentException("El nombre del propietario es obligatorio");
+        }
+        
+        if (propietario.getDni() == null || propietario.getDni().trim().isEmpty()) {
+            throw new IllegalArgumentException("El DNI del propietario es obligatorio");
+        }
+        
+        // Verificar si ya existe un propietario con el mismo DNI (excepto si es el mismo)
+        ModeloPropietario existente = buscarPropietarioPorDNI(propietario.getDni());
+        if (existente != null && (propietario.getId() == null || !propietario.getId().equals(existente.getId()))) {
+            throw new IllegalArgumentException("Ya existe un propietario con el DNI " + propietario.getDni());
+        }
+        
+        // Verificar que las referencias a mascotas existan
+        if (propietario.getMascotas() != null) {
+            List<ObjectId> mascotasValidas = new ArrayList<>();
+            for (ObjectId mascotaId : propietario.getMascotas()) {
+                ModeloPaciente paciente = obtenerPacientePorId(mascotaId);
+                if (paciente != null) {
+                    mascotasValidas.add(mascotaId);
+                    
+                    // Asegurar que la mascota tiene a este propietario como su propietario
+                    if (paciente.getPropietarioId() == null || !paciente.getPropietarioId().equals(propietario.getId())) {
+                        paciente.setPropietarioId(propietario.getId());
+                        // Guardar paciente sin usar guardarPaciente para evitar recursión
+                        Document pacienteDoc = paciente.toDocument();
+                        pacientesCollection.replaceOne(
+                            Filters.eq("_id", paciente.getId()),
+                            pacienteDoc
+                        );
+                    }
+                }
+            }
+            
+            // Actualizar la lista con solo las mascotas válidas
+            propietario.setMascotas(mascotasValidas);
+        }
+        
         Document doc = propietario.toDocument();
         
         if (propietario.getId() == null) {
@@ -352,6 +441,23 @@ public class ServicioClinica {
      * @return El ID del diagnóstico guardado
      */
     public ObjectId guardarDiagnostico(ModeloDiagnostico diagnostico) {
+        // Validar que los campos obligatorios estén presentes
+        if (diagnostico.getPacienteId() == null) {
+            throw new IllegalArgumentException("El ID del paciente es obligatorio para guardar un diagnóstico");
+        }
+        
+        // Verificar que el paciente existe
+        ModeloPaciente paciente = obtenerPacientePorId(diagnostico.getPacienteId());
+        if (paciente == null) {
+            throw new IllegalArgumentException("El paciente con ID " + diagnostico.getPacienteId() + " no existe");
+        }
+        
+        // Si no tiene el nombre del paciente pero tenemos el ID, añadirlo
+        if ((diagnostico.getNombrePaciente() == null || diagnostico.getNombrePaciente().isEmpty()) && 
+            paciente.getNombre() != null) {
+            diagnostico.setNombrePaciente(paciente.getNombre());
+        }
+        
         Document doc = diagnostico.toDocument();
         
         if (diagnostico.getId() == null) {
@@ -451,6 +557,118 @@ public class ServicioClinica {
      * @return El ID de la cita guardada
      */
     public ObjectId guardarCita(ModeloCita cita) {
+        // Validar que los IDs esenciales estén presentes
+        if (cita.getPacienteId() == null) {
+            throw new IllegalArgumentException("El ID del paciente es obligatorio para guardar una cita");
+        }
+        
+        // Validar que el paciente existe
+        ModeloPaciente paciente = obtenerPacientePorId(cita.getPacienteId());
+        if (paciente == null) {
+            throw new IllegalArgumentException("El paciente con ID " + cita.getPacienteId() + " no existe");
+        }
+        
+        // Si no tiene el nombre del paciente pero tenemos el ID, añadirlo
+        if ((cita.getNombrePaciente() == null || cita.getNombrePaciente().isEmpty()) && 
+            paciente.getNombre() != null) {
+            cita.setNombrePaciente(paciente.getNombre());
+        }
+        
+        // Si no tiene el tipo y raza de animal, añadirlos
+        if ((cita.getTipoAnimal() == null || cita.getTipoAnimal().isEmpty()) && 
+            paciente.getEspecie() != null) {
+            cita.setTipoAnimal(paciente.getEspecie());
+        }
+        
+        if ((cita.getRazaAnimal() == null || cita.getRazaAnimal().isEmpty()) && 
+            paciente.getRaza() != null) {
+            cita.setRazaAnimal(paciente.getRaza());
+        }
+        
+        // Resolver el usuario (veterinario)
+        try {
+            // Si tenemos un ID de usuario, usarlo directamente
+            if (cita.getUsuarioAsignado() != null && !cita.getUsuarioAsignado().isEmpty()) {
+                // Verificar que el usuario existe
+                MongoCollection<Document> usuariosCollection = database.getCollection("usuarios");
+                Document usuarioDoc = usuariosCollection.find(Filters.eq("usuario", cita.getUsuarioAsignado())).first();
+                
+                if (usuarioDoc != null) {
+                    // Asegurar que tanto el ID como el nombre están guardados
+                    cita.setUsuarioAsignado(usuarioDoc.getString("usuario"));
+                    
+                    // Si no hay nombre de veterinario pero tenemos nombre de usuario, usarlo
+                    if ((cita.getNombreVeterinario() == null || cita.getNombreVeterinario().isEmpty()) && 
+                        usuarioDoc.containsKey("nombre") && usuarioDoc.containsKey("apellido")) {
+                        String nombreCompleto = usuarioDoc.getString("nombre") + " " + usuarioDoc.getString("apellido");
+                        cita.setNombreVeterinario(nombreCompleto);
+                    }
+                } else {
+                    System.out.println("Advertencia: No se encontró el usuario con ID: " + cita.getUsuarioAsignado());
+                }
+            } 
+            // Si tenemos nombre de veterinario pero no ID, intentar resolver
+            else if (cita.getNombreVeterinario() != null && !cita.getNombreVeterinario().isEmpty()) {
+                MongoCollection<Document> usuariosCollection = database.getCollection("usuarios");
+                String nombreCompleto = cita.getNombreVeterinario().replace("Dr. ", "").trim();
+                
+                // Dividir nombre en partes
+                String[] partes = nombreCompleto.split(" ", 2);
+                String nombre = partes[0].trim();
+                String apellido = partes.length > 1 ? partes[1].trim() : "";
+                
+                // Buscar coincidencia por nombre y apellido
+                Document usuarioDoc = usuariosCollection.find(
+                    Filters.and(
+                        Filters.regex("nombre", "^" + nombre + "$", "i"),
+                        Filters.regex("apellido", "^" + apellido + "$", "i")
+                    )
+                ).first();
+                
+                if (usuarioDoc != null && usuarioDoc.containsKey("usuario")) {
+                    cita.setUsuarioAsignado(usuarioDoc.getString("usuario"));
+                } else {
+                    // Buscar coincidencia parcial
+                    usuarioDoc = usuariosCollection.find(
+                        Filters.or(
+                            Filters.regex("nombre", nombre, "i"),
+                            Filters.regex("apellido", apellido, "i")
+                        )
+                    ).first();
+                    
+                    if (usuarioDoc != null && usuarioDoc.containsKey("usuario")) {
+                        cita.setUsuarioAsignado(usuarioDoc.getString("usuario"));
+                    } else {
+                        System.out.println("No se pudo encontrar usuario para el veterinario: " + nombreCompleto);
+                    }
+                }
+            }
+            
+            // Si después de todo no tenemos un ID de usuario, lanzar excepción
+            if (cita.getUsuarioAsignado() == null || cita.getUsuarioAsignado().isEmpty()) {
+                throw new IllegalArgumentException("No se pudo determinar el ID de usuario para la cita");
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error al resolver el usuario: " + e.getMessage());
+            throw new IllegalArgumentException("Error al resolver el usuario para la cita: " + e.getMessage());
+        }
+        
+        // Verificar si hay conflicto de horario
+        if (cita.getFechaHora() != null) {
+            boolean hayConflicto = hayConflictoHorario(
+                cita.getFechaHora(), 
+                cita.getDuracionMinutos(), 
+                cita.getId()
+            );
+            
+            if (hayConflicto) {
+                throw new IllegalArgumentException("Hay un conflicto de horario con otra cita existente");
+            }
+        }
+        
+        // Guardar el documento usando el método toDocument de ModeloCita
+        // que ya incluye fechaHoraFin y duracionMinutos
         Document doc = cita.toDocument();
         
         if (cita.getId() == null) {

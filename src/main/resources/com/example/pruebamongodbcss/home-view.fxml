@@ -62,40 +62,19 @@
                                 <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                             </padding>
                             
-                            <!-- Feature Card 1: Main image with text overlay -->
+                            <!-- Feature Card 1: Calendar Component -->
                             <BorderPane styleClass="card, card-main" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="0" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
                                 <center>
-                                    <StackPane VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
-                                        <!-- Replace ImageView with gradient Rectangle as temporary placeholder -->
-                                        <Rectangle width="500.0" height="300.0" arcHeight="10.0" arcWidth="10.0" StackPane.alignment="CENTER">
-                                            <fill>
-                                                <LinearGradient endX="1.0" endY="1.0">
-                                                    <stops>
-                                                        <Stop color="#3d5af1" />
-                                                        <Stop color="#2c91d9" offset="1.0" />
-                                                    </stops>
-                                                </LinearGradient>
-                                            </fill>
-                                        </Rectangle>
-                                        <Rectangle width="500.0" height="300.0" arcHeight="10.0" arcWidth="10.0" fill="#00000066" StackPane.alignment="CENTER" />
-                                        <VBox alignment="BOTTOM_LEFT" spacing="10.0" StackPane.alignment="BOTTOM_LEFT" VBox.vgrow="ALWAYS">
-                                            <padding>
-                                                <Insets bottom="20.0" left="20.0" right="20.0" />
-                                            </padding>
-                                            <Label styleClass="card-title" text="A FUSION OF INNOVATION AND ELEGANCE" wrapText="true">
-                                                <font>
-                                                    <Font name="System Bold" size="18.0" />
-                                                </font>
-                                            </Label>
-                                            <Label styleClass="card-subtitle" text="DESIGNED FOR THE FUTURE OF DRIVING" wrapText="true">
-                                                <font>
-                                                    <Font size="14.0" />
-                                                </font>
-                                            </Label>
-                                            <JFXButton fx:id="btnLearnMore" styleClass="btn-card" text="LEARN MORE" />
-                                        </VBox>
-                                    </StackPane>
+                                    <fx:include source="calendar-component.fxml" />
                                 </center>
+                                <bottom>
+                                    <HBox alignment="CENTER_RIGHT">
+                                        <padding>
+                                            <Insets top="10" right="10" bottom="10" left="10" />
+                                        </padding>
+                                        <JFXButton fx:id="btnLearnMore" styleClass="btn-card" text="LEARN MORE" />
+                                    </HBox>
+                                </bottom>
                             </BorderPane>
                             
                             <!-- Feature Card 2: Secondary card with placeholder rectangle instead of image -->
@@ -157,89 +136,18 @@
                                 <Insets top="15.0" bottom="15.0" left="20.0" right="20.0" />
                             </padding>
                             <HBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
-                                <JFXButton fx:id="btnBack" styleClass="btn-back" text="← BACK" />
+                                <JFXButton fx:id="btnBack" styleClass="btn-back" text="← VOLVER" />
                             </HBox>
-                            <Label styleClass="page-title" text="EXPLORE OUR FEATURES" wrapText="true">
+                            <Label styleClass="page-title" text="CALENDARIO DE CITAS" wrapText="true">
                                 <font>
                                     <Font name="System Bold" size="22.0" />
                                 </font>
                             </Label>
                             
-                            <!-- Feature Rows -->
-                            <HBox fx:id="featureRow1" styleClass="feature-row" spacing="20.0" HBox.hgrow="ALWAYS">
-                                <padding>
-                                    <Insets top="10.0" right="10.0" bottom="10.0" left="10.0" />
-                                </padding>
-                                <Rectangle width="60.0" height="60.0" arcWidth="15.0" arcHeight="15.0" HBox.hgrow="NEVER">
-                                    <fill>
-                                        <LinearGradient endX="1.0" endY="1.0">
-                                            <stops>
-                                                <Stop color="#4d7eff" />
-                                                <Stop color="#3fd9fb" offset="1.0" />
-                                            </stops>
-                                        </LinearGradient>
-                                    </fill>
-                                </Rectangle>
-                                <VBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
-                                    <Label styleClass="feature-title" text="SUPERIOR RANGE" wrapText="true">
-                                        <font>
-                                            <Font name="System Bold" size="16.0" />
-                                        </font>
-                                    </Label>
-                                    <Label styleClass="feature-description" text="Travel up to 500 miles on a single charge with our advanced battery technology."
-                                           wrapText="true" />
-                                </VBox>
-                            </HBox>
-                            
-                            <HBox fx:id="featureRow2" styleClass="feature-row" spacing="20.0" HBox.hgrow="ALWAYS">
-                                <padding>
-                                    <Insets top="10.0" right="10.0" bottom="10.0" left="10.0" />
-                                </padding>
-                                <Rectangle width="60.0" height="60.0" arcWidth="15.0" arcHeight="15.0" HBox.hgrow="NEVER">
-                                    <fill>
-                                        <LinearGradient endX="1.0" endY="1.0">
-                                            <stops>
-                                                <Stop color="#50e3b9" />
-                                                <Stop color="#1cc88a" offset="1.0" />
-                                            </stops>
-                                        </LinearGradient>
-                                    </fill>
-                                </Rectangle>
-                                <VBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
-                                    <Label styleClass="feature-title" text="QUICK CHARGING" wrapText="true">
-                                        <font>
-                                            <Font name="System Bold" size="16.0" />
-                                        </font>
-                                    </Label>
-                                    <Label styleClass="feature-description" text="Reach 80% battery capacity in just 30 minutes with our supercharging network."
-                                           wrapText="true" />
-                                </VBox>
-                            </HBox>
-                            
-                            <HBox fx:id="featureRow3" styleClass="feature-row" spacing="20.0" HBox.hgrow="ALWAYS">
-                                <padding>
-                                    <Insets top="10.0" right="10.0" bottom="10.0" left="10.0" />
-                                </padding>
-                                <Rectangle width="60.0" height="60.0" arcWidth="15.0" arcHeight="15.0" HBox.hgrow="NEVER">
-                                    <fill>
-                                        <LinearGradient endX="1.0" endY="1.0">
-                                            <stops>
-                                                <Stop color="#f1c40f" />
-                                                <Stop color="#e67e22" offset="1.0" />
-                                            </stops>
-                                        </LinearGradient>
-                                    </fill>
-                                </Rectangle>
-                                <VBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
-                                    <Label styleClass="feature-title" text="INTELLIGENT SOFTWARE" wrapText="true">
-                                        <font>
-                                            <Font name="System Bold" size="16.0" />
-                                        </font>
-                                    </Label>
-                                    <Label styleClass="feature-description" text="Experience next-level driving with our AI-powered software that learns your preferences and optimizes your journey."
-                                           wrapText="true" />
-                                </VBox>
-                            </HBox>
+                            <!-- Calendar Container -->
+                            <BorderPane styleClass="calendar-container" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
+                                <!-- Calendar will be loaded here programmatically -->
+                            </BorderPane>
                         </VBox>
                     </VBox>
                 </StackPane>
@@ -256,6 +164,7 @@
             <JFXButton styleClass="btn-footer, btn-primary" text="SOLUTIONS" />
             <JFXButton styleClass="btn-footer, btn-secondary" text="ABOUT US" />
             <JFXButton styleClass="btn-footer, btn-info" text="PRICING" />
+            <JFXButton fx:id="btnDemoCalendar" styleClass="btn-card" text="DEMO CALENDAR" />
         </HBox>
     </bottom>
 </BorderPane> 

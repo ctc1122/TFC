@@ -1,0 +1,1899 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario de Citas</title>
+    
+    <!-- FullCalendar Core -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    
+    <!-- jQuery UI para diálogos -->
+    <link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Colores principales */
+            --bg-color: #ffffff;
+            --text-color: #3c4043;
+            --secondary-text: #70757a;
+            --border-color: #e8eaed;
+            --event-bg-1: rgba(3, 155, 229, 0.9);  /* Azul */
+            --event-bg-2: rgba(0, 200, 83, 0.9);  /* Verde */
+            --event-bg-3: rgba(255, 145, 0, 0.9);  /* Naranja */
+            --event-bg-4: rgba(233, 30, 99, 0.9);  /* Rosa */
+            --event-bg-5: rgba(103, 58, 183, 0.9);  /* Violeta */
+            --header-bg: #f8f9fa;
+            --today-bg: #e8f0fe;
+            --today-border: #1a73e8;
+            --weekend-bg: #f8f9fa;
+            --button-bg: #1a73e8;
+            --button-text: white;
+            --button-hover: #1967d2;
+            --button-active: #1657b9;
+            --modal-bg: white;
+            --hover-bg: #f1f3f4;
+            --pressed-bg: #d2e3fc;
+            --shadow-color: rgba(60, 64, 67, 0.15);
+            --calendar-bg: white;
+            --cell-hover: #f5f5f5;
+        }
+        
+        .dark-mode {
+            --bg-color: #202124;
+            --text-color: #e8eaed;
+            --secondary-text: #9aa0a6;
+            --border-color: #5f6368;
+            --event-bg-1: rgba(26, 115, 232, 0.9);  /* Azul oscuro */
+            --event-bg-2: rgba(52, 168, 83, 0.9);  /* Verde oscuro */
+            --event-bg-3: rgba(251, 188, 4, 0.9);  /* Amarillo oscuro */
+            --event-bg-4: rgba(234, 67, 53, 0.9);  /* Rojo oscuro */
+            --event-bg-5: rgba(156, 39, 176, 0.9);  /* Violeta oscuro */
+            --header-bg: #2d2e30;
+            --today-bg: rgba(23, 78, 166, 0.15);
+            --today-border: #8ab4f8;
+            --weekend-bg: #2d2e30;
+            --button-bg: #8ab4f8;
+            --button-text: #202124;
+            --button-hover: #93bbff;
+            --button-active: #7fa5e3;
+            --modal-bg: #2d2e30;
+            --hover-bg: #35363a;
+            --pressed-bg: #174ea6;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --calendar-bg: #2a2b2d;
+            --cell-hover: #35363a;
+        }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500&display=swap');
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+        
+        #calendar-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0;
+            box-shadow: 0 6px 18px var(--shadow-color);
+            border-radius: 16px;
+            background-color: var(--calendar-bg);
+            overflow: hidden;
+        }
+        
+        /* FullCalendar personalizaciones */
+        .fc {
+            --fc-border-color: var(--border-color);
+            --fc-page-bg-color: var(--calendar-bg);
+            --fc-neutral-bg-color: var(--header-bg);
+            --fc-event-border-color: transparent;
+            --fc-today-bg-color: var(--today-bg);
+            --fc-event-text-color: #fff;
+            height: 100%;
+            font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+        }
+        
+        .fc-theme-standard td, .fc-theme-standard th {
+            border-color: var(--border-color);
+        }
+        
+        .fc-theme-standard .fc-scrollgrid {
+            border-color: var(--border-color);
+        }
+        
+        /* Toolbar */
+        .fc-toolbar, .fc-header-toolbar {
+            background-color: var(--calendar-bg);
+            padding: 20px 24px;
+            margin-bottom: 0 !important;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .fc-toolbar-title {
+            font-size: 22px !important;
+            font-weight: 500 !important;
+            color: var(--text-color);
+            letter-spacing: -0.5px;
+        }
+        
+        /* Botones */
+        .fc-button {
+            font-family: 'Google Sans', 'Roboto', Arial, sans-serif !important;
+            font-weight: 500 !important;
+            font-size: 14px !important;
+            text-transform: none !important;
+        }
+        
+        .fc-button-primary {
+            background-color: var(--button-bg) !important;
+            border-color: transparent !important;
+            color: var(--button-text) !important;
+            border-radius: 24px !important;
+            padding: 8px 16px !important;
+            box-shadow: 0 2px 4px var(--shadow-color) !important;
+            transition: all 0.2s ease !important;
+        }
+        
+        .fc-button-primary:hover {
+            background-color: var(--button-hover) !important;
+            box-shadow: 0 4px 8px var(--shadow-color) !important;
+            transform: translateY(-1px) !important;
+        }
+        
+        .fc-button-primary:not(:disabled):active,
+        .fc-button-primary:not(:disabled).fc-button-active {
+            background-color: var(--button-active) !important;
+            color: var(--button-text) !important;
+            box-shadow: 0 1px 2px var(--shadow-color) !important;
+            transform: translateY(1px) !important;
+        }
+        
+        .fc-today-button {
+            text-transform: none !important;
+        }
+        
+        .fc-button-group {
+            box-shadow: 0 2px 4px var(--shadow-color) !important;
+            border-radius: 24px !important;
+            overflow: hidden;
+        }
+        
+        .fc-button-group .fc-button-primary {
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            padding: 8px 12px !important;
+            position: relative;
+        }
+        
+        .fc-button-group .fc-button-primary:after {
+            content: "";
+            position: absolute;
+            right: 0;
+            top: 25%;
+            height: 50%;
+            width: 1px;
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .fc-button-group .fc-button-primary:last-child:after {
+            display: none;
+        }
+        
+        .fc-button-group .fc-button-primary:first-child {
+            border-top-left-radius: 24px !important;
+            border-bottom-left-radius: 24px !important;
+            padding-left: 16px !important;
+        }
+        
+        .fc-button-group .fc-button-primary:last-child {
+            border-top-right-radius: 24px !important;
+            border-bottom-right-radius: 24px !important;
+            padding-right: 16px !important;
+        }
+        
+        /* Días del mes */
+        .fc-daygrid-day {
+            transition: background-color 0.2s;
+            cursor: pointer;
+            height: 110px !important;
+        }
+        
+        .fc-daygrid-day:hover {
+            background-color: var(--cell-hover);
+        }
+        
+        .fc-day-sat, .fc-day-sun {
+            background-color: var(--weekend-bg);
+        }
+        
+        .fc-daygrid-day-top {
+            padding: 8px;
+            justify-content: center;
+            margin-bottom: 4px;
+        }
+        
+        .fc-daygrid-day-number {
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--text-color);
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+        
+        .fc-daygrid-day:hover .fc-daygrid-day-number {
+            background-color: var(--hover-bg);
+        }
+        
+        /* Estilo para el día actual */
+        .fc-day-today {
+            background-color: var(--today-bg) !important;
+            position: relative;
+        }
+        
+        .fc-day-today:before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: var(--today-border);
+        }
+        
+        .fc-day-today .fc-daygrid-day-number {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            font-weight: 500;
+        }
+        
+        /* Eventos */
+        .fc-event {
+            border-radius: 8px !important;
+            padding: 6px 8px !important;
+            margin: 1px 8px 2px !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            box-shadow: 0 2px 6px var(--shadow-color) !important;
+            transition: all 0.2s ease !important;
+            border: none !important;
+            opacity: 0.95;
+        }
+        
+        .fc-event:hover {
+            box-shadow: 0 4px 10px var(--shadow-color) !important;
+            transform: translateY(-1px) !important;
+            opacity: 1;
+        }
+        
+        /* Colores de eventos */
+        .fc-event:nth-of-type(5n+1) {
+            background-color: var(--event-bg-1) !important;
+            border-left: 4px solid rgba(3, 155, 229, 1) !important;
+        }
+        
+        .fc-event:nth-of-type(5n+2) {
+            background-color: var(--event-bg-2) !important;
+            border-left: 4px solid rgba(0, 200, 83, 1) !important;
+        }
+        
+        .fc-event:nth-of-type(5n+3) {
+            background-color: var(--event-bg-3) !important;
+            border-left: 4px solid rgba(255, 145, 0, 1) !important;
+        }
+        
+        .fc-event:nth-of-type(5n+4) {
+            background-color: var(--event-bg-4) !important;
+            border-left: 4px solid rgba(233, 30, 99, 1) !important;
+        }
+        
+        .fc-event:nth-of-type(5n+5) {
+            background-color: var(--event-bg-5) !important;
+            border-left: 4px solid rgba(103, 58, 183, 1) !important;
+        }
+        
+        /* Encabezados de días de la semana */
+        .fc-col-header {
+            background-color: var(--header-bg);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .fc-col-header-cell {
+            padding: 12px 0 !important;
+        }
+        
+        .fc-col-header-cell-cushion {
+            font-weight: 500;
+            font-size: 12px;
+            color: var(--secondary-text);
+            text-decoration: none !important;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Vista de tiempo - horaria */
+        .fc-timegrid-slot {
+            height: 48px !important;
+            transition: background-color 0.2s;
+        }
+        
+        .fc-timegrid-slot:hover {
+            background-color: var(--cell-hover);
+        }
+        
+        .fc-timegrid-axis-cushion, .fc-timegrid-slot-label-cushion {
+            font-size: 12px;
+            color: var(--secondary-text);
+        }
+        
+        .fc-timegrid-event {
+            margin: 1px 2px !important;
+            padding: 5px 8px !important;
+            border-radius: 8px !important;
+        }
+        
+        .fc-timegrid-event-harness {
+            margin-right: 2px !important;
+            margin-left: 2px !important;
+        }
+        
+        .fc-timegrid-event .fc-event-main {
+            padding: 2px 4px !important;
+        }
+        
+        /* Vista de semana/día */
+        .fc-timegrid-body {
+            overflow-x: hidden !important;
+        }
+        
+        .fc-timegrid-divider {
+            display: none;
+        }
+        
+        /* Más eventos (+3 más) */
+        .fc-daygrid-more-link {
+            color: var(--button-bg) !important;
+            font-weight: 500;
+            font-size: 12px;
+            margin: 0 8px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            background-color: transparent;
+            transition: background-color 0.2s;
+        }
+        
+        .fc-daygrid-more-link:hover {
+            background-color: var(--hover-bg);
+            text-decoration: none;
+        }
+        
+        /* Estilos para el diálogo de eventos */
+        .ui-dialog {
+            background-color: var(--modal-bg);
+            color: var(--text-color);
+            border: none;
+            border-radius: 16px;
+            padding: 0;
+            box-shadow: 0 12px 28px var(--shadow-color), 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+        }
+        
+        .ui-dialog .ui-dialog-titlebar {
+            background-color: var(--calendar-bg);
+            color: var(--text-color);
+            border: none;
+            padding: 20px 24px;
+            font-size: 20px;
+            font-weight: 500;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .ui-dialog-content {
+            padding: 24px !important;
+        }
+        
+        .ui-dialog-titlebar-close {
+            background-color: transparent !important;
+            border: none !important;
+            color: var(--text-color) !important;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        
+        .ui-dialog-titlebar-close:hover {
+            opacity: 1;
+        }
+        
+        /* Estilos para el formulario de evento */
+        .event-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .event-form input, .event-form textarea {
+            padding: 14px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+        
+        .event-form input:focus, .event-form textarea:focus {
+            outline: none;
+            border-color: var(--button-bg);
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.25);
+        }
+        
+        .event-form label {
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-color);
+            font-size: 14px;
+            display: block;
+        }
+        
+        .event-form .form-row {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0;
+        }
+        
+        .button-container {
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
+            margin-top: 24px;
+        }
+        
+        .button-container button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 15px;
+            font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .button-container button:after {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: radial-gradient(circle, #fff 10%, transparent 10.01%) 50% 50% no-repeat;
+            transform: scale(10, 10);
+            opacity: 0;
+            transition: transform .3s, opacity .5s;
+        }
+        
+        .button-container button:active:after {
+            transform: scale(0, 0);
+            opacity: .3;
+            transition: 0s;
+        }
+        
+        .save-button {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+        
+        .save-button:hover {
+            box-shadow: 0 4px 10px var(--shadow-color);
+            transform: translateY(-1px);
+            background-color: var(--button-hover);
+        }
+        
+        .save-button:active {
+            box-shadow: 0 1px 2px var(--shadow-color);
+            transform: translateY(1px);
+        }
+        
+        .delete-button {
+            background-color: transparent;
+            color: var(--event-bg-4);
+            margin-right: auto;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .delete-button:hover {
+            background-color: rgba(234, 67, 53, 0.1);
+        }
+        
+        .delete-button:before {
+            content: "delete";
+            font-family: 'Material Icons';
+            font-size: 16px;
+        }
+        
+        /* Responsive */
+        @media screen and (max-width: 768px) {
+            .fc-header-toolbar {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .fc-toolbar-chunk {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+            }
+            
+            .fc-toolbar-chunk:first-child {
+                order: 2;
+            }
+            
+            .fc-toolbar-chunk:nth-child(2) {
+                order: 1;
+            }
+            
+            .fc-toolbar-chunk:last-child {
+                order: 3;
+            }
+            
+            #calendar-container {
+                margin: 10px;
+                border-radius: 12px;
+            }
+            
+            .fc-button {
+                padding: 8px 12px !important;
+                font-size: 13px !important;
+            }
+            
+            .fc-button-group .fc-button-primary {
+                padding: 6px 10px !important;
+            }
+        }
+        
+        /* Colores para los diferentes tipos de eventos */
+        .urgent-event {
+            background-color: #ff9800 !important;
+            border-left: 4px solid #e65100 !important;
+            color: #fff !important;
+        }
+        
+        .completed-event {
+            background-color: #4caf50 !important;
+            border-left: 4px solid #2e7d32 !important;
+            color: #fff !important;
+        }
+        
+        .cancelled-event {
+            background-color: #f44336 !important;
+            border-left: 4px solid #b71c1c !important;
+            color: #fff !important;
+            text-decoration: line-through;
+        }
+        
+        /* Estilos para filtros de calendario - como los de CalendarFX */
+        .calendar-filters {
+            padding: 15px;
+            border-right: 1px solid var(--border-color);
+            background-color: var(--calendar-bg);
+        }
+        
+        .filter-group {
+            margin-bottom: 20px;
+        }
+        
+        .filter-title {
+            font-weight: 500;
+            margin-bottom: 10px;
+            font-size: 15px;
+            color: var(--text-color);
+        }
+        
+        .filter-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .filter-checkbox {
+            margin-right: 8px;
+        }
+        
+        .filter-label {
+            font-size: 14px;
+            color: var(--text-color);
+        }
+        
+        /* Estilos para tooltips de eventos */
+        .event-tooltip {
+            background-color: var(--calendar-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 300px;
+            z-index: 1000;
+        }
+        
+        .event-tooltip-title {
+            font-weight: 500;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .event-tooltip-time {
+            color: var(--secondary-text);
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        
+        .event-tooltip-location {
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        
+        .event-tooltip-description {
+            font-size: 12px;
+            margin-top: 5px;
+            color: var(--secondary-text);
+        }
+        
+        /* Layout para calendario con sidebar */
+        .calendar-layout {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .calendar-sidebar {
+            width: 220px;
+            padding: 15px;
+            border-right: 1px solid var(--border-color);
+            background-color: var(--calendar-bg);
+        }
+        
+        .calendar-main {
+            flex: 1;
+            min-width: 0; /* Para evitar overflow */
+        }
+        
+        @media screen and (max-width: 768px) {
+            .calendar-layout {
+                flex-direction: column;
+            }
+            
+            .calendar-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+        }
+        
+        /* Estilos para el mini calendario */
+        .mini-calendar-container {
+            margin-bottom: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .fc-mini .fc-daygrid-day {
+            height: auto !important;
+            cursor: pointer;
+        }
+        
+        .fc-mini .fc-toolbar {
+            padding: 8px;
+        }
+        
+        .fc-mini .fc-toolbar-title {
+            font-size: 14px !important;
+        }
+        
+        .fc-mini .fc-button {
+            padding: 4px 8px !important;
+            font-size: 12px !important;
+        }
+        
+        .fc-mini .fc-daygrid-day-number {
+            width: 24px;
+            height: 24px;
+            font-size: 12px;
+        }
+        
+        /* Estilos para acciones del sidebar */
+        .sidebar-actions {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .sidebar-action-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            color: var(--text-color);
+            font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .sidebar-action-button:hover {
+            background-color: var(--hover-bg);
+        }
+        
+        .sidebar-action-button i {
+            font-size: 18px;
+        }
+        
+        /* Estilos para menú contextual */
+        .context-menu {
+            position: absolute;
+            background-color: var(--calendar-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            min-width: 180px;
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+            font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+        }
+        
+        .context-menu-item {
+            padding: 8px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-color);
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .context-menu-item:hover {
+            background-color: var(--hover-bg);
+        }
+        
+        .context-menu-item i {
+            font-size: 18px;
+            color: var(--secondary-text);
+        }
+        
+        .context-menu-separator {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 4px 0;
+        }
+        
+        /* Mejoras responsive */
+        @media screen and (max-width: 768px) {
+            .calendar-layout {
+                flex-direction: column;
+            }
+            
+            .calendar-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            .mini-calendar-container {
+                grid-column: 1 / -1;
+            }
+            
+            .sidebar-actions {
+                flex-direction: row;
+                justify-content: center;
+            }
+        }
+        
+        /* Estilos para el selector de tipo de evento */
+        select {
+            padding: 14px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            width: 100%;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="gray" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: var(--button-bg);
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.25);
+        }
+    </style>
+</head>
+<body>
+    <div id="calendar-container">
+        <div class="calendar-layout">
+            <div class="calendar-sidebar">
+                <!-- Mini calendario -->
+                <div class="mini-calendar-container">
+                    <div id="mini-calendar"></div>
+                </div>
+                
+                <div class="filter-group">
+                    <div class="filter-title">Predeterminado</div>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filter-default" class="filter-checkbox" checked>
+                        <label for="filter-default" class="filter-label">Predeterminado</label>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <div class="filter-title">Veterinaria</div>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filter-normal" class="filter-checkbox" checked>
+                        <label for="filter-normal" class="filter-label">Citas normales</label>
+                    </div>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filter-urgent" class="filter-checkbox" checked>
+                        <label for="filter-urgent" class="filter-label">Citas urgentes</label>
+                    </div>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filter-completed" class="filter-checkbox" checked>
+                        <label for="filter-completed" class="filter-label">Citas completadas</label>
+                    </div>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filter-cancelled" class="filter-checkbox" checked>
+                        <label for="filter-cancelled" class="filter-label">Citas canceladas</label>
+                    </div>
+                </div>
+                
+                <!-- Acciones del calendario -->
+                <div class="sidebar-actions">
+                    <button id="print-button" class="sidebar-action-button">
+                        <i class="material-icons">print</i> Imprimir
+                    </button>
+                    <button id="refresh-button" class="sidebar-action-button">
+                        <i class="material-icons">refresh</i> Actualizar
+                    </button>
+                </div>
+            </div>
+            <div class="calendar-main">
+                <div id="calendar"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Diálogo para crear/editar eventos -->    
+    <div id="event-dialog" title="Detalles del Evento" style="display:none;">        
+        <form id="event-form" class="event-form">            
+            <div class="form-row">                
+                <label for="event-title">Título</label>                
+                <input type="text" id="event-title" name="title" required placeholder="Añade un título">            
+            </div>            
+            <div class="form-row time-inputs">                
+                <div class="form-column">                    
+                    <label for="event-start">Fecha inicio</label>                    
+                    <input type="datetime-local" id="event-start" name="start" required>                
+                </div>                
+                <div class="form-column">                    
+                    <label for="event-end">Fecha fin</label>                    
+                    <input type="datetime-local" id="event-end" name="end" required>                
+                </div>            
+            </div>
+            <div class="form-row">
+                <label for="event-type">Tipo de cita</label>
+                <select id="event-type" name="type">
+                    <option value="default">Normal</option>
+                    <option value="urgent">Urgente</option>
+                    <option value="completed">Completada</option>
+                    <option value="cancelled">Cancelada</option>
+                </select>
+            </div>
+            <div class="form-row">                
+                <label for="event-location">Ubicación</label>                
+                <input type="text" id="event-location" name="location" placeholder="Añade una ubicación">            
+            </div>            
+            <div class="form-row">                
+                <label for="event-description">Descripción</label>                
+                <textarea id="event-description" name="description" rows="3" placeholder="Añade una descripción"></textarea>            
+            </div>            
+            <input type="hidden" id="event-id">            
+            <div class="button-container">                
+                <button type="button" id="delete-button" class="delete-button">Eliminar</button>                
+                <button type="button" id="cancel-button" class="cancel-button">Cancelar</button>                
+                <button type="submit" class="save-button">Guardar</button>            
+            </div>        
+        </form>    
+    </div>
+    
+    <!-- Menú contextual -->
+    <div id="context-menu" class="context-menu">
+        <div class="context-menu-item" id="cm-create-event">
+            <i class="material-icons">add</i> Crear evento
+        </div>
+        <div class="context-menu-item" id="cm-goto-date">
+            <i class="material-icons">today</i> Ir a fecha
+        </div>
+        <div class="context-menu-item cm-edit-only" id="cm-edit-event">
+            <i class="material-icons">edit</i> Editar evento
+        </div>
+        <div class="context-menu-item cm-edit-only" id="cm-delete-event">
+            <i class="material-icons">delete</i> Eliminar evento
+        </div>
+        <div class="context-menu-separator cm-edit-only"></div>
+        <div class="context-menu-item" id="cm-view-change-day">
+            <i class="material-icons">view_day</i> Ver día
+        </div>
+        <div class="context-menu-item" id="cm-view-change-week">
+            <i class="material-icons">view_week</i> Ver semana
+        </div>
+        <div class="context-menu-item" id="cm-view-change-month">
+            <i class="material-icons">view_module</i> Ver mes
+        </div>
+    </div>
+    
+    <script>
+        // Variables para los calendarios
+        let calendar;
+        let miniCalendar;
+        
+        // Helper function to reformat problematic dates
+        function reformatDate(dateStr) {
+            // If it's a LocalDateTime from Java (2023-05-16T14:30:00)
+            if (dateStr.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/)) {
+                return dateStr; // Already ISO format
+            }
+            
+            // If it's a LocalDateTime toString() format 
+            // Example: 2023-05-16T14:30
+            if (dateStr.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/)) {
+                return dateStr;
+            }
+            
+            // If it's a different format, try to parse and convert
+            try {
+                const date = new Date(dateStr);
+                if (!isNaN(date.getTime())) {
+                    return date.toISOString();
+                }
+            } catch (e) {
+                console.error('Failed to reformat date:', dateStr);
+            }
+            
+            // If all fails, return as is
+            return dateStr;
+        }
+        
+        // Datos de ejemplo en formato similar a CalendarFX
+        let events = [
+            {
+                id: '1',
+                title: 'Revisión de Max (María García)',
+                start: '2025-05-16T10:00:00',
+                end: '2025-05-16T10:30:00',
+                location: 'Clínica Veterinaria',
+                description: 'Revisión periódica para Max'
+            },
+            {
+                id: '2',
+                title: 'Vacunación Urgente (Carlos Pérez)',
+                start: '2025-05-16T11:30:00',
+                end: '2025-05-16T12:00:00',
+                location: 'Clínica Veterinaria',
+                description: 'Vacuna antirrábica'
+            },
+            {
+                id: '3',
+                title: 'Cirugía completada (Ana Martínez)',
+                start: '2025-05-17T09:00:00',
+                end: '2025-05-17T11:00:00',
+                location: 'Clínica Veterinaria - Quirófano',
+                description: 'Cirugía de fractura en pata derecha'
+            },
+            {
+                id: '4',
+                title: 'Control cancelada (Pedro Sánchez)',
+                start: '2025-05-18T15:00:00',
+                end: '2025-05-18T15:30:00',
+                location: 'Clínica Veterinaria',
+                description: 'Control post-operatorio cancelado'
+            }
+        ];
+        
+        // Inicializar calendario
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+            const miniCalendarEl = document.getElementById('mini-calendar');
+            
+            // Inicialización de mini calendario
+            const miniCalendar = new FullCalendar.Calendar(miniCalendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev',
+                    center: 'title',
+                    right: 'next'
+                },
+                height: 'auto',
+                dayMaxEventRows: 0, // Ocultar eventos en mini calendario
+                selectable: false,
+                locale: 'es',
+                firstDay: 1,
+                dayCellDidMount: function(info) {
+                    info.el.addEventListener('click', function() {
+                        // Al hacer clic en una fecha, navegar a esa fecha en el calendario principal
+                        calendar.gotoDate(info.date);
+                    });
+                }
+            });
+            
+            // Inicializar el calendario principal
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                events: events,
+                editable: true,
+                selectable: true,
+                selectMirror: true,
+                dayMaxEvents: true, 
+                locale: 'es',
+                height: 'auto',
+                expandRows: true,
+                nowIndicator: true,
+                businessHours: {
+                    daysOfWeek: [1, 2, 3, 4, 5],
+                    startTime: '08:00',
+                    endTime: '20:00',
+                },
+                eventTimeFormat: {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    meridiem: false
+                },
+                slotLabelFormat: {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    omitZeroMinute: false,
+                    meridiem: false
+                },
+                firstDay: 1, // Lunes como primer día
+                scrollTime: '08:00:00',
+                buttonText: {
+                    today: 'Hoy',
+                    month: 'Mes',
+                    week: 'Semana',
+                    day: 'Día'
+                },
+                
+                // Acción para crear un evento haciendo clic en una fecha
+                dateClick: function(info) {
+                    console.log('Date clicked:', info.dateStr);
+                    // Crear evento en esta fecha
+                    let startDate = info.date;
+                    let endDate = new Date(startDate);
+                    endDate.setHours(startDate.getHours() + 1);
+                    
+                    openEventDialog({
+                        start: startDate.toISOString(),
+                        end: endDate.toISOString()
+                    });
+                },
+                
+                select: function(info) {
+                    console.log('Selection made:', info.startStr, 'to', info.endStr);
+                    openEventDialog({
+                        start: info.startStr,
+                        end: info.endStr
+                    });
+                    calendar.unselect();
+                },
+                
+                // Añadir context menu (click derecho) para crear/editar eventos
+                eventDidMount: function(info) {
+                    info.el.addEventListener('contextmenu', function(e) {
+                        e.preventDefault();
+                        console.log('Right-click on event:', info.event.title);
+                        openEventDialog(info.event);
+                    });
+                },
+                
+                // Añadir context menu a las celdas del calendario
+                dayCellDidMount: function(info) {
+                    info.el.addEventListener('contextmenu', function(e) {
+                        e.preventDefault();
+                        console.log('Right-click on day cell:', info.date);
+                        // Crear evento en esta fecha
+                        let startDate = info.date;
+                        let endDate = new Date(startDate);
+                        endDate.setHours(startDate.getHours() + 1);
+                        
+                        openEventDialog({
+                            start: startDate.toISOString(),
+                            end: endDate.toISOString()
+                        });
+                    });
+                },
+                
+                // Acción para editar un evento haciendo clic en él
+                eventClick: function(info) {
+                    console.log('Event clicked:', info.event.title);
+                    openEventDialog(info.event);
+                },
+                
+                // Acción para actualizar evento al arrastrar
+                eventDrop: function(info) {
+                    console.log('Event dropped:', info.event.title);
+                    updateEvent(info.event);
+                },
+                
+                // Acción para actualizar evento al redimensionar
+                eventResize: function(info) {
+                    console.log('Event resized:', info.event.title);
+                    updateEvent(info.event);
+                },
+                
+                // Personalizar el color de los eventos según su tipo
+                eventClassNames: function(arg) {
+                    // Ejemplo: colorear eventos según su título o datos
+                    const title = arg.event.title.toLowerCase();
+                    if (title.includes('urgente') || title.includes('urgencia')) {
+                        return ['urgent-event'];
+                    } else if (title.includes('completada') || title.includes('realizada')) {
+                        return ['completed-event'];
+                    } else if (title.includes('cancelada')) {
+                        return ['cancelled-event'];
+                    }
+                    return [];
+                }
+            });
+            
+            // Renderizar ambos calendarios
+            miniCalendar.render();
+            calendar.render();
+            
+            // Configurar el formulario
+            $("#event-form").on("submit", function(e) {
+                e.preventDefault();
+                saveEvent();
+            });
+            
+            // Configurar botón de eliminar
+            $("#delete-button").on("click", function() {
+                deleteEvent();
+            });
+            
+            // Configurar botón de cancelar
+            $("#cancel-button").on("click", function() {
+                $("#event-dialog").dialog("close");
+            });
+            
+            // Configurar filtros de calendario
+            setupFilters();
+            
+            // Configurar botones de acción
+            setupActionButtons();
+            
+            // Configurar menú contextual
+            setupContextMenu();
+            
+            // Actualizar fechas al estilo actual (si hay tema oscuro)
+            checkDarkMode();
+            
+            // Renderizar mini-calendario
+            miniCalendar.render();
+        });
+        
+        // Función para aplicar los filtros seleccionados
+        function applyFilters() {
+            // Obtener estado de los filtros
+            const showNormal = document.getElementById('filter-normal').checked;
+            const showUrgent = document.getElementById('filter-urgent').checked;
+            const showCompleted = document.getElementById('filter-completed').checked;
+            const showCancelled = document.getElementById('filter-cancelled').checked;
+            
+            // Filtrar eventos según las selecciones
+            const filteredEvents = events.filter(event => {
+                const title = event.title.toLowerCase();
+                
+                if (!showNormal && !title.includes('urgente') && !title.includes('completada') && !title.includes('cancelada')) {
+                    return false;
+                }
+                
+                if (!showUrgent && (title.includes('urgente') || title.includes('urgencia'))) {
+                    return false;
+                }
+                
+                if (!showCompleted && (title.includes('completada') || title.includes('realizada'))) {
+                    return false;
+                }
+                
+                if (!showCancelled && title.includes('cancelada')) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            // Actualizar calendario con eventos filtrados
+            calendar.removeAllEvents();
+            calendar.addEventSource(filteredEvents);
+            
+            console.log('Filtros aplicados:', { 
+                normal: showNormal, 
+                urgent: showUrgent, 
+                completed: showCompleted, 
+                cancelled: showCancelled 
+            });
+            console.log('Eventos mostrados:', filteredEvents.length);
+        }
+        
+        // Configurar botones de acciones
+        function setupActionButtons() {
+            // Botón de imprimir
+            document.getElementById('print-button').addEventListener('click', function() {
+                printCalendar();
+            });
+            
+            // Botón de actualizar
+            document.getElementById('refresh-button').addEventListener('click', function() {
+                refreshCalendar();
+            });
+        }
+        
+        // Configurar menú contextual
+        function setupContextMenu() {
+            const contextMenu = document.getElementById('context-menu');
+            let activeEvent = null;
+            
+            // Añadir listener para click derecho en todo el calendario
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                
+                // Ocultar por defecto todos los items que son solo para edición
+                const editOnlyItems = document.querySelectorAll('.cm-edit-only');
+                editOnlyItems.forEach(item => item.style.display = 'none');
+                
+                // Posicionar el menú en el cursor
+                contextMenu.style.left = e.pageX + 'px';
+                contextMenu.style.top = e.pageY + 'px';
+                
+                // Mostrar menú
+                contextMenu.style.display = 'block';
+                
+                // Guardar la posición para crear un evento si se selecciona esa opción
+                const date = calendar.getDate();
+                contextMenu.dataset.date = date.toISOString();
+                
+                // Identificar si hicimos clic en un evento
+                const fcEvent = closestByClass(e.target, 'fc-event');
+                if (fcEvent) {
+                    // Es un evento, buscar el ID del evento y guardar referencia
+                    const eventId = fcEvent.getAttribute('data-event-id') || 
+                                   fcEvent.fcSeg?.eventRange?.def?.publicId;
+                    if (eventId) {
+                        activeEvent = calendar.getEventById(eventId);
+                        if (activeEvent) {
+                            // Mostrar elementos de edición para eventos
+                            editOnlyItems.forEach(item => item.style.display = 'flex');
+                        }
+                    }
+                }
+            });
+            
+            // Cerrar el menú al hacer clic en cualquier parte
+            document.addEventListener('click', function() {
+                contextMenu.style.display = 'none';
+                activeEvent = null;
+            });
+            
+            // Prevenir cierre al hacer clic en el menú
+            contextMenu.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+            
+            // Acciones del menú contextual
+            document.getElementById('cm-create-event').addEventListener('click', function() {
+                const dateStr = contextMenu.dataset.date;
+                const date = dateStr ? new Date(dateStr) : new Date();
+                
+                openEventDialog({
+                    start: date.toISOString(),
+                    end: new Date(date.getTime() + 60 * 60 * 1000).toISOString()
+                });
+                
+                contextMenu.style.display = 'none';
+            });
+            
+            document.getElementById('cm-goto-date').addEventListener('click', function() {
+                // Preguntar por una fecha con un diálogo
+                const dateStr = prompt('Introduce una fecha (YYYY-MM-DD):', 
+                                     new Date().toISOString().split('T')[0]);
+                if (dateStr) {
+                    calendar.gotoDate(dateStr);
+                }
+                
+                contextMenu.style.display = 'none';
+            });
+            
+            document.getElementById('cm-edit-event').addEventListener('click', function() {
+                if (activeEvent) {
+                    openEventDialog(activeEvent);
+                }
+                
+                contextMenu.style.display = 'none';
+            });
+            
+            document.getElementById('cm-delete-event').addEventListener('click', function() {
+                if (activeEvent) {
+                    if (confirm('¿Estás seguro de que quieres eliminar este evento?')) {
+                        deleteEventById(activeEvent.id);
+                    }
+                }
+                
+                contextMenu.style.display = 'none';
+            });
+            
+            document.getElementById('cm-view-change-day').addEventListener('click', function() {
+                calendar.changeView('timeGridDay');
+                contextMenu.style.display = 'none';
+            });
+            
+            document.getElementById('cm-view-change-week').addEventListener('click', function() {
+                calendar.changeView('timeGridWeek');
+                contextMenu.style.display = 'none';
+            });
+            
+            document.getElementById('cm-view-change-month').addEventListener('click', function() {
+                calendar.changeView('dayGridMonth');
+                contextMenu.style.display = 'none';
+            });
+        }
+        
+        // Eliminar evento por su ID
+        function deleteEventById(eventId) {
+            // Eliminar del array de eventos
+            events = events.filter(e => e.id !== eventId);
+            
+            // Eliminar del calendario
+            calendar.getEventById(eventId)?.remove();
+            
+            // Notificar a la app Java
+            notifyJavaApp('delete', { id: eventId });
+        }
+        
+        // Función de impresión del calendario
+        function printCalendar() {
+            const currentView = calendar.view.type;
+            let title = 'Calendario';
+            
+            if (currentView === 'timeGridDay') {
+                title = 'Horario Diario: ' + calendar.formatDate(calendar.getDate(), {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            } else if (currentView === 'timeGridWeek') {
+                title = 'Horario Semanal';
+            } else if (currentView === 'dayGridMonth') {
+                title = 'Calendario Mensual: ' + calendar.formatDate(calendar.getDate(), {
+                    year: 'numeric',
+                    month: 'long'
+                });
+            }
+            
+            // Crear contenido para imprimir
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>${title}</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            padding: 20px;
+                        }
+                        h1 {
+                            text-align: center;
+                            margin-bottom: 20px;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                        }
+                        th, td {
+                            border: 1px solid #ddd;
+                            padding: 8px;
+                            text-align: left;
+                        }
+                        th {
+                            background-color: #f2f2f2;
+                        }
+                        .event {
+                            margin-bottom: 5px;
+                            padding: 5px;
+                            border-radius: 4px;
+                        }
+                        .event-time {
+                            font-weight: bold;
+                        }
+                        .event-title {
+                            font-weight: bold;
+                        }
+                        .event-location {
+                            font-style: italic;
+                        }
+                        @media print {
+                            .no-print {
+                                display: none;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>${title}</h1>
+                    <div class="no-print">
+                        <button onclick="window.print()">Imprimir</button>
+                        <button onclick="window.close()">Cerrar</button>
+                    </div>
+                    <div id="print-content"></div>
+                </body>
+                </html>
+            `);
+            
+            // Añadir eventos según la vista
+            const content = printWindow.document.getElementById('print-content');
+            const visibleEvents = calendar.getEvents().filter(e => {
+                return e.display !== 'none' && e.start >= calendar.view.activeStart && 
+                       e.start <= calendar.view.activeEnd;
+            });
+            
+            if (currentView === 'dayGridMonth') {
+                // Vista de mes: tabla por día con eventos
+                const table = document.createElement('table');
+                const headerRow = document.createElement('tr');
+                ['Fecha', 'Eventos'].forEach(headerText => {
+                    const th = document.createElement('th');
+                    th.textContent = headerText;
+                    headerRow.appendChild(th);
+                });
+                table.appendChild(headerRow);
+                
+                // Agrupar eventos por día
+                const eventsByDay = {};
+                visibleEvents.forEach(event => {
+                    const dateKey = event.start.toISOString().split('T')[0];
+                    if (!eventsByDay[dateKey]) {
+                        eventsByDay[dateKey] = [];
+                    }
+                    eventsByDay[dateKey].push(event);
+                });
+                
+                // Crear filas para cada día con eventos
+                Object.keys(eventsByDay).sort().forEach(dateKey => {
+                    const row = document.createElement('tr');
+                    const dateCell = document.createElement('td');
+                    dateCell.textContent = formatDate(new Date(dateKey));
+                    row.appendChild(dateCell);
+                    
+                    const eventsCell = document.createElement('td');
+                    eventsByDay[dateKey].forEach(event => {
+                        const eventDiv = document.createElement('div');
+                        eventDiv.className = 'event';
+                        eventDiv.style.backgroundColor = event.backgroundColor || '#f0f0f0';
+                        eventDiv.style.color = event.textColor || '#333';
+                        
+                        const timeSpan = document.createElement('div');
+                        timeSpan.className = 'event-time';
+                        timeSpan.textContent = formatTime(event.start) + 
+                                             (event.end ? ' - ' + formatTime(event.end) : '');
+                        eventDiv.appendChild(timeSpan);
+                        
+                        const titleSpan = document.createElement('div');
+                        titleSpan.className = 'event-title';
+                        titleSpan.textContent = event.title;
+                        eventDiv.appendChild(titleSpan);
+                        
+                        if (event.extendedProps.location) {
+                            const locationSpan = document.createElement('div');
+                            locationSpan.className = 'event-location';
+                            locationSpan.textContent = event.extendedProps.location;
+                            eventDiv.appendChild(locationSpan);
+                        }
+                        
+                        eventsCell.appendChild(eventDiv);
+                    });
+                    
+                    row.appendChild(eventsCell);
+                    table.appendChild(row);
+                });
+                
+                content.appendChild(table);
+            } else {
+                // Vista diaria o semanal: lista de eventos
+                const eventsDiv = document.createElement('div');
+                
+                visibleEvents.sort((a, b) => a.start - b.start).forEach(event => {
+                    const eventDiv = document.createElement('div');
+                    eventDiv.className = 'event';
+                    eventDiv.style.backgroundColor = event.backgroundColor || '#f0f0f0';
+                    eventDiv.style.color = event.textColor || '#333';
+                    eventDiv.style.padding = '10px';
+                    eventDiv.style.marginBottom = '10px';
+                    
+                    const titleDiv = document.createElement('div');
+                    titleDiv.className = 'event-title';
+                    titleDiv.textContent = event.title;
+                    titleDiv.style.fontSize = '16px';
+                    titleDiv.style.fontWeight = 'bold';
+                    eventDiv.appendChild(titleDiv);
+                    
+                    const timeDiv = document.createElement('div');
+                    timeDiv.className = 'event-time';
+                    const eventDate = formatDate(event.start);
+                    const startTime = formatTime(event.start);
+                    const endTime = event.end ? formatTime(event.end) : '';
+                    timeDiv.textContent = `${eventDate}, ${startTime}${endTime ? ' - ' + endTime : ''}`;
+                    eventDiv.appendChild(timeDiv);
+                    
+                    if (event.extendedProps.location) {
+                        const locationDiv = document.createElement('div');
+                        locationDiv.className = 'event-location';
+                        locationDiv.textContent = 'Ubicación: ' + event.extendedProps.location;
+                        eventDiv.appendChild(locationDiv);
+                    }
+                    
+                    if (event.extendedProps.description) {
+                        const descDiv = document.createElement('div');
+                        descDiv.className = 'event-description';
+                        descDiv.textContent = event.extendedProps.description;
+                        descDiv.style.marginTop = '5px';
+                        eventDiv.appendChild(descDiv);
+                    }
+                    
+                    eventsDiv.appendChild(eventDiv);
+                });
+                
+                content.appendChild(eventsDiv);
+            }
+            
+            printWindow.document.close();
+        }
+        
+        // Formatear fecha para impresión
+        function formatDate(date) {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('es-ES', options);
+        }
+        
+        // Formatear hora para impresión
+        function formatTime(date) {
+            const options = { hour: '2-digit', minute: '2-digit' };
+            return date.toLocaleTimeString('es-ES', options);
+        }
+        
+        // Encontrar el elemento padre más cercano con una clase determinada
+        function closestByClass(el, className) {
+            while (el) {
+                if (el.classList && el.classList.contains(className)) {
+                    return el;
+                }
+                el = el.parentNode;
+            }
+            return null;
+        }
+        
+        // Guardar evento (crear o actualizar)
+        function saveEvent() {
+            const formData = {
+                id: $("#event-id").val() || generateId(),
+                title: $("#event-title").val(),
+                start: $("#event-start").val(),
+                end: $("#event-end").val(),
+                location: $("#event-location").val(),
+                description: $("#event-description").val(),
+                type: $("#event-type").val() // Añadir el tipo de cita
+            };
+            
+            // Elegir color según el tipo de evento
+            let eventColor, borderColor;
+            switch (formData.type) {
+                case 'urgent':
+                    eventColor = 'var(--event-bg-3)';
+                    borderColor = '#e65100';
+                    break;
+                case 'completed':
+                    eventColor = 'var(--event-bg-2)';
+                    borderColor = '#2e7d32';
+                    break;
+                case 'cancelled':
+                    eventColor = 'var(--event-bg-4)';
+                    borderColor = '#b71c1c';
+                    break;
+                default:
+                    eventColor = 'var(--event-bg-1)';
+                    borderColor = '#0288d1';
+            }
+            
+            formData.color = eventColor;
+            
+            // Para eventos cancelados, añadir al título si no contiene ya "cancelada"
+            if (formData.type === 'cancelled' && !formData.title.toLowerCase().includes('cancelada')) {
+                formData.title += ' (Cancelada)';
+            }
+            
+            // Para eventos completados, añadir al título si no contiene ya "completada"
+            if (formData.type === 'completed' && !formData.title.toLowerCase().includes('completada')) {
+                formData.title += ' (Completada)';
+            }
+            
+            // Para eventos urgentes, añadir al título si no contiene ya "urgente"
+            if (formData.type === 'urgent' && !formData.title.toLowerCase().includes('urgente')) {
+                formData.title = 'URGENTE: ' + formData.title;
+            }
+            
+            // Actualizar array de eventos
+            const existingIndex = events.findIndex(e => e.id === formData.id);
+            if (existingIndex >= 0) {
+                // Actualizar evento existente
+                events[existingIndex] = formData;
+            } else {
+                // Añadir nuevo evento
+                events.push(formData);
+            }
+            
+            // Actualizar calendario
+            calendar.getEventById(formData.id)?.remove();
+            calendar.addEvent({
+                ...formData,
+                backgroundColor: eventColor,
+                borderColor: borderColor
+            });
+            
+            // Cerrar diálogo
+            $("#event-dialog").dialog("close");
+            
+            // Aquí se llamaría a la función para guardar en la BD local
+            console.log('Evento guardado:', formData);
+            notifyJavaApp('save', formData);
+        }
+        
+        // Activar/desactivar modo oscuro
+        function toggleDarkMode(isDark) {
+            if (isDark) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+            
+            // Actualizar calendario
+            calendar.render();
+        }
+        
+        // Comprobar si está en modo oscuro
+        function checkDarkMode() {
+            const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            toggleDarkMode(isDarkMode);
+        }
+        
+        // Notificar a la aplicación Java
+        function notifyJavaApp(action, data) {
+            try {
+                // Esta función será implementada por la aplicación JavaFX
+                if (window.javaConnector) {
+                    window.javaConnector.processEvent(action, JSON.stringify(data));
+                }
+            } catch (e) {
+                console.error('Error al notificar a la aplicación Java:', e);
+            }
+        }
+        
+        // Exponer funciones para uso desde Java
+        window.calendarApi = {
+            // Funciones de tema
+            toggleDarkMode: toggleDarkMode,
+            
+            // Funciones de eventos
+            addEvent: function(eventData) {
+                try {
+                    console.log('Adding event from Java:', eventData);
+                    const event = JSON.parse(eventData);
+                    events.push(event);
+                    calendar.addEvent(event);
+                } catch (e) {
+                    console.error('Error adding event:', e);
+                }
+            },
+            
+            updateEvents: function(newEventsJson) {
+                try {
+                    console.log('Updating events from Java:', newEventsJson);
+                    
+                    // Parse the JSON if it's a string
+                    let newEvents;
+                    if (typeof newEventsJson === 'string') {
+                        // Try to parse the JSON, but handle potential escaping issues
+                        try {
+                            newEvents = JSON.parse(newEventsJson);
+                        } catch (parseError) {
+                            console.error('JSON parse error:', parseError);
+                            // If double-escaped, try to fix it
+                            const cleanedJson = newEventsJson
+                                .replace(/\\"/g, '"')
+                                .replace(/^"/, '')
+                                .replace(/"$/, '');
+                            newEvents = JSON.parse(cleanedJson);
+                        }
+                    } else {
+                        newEvents = newEventsJson;
+                    }
+                    
+                    // Ensure we have an array
+                    if (!Array.isArray(newEvents)) {
+                        if (newEvents && typeof newEvents === 'object') {
+                            // If it's a single object, wrap it in an array
+                            newEvents = [newEvents];
+                        } else {
+                            // Otherwise, initialize as empty array
+                            newEvents = [];
+                        }
+                    }
+                    
+                    // Process dates to ensure they are in the correct format
+                    newEvents.forEach(event => {
+                        // Fix start date if needed
+                        if (event.start && typeof event.start === 'string') {
+                            try {
+                                // Check if it's a valid ISO date
+                                const date = new Date(event.start);
+                                if (isNaN(date.getTime())) {
+                                    console.warn('Invalid start date:', event.start);
+                                    // Try to fix common date format issues
+                                    event.start = reformatDate(event.start);
+                                }
+                            } catch (e) {
+                                console.warn('Error processing start date:', e);
+                            }
+                        }
+                        
+                        // Fix end date if needed
+                        if (event.end && typeof event.end === 'string') {
+                            try {
+                                // Check if it's a valid ISO date
+                                const date = new Date(event.end);
+                                if (isNaN(date.getTime())) {
+                                    console.warn('Invalid end date:', event.end);
+                                    // Try to fix common date format issues
+                                    event.end = reformatDate(event.end);
+                                }
+                            } catch (e) {
+                                console.warn('Error processing end date:', e);
+                            }
+                        }
+                    });
+                    
+                    // Update the local events array
+                    events = newEvents;
+                    
+                    // Clear and update calendar
+                    calendar.removeAllEvents();
+                    if (events.length > 0) {
+                        calendar.addEventSource(events);
+                    }
+                    
+                    // Apply any active filters
+                    applyFilters();
+                    
+                    // Refresh the view
+                    calendar.render();
+                    console.log('Calendar updated with', events.length, 'events');
+                    
+                    // Log event details for debugging
+                    events.forEach(event => {
+                        console.log(`Event: ${event.title}, Start: ${event.start}, End: ${event.end}`);
+                    });
+                } catch (e) {
+                    console.error('Error updating events:', e, 'JSON:', newEventsJson);
+                }
+            },
+            
+            // Funciones de navegación
+            goToToday: function() {
+                calendar.today();
+            },
+            
+            goToDate: function(dateStr) {
+                calendar.gotoDate(dateStr);
+            },
+            
+            changeView: function(viewName) {
+                calendar.changeView(viewName);
+            },
+            
+            // Funciones de acción
+            createNewEvent: function() {
+                const now = new Date();
+                const endTime = new Date();
+                endTime.setHours(now.getHours() + 1);
+                
+                openEventDialog({
+                    start: now.toISOString(),
+                    end: endTime.toISOString()
+                });
+            },
+            
+            // Funciones de actualización
+            refreshCalendar: function() {
+                console.log('Refrescando calendario...');
+                
+                try {
+                    // Llamar a la API de Java para obtener los eventos actualizados
+                    if (window.javaConnector) {
+                        // Enviar mensaje pidiendo actualización de eventos
+                        window.javaConnector.processEvent('refresh', JSON.stringify({
+                            requestType: 'userAppointments',
+                            timestamp: new Date().getTime()
+                        }));
+                        
+                        console.log('Solicitud de actualización enviada a Java');
+                    } else {
+                        console.log('No se pudo acceder al conector de Java para actualizar eventos');
+                        
+                        // Si no hay conector, refrescar la vista con los datos existentes
+                        calendar.refetchEvents();
+                        calendar.render();
+                    }
+                } catch (e) {
+                    console.error('Error al refrescar el calendario:', e);
+                    
+                    // Si hay un error, al menos intentar redibujar
+                    calendar.render();
+                }
+            }
+        };
+    </script>
+</body>
+</html> 

@@ -3,6 +3,8 @@ package com.example.pruebamongodbcss.theme;
 import java.util.ArrayList;
 import java.util.List;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Scene;
 import javafx.scene.control.ToggleButton;
 
@@ -27,7 +29,9 @@ public class ThemeManager {
         "clinica-styles.css"
     );
     
-    private boolean isDarkTheme = false;
+    // Propiedad observable para el tema oscuro
+    private final BooleanProperty darkThemeProperty = new SimpleBooleanProperty(false);
+    
     private List<Scene> registeredScenes = new ArrayList<>();
     private List<ToggleButton> themeToggles = new ArrayList<>();
     
@@ -64,11 +68,11 @@ public class ThemeManager {
     public void registerToggle(ToggleButton toggle) {
         if (!themeToggles.contains(toggle)) {
             themeToggles.add(toggle);
-            toggle.setSelected(isDarkTheme);
+            toggle.setSelected(darkThemeProperty.get());
             
             // Establecer listener para cambio de tema
             toggle.selectedProperty().addListener((obs, oldVal, newVal) -> {
-                if (newVal != isDarkTheme) {
+                if (newVal != darkThemeProperty.get()) {
                     setDarkTheme(newVal);
                 }
             });
@@ -80,8 +84,8 @@ public class ThemeManager {
      * @param dark true para tema oscuro, false para tema claro
      */
     public void setDarkTheme(boolean dark) {
-        if (isDarkTheme != dark) {
-            isDarkTheme = dark;
+        if (darkThemeProperty.get() != dark) {
+            darkThemeProperty.set(dark);
             
             // Actualizar todas las escenas registradas
             updateAllScenes();
@@ -100,14 +104,22 @@ public class ThemeManager {
      * @return true si el tema es oscuro, false si es claro
      */
     public boolean isDarkTheme() {
-        return isDarkTheme;
+        return darkThemeProperty.get();
+    }
+    
+    /**
+     * Obtiene la propiedad observable del tema oscuro
+     * @return Propiedad observable del tema oscuro
+     */
+    public BooleanProperty darkThemeProperty() {
+        return darkThemeProperty;
     }
     
     /**
      * Alternar entre tema claro y oscuro
      */
     public void toggleTheme() {
-        setDarkTheme(!isDarkTheme);
+        setDarkTheme(!darkThemeProperty.get());
     }
     
     /**
@@ -132,7 +144,7 @@ public class ThemeManager {
             style.contains("light-theme.css") || style.contains("dark-theme.css"));
         
         // Aplicar el tema actual siempre como primer stylesheet para prioridad máxima
-        String themePath = isDarkTheme ? DARK_THEME_PATH : LIGHT_THEME_PATH;
+        String themePath = darkThemeProperty.get() ? DARK_THEME_PATH : LIGHT_THEME_PATH;
         if (!scene.getStylesheets().contains(getClass().getResource(themePath).toExternalForm())) {
             scene.getStylesheets().add(0, getClass().getResource(themePath).toExternalForm());
         }
@@ -150,12 +162,21 @@ public class ThemeManager {
         }
         
         // Aplicar o quitar la clase dark-theme para estilos específicos de tema
-        if (isDarkTheme) {
+        if (darkThemeProperty.get()) {
             if (!scene.getRoot().getStyleClass().contains("dark-theme")) {
                 scene.getRoot().getStyleClass().add("dark-theme");
             }
+            
+            // Asegurarse de que no tiene la clase light-theme
+            scene.getRoot().getStyleClass().remove("light-theme");
         } else {
+            // Quitar la clase dark-theme y agregar light-theme
             scene.getRoot().getStyleClass().remove("dark-theme");
+            
+            // Agregar light-theme si no la tiene
+            if (!scene.getRoot().getStyleClass().contains("light-theme")) {
+                scene.getRoot().getStyleClass().add("light-theme");
+            }
         }
     }
     
@@ -173,6 +194,6 @@ public class ThemeManager {
      * @return Ruta del CSS del tema actual
      */
     public String getCurrentThemePath() {
-        return isDarkTheme ? DARK_THEME_PATH : LIGHT_THEME_PATH;
+        return darkThemeProperty.get() ? DARK_THEME_PATH : LIGHT_THEME_PATH;
     }
 } 

@@ -15,6 +15,24 @@ module com.example.pruebamongodbcss {
     requires MaterialFX;
     requires java.sql;
     requires org.apache.pdfbox;
+    requires jdk.jsobject;
+
+    
+    // CalendarFX requirements
+    requires com.calendarfx.view;
+    
+    // Google API requirements - COMPLETO
+    requires com.google.api.client;
+    requires com.google.api.client.json.gson;
+    requires com.google.api.client.extensions.java6.auth;
+    requires com.google.api.client.extensions.jetty.auth;
+    requires com.google.api.client.auth;
+    requires com.google.api.services.calendar;
+    requires google.api.client;
+    
+    // Fixed Gson dependency
+    requires com.google.gson;
+    requires transitive java.logging;
     
     // Configuración básica del módulo principal
     exports com.example.pruebamongodbcss;
@@ -33,6 +51,7 @@ module com.example.pruebamongodbcss {
     exports com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico;
     exports com.example.pruebamongodbcss.theme;
     exports com.example.pruebamongodbcss.Modulos.Clinica.Citas;
+    exports com.example.pruebamongodbcss.calendar;
     
     // Apertura de submódulos para FXML
     opens com.example.pruebamongodbcss.Modulos.AppChat to javafx.fxml;
@@ -46,7 +65,10 @@ module com.example.pruebamongodbcss {
     opens com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico to javafx.fxml;
     opens com.example.pruebamongodbcss.theme to javafx.fxml;
     opens com.example.pruebamongodbcss.Modulos.Clinica.Citas to javafx.fxml;
+    opens com.example.pruebamongodbcss.calendar to javafx.fxml, javafx.graphics, com.google.api.client, com.google.api.services.calendar, com.google.gson;
+    
 
+    
     // IMPORTANTE: Cada vez que crees un nuevo paquete dentro de Modulos,
     // necesitarás añadir dos líneas como estas:
     // exports com.example.pruebamongodbcss.Modulos.TuNuevoPaquete;
