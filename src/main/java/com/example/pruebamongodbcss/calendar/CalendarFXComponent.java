@@ -15,7 +15,6 @@ import com.calendarfx.model.CalendarSource;
 import com.calendarfx.model.Entry;
 import com.calendarfx.view.CalendarView;
 import com.calendarfx.view.DateControl;
-import com.example.pruebamongodbcss.theme.ThemeManager;
 
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -97,8 +96,25 @@ public class CalendarFXComponent extends BorderPane {
             // Crear el componente principal de la vista
             calendarView = new CalendarView();
             
-            // Forzar el estilo predeterminado de CalendarFX
-            applyCalendarStyles();
+            // DESACTIVAR COMPLETAMENTE LOS ESTILOS DEL THEME MANAGER
+            // Esto es una técnica radical pero efectiva
+            calendarView.getStylesheets().clear();
+            
+            // Establecer un ID único para este componente y sus hijos
+            // para evitar que los selectores CSS del ThemeManager lo afecten
+            this.setId("calendar-fx-isolated-component");
+            calendarView.setId("calendar-view-isolated");
+            
+            // Forzar el estilo predeterminado de CalendarFX SOLAMENTE
+            if (!calendarView.getStylesheets().contains(CALENDAR_DEFAULT_CSS)) {
+                calendarView.getStylesheets().add(CALENDAR_DEFAULT_CSS);
+            }
+            
+            // Aplicar tema básico
+            applyTheme();
+            
+            // Desconectar este componente del ThemeManager
+            desconectarDelThemeManager(this);
             
             // Crear los calendarios por tipo de cita con colores predeterminados
             Calendar citasPendientes = new Calendar("Citas pendientes");
@@ -201,6 +217,22 @@ public class CalendarFXComponent extends BorderPane {
             // Añadir el calendario a este BorderPane
             setCenter(calendarView);
             
+            // Buscar y modificar el botón de impresión una vez que todo esté configurado
+            Platform.runLater(() -> {
+                // Programar múltiples intentos para asegurar que capturamos el botón
+                for (int i = 0; i < 5; i++) {
+                    int delay = i * 1000;
+                    new Thread(() -> {
+                        try {
+                            Thread.sleep(delay);
+                            Platform.runLater(() -> buscarYCambiarColorBoton(calendarView));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }).start();
+                }
+            });
+            
         } catch (Exception e) {
             e.printStackTrace();
             showErrorMessage("Error al inicializar el calendario", e.getMessage());
@@ -214,18 +246,21 @@ public class CalendarFXComponent extends BorderPane {
         try {
             // Crear botones con estilos modernos
             Button refreshButton = new Button("Actualizar");
+            refreshButton.setId("calendar-refresh-button");
             refreshButton.getStyleClass().add("modern-button");
-            refreshButton.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white;");
+            refreshButton.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white; -fx-font-weight: normal;");
             refreshButton.setPrefWidth(120);
             
             Button addAppointmentButton = new Button("Nueva cita");
+            addAppointmentButton.setId("calendar-new-appointment-button");
             addAppointmentButton.getStyleClass().add("modern-button");
-            addAppointmentButton.setStyle("-fx-background-color: #4285f4; -fx-text-fill: white;");
+            addAppointmentButton.setStyle("-fx-background-color: #4285f4; -fx-text-fill: white; -fx-font-weight: normal;");
             addAppointmentButton.setPrefWidth(120);
             
             Button todayButton = new Button("Hoy");
+            todayButton.setId("calendar-today-button");
             todayButton.getStyleClass().add("modern-button");
-            todayButton.setStyle("-fx-background-color: #34a853; -fx-text-fill: white;");
+            todayButton.setStyle("-fx-background-color: #34a853; -fx-text-fill: white; -fx-font-weight: normal;");
             todayButton.setPrefWidth(120);
             
             // Agregar eventos a los botones
@@ -233,8 +268,9 @@ public class CalendarFXComponent extends BorderPane {
             addAppointmentButton.setOnAction(e -> showNewAppointmentDialog());
             todayButton.setOnAction(e -> calendarView.setDate(LocalDate.now()));
             
-            // Crear contenedor para los botones
+            // Crear contenedor para los botones con estilo fijo
             HBox toolBar = new HBox(10, todayButton, refreshButton, addAppointmentButton);
+            toolBar.setId("calendar-toolbar");
             toolBar.setPadding(new Insets(10));
             toolBar.setStyle("-fx-background-color: #f8f9fa;");
             
@@ -419,85 +455,114 @@ public class CalendarFXComponent extends BorderPane {
      * Aplica los estilos CSS por defecto del calendario
      */
     private void applyCalendarStyles() {
-        try {
-            // Asegurarse de que estamos usando los estilos por defecto de CalendarFX
-            if (!calendarView.getStylesheets().contains(CALENDAR_DEFAULT_CSS)) {
-                calendarView.getStylesheets().add(CALENDAR_DEFAULT_CSS);
-            }
-            
-            // Aplicar estilos modernos generales
-            calendarView.setStyle("-fx-background-color: white;");
-            this.setStyle("-fx-background-color: white;");
-            
-            // Aplicar tema claro/oscuro según configuración
-            applyTheme();
-            
-            // Aproximación directa: buscar el botón de impresión después de un breve delay
-            Platform.runLater(() -> {
-                new Thread(() -> {
-                    try {
-                        // Esperar a que se inicialice la UI completamente
-                        Thread.sleep(500);
-                        
-                        // Volver al hilo de la UI para modificar el botón
-                        Platform.runLater(() -> {
-                            stylePrintButton(calendarView);
-                        });
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }).start();
-            });
-        } catch (Exception e) {
-            System.err.println("Error al aplicar estilos: " + e.getMessage());
-            e.printStackTrace();
+        // Asegurarse de que estamos usando los estilos por defecto de CalendarFX
+        if (!calendarView.getStylesheets().contains(CALENDAR_DEFAULT_CSS)) {
+            calendarView.getStylesheets().add(CALENDAR_DEFAULT_CSS);
+        }
+        
+        // Aplicar estilos básicos
+        this.setStyle("-fx-background-color: white;");
+    }
+    
+    /**
+     * Aplica un tema básico independiente del ThemeManager
+     */
+    private void applyTheme() {
+        // Aplicar un tema claro fijo, sin usar el ThemeManager
+        setStyle("-fx-background-color: white;");
+        calendarView.setStyle("-fx-background-color: white;");
+        
+        // Programar múltiples intentos para buscar y modificar los componentes
+        programarMultiplesIntentos();
+    }
+    
+    /**
+     * Programa múltiples intentos para modificar los componentes críticos
+     */
+    private void programarMultiplesIntentos() {
+        // Ejecutar varias veces con diferentes retrasos para asegurar que capturamos todos los componentes
+        for (int i = 0; i < 10; i++) {
+            final int delay = 500 * (i + 1);
+            new Thread(() -> {
+                try {
+                    Thread.sleep(delay);
+                    Platform.runLater(() -> {
+                        buscarYModificarComponentes(calendarView);
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }).start();
         }
     }
     
     /**
-     * Método simplificado para buscar y estilizar el botón de impresión
+     * Busca y modifica botones y otros componentes 
      */
-    private void stylePrintButton(Node parent) {
+    private void buscarYModificarComponentes(Node nodo) {
         try {
-            // Recorrer todos los nodos hijos recursivamente
-            if (parent instanceof Parent) {
-                for (Node child : ((Parent) parent).getChildrenUnmodifiable()) {
-                    // Verificar si es un botón
-                    if (child instanceof Button) {
-                        Button button = (Button) child;
-                        
-                        // Si tiene el texto "Print" o "Imprimir", o tiene la clase "print-button"
-                        if ((button.getText() != null && 
-                             (button.getText().equals("Print") || button.getText().equals("Imprimir"))) || 
-                            button.getStyleClass().contains("print-button")) {
-                            
-                            // Aplicar estilo directamente
-                            button.setStyle("-fx-background-color: #EA4335; -fx-text-fill: white;");
-                            System.out.println("Botón de impresión estilizado correctamente");
-                        }
-                    }
+            // Modificar según el tipo de componente
+            if (nodo instanceof Button) {
+                Button btn = (Button) nodo;
+                
+                // Si es botón de impresión, modificar directamente
+                if (btn.getText() != null && 
+                    (btn.getText().equals("Print") || btn.getText().equals("Imprimir"))) {
                     
-                    // Buscar recursivamente en los hijos
-                    stylePrintButton(child);
+                    // Crear un fondo rojo sólido
+                    javafx.scene.layout.Background redBackground = new javafx.scene.layout.Background(
+                        new javafx.scene.layout.BackgroundFill(
+                            javafx.scene.paint.Color.web("#EA4335"), 
+                            new javafx.scene.layout.CornerRadii(3), 
+                            javafx.geometry.Insets.EMPTY
+                        )
+                    );
+                    
+                    // Aplicar el fondo y otros estilos directamente
+                    btn.setBackground(redBackground);
+                    btn.setTextFill(javafx.scene.paint.Color.WHITE);
+                    btn.setBorder(null);
+                    btn.setEffect(null);
+                    
+                    System.out.println("🖨️ Botón de impresión modificado: " + btn.getText());
+                }
+            } 
+            // Si es la barra de búsqueda
+            else if (nodo instanceof TextField) {
+                TextField searchField = (TextField) nodo;
+                if (searchField.getPromptText() != null && 
+                    (searchField.getPromptText().contains("Search") || 
+                     searchField.getPromptText().contains("Buscar"))) {
+                    
+                    searchField.setBackground(new javafx.scene.layout.Background(
+                        new javafx.scene.layout.BackgroundFill(
+                            javafx.scene.paint.Color.WHITE, 
+                            new javafx.scene.layout.CornerRadii(3), 
+                            javafx.geometry.Insets.EMPTY
+                        )
+                    ));
+                    searchField.setBorder(new javafx.scene.layout.Border(
+                        new javafx.scene.layout.BorderStroke(
+                            javafx.scene.paint.Color.LIGHTGRAY,
+                            javafx.scene.layout.BorderStrokeStyle.SOLID,
+                            new javafx.scene.layout.CornerRadii(3),
+                            new javafx.scene.layout.BorderWidths(1)
+                        )
+                    ));
+                    
+                    System.out.println("🔍 Barra de búsqueda modificada");
+                }
+            }
+            
+            // Buscar recursivamente en todos los hijos
+            if (nodo instanceof Parent) {
+                Parent parent = (Parent) nodo;
+                for (Node hijo : parent.getChildrenUnmodifiable()) {
+                    buscarYModificarComponentes(hijo);
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error al estilizar botón de impresión: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * Aplica el tema actual (claro/oscuro)
-     */
-    private void applyTheme() {
-        boolean isDarkTheme = ThemeManager.getInstance().isDarkTheme();
-        
-        if (isDarkTheme) {
-            setStyle("-fx-background-color: #202124;");
-            calendarView.setStyle("-fx-background-color: #202124;");
-        } else {
-            setStyle("-fx-background-color: white;");
-            calendarView.setStyle("-fx-background-color: white;");
+            System.err.println("Error al modificar componentes: " + e.getMessage());
         }
     }
     
@@ -505,9 +570,18 @@ public class CalendarFXComponent extends BorderPane {
      * Configura aspectos visuales adicionales del calendario
      */
     private void configureVisualSettings() {
+        // IDs únicos para cada página
+        calendarView.getDayPage().setId("calendar-day-page");
+        calendarView.getWeekPage().setId("calendar-week-page");
+        calendarView.getMonthPage().setId("calendar-month-page");
+        calendarView.getYearPage().setId("calendar-year-page");
+        
         // Deshabilitar botones predeterminados que reemplazamos con los nuestros
         calendarView.setShowAddCalendarButton(false);
-        calendarView.setShowPrintButton(true); // Habilitar botón de impresión nativo
+        
+        // Asegurarnos de que el botón de impresión está habilitado y visible
+        calendarView.setShowPrintButton(true);
+        //calendarView.getCalendarSources().get(0).getCalendars().get(0).getStyle();
         
         // Mantener controles útiles
         calendarView.setShowPageToolBarControls(true);
@@ -516,6 +590,59 @@ public class CalendarFXComponent extends BorderPane {
         // Configurar colores personalizados para algunas vistas
         calendarView.getWeekPage().setStyle("-fx-background-color: #f8f9fa;");
         calendarView.getDayPage().setStyle("-fx-background-color: #f8f9fa;");
+        
+        // Programar búsqueda del botón de impresión y forzar su color
+        new Thread(() -> {
+            for (int i = 0; i < 10; i++) {  // 10 intentos
+                try {
+                    Thread.sleep(500 * (i + 1));  // Incrementar el tiempo entre intentos
+                    Platform.runLater(() -> {
+                        buscarYCambiarColorBoton(calendarView);
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+    
+    /**
+     * Método simple para cambiar el color del botón de impresión
+     */
+    private void buscarYCambiarColorBoton(Node node) {
+        if (node instanceof Button) {
+            Button boton = (Button) node;
+            // Verificar si es el botón de impresión
+            if (boton.getText() != null && 
+                (boton.getText().equals("Print") || boton.getText().equals("Imprimir"))) {
+                
+                // Cambiar el color directamente (sin CSS)
+                try {
+                    boton.setBackground(new javafx.scene.layout.Background(
+                        new javafx.scene.layout.BackgroundFill(
+                            javafx.scene.paint.Color.web("#EA4335"), 
+                            new javafx.scene.layout.CornerRadii(3), 
+                            javafx.geometry.Insets.EMPTY
+                        )
+                    ));
+                    
+                    // Cambiar color del texto
+                    boton.setTextFill(javafx.scene.paint.Color.WHITE);
+                    
+                    System.out.println("Botón de impresión modificado");
+                } catch (Exception e) {
+                    // Si falla, probar con setStyle
+                    boton.setStyle("-fx-background-color: #EA4335; -fx-text-fill: white;");
+                }
+            }
+        }
+        
+        // Revisar hijos recursivamente
+        if (node instanceof Parent) {
+            for (Node hijo : ((Parent) node).getChildrenUnmodifiable()) {
+                buscarYCambiarColorBoton(hijo);
+            }
+        }
     }
     
     /**
@@ -921,5 +1048,55 @@ public class CalendarFXComponent extends BorderPane {
             alert.setContentText(message);
             alert.showAndWait();
         });
+    }
+    
+    /**
+     * Método para desconectar este componente del ThemeManager
+     * recorriendo todos los nodos y aplicando estilos directos
+     */
+    private void desconectarDelThemeManager(Node nodo) {
+        try {
+            // Desconectar nodo actual
+            if (nodo != null) {
+                // Aplicar estilos directos según el tipo de nodo
+                if (nodo instanceof Button) {
+                    Button btn = (Button) nodo;
+                    
+                    // Si es botón de impresión, forzar estilo rojo
+                    if (btn.getText() != null && 
+                        (btn.getText().equals("Print") || btn.getText().equals("Imprimir"))) {
+                        
+                        btn.setBackground(new javafx.scene.layout.Background(
+                            new javafx.scene.layout.BackgroundFill(
+                                javafx.scene.paint.Color.web("#EA4335"), 
+                                new javafx.scene.layout.CornerRadii(3), 
+                                javafx.geometry.Insets.EMPTY
+                            )
+                        ));
+                        btn.setTextFill(javafx.scene.paint.Color.WHITE);
+                    }
+                } 
+                // Si es barra de búsqueda
+                else if (nodo instanceof TextField) {
+                    TextField searchField = (TextField) nodo;
+                    if (searchField.getPromptText() != null && 
+                        (searchField.getPromptText().contains("Search") || 
+                         searchField.getPromptText().contains("Buscar"))) {
+                        
+                        searchField.setStyle("-fx-background-color: white; -fx-border-color: #ddd; -fx-prompt-text-fill: #999;");
+                    }
+                }
+            }
+            
+            // Recursivamente desconectar todos los hijos
+            if (nodo instanceof Parent) {
+                Parent parent = (Parent) nodo;
+                for (Node hijo : parent.getChildrenUnmodifiable()) {
+                    desconectarDelThemeManager(hijo);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error en desconectarDelThemeManager: " + e.getMessage());
+        }
     }
 }
