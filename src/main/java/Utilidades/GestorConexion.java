@@ -17,7 +17,7 @@ public class GestorConexion {
     // Nombres de las bases de datos
     private static String DB_CLINICA = "Clinica";
     private static String DB_INVENTARIO = "Inventario";
-    private static String DB_TERMINOS = "Terminos";
+    private static String DB_TERMINOS = "cima";
     private static String DB_EMPRESA = "Empresa";
     
     // Cliente MongoDB compartido (singleton)

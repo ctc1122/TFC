@@ -27,13 +27,6 @@ public class InicializadorMongoDB {
             // Crear índices para Inventario
             inventarioDB.getCollection("productos").createIndex(new Document("codigo", 1));
 
-            // Inicializar base de datos Terminos
-            MongoDatabase terminosDB = GestorConexion.conectarBD("Terminos");
-            terminosDB.createCollection("terminos_medicos");
-            terminosDB.createCollection("categorias");
-            
-            // Crear índices para Terminos
-            terminosDB.getCollection("terminos_medicos").createIndex(new Document("nombre", 1));
 
             // Inicializar base de datos Empresa
             MongoDatabase empresaDB = GestorConexion.conectarBD("Empresa");

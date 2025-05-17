@@ -191,6 +191,96 @@ def importar_medicamentos_dcsa(xml_file, db):
         print(f"Error al procesar archivo DCSA {xml_file}: {e}")
         return 0, 0, 0
 
+def importar_laboratorios(xml_file, db):
+    """Importa datos del archivo DICCIONARIO_LABORATORIOS.xml a MongoDB."""
+    try:
+        print(f"Procesando archivo LABORATORIOS: {xml_file}...")
+        tree = ET.parse(xml_file)
+        root = tree.getroot()
+        root = limpiar_namespaces(root)
+        
+        # Obtener colecciones
+        laboratorios_col = db.laboratorios
+        medicamentos_col = db.medicamentos
+        
+        # Contador para estadísticas
+        total = 0
+        importados = 0
+        actualizados = 0
+        errores = 0
+        
+        # Procesar cada laboratorio
+        for lab_elem in root.findall('.//laboratorios'):
+            total += 1
+            try:
+                codigo = lab_elem.find('codigolaboratorio').text if lab_elem.find('codigolaboratorio') is not None else None
+                nombre = lab_elem.find('laboratorio').text if lab_elem.find('laboratorio') is not None else None
+                direccion = lab_elem.find('direccion').text if lab_elem.find('direccion') is not None else None
+                codigo_postal = lab_elem.find('codigopostal').text if lab_elem.find('codigopostal') is not None else None
+                localidad = lab_elem.find('localidad').text if lab_elem.find('localidad') is not None else None
+                cif = lab_elem.find('cif').text if lab_elem.find('cif') is not None else None
+                
+                if codigo and nombre:
+                    # Insertar o actualizar laboratorio
+                    laboratorio = {
+                        'codigo': codigo,
+                        'nombre': nombre,
+                        'direccion': direccion,
+                        'codigo_postal': codigo_postal,
+                        'localidad': localidad,
+                        'cif': cif,
+                        'fecha_importacion': datetime.now()
+                    }
+                    
+                    # Usar upsert para actualizar si existe o insertar si no
+                    result = laboratorios_col.update_one(
+                        {'codigo': codigo}, 
+                        {'$set': laboratorio},
+                        upsert=True
+                    )
+                    
+                    if result.upserted_id is not None:
+                        importados += 1
+                    elif result.modified_count > 0:
+                        actualizados += 1
+                    
+                    if importados % 100 == 0 and importados > 0:
+                        print(f"Importados {importados} laboratorios...")
+                    elif actualizados % 100 == 0 and actualizados > 0:
+                        print(f"Actualizados {actualizados} laboratorios...")
+                    
+                    # Buscar relacionar laboratorios con medicamentos que tienen ese nombre de laboratorio
+                    # Esto es una aproximación ya que el esquema exacto de relación no está claro
+                    medicamentos_result = medicamentos_col.update_many(
+                        {'$or': [
+                            {'laboratorio': {'$regex': nombre, '$options': 'i'}},
+                            {'codigo_laboratorio': codigo}
+                        ]},
+                        {'$set': {
+                            'codigo_laboratorio': codigo,
+                            'laboratorio_info': laboratorio,
+                            'fecha_actualizacion_lab': datetime.now()
+                        }}
+                    )
+                    
+                    if medicamentos_result.modified_count > 0:
+                        print(f"Actualizada información de laboratorio en {medicamentos_result.modified_count} medicamentos para el laboratorio {nombre}")
+                        
+                else:
+                    errores += 1
+            except Exception as e:
+                print(f"Error al procesar laboratorio: {e}")
+                errores += 1
+                
+        # Crear índices
+        laboratorios_col.create_index('codigo')
+        laboratorios_col.create_index('nombre')
+                
+        return total, importados, actualizados, errores
+    except Exception as e:
+        print(f"Error al procesar archivo LABORATORIOS {xml_file}: {e}")
+        return 0, 0, 0, 0
+
 def crear_indices(db):
     """Crea índices para mejorar el rendimiento de las consultas."""
     try:
@@ -199,8 +289,11 @@ def crear_indices(db):
         db.medicamentos.create_index('codigo_dcpf')
         db.medicamentos.create_index('codigo_dcsa')
         db.medicamentos.create_index('nombre')
+        db.medicamentos.create_index('codigo_laboratorio')
         db.principios_activos.create_index('codigo_dcsa')
         db.principios_activos.create_index('nombre')
+        db.laboratorios.create_index('codigo')
+        db.laboratorios.create_index('nombre')
         print("Índices creados correctamente.")
     except Exception as e:
         print(f"Error al crear índices: {e}")
@@ -210,7 +303,8 @@ def procesar_archivos_cima(directorio, db):
     archivos = {
         'dcp': None,
         'dcpf': None,
-        'dcsa': None
+        'dcsa': None,
+        'laboratorios': None
     }
     
     # Buscar los archivos en el directorio
@@ -223,10 +317,12 @@ def procesar_archivos_cima(directorio, db):
                 archivos['dcpf'] = ruta_completa
             elif 'DICCIONARIO_DCSA.xml' in archivo:
                 archivos['dcsa'] = ruta_completa
+            elif 'DICCIONARIO_LABORATORIOS.xml' in archivo:
+                archivos['laboratorios'] = ruta_completa
     
     resultados = {}
     
-    # Procesar archivos en orden: primero DCP, luego DCPF y finalmente DCSA
+    # Procesar archivos en orden: primero DCP, luego DCPF, luego DCSA y finalmente LABORATORIOS
     if archivos['dcp']:
         resultados['dcp'] = importar_medicamentos_dcp(archivos['dcp'], db)
     else:
@@ -241,6 +337,11 @@ def procesar_archivos_cima(directorio, db):
         resultados['dcsa'] = importar_medicamentos_dcsa(archivos['dcsa'], db)
     else:
         print("No se encontró el archivo DICCIONARIO_DCSA.xml")
+        
+    if archivos['laboratorios']:
+        resultados['laboratorios'] = importar_laboratorios(archivos['laboratorios'], db)
+    else:
+        print("No se encontró el archivo DICCIONARIO_LABORATORIOS.xml")
     
     crear_indices(db)
     return resultados
@@ -274,6 +375,10 @@ def main():
     if 'dcsa' in resultados:
         total, importados, errores = resultados['dcsa']
         print(f"DCSA - Total procesados: {total}, Actualizados: {importados}, Errores: {errores}")
+        
+    if 'laboratorios' in resultados:
+        total, importados, actualizados, errores = resultados['laboratorios']
+        print(f"LABORATORIOS - Total procesados: {total}, Importados: {importados}, Actualizados: {actualizados}, Errores: {errores}")
 
 if __name__ == '__main__':
     main() 
