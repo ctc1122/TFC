@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
-<?import io.github.palexdev.materialfx.controls.MFXDatePicker?>
+<?import javafx.scene.control.DatePicker?>
 <?import java.lang.String?>
 
 <BorderPane prefHeight="500.0" prefWidth="600.0" styleClass="background-white" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.Citas.CitaFormularioController">
@@ -63,7 +63,7 @@
                   
                   <ComboBox fx:id="cmbVeterinario" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                   
-                  <MFXDatePicker fx:id="dpFecha" style="-fx-pref-width: 300; -fx-pref-height: 30; -fx-background-color: white; -fx-background-radius: 3; -fx-border-color: #aaaaaa; -fx-border-radius: 3; -fx-font-size: 13px; -fx-padding: 5;" floatingText="Fecha" promptText="Seleccionar fecha" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                  <DatePicker fx:id="dpFecha" prefWidth="300.0" promptText="Seleccionar fecha" GridPane.columnIndex="1" GridPane.rowIndex="2" style="-fx-background-color: white; -fx-text-fill: black;" />
                   
                   <HBox alignment="CENTER_LEFT" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
                      <children>
@@ -98,6 +98,6 @@
    </center>
    
    <stylesheets>
-      <String fx:value="/com/example/pruebamongodbcss/Clinica/clinica-styles.css" />
+      <String fx:value="/com/example/pruebamongodbcss/css/clinica-styles.css" />
    </stylesheets>
 </BorderPane> 

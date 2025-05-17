@@ -7,7 +7,6 @@ import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
 import com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica;
 
-import io.github.palexdev.materialfx.controls.MFXDatePicker;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -37,7 +36,7 @@ public class CitaFormularioController implements Initializable {
     @FXML private Label lblTitulo;
     @FXML private ComboBox<ModeloPaciente> cmbPaciente;
     @FXML private ComboBox<String> cmbVeterinario;
-    @FXML private MFXDatePicker dpFecha;
+    @FXML private DatePicker dpFecha;
     @FXML private ComboBox<String> cmbHora;
     @FXML private ComboBox<String> cmbMinuto;
     @FXML private TextField txtMotivo;
@@ -174,8 +173,21 @@ public class CitaFormularioController implements Initializable {
         // Actualizar título
         lblTitulo.setText("Editar Cita");
         
-        // Cargar datos de la cita
-        cargarDatosCita();
+        System.out.println("Configurando cita para edición: " + cita.getId().toString());
+        
+        // Asegurarse que los datos necesarios estén cargados antes de popular el formulario
+        if (pacientesObservable.isEmpty()) {
+            cargarPacientes();
+        }
+        
+        if (cmbVeterinario.getItems().isEmpty()) {
+            cargarVeterinarios();
+        }
+        
+        // Cargar datos de la cita después de un breve retraso para asegurar que los datos estén cargados
+        javafx.application.Platform.runLater(() -> {
+            cargarDatosCita();
+        });
     }
     
     /**
@@ -229,31 +241,131 @@ public class CitaFormularioController implements Initializable {
      */
     private void cargarDatosCita() {
         if (cita != null) {
-            // Seleccionar paciente
-            for (ModeloPaciente paciente : pacientesObservable) {
-                if (paciente.getId().equals(cita.getPacienteId())) {
-                    cmbPaciente.getSelectionModel().select(paciente);
-                    break;
+            try {
+                System.out.println("Cargando datos de cita: " + cita.getId());
+                
+                // Seleccionar paciente
+                boolean pacienteEncontrado = false;
+                if (cita.getPacienteId() != null) {
+                    System.out.println("Buscando paciente con ID: " + cita.getPacienteId());
+                    for (ModeloPaciente paciente : pacientesObservable) {
+                        if (paciente.getId().equals(cita.getPacienteId())) {
+                            System.out.println("Paciente encontrado: " + paciente.getNombre());
+                            cmbPaciente.getSelectionModel().select(paciente);
+                            pacienteEncontrado = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!pacienteEncontrado) {
+                        System.out.println("Advertencia: No se encontró el paciente con ID: " + cita.getPacienteId());
+                    }
                 }
+                
+                // Seleccionar veterinario
+                if (cita.getNombreVeterinario() != null && !cita.getNombreVeterinario().isEmpty()) {
+                    System.out.println("Seleccionando veterinario: " + cita.getNombreVeterinario());
+                    
+                    // Verificar si el nombre del veterinario ya incluye el prefijo "Dr." o "Dra."
+                    String nombreVeterinario = cita.getNombreVeterinario();
+                    if (!nombreVeterinario.startsWith("Dr.") && !nombreVeterinario.startsWith("Dra.")) {
+                        nombreVeterinario = "Dr. " + nombreVeterinario;
+                    }
+                    
+                    // Imprimir los veterinarios disponibles para diagnóstico
+                    System.out.println("Veterinarios disponibles:");
+                    for (String vet : cmbVeterinario.getItems()) {
+                        System.out.println(" - " + vet);
+                    }
+                    
+                    // Seleccionar el veterinario por el nombre exacto o buscando coincidencia parcial
+                    if (cmbVeterinario.getItems().contains(nombreVeterinario)) {
+                        cmbVeterinario.getSelectionModel().select(nombreVeterinario);
+                        System.out.println("Veterinario seleccionado: " + nombreVeterinario);
+                    } else {
+                        // Buscar por coincidencia parcial
+                        boolean encontrado = false;
+                        for (String vet : cmbVeterinario.getItems()) {
+                            if (vet.contains(nombreVeterinario) || nombreVeterinario.contains(vet)) {
+                                cmbVeterinario.getSelectionModel().select(vet);
+                                System.out.println("Veterinario seleccionado por coincidencia parcial: " + vet);
+                                encontrado = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!encontrado && !cmbVeterinario.getItems().isEmpty()) {
+                            // Si no encuentra coincidencia, seleccionar el primero
+                            cmbVeterinario.getSelectionModel().selectFirst();
+                            System.out.println("No se encontró el veterinario, se seleccionó el primero por defecto: " + cmbVeterinario.getValue());
+                        }
+                    }
+                } else if (!cmbVeterinario.getItems().isEmpty()) {
+                    // Si no hay veterinario asignado, seleccionar el primero
+                    cmbVeterinario.getSelectionModel().selectFirst();
+                    System.out.println("No hay veterinario asignado, se seleccionó el primero por defecto: " + cmbVeterinario.getValue());
+                }
+                
+                // Configurar fecha y hora
+                if (cita.getFechaHora() != null) {
+                    LocalDateTime fechaHora = cita.getFechaHora();
+                    System.out.println("Configurando fecha: " + fechaHora);
+                    
+                    // Asegurar que el datepicker tenga un valor
+                    dpFecha.setValue(fechaHora.toLocalDate());
+                    
+                    // Formatear hora y minuto con dos dígitos
+                    String horaStr = String.format("%02d", fechaHora.getHour());
+                    String minutoStr = String.format("%02d", fechaHora.getMinute());
+                    
+                    System.out.println("Hora: " + horaStr + ", Minuto: " + minutoStr);
+                    
+                    // Seleccionar hora y minuto si están en las listas
+                    if (cmbHora.getItems().contains(horaStr)) {
+                        cmbHora.getSelectionModel().select(horaStr);
+                    } else if (!cmbHora.getItems().isEmpty()) {
+                        cmbHora.getSelectionModel().selectFirst();
+                    }
+                    
+                    if (cmbMinuto.getItems().contains(minutoStr)) {
+                        cmbMinuto.getSelectionModel().select(minutoStr);
+                    } else if (!cmbMinuto.getItems().isEmpty()) {
+                        cmbMinuto.getSelectionModel().selectFirst();
+                    }
+                } else {
+                    System.out.println("No hay fecha y hora en la cita");
+                    dpFecha.setValue(LocalDate.now());
+                    if (!cmbHora.getItems().isEmpty()) cmbHora.getSelectionModel().selectFirst();
+                    if (!cmbMinuto.getItems().isEmpty()) cmbMinuto.getSelectionModel().selectFirst();
+                }
+                
+                // Establecer motivo
+                if (cita.getMotivo() != null) {
+                    txtMotivo.setText(cita.getMotivo());
+                    System.out.println("Motivo: " + cita.getMotivo());
+                }
+                
+                // Seleccionar estado
+                if (cita.getEstado() != null) {
+                    cmbEstado.getSelectionModel().select(cita.getEstado());
+                    System.out.println("Estado: " + cita.getEstado());
+                } else if (!cmbEstado.getItems().isEmpty()) {
+                    cmbEstado.getSelectionModel().selectFirst();
+                }
+                
+                // Establecer observaciones
+                if (cita.getObservaciones() != null) {
+                    txtObservaciones.setText(cita.getObservaciones());
+                    System.out.println("Observaciones configuradas");
+                }
+                
+                System.out.println("Carga de datos completada");
+            } catch (Exception e) {
+                System.err.println("Error al cargar datos de la cita: " + e.getMessage());
+                e.printStackTrace();
             }
-            
-            // Seleccionar veterinario
-            cmbVeterinario.getSelectionModel().select(cita.getNombreVeterinario());
-            
-            // Configurar fecha y hora
-            LocalDateTime fechaHora = cita.getFechaHora();
-            dpFecha.setValue(fechaHora.toLocalDate());
-            cmbHora.getSelectionModel().select(String.format("%02d", fechaHora.getHour()));
-            cmbMinuto.getSelectionModel().select(String.format("%02d", fechaHora.getMinute()));
-            
-            // Establecer motivo
-            txtMotivo.setText(cita.getMotivo());
-            
-            // Seleccionar estado
-            cmbEstado.getSelectionModel().select(cita.getEstado());
-            
-            // Establecer observaciones
-            txtObservaciones.setText(cita.getObservaciones());
+        } else {
+            System.out.println("No hay cita para cargar");
         }
     }
     

@@ -4,7 +4,6 @@ import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.calendar.CalendarEvent.EventoTipo;
 
-import io.github.palexdev.materialfx.controls.MFXDatePicker;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -36,7 +35,7 @@ public class EventoFormularioController implements Initializable {
     @FXML private TextArea txtDescripcion;
     @FXML private TextField txtUbicacion;
     @FXML private ComboBox<String> cmbParticipantes;
-    @FXML private MFXDatePicker dpFecha;
+    @FXML private DatePicker dpFecha;
     @FXML private ComboBox<String> cmbHora;
     @FXML private ComboBox<String> cmbMinuto;
     @FXML private ComboBox<String> cmbHoraFin;

@@ -786,7 +786,7 @@ public class CalendarFXComponent extends BorderPane {
             }
             
             // Cargar el formulario de citas desde la ubicación correcta
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/clinica/citas/cita-formulario.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Citas/cita-formulario.fxml"));
             Parent root = loader.load();
             
             // Obtener el controlador

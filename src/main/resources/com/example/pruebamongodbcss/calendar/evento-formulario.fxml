@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import io.github.palexdev.materialfx.controls.MFXDatePicker?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ColorPicker?>
 <?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextArea?>
@@ -58,7 +58,7 @@
             
             <HBox alignment="CENTER_LEFT" spacing="10.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
                <children>
-                  <MFXDatePicker fx:id="dpFecha" editable="true" prefWidth="170.0" promptText="Fecha" />
+                  <DatePicker fx:id="dpFecha" editable="true" prefWidth="170.0" promptText="Fecha" />
                   <CheckBox fx:id="chkTodoElDia" mnemonicParsing="false" text="Todo el día" />
                </children>
             </HBox>
