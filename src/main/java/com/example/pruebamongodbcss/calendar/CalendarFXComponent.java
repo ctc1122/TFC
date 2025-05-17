@@ -980,7 +980,67 @@ public class CalendarFXComponent extends BorderPane {
             return null;
         });
         
-        // Agregar menú contextual para clic derecho
+        // Menú contextual para clic derecho sobre una entrada (cita)
+        calendarView.setEntryContextMenuCallback(param -> {
+            Entry<?> entry = param.getEntry();
+            ContextMenu contextMenu = new ContextMenu();
+            
+            MenuItem editItem = new MenuItem("Editar cita");
+            MenuItem deleteItem = new MenuItem("Eliminar cita");
+            
+            // Configurar acción de edición
+            editItem.setOnAction(e -> {
+                showEntryDetailsDialog(entry);
+            });
+            
+            // Configurar acción de eliminación
+            deleteItem.setOnAction(e -> {
+                // Confirmar eliminación
+                Alert confirmDialog = new Alert(AlertType.CONFIRMATION);
+                confirmDialog.setTitle("Eliminar cita");
+                confirmDialog.setHeaderText("¿Está seguro que desea eliminar esta cita?");
+                confirmDialog.setContentText("Esta acción no se puede deshacer.");
+                
+                Optional<ButtonType> result = confirmDialog.showAndWait();
+                if (result.isPresent() && result.get() == ButtonType.OK) {
+                    // Obtener ID de la cita
+                    String entryId = entry.getId();
+                    
+                    // Eliminar de la BD
+                    boolean deleted = calendarService.deleteAppointment(entryId);
+                    
+                    if (deleted) {
+                        // Eliminar del calendario visual
+                        Calendar calendar = entry.getCalendar();
+                        if (calendar != null) {
+                            calendar.removeEntry(entry);
+                        }
+                        
+                        // Refrescar la vista
+                        refreshCalendarFromDatabase();
+                        
+                        // Mostrar mensaje de éxito
+                        Alert alert = new Alert(AlertType.INFORMATION);
+                        alert.setTitle("Éxito");
+                        alert.setHeaderText(null);
+                        alert.setContentText("La cita ha sido eliminada correctamente.");
+                        alert.showAndWait();
+                    } else {
+                        // Mostrar error
+                        showErrorMessage("Error", "No se pudo eliminar la cita. Por favor, inténtelo de nuevo.");
+                        // Refrescar de todos modos para asegurar consistencia
+                        refreshCalendarFromDatabase();
+                    }
+                }
+            });
+            
+            // Agregar opciones al menú
+            contextMenu.getItems().addAll(editItem, deleteItem);
+            
+            return contextMenu;
+        });
+        
+        // Agregar menú contextual para clic derecho en un día
         calendarView.getDayPage().setContextMenuCallback(new Callback<DateControl.ContextMenuParameter, ContextMenu>() {
             @Override
             public ContextMenu call(DateControl.ContextMenuParameter param) {
