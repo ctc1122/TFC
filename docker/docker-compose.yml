@@ -40,6 +40,19 @@ services:
       - app-network
     restart: unless-stopped
 
+  # MongoDB CIMA (puerto 27020)
+  mongodb-cima:
+    image: mongo:latest
+    container_name: mongodb-tfc-cima
+    ports:
+      - "27020:27017"
+    volumes:
+      - mongodb-cima-data:/data/db
+      - ./init-mongo-cima.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - app-network
+    restart: unless-stopped
+
   # MariaDB (puerto 3306)
   mariadb:
     image: mariadb:latest
@@ -78,6 +91,8 @@ volumes:
     name: mongodb-tfc-data2
   mongodb-data3:
     name: mongodb-tfc-data3
+  mongodb-cima-data:
+    name: mongodb-tfc-cima-data
   mysql_data:
     name: umls-db-data
 
