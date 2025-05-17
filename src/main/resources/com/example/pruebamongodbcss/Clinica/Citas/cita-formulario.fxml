@@ -14,8 +14,9 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 <?import io.github.palexdev.materialfx.controls.MFXDatePicker?>
+<?import java.lang.String?>
 
-<BorderPane prefHeight="500.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.Citas.CitaFormularioController">
+<BorderPane prefHeight="500.0" prefWidth="600.0" styleClass="background-white" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.Citas.CitaFormularioController">
    <top>
       <HBox alignment="CENTER" prefHeight="60.0" style="-fx-background-color: #3f51b5;" BorderPane.alignment="CENTER">
          <children>
@@ -62,7 +63,7 @@
                   
                   <ComboBox fx:id="cmbVeterinario" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                   
-                  <MFXDatePicker fx:id="dpFecha" promptText="Seleccionar fecha" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                  <MFXDatePicker fx:id="dpFecha" style="-fx-pref-width: 300; -fx-pref-height: 30; -fx-background-color: white; -fx-background-radius: 3; -fx-border-color: #aaaaaa; -fx-border-radius: 3; -fx-font-size: 13px; -fx-padding: 5;" floatingText="Fecha" promptText="Seleccionar fecha" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                   
                   <HBox alignment="CENTER_LEFT" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
                      <children>
@@ -83,7 +84,7 @@
             <HBox alignment="CENTER_RIGHT" spacing="10.0">
                <children>
                   <Button fx:id="btnRazas" mnemonicParsing="false" onAction="#onBuscarRazas" styleClass="btn-info" text="Buscar Razas por Animal" />
-                  <Label fx:id="lblError" styleClass="label-error" text="Error" visible="false" />
+                  <Label fx:id="lblError" style="-fx-text-fill: red;" text="Error" visible="false" />
                   <HBox HBox.hgrow="ALWAYS" />
                   <Button fx:id="btnCancelar" onAction="#onCancelar" styleClass="btn-secondary" text="Cancelar" />
                   <Button fx:id="btnGuardar" onAction="#onGuardar" styleClass="btn-primary" text="Guardar" />
@@ -95,4 +96,8 @@
          </padding>
       </VBox>
    </center>
+   
+   <stylesheets>
+      <String fx:value="/com/example/pruebamongodbcss/Clinica/clinica-styles.css" />
+   </stylesheets>
 </BorderPane> 

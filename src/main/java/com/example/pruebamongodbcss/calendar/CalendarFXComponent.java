@@ -916,6 +916,34 @@ public class CalendarFXComponent extends BorderPane {
             // Veterinario
             cita.setNombreVeterinario(event.getUsuario());
             
+            // Para citas médicas, el usuario asignado es el veterinario de la cita
+            // IMPORTANTE: Esto solo establece el valor inicial, el formulario lo actualizará
+            // cuando el usuario seleccione un veterinario
+            if (event.getUsuario() != null && !event.getUsuario().isEmpty()) {
+                // Extraer el nombre de usuario del nombre del veterinario
+                String nombreVeterinario = event.getUsuario();
+                // Intentamos extraer el username del formato "Dr. Nombre Apellido"
+                if (nombreVeterinario.startsWith("Dr. ") || nombreVeterinario.startsWith("Dra. ")) {
+                    nombreVeterinario = nombreVeterinario.substring(4);
+                }
+                // Convertir a formato de usuario simple (primera letra nombre + apellido en minúsculas)
+                String[] partes = nombreVeterinario.split(" ");
+                if (partes.length >= 2) {
+                    String posibleUsuario = (partes[0].substring(0, 1) + partes[1]).toLowerCase();
+                    cita.setUsuarioAsignado(posibleUsuario);
+                } else {
+                    cita.setUsuarioAsignado(nombreVeterinario.toLowerCase());
+                }
+            } 
+            // Si no hay veterinario, usamos el usuario actual
+            else if (usuarioActual != null) {
+                cita.setUsuarioAsignado(usuarioActual.getUsuario());
+            }
+            // Valor por defecto como último recurso
+            else {
+                cita.setUsuarioAsignado("sistema");
+            }
+            
             return cita;
         } catch (Exception e) {
             e.printStackTrace();

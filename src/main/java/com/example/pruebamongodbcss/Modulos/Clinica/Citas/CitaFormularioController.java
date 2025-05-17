@@ -359,6 +359,56 @@ public class CitaFormularioController implements Initializable {
                 cita.setVeterinarioId(mapaVeterinariosId.get(nombreVeterinario));
             }
             
+            // IMPORTANTE: Extraer username del veterinario para asignar la cita
+            // Quitar el "Dr. " o "Dra. " si existe
+            String nombreSinTitulo = nombreVeterinario;
+            if (nombreVeterinario.startsWith("Dr. ") || nombreVeterinario.startsWith("Dra. ")) {
+                nombreSinTitulo = nombreVeterinario.substring(4);
+            }
+            
+            // Buscar el usuario del veterinario seleccionado
+            ServicioUsuarios servicioUsuarios = new ServicioUsuarios();
+            try {
+                // Dividir nombre y apellido
+                String[] partes = nombreSinTitulo.split(" ", 2);
+                String nombre = partes[0].trim();
+                String apellido = partes.length > 1 ? partes[1].trim() : "";
+                
+                // Buscar usuario que coincida con el nombre o apellido
+                List<Usuario> posiblesUsuarios = servicioUsuarios.buscarUsuariosPorTexto(nombre);
+                Usuario veterinario = null;
+                
+                // Buscar coincidencia exacta de nombre y apellido
+                for (Usuario u : posiblesUsuarios) {
+                    if (u.getNombre().equalsIgnoreCase(nombre) && 
+                        u.getApellido().toLowerCase().contains(apellido.toLowerCase())) {
+                        veterinario = u;
+                        break;
+                    }
+                }
+                
+                if (veterinario != null) {
+                    // Si encontramos el usuario, usar su username
+                    cita.setUsuarioAsignado(veterinario.getUsuario());
+                    System.out.println("Usuario asignado a la cita: " + veterinario.getUsuario());
+                } else {
+                    // Si no lo encontramos, intentamos construir un username típico (primera letra + apellido)
+                    if (!nombre.isEmpty() && !apellido.isEmpty()) {
+                        String usuarioGenerado = (nombre.substring(0, 1) + apellido).toLowerCase();
+                        cita.setUsuarioAsignado(usuarioGenerado);
+                        System.out.println("Usuario generado para la cita: " + usuarioGenerado);
+                    } else {
+                        // Fallback a sistema si no podemos generar nada
+                        cita.setUsuarioAsignado("sistema");
+                        System.out.println("Usuario por defecto para la cita: sistema");
+                    }
+                }
+            } catch (Exception e) {
+                // Si algo falla, usar un valor por defecto
+                cita.setUsuarioAsignado("sistema");
+                System.out.println("Error al buscar usuario para veterinario: " + e.getMessage());
+            }
+            
             cita.setFechaHora(obtenerFechaHoraSeleccionada());
             cita.setMotivo(txtMotivo.getText().trim());
             cita.setEstado(cmbEstado.getValue());

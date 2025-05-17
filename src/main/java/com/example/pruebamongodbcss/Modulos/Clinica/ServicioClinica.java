@@ -646,12 +646,18 @@ public class ServicioClinica {
             
             // Si después de todo no tenemos un ID de usuario, lanzar excepción
             if (cita.getUsuarioAsignado() == null || cita.getUsuarioAsignado().isEmpty()) {
-                throw new IllegalArgumentException("No se pudo determinar el ID de usuario para la cita");
+                // Usar un valor por defecto en lugar de lanzar excepción
+                System.out.println("ADVERTENCIA: No se pudo determinar el ID de usuario para la cita. Usando 'sistema' como valor por defecto.");
+                cita.setUsuarioAsignado("sistema");
             }
             
         } catch (Exception e) {
             System.err.println("Error al resolver el usuario: " + e.getMessage());
-            throw new IllegalArgumentException("Error al resolver el usuario para la cita: " + e.getMessage());
+            // En lugar de lanzar excepción, asignar un usuario por defecto
+            System.out.println("ADVERTENCIA: Error al resolver el usuario. Usando 'sistema' como valor por defecto.");
+            if (cita.getUsuarioAsignado() == null || cita.getUsuarioAsignado().isEmpty()) {
+                cita.setUsuarioAsignado("sistema");
+            }
         }
         
         // Verificar si hay conflicto de horario
