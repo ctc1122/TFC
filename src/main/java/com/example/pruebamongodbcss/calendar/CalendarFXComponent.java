@@ -67,6 +67,22 @@ public class CalendarFXComponent extends BorderPane {
     // Ruta al archivo CSS del calendario
     private static final String CALENDAR_DEFAULT_CSS = CalendarFXComponent.class.getResource("/com/example/pruebamongodbcss/theme/jfx-calendar-styles.css").toExternalForm();
     
+    // CSS personalizado para forzar texto negro en todo el calendario
+    private static final String BLACK_TEXT_CSS = 
+        ".calendar-view * { -fx-text-fill: black !important; }" +
+        ".date-time-label { -fx-text-fill: black !important; }" +
+        ".date-time-header { -fx-text-fill: black !important; }" +
+        ".weekday-label { -fx-text-fill: black !important; }" +
+        ".date-label { -fx-text-fill: black !important; }" +
+        ".month-year-label { -fx-text-fill: black !important; }" +
+        ".time-label { -fx-text-fill: black !important; }" +
+        ".detail-label { -fx-text-fill: black !important; }" +
+        ".calendar-header { -fx-text-fill: black !important; }" +
+        ".entry-title { -fx-text-fill: black !important; }" +
+        ".agenda-view .time-label { -fx-text-fill: black !important; }" +
+        ".day-of-week-label { -fx-text-fill: black !important; }" +
+        ".day-of-month-label { -fx-text-fill: black !important; }";
+    
     private Map<String, String> entryDescriptions = new java.util.HashMap<>();
     
     /**
@@ -109,6 +125,9 @@ public class CalendarFXComponent extends BorderPane {
             if (!calendarView.getStylesheets().contains(CALENDAR_DEFAULT_CSS)) {
                 calendarView.getStylesheets().add(CALENDAR_DEFAULT_CSS);
             }
+            
+            // Agregar el CSS para forzar texto negro
+            calendarView.getStylesheets().add("data:text/css," + BLACK_TEXT_CSS.replace(" ", "%20"));
             
             // Aplicar tema básico
             applyTheme();
@@ -225,7 +244,10 @@ public class CalendarFXComponent extends BorderPane {
                     new Thread(() -> {
                         try {
                             Thread.sleep(delay);
-                            Platform.runLater(() -> buscarYCambiarColorBoton(calendarView));
+                            Platform.runLater(() -> {
+                                buscarYCambiarColorBoton(calendarView);
+                                aplicarTextoNegro(calendarView);
+                            });
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -472,6 +494,10 @@ public class CalendarFXComponent extends BorderPane {
         setStyle("-fx-background-color: white;");
         calendarView.setStyle("-fx-background-color: white;");
         
+        // Aplicar estilo de texto negro directamente a través de CSS inline
+        String blackTextStyle = "-fx-text-fill: black !important;";
+        calendarView.setStyle(calendarView.getStyle() + "; " + blackTextStyle);
+        
         // Programar múltiples intentos para buscar y modificar los componentes
         programarMultiplesIntentos();
     }
@@ -488,6 +514,7 @@ public class CalendarFXComponent extends BorderPane {
                     Thread.sleep(delay);
                     Platform.runLater(() -> {
                         buscarYModificarComponentes(calendarView);
+                        aplicarTextoNegro(calendarView);
                     });
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -504,6 +531,9 @@ public class CalendarFXComponent extends BorderPane {
             // Modificar según el tipo de componente
             if (nodo instanceof Button) {
                 Button btn = (Button) nodo;
+                
+                // Aplicar texto negro a todos los botones
+                btn.setTextFill(Color.BLACK);
                 
                 // Si es botón de impresión, modificar directamente
                 if (btn.getText() != null && 
@@ -530,6 +560,8 @@ public class CalendarFXComponent extends BorderPane {
             // Si es la barra de búsqueda
             else if (nodo instanceof TextField) {
                 TextField searchField = (TextField) nodo;
+                searchField.setStyle(searchField.getStyle() + "; -fx-text-fill: black;");
+                
                 if (searchField.getPromptText() != null && 
                     (searchField.getPromptText().contains("Search") || 
                      searchField.getPromptText().contains("Buscar"))) {
@@ -552,6 +584,14 @@ public class CalendarFXComponent extends BorderPane {
                     
                     System.out.println("🔍 Barra de búsqueda modificada");
                 }
+            }
+            // Si es cualquier etiqueta, aplicar texto negro
+            else if (nodo instanceof Label) {
+                ((Label) nodo).setTextFill(Color.BLACK);
+            }
+            // Si es un texto, aplicar color negro
+            else if (nodo instanceof Text) {
+                ((Text) nodo).setFill(Color.BLACK);
             }
             
             // Buscar recursivamente en todos los hijos
@@ -591,6 +631,13 @@ public class CalendarFXComponent extends BorderPane {
         calendarView.getWeekPage().setStyle("-fx-background-color: #f8f9fa;");
         calendarView.getDayPage().setStyle("-fx-background-color: #f8f9fa;");
         
+        // Aplicar estilo de texto negro a las páginas principales
+        String blackTextStyle = "-fx-text-fill: black !important;";
+        calendarView.getDayPage().setStyle(calendarView.getDayPage().getStyle() + "; " + blackTextStyle);
+        calendarView.getWeekPage().setStyle(calendarView.getWeekPage().getStyle() + "; " + blackTextStyle);
+        calendarView.getMonthPage().setStyle(calendarView.getMonthPage().getStyle() + "; " + blackTextStyle);
+        calendarView.getYearPage().setStyle(calendarView.getYearPage().getStyle() + "; " + blackTextStyle);
+        
         // Programar búsqueda del botón de impresión y forzar su color
         new Thread(() -> {
             for (int i = 0; i < 10; i++) {  // 10 intentos
@@ -598,6 +645,7 @@ public class CalendarFXComponent extends BorderPane {
                     Thread.sleep(500 * (i + 1));  // Incrementar el tiempo entre intentos
                     Platform.runLater(() -> {
                         buscarYCambiarColorBoton(calendarView);
+                        aplicarTextoNegro(calendarView);
                     });
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -1062,6 +1110,9 @@ public class CalendarFXComponent extends BorderPane {
                 if (nodo instanceof Button) {
                     Button btn = (Button) nodo;
                     
+                    // Aplicar texto negro por defecto a botones
+                    btn.setTextFill(Color.BLACK);
+                    
                     // Si es botón de impresión, forzar estilo rojo
                     if (btn.getText() != null && 
                         (btn.getText().equals("Print") || btn.getText().equals("Imprimir"))) {
@@ -1079,12 +1130,21 @@ public class CalendarFXComponent extends BorderPane {
                 // Si es barra de búsqueda
                 else if (nodo instanceof TextField) {
                     TextField searchField = (TextField) nodo;
+                    searchField.setStyle(searchField.getStyle() + "; -fx-text-fill: black;");
+                    
                     if (searchField.getPromptText() != null && 
                         (searchField.getPromptText().contains("Search") || 
                          searchField.getPromptText().contains("Buscar"))) {
                         
-                        searchField.setStyle("-fx-background-color: white; -fx-border-color: #ddd; -fx-prompt-text-fill: #999;");
+                        searchField.setStyle("-fx-background-color: white; -fx-border-color: #ddd; -fx-prompt-text-fill: #999; -fx-text-fill: black;");
                     }
+                }
+                // Si es una etiqueta o texto, forzar color negro
+                else if (nodo instanceof Label) {
+                    ((Label) nodo).setTextFill(Color.BLACK);
+                }
+                else if (nodo instanceof Text) {
+                    ((Text) nodo).setFill(Color.BLACK);
                 }
             }
             
@@ -1097,6 +1157,35 @@ public class CalendarFXComponent extends BorderPane {
             }
         } catch (Exception e) {
             System.err.println("Error en desconectarDelThemeManager: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Aplica color negro a todos los textos del calendario
+     */
+    private void aplicarTextoNegro(Node nodo) {
+        try {
+            // Aplicar estilo de texto negro a todos los nodos de texto
+            if (nodo instanceof Text) {
+                ((Text) nodo).setFill(Color.BLACK);
+            } else if (nodo instanceof Label) {
+                ((Label) nodo).setTextFill(Color.BLACK);
+            } else if (nodo instanceof Button) {
+                ((Button) nodo).setTextFill(Color.BLACK);
+            } else if (nodo instanceof TextField) {
+                ((TextField) nodo).setStyle(((TextField) nodo).getStyle() + "; -fx-text-fill: black;");
+            } else if (nodo instanceof Control) {
+                ((Control) nodo).setStyle(((Control) nodo).getStyle() + "; -fx-text-fill: black;");
+            }
+            
+            // Recorrer recursivamente todos los nodos hijos
+            if (nodo instanceof Parent) {
+                for (Node hijo : ((Parent) nodo).getChildrenUnmodifiable()) {
+                    aplicarTextoNegro(hijo);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al aplicar texto negro: " + e.getMessage());
         }
     }
 }

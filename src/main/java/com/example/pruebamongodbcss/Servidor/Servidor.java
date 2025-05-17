@@ -1,10 +1,14 @@
 package com.example.pruebamongodbcss.Servidor;
 
+import java.awt.GridLayout;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
 
 import com.mongodb.client.MongoDatabase;
 
@@ -32,22 +36,18 @@ public class Servidor {
     public Servidor(int puerto) {
         this.puerto = puerto;
         this.pool = Executors.newCachedThreadPool();
-        // Intentar conectar a MongoDB local (Docker) primero
-        MongoDatabase localDB = GestorConexion.conectarEmpresa();
         
-        // Si la conexión local falla, intentar con la conexión remota
-        if (localDB == null) {
-            System.out.println("Conexión a MongoDB local fallida, intentando conexión remota...");
-            MongoDatabase remoteDB = GestorConexion.conectarEmpresa();
-            if (remoteDB == null) {
-                System.err.println("Error: No se pudo conectar a ninguna base de datos MongoDB.");
+        // Intentar conectar a MongoDB
+        try {
+            this.database = GestorConexion.conectarEmpresa();
+            if (this.database != null) {
+                System.out.println("Conexión a MongoDB establecida exitosamente.");
+            } else {
                 throw new RuntimeException("No se pudo establecer conexión con MongoDB");
             }
-            this.database = remoteDB;
-            System.out.println("Conexión a MongoDB remota establecida exitosamente.");
-        } else {
-            this.database = localDB;
-            System.out.println("Conexión a MongoDB local establecida exitosamente.");
+        } catch (Exception e) {
+            System.err.println("Error al conectar con MongoDB: " + e.getMessage());
+            throw new RuntimeException("No se pudo establecer conexión con MongoDB", e);
         }
         
         this.running = true;
@@ -63,16 +63,26 @@ public class Servidor {
             System.out.println("Servidor iniciado en puerto " + puerto);
 
             while (running) {
-                // Esperar a que un cliente se conecte
-                Socket clientSocket = serverSocket.accept();
-                System.out.println("Nuevo cliente conectado: " + clientSocket.getInetAddress());
-                // Crear un nuevo hilo para manejar la conexión del cliente
-                ClienteHandler handler = new ClienteHandler(clientSocket, database);
-                // Ejecutar el hilo en el pool de hilos
-                pool.execute(handler);
+                try {
+                    // Esperar a que un cliente se conecte
+                    Socket clientSocket = serverSocket.accept();
+                    System.out.println("Nuevo cliente conectado: " + clientSocket.getInetAddress());
+                    // Crear un nuevo hilo para manejar la conexión del cliente
+                    ClienteHandler handler = new ClienteHandler(clientSocket, database);
+                    // Ejecutar el hilo en el pool de hilos
+                    pool.execute(handler);
+                } catch (IOException e) {
+                    if (running) {
+                        System.err.println("Error al aceptar conexión del cliente: " + e.getMessage());
+                    } else {
+                        // Si ya no está corriendo, es normal recibir una excepción al cerrar el socket
+                        break;
+                    }
+                }
             }
         } catch (IOException e) {
-            System.err.println("Error en el servidor: " + e.getMessage());
+            System.err.println("Error al iniciar el servidor: " + e.getMessage());
+            e.printStackTrace();
         } finally {
             detener();
         }
@@ -93,11 +103,70 @@ public class Servidor {
     }
 
     public static void main(String[] args) {
-        try {
-            Servidor servidor = new Servidor();
-            servidor.iniciar();
-        } catch (Exception e) {
-            System.err.println("Error al iniciar el servidor: " + e.getMessage());
+        
+        VentanaServer ventana = new VentanaServer();
+        ventana.setVisible(true);
+        ventana.revalidate();
+
+
+    }
+
+
+} 
+
+
+    //Ventana para mostrar el servidor
+    class VentanaServer extends JFrame{
+
+        Servidor servidor;
+
+        JButton btnIniciar = new JButton("Iniciar");
+        JButton btnDetener = new JButton("Detener");
+        JButton btnSalir = new JButton("Salir");
+
+        public VentanaServer( ){
+            setTitle("Servidor Clinica");
+            setSize(500, 500);
+            setLocationRelativeTo(null);
+            this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            
+            setLayout(new GridLayout(3, 1));
+            add(btnIniciar);
+            add(btnDetener);
+            add(btnSalir);
+
+            btnIniciar.addActionListener(e -> {
+                try {
+                    this.servidor = new Servidor();
+                    // Iniciar el servidor en un hilo separado para no bloquear la UI
+                    new Thread(() -> {
+                        servidor.iniciar();
+                    }).start();
+                    btnIniciar.setEnabled(false);
+                    btnDetener.setEnabled(true);
+                } catch (Exception ex) {
+                    System.err.println("Error al iniciar el servidor: " + ex.getMessage());
+                    ex.printStackTrace();
+                }
+            });
+
+            btnDetener.addActionListener(e -> {
+                if (servidor != null) {
+                    servidor.detener();
+                    btnIniciar.setEnabled(true);
+                    btnDetener.setEnabled(false);
+                }
+            });
+
+            btnSalir.addActionListener(e -> {
+                if (servidor != null) {
+                    servidor.detener();
+                }
+                this.dispose();
+                System.exit(0);
+            });
+
+            // Inicialmente, el botón detener debería estar deshabilitado
+            btnDetener.setEnabled(false);
         }
     }
-} 
