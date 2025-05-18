@@ -98,17 +98,24 @@ public class CalendarFXComponent extends BorderPane {
      * @param usuario El usuario actual logueado en el sistema
      */
     public CalendarFXComponent() {
-
         initialize();
     }
     
     /**
-     * Constructor que inicializa el componente del calendario sin usuario.
-     
-    public CalendarFXComponent() {
-        this(null);
+     * Establece el usuario actual para el componente de calendario.
+     * @param usuario El usuario actual de la sesión
+     */
+    public void setUsuarioActual(com.example.pruebamongodbcss.Data.Usuario usuario) {
+        this.usuarioActual = usuario;
+        if (usuario != null) {
+            System.out.println("Usuario establecido en CalendarFXComponent: " + usuario.getUsuario() + 
+                               ", Rol: " + (usuario.getRol() != null ? usuario.getRol().name() : "null"));
+        }
+        // Recargar las citas si el servicio ya está inicializado
+        if (calendarService != null) {
+            loadAppointmentsFromDatabase();
+        }
     }
-    */
     
     /**
      * Inicializa el componente del calendario.
@@ -351,10 +358,10 @@ public class CalendarFXComponent extends BorderPane {
             
             // Cargar citas según el rol del usuario
             if (usuarioActual != null) {
-                String username = PanelInicioController.getUsuarioSesion().getUsuario();
+                String username = usuarioActual.getUsuario();
                 com.example.pruebamongodbcss.Data.Usuario.Rol rol = usuarioActual.getRol();
                 
-                System.out.println("Usuario actual: " + username + ", Rol: " + (rol != null ? rol.name() : "null"));
+                System.out.println("Usuario actual en loadAppointmentsFromDatabase: " + username + ", Rol: " + (rol != null ? rol.name() : "null"));
                 
                 if (rol == com.example.pruebamongodbcss.Data.Usuario.Rol.ADMINISTRADOR) {
                     // Administradores ven absolutamente todo

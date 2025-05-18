@@ -116,6 +116,9 @@ public class HomeViewController implements Initializable {
             // Crear nuestro componente de calendario personalizado basado en CalendarFX
             calendarComponent = new CalendarFXComponent();
             
+            // Establecer el usuario actual
+            calendarComponent.setUsuarioActual(PanelInicioController.getUsuarioSesion());
+            
             // Replace content in page2 with the calendar
             if (page2 != null) {
                 // Find a suitable container in page2 to place the calendar

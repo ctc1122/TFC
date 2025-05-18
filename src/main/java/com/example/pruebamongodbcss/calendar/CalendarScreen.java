@@ -12,11 +12,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 /**
- * Pantalla principal para mostrar el calendario con interfaz web
+ * Pantalla principal para mostrar el calendario
  */
 public class CalendarScreen extends BorderPane {
 
-    private GoogleCalendarWebView calendarWebView;
+    private CalendarFXComponent calendarComponent;
     private Usuario usuarioActual;
     
     /**
@@ -61,11 +61,16 @@ public class CalendarScreen extends BorderPane {
         headerBox.setAlignment(Pos.CENTER_LEFT);
         headerBox.getChildren().addAll(backButton, titleLabel);
         
-        // Crear componente de calendario con interfaz web
-        calendarWebView = new GoogleCalendarWebView(usuarioActual);
+        // Crear componente de calendario nativo
+        calendarComponent = new CalendarFXComponent();
+        
+        // Establecer el usuario actual
+        if (usuarioActual != null) {
+            calendarComponent.setUsuarioActual(usuarioActual);
+        }
         
         // Crear área de información
-        String infoText = "Calendario con Interfaz Web";
+        String infoText = "Calendario de Citas";
         if (usuarioActual != null) {
             infoText += " - Usuario: " + usuarioActual.getUsuario();
         } else {
@@ -85,7 +90,7 @@ public class CalendarScreen extends BorderPane {
         
         // Configurar layout
         setTop(headerBox);
-        setCenter(calendarWebView);
+        setCenter(calendarComponent);
         setBottom(infoBox);
     }
     
@@ -95,20 +100,16 @@ public class CalendarScreen extends BorderPane {
      */
     public void setUsuario(Usuario usuario) {
         this.usuarioActual = usuario;
-        // Recrear el calendario con el nuevo usuario
-        if (calendarWebView != null) {
-            calendarWebView.dispose();
+        // Actualizar el componente del calendario con el nuevo usuario
+        if (calendarComponent != null) {
+            calendarComponent.setUsuarioActual(usuario);
         }
-        calendarWebView = new GoogleCalendarWebView(usuario);
-        setCenter(calendarWebView);
     }
     
     /**
      * Libera recursos al cerrar
      */
     public void dispose() {
-        if (calendarWebView != null) {
-            calendarWebView.dispose();
-        }
+        // No se requiere liberar recursos adicionales con CalendarFXComponent
     }
 } 

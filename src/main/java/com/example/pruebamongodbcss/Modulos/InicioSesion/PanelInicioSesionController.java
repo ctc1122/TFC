@@ -5,7 +5,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.URL;
-import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -510,52 +509,30 @@ public class PanelInicioSesionController extends Application implements Initiali
                     if (resultadoFinal) {
                         mostrarMensaje("Inicio de sesión exitoso.");
                         
-                        // Si el usuario es nulo pero la autenticación es correcta,
-                        // crear un usuario básico para permitir el inicio de sesión
-                        if (usuarioFinal != null) {
-                            // Si tenemos un usuario autenticado normal
-                            cambiarAMenuPrincipal(usuarioFinal);
-                        } else {
-                            // Crear un usuario básico con los datos de inicio de sesión
-                            try {
-                                System.out.println("Usuario autenticado pero sin datos completos. Creando usuario básico...");
+                        // Intentar obtener el usuario completo de la base de datos
+                        try {
+                            // Si tenemos un usuario autenticado, usarlo directamente
+                            if (usuarioFinal != null) {
+                                cambiarAMenuPrincipal(usuarioFinal);
+                            } else {
+                                // Buscar el usuario completo en la base de datos
+                                MongoDatabase db = GestorConexion.conectarEmpresa();
+                                MongoCollection<Document> usuariosCollection = db.getCollection("usuarios");
+                                Document query = new Document("usuario", usuario);
+                                Document result = usuariosCollection.find(query).first();
                                 
-                                // Crear un Document con datos mínimos del usuario
-                                Document userDoc = new Document()
-                                    .append("usuario", usuario)
-                                    .append("password", password)
-                                    .append("nombre", usuario)
-                                    .append("apellido", "")
-                                    .append("email", usuario + "@clinica.com")
-                                    .append("telefono", "000000000")
-                                    .append("rol", "NORMAL") // Por defecto normal
-                                    .append("fechaCreacion", new Date())
-                                    .append("activo", true);
-                                
-                                try {
-                                    // Intentar obtener información de rol desde la base de datos
-                                    MongoDatabase db = GestorConexion.conectarEmpresa();
-                                    MongoCollection<Document> usuariosCollection = db.getCollection("usuarios");
-                                    Document query = new Document("usuario", usuario);
-                                    Document result = usuariosCollection.find(query).first();
-                                    
-                                    if (result != null && result.containsKey("rol")) {
-                                        String rol = result.getString("rol");
-                                        System.out.println("Rol encontrado en BD: " + rol);
-                                        userDoc.append("rol", rol);
-                                    }
-                                } catch (Exception e) {
-                                    System.err.println("Error al buscar rol en BD: " + e.getMessage());
+                                if (result != null) {
+                                    // Crear usuario a partir del documento de MongoDB
+                                    Usuario usuarioCompleto = new Usuario(result);
+                                    cambiarAMenuPrincipal(usuarioCompleto);
+                                } else {
+                                    // Si no podemos obtener el usuario de la base de datos, notificar al usuario
+                                    mostrarMensaje("Error: No se pudo obtener información completa del usuario.");
                                 }
-                                
-                                // Usar el constructor que acepta un Document
-                                Usuario usuarioBasico = new Usuario(userDoc);
-                                
-                                cambiarAMenuPrincipal(usuarioBasico);
-                            } catch (Exception e) {
-                                System.err.println("Error al crear usuario básico: " + e.getMessage());
-                                mostrarMensaje("Error: No se pudo crear un usuario básico. " + e.getMessage());
                             }
+                        } catch (Exception e) {
+                            System.err.println("Error al obtener usuario completo: " + e.getMessage());
+                            mostrarMensaje("Error al cargar datos de usuario: " + e.getMessage());
                         }
                     } else {
                         mostrarMensaje("Usuario o contraseña incorrectos.");
