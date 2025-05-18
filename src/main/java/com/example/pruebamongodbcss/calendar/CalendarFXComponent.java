@@ -331,19 +331,37 @@ public class CalendarFXComponent extends BorderPane {
      * Muestra un diálogo para crear una nueva cita
      */
     private void showNewAppointmentDialog() {
-        Entry<String> entry = new Entry<>("Nueva cita");
-        
-        // Configurar la fecha y hora para la próxima hora completa
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime nextHour = now.withMinute(0).withSecond(0).plusHours(1);
-        entry.setInterval(ZonedDateTime.of(nextHour, ZoneId.systemDefault()), 
-                          ZonedDateTime.of(nextHour.plusHours(1), ZoneId.systemDefault()));
-        
-        // Configurar el calendario por defecto (citas pendientes)
-        entry.setCalendar(calendars.get(0));
-        
-        // Mostrar el diálogo de detalles
-        showEntryDetailsDialog(entry);
+        try {
+            // Cargar el formulario de citas
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Citas/cita-formulario.fxml"));
+            Parent root = loader.load();
+            
+            // Obtener el controlador
+            com.example.pruebamongodbcss.Modulos.Clinica.Citas.CitaFormularioController controller = loader.getController();
+            
+            // Configurar el controlador con el servicio de clínica
+            com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
+            controller.setServicio(servicioClinica);
+            
+            // Configurar callback para refrescar el calendario
+            controller.setCitaGuardadaCallback(() -> {
+                refreshCalendarFromDatabase();
+            });
+            
+            // Mostrar el formulario en una ventana modal
+            Stage stage = new Stage();
+            stage.setTitle("Nueva Cita");
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(root));
+            stage.showAndWait();
+            
+            // Refrescar el calendario después de cerrar
+            refreshCalendarFromDatabase();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            showErrorMessage("Error", "No se pudo abrir el formulario de citas: " + e.getMessage());
+        }
     }
     
     /**
@@ -749,8 +767,16 @@ public class CalendarFXComponent extends BorderPane {
      */
     private void showEntryDetailsDialog(Entry<?> entry) {
         try {
+            // Determinar si es una nueva entrada (sin ID)
+            boolean esNuevaCita = (entry.getId() == null || entry.getId().isEmpty());
+            
             // Convertir la entrada a un evento
             CalendarEvent event = entryToCalendarEvent(entry);
+            
+            // Si es una nueva cita, asegurarse de que no tenga ID
+            if (esNuevaCita) {
+                event.setId(null);
+            }
             
             // Agregar descripción si existe
             if (entryDescriptions.containsKey(entry.getId())) {
@@ -863,9 +889,22 @@ public class CalendarFXComponent extends BorderPane {
                 }
                 
                 try {
-                    // Cargar la cita directamente de la base de datos usando su ID
-                    org.bson.types.ObjectId citaId = new org.bson.types.ObjectId(idStr);
-                    com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = servicioClinica.obtenerCitaPorId(citaId);
+                    // Verificar si el ID tiene formato de UUID
+                    if (idStr.contains("-") && idStr.length() == 36) {
+                        // Formato UUID detectado, mostrar mensaje específico
+                        Alert alert = new Alert(AlertType.ERROR);
+                        alert.setTitle("Error");
+                        alert.setHeaderText("Error al cargar la cita");
+                        alert.setContentText("El formato del ID de la cita no es compatible (UUID: " + idStr + "). " +
+                                            "Este tipo de identificador no es válido para MongoDB ObjectId.\n\n" +
+                                            "Por favor, cree una nueva cita en lugar de editar esta.");
+                        alert.showAndWait();
+                        return;
+                    }
+                    
+                    // Cargar la cita usando el método que maneja strings
+                    com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = 
+                        servicioClinica.obtenerCitaPorIdString(idStr);
                     
                     if (cita != null) {
                         controller.setCita(cita);
@@ -878,6 +917,15 @@ public class CalendarFXComponent extends BorderPane {
                         alert.showAndWait();
                         return;
                     }
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                    Alert alert = new Alert(AlertType.ERROR);
+                    alert.setTitle("Error");
+                    alert.setHeaderText("Error al cargar la cita");
+                    alert.setContentText("No se pudo cargar la cita: ID inválido. Este ID no cumple con el formato requerido para MongoDB ObjectId.\n\n" +
+                                        "Por favor, cree una nueva cita en lugar de editar esta.");
+                    alert.showAndWait();
+                    return;
                 } catch (Exception e) {
                     e.printStackTrace();
                     Alert alert = new Alert(AlertType.ERROR);
@@ -888,6 +936,7 @@ public class CalendarFXComponent extends BorderPane {
                     return;
                 }
             }
+            // Si NO tiene ID, es una NUEVA cita (no hacer nada, el formulario se abrirá vacío)
             
             // Mostrar el formulario en una ventana modal
             Stage stage = new Stage();

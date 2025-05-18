@@ -137,6 +137,23 @@ public class CalendarService {
                 // Remover el _id para evitar error de actualización
                 doc.remove("_id");
                 
+                // Verificar si el ID tiene formato UUID (contiene guiones)
+                if (event.getId().contains("-")) {
+                    LOGGER.warning("Detectado ID con formato UUID: " + event.getId() + ". Generando nuevo ObjectId.");
+                    
+                    // Generar un nuevo ID y asignarlo al evento
+                    ObjectId nuevoId = new ObjectId();
+                    event.setId("_" + nuevoId.toString());
+                    
+                    // Configurar el documento con el nuevo ID
+                    doc.put("_id", nuevoId);
+                    
+                    // Insertar como nuevo documento (no actualizar)
+                    appointmentsCollection.insertOne(doc);
+                    LOGGER.info("Convertido UUID a ObjectId y guardado como nuevo: " + event.getId());
+                    return event;
+                }
+                
                 // Verificar si el ID es un ObjectId válido
                 ObjectId objectId;
                 try {
@@ -177,8 +194,8 @@ public class CalendarService {
             return event;
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error al guardar cita", e);
+            return null;
         }
-        return null;
     }
     
     /**

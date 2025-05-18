@@ -697,8 +697,45 @@ public class ServicioClinica {
      * @return La cita encontrada o null si no existe
      */
     public ModeloCita obtenerCitaPorId(ObjectId id) {
-        Document doc = citasCollection.find(Filters.eq("_id", id)).first();
-        return doc != null ? new ModeloCita(doc) : null;
+        if (id == null) {
+            return null;
+        }
+        
+        try {
+            Document doc = citasCollection.find(Filters.eq("_id", id)).first();
+            return doc != null ? new ModeloCita(doc) : null;
+        } catch (Exception e) {
+            System.err.println("Error al obtener cita por ID: " + e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Obtener una cita por su ID en formato String.
+     * @param idString ID de la cita como String
+     * @return La cita encontrada o null si no existe o el formato es inválido
+     */
+    public ModeloCita obtenerCitaPorIdString(String idString) {
+        if (idString == null || idString.isEmpty()) {
+            return null;
+        }
+        
+        // Verificar si el ID tiene formato UUID (contiene guiones)
+        if (idString.contains("-")) {
+            System.out.println("Formato UUID detectado: " + idString + ". Este formato no es compatible con MongoDB ObjectId.");
+            return null;
+        }
+        
+        try {
+            ObjectId id = new ObjectId(idString);
+            return obtenerCitaPorId(id);
+        } catch (IllegalArgumentException e) {
+            System.err.println("ID inválido para ObjectId: " + idString);
+            return null;
+        } catch (Exception e) {
+            System.err.println("Error al obtener cita por ID: " + e.getMessage());
+            return null;
+        }
     }
     
     /**
