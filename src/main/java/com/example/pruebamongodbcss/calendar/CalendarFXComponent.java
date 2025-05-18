@@ -31,6 +31,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
 
 import javafx.scene.control.Label;
+import javafx.scene.control.Labeled;
 import javafx.scene.control.MenuItem;
 
 import javafx.scene.control.TextField;
@@ -1158,158 +1159,112 @@ public class CalendarFXComponent extends BorderPane {
      */
     private void setupMouseListeners(DateControl view) {
         if (view == null) {
-            System.out.println("Vista de calendario nula, no se pueden configurar listeners");
             return;
         }
         
-        System.out.println("Configurando listeners para: " + view.getClass().getSimpleName());
+        // Tratamiento especial para la vista de mes
+        boolean isMonthView = view.getClass().getSimpleName().contains("MonthView");
         
-        // Configurar un listener para eventos de movimiento del ratón
+        // Nodo actual con tooltip para evitar reinstalaciones
+        final Node[] lastNodeWithTooltip = {null};
+        final Entry<?>[] lastEntryWithTooltip = {null};
+        
+        // Configurar un listener para eventos de movimiento del ratón con limitación de frecuencia
         view.addEventFilter(MouseEvent.MOUSE_MOVED, e -> {
+            // Limitar la frecuencia de procesamiento para evitar parpadeos
             Node node = e.getPickResult().getIntersectedNode();
             if (node != null) {
-                // Buscar en los padres hasta encontrar un nodo de entrada
+                // Si el nodo o uno de sus padres ya tiene un tooltip instalado, no hacer nada
                 Node current = node;
                 while (current != null && current != view) {
-                    if (isEntryNode(current)) {
-                        Entry<?> entry = findEntryForNode(current);
-                        if (entry != null) {
-                            createTooltipForEntry(current, entry);
-                        }
-                        break;
+                    if (current == lastNodeWithTooltip[0]) {
+                        return; // Ya tiene tooltip, no hacer nada
                     }
                     current = current.getParent();
                 }
-            }
-        });
-    }
-    
-    /**
-     * Encuentra todos los posibles nodos de entrada en el árbol de nodos
-     */
-    private List<Node> findAllEntryNodes(Node rootNode) {
-        List<Node> entryNodes = new ArrayList<>();
-        
-        if (rootNode == null) return entryNodes;
-        
-        // Verificar si este nodo parece una entrada
-        if (isEntryNode(rootNode)) {
-            entryNodes.add(rootNode);
-        }
-        
-        // También verificar nodos con ciertas clases CSS que podrían ser entradas
-        if (rootNode.getStyleClass() != null) {
-            for (String styleClass : rootNode.getStyleClass()) {
-                if (styleClass.contains("entry") || styleClass.contains("appointment")) {
-                    entryNodes.add(rootNode);
-                    break;
+                
+                // Buscar entrada para este nodo
+                Entry<?> entry = null;
+                Node targetNode = null;
+                
+                // Buscar en los padres hasta encontrar un nodo de entrada
+                current = node;
+                int currentDepth = 0;
+                int maxDepth = 15;
+                
+                while (current != null && current != view && currentDepth < maxDepth) {
+                    boolean foundEntry = false;
+                    
+                    // Para vista de mes, necesitamos técnicas más agresivas
+                    if (isMonthView) {
+                        // Verificar si tiene clases específicas de la vista de mes
+                        if (isMonthEntryNode(current)) {
+                            // Intentar obtener la información exacta de la celda
+                            entry = findExactEntryForDay(current, e.getX(), e.getY());
+                            if (entry != null) {
+                                targetNode = current;
+                                foundEntry = true;
+                            }
+                        }
+                        
+                        if (!foundEntry) {
+                            // Intentar buscar en la información de texto
+                            String nodeText = extractTextFromNode(current);
+                            if (nodeText != null && !nodeText.isEmpty() && nodeText.length() > 3) {
+                                // Buscar entrada que coincida con este texto exacto
+                                entry = findExactEntryByText(nodeText, current);
+                                if (entry != null) {
+                                    targetNode = current;
+                                    foundEntry = true;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Método general para todas las vistas
+                    if (!foundEntry && isEntryNode(current)) {
+                        entry = findEntryForNode(current);
+                        if (entry != null) {
+                            targetNode = current;
+                            foundEntry = true;
+                        }
+                    }
+                    
+                    if (foundEntry) {
+                        break;
+                    }
+                    
+                    current = current.getParent();
+                    currentDepth++;
                 }
-            }
-        }
-        
-        // Buscar recursivamente en los hijos
-        if (rootNode instanceof Parent) {
-            for (Node child : ((Parent) rootNode).getChildrenUnmodifiable()) {
-                entryNodes.addAll(findAllEntryNodes(child));
-            }
-        }
-        
-        return entryNodes;
-    }
-    
-    /**
-     * Verifica si un nodo es un nodo de entrada de calendario
-     */
-    private boolean isEntryNode(Node node) {
-        if (node == null) return false;
-        
-        // Verificar por estructura o clase específica
-        if (node.getStyleClass() != null) {
-            for (String styleClass : node.getStyleClass()) {
-                if (styleClass.contains("entry") || 
-                    styleClass.contains("calendar-entry") || 
-                    styleClass.contains("day-entry") ||
-                    styleClass.contains("month-entry") ||
-                    styleClass.contains("all-day-entry")) {
-                    return true;
-                }
-            }
-        }
-        
-        // Verificar si el userData es una entrada
-        if (node.getUserData() instanceof Entry) {
-            return true;
-        }
-        
-        return false;
-    }
-    
-    /**
-     * Intenta encontrar la entrada asociada a un nodo
-     */
-    private Entry<?> findEntryForNode(Node node) {
-        // Intentar obtener el Entry del userData
-        if (node.getUserData() instanceof Entry) {
-            return (Entry<?>) node.getUserData();
-        }
-        
-        // Intentar obtener el Entry mediante propiedades
-        for (Calendar calendar : calendars) {
-            // Obtener las entradas del calendario para un periodo amplio
-            Map<LocalDate, List<Entry<?>>> entriesMap = calendar.findEntries(
-                LocalDate.now().minusDays(30), 
-                LocalDate.now().plusDays(365), 
-                ZoneId.systemDefault()
-            );
-            
-            // Iterar por cada día y sus entradas
-            for (List<Entry<?>> entries : entriesMap.values()) {
-                for (Entry<?> entry : entries) {
-                    // Intentar comparar el título del entry con algún texto en el nodo
-                    if (containsEntryInfo(node, entry)) {
-                        return entry;
+                
+                // Si se encontró una entrada y es diferente a la última, actualizar el tooltip
+                if (entry != null && targetNode != null) {
+                    if (lastEntryWithTooltip[0] == null || !entry.equals(lastEntryWithTooltip[0])) {
+                        // Quitar el tooltip anterior si existe
+                        if (lastNodeWithTooltip[0] != null) {
+                            Tooltip.uninstall(lastNodeWithTooltip[0], null);
+                        }
+                        
+                        // Instalar el nuevo tooltip
+                        createTooltipForEntry(targetNode, entry);
+                        
+                        // Actualizar referencias
+                        lastNodeWithTooltip[0] = targetNode;
+                        lastEntryWithTooltip[0] = entry;
                     }
                 }
             }
-        }
+        });
         
-        return null;
-    }
-    
-    /**
-     * Verifica si un nodo contiene información sobre una entrada específica
-     */
-    private boolean containsEntryInfo(Node node, Entry<?> entry) {
-        // Buscar todos los textos dentro del nodo
-        List<Text> textNodes = findTextNodes(node);
-        
-        for (Text text : textNodes) {
-            // Si el texto contiene el título del entry, probablemente es este entry
-            if (text.getText() != null && 
-                entry.getTitle() != null && 
-                text.getText().contains(entry.getTitle())) {
-                return true;
+        // Limpiar el tooltip cuando el mouse sale de la vista
+        view.addEventFilter(MouseEvent.MOUSE_EXITED, e -> {
+            if (lastNodeWithTooltip[0] != null) {
+                Tooltip.uninstall(lastNodeWithTooltip[0], null);
+                lastNodeWithTooltip[0] = null;
+                lastEntryWithTooltip[0] = null;
             }
-        }
-        
-        return false;
-    }
-    
-    /**
-     * Encuentra todos los nodos de texto dentro de un nodo padre
-     */
-    private List<Text> findTextNodes(Node node) {
-        List<Text> result = new ArrayList<>();
-        
-        if (node instanceof Text) {
-            result.add((Text) node);
-        } else if (node instanceof Parent) {
-            for (Node child : ((Parent) node).getChildrenUnmodifiable()) {
-                result.addAll(findTextNodes(child));
-            }
-        }
-        
-        return result;
+        });
     }
     
     /**
@@ -1347,12 +1302,16 @@ public class CalendarFXComponent extends BorderPane {
             // Crear un tooltip elaborado
             Tooltip tooltip = new Tooltip();
             
-            // Estilo avanzado con CSS
+            // Estilo avanzado con CSS - forzar texto blanco con !important
             tooltip.setStyle("-fx-background-color: #333333; " +
-                          "-fx-text-fill: white; " +
+                          "-fx-text-fill: white !important; " +
                           "-fx-font-size: 12px; " +
                           "-fx-padding: 10 15 10 15; " +
-                          "-fx-background-radius: 6;");
+                          "-fx-background-radius: 6; " +
+                          "-fx-font-weight: normal; " +
+                          "-fx-font-family: 'System'; " +
+                          "-fx-text-alignment: left; " +
+                          "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0, 0, 3);");
             
             // Construir contenido
             StringBuilder content = new StringBuilder();
@@ -1373,18 +1332,15 @@ public class CalendarFXComponent extends BorderPane {
             
             tooltip.setText(content.toString());
             
-            // Configurar el tooltip
-            tooltip.setShowDelay(Duration.millis(200));
-            tooltip.setShowDuration(Duration.seconds(30));
-            tooltip.setHideDelay(Duration.millis(200));
+            // Configurar el tooltip con tiempos ajustados para reducir parpadeo
+            tooltip.setShowDelay(Duration.millis(100));  // Mostrar más rápido
+            tooltip.setShowDuration(Duration.seconds(60)); // Duración larga
+            tooltip.setHideDelay(Duration.seconds(1));  // Retraso al ocultar para reducir parpadeo
             
             // Aplicar el tooltip al nodo
             Tooltip.install(node, tooltip);
-            
-            System.out.println("Tooltip instalado correctamente para: " + entry.getTitle());
         } catch (Exception e) {
-            System.err.println("Error al crear tooltip: " + e.getMessage());
-            e.printStackTrace();
+            // Error silencioso
         }
     }
     
@@ -1508,5 +1464,266 @@ public class CalendarFXComponent extends BorderPane {
      */
     public CalendarView getCalendarView() {
         return calendarView;
+    }
+    
+    /**
+     * Extrae texto de un nodo (útil para vista de mes)
+     */
+    private String extractTextFromNode(Node node) {
+        if (node instanceof Text) {
+            return ((Text) node).getText();
+        } else if (node instanceof Label) {
+            return ((Label) node).getText();
+        }
+        
+        // Buscar textos en hijos
+        if (node instanceof Parent) {
+            StringBuilder result = new StringBuilder();
+            for (Node child : ((Parent) node).getChildrenUnmodifiable()) {
+                String childText = extractTextFromNode(child);
+                if (childText != null && !childText.isEmpty()) {
+                    if (result.length() > 0) {
+                        result.append(" ");
+                    }
+                    result.append(childText);
+                }
+            }
+            return result.toString();
+        }
+        
+        return "";
+    }
+    
+    /**
+     * Verifica si un nodo es un nodo de entrada de calendario
+     */
+    private boolean isEntryNode(Node node) {
+        if (node == null) return false;
+        
+        // Verificar por estructura o clase específica
+        if (node.getStyleClass() != null) {
+            for (String styleClass : node.getStyleClass()) {
+                if (styleClass.contains("entry") || 
+                    styleClass.contains("calendar-entry") || 
+                    styleClass.contains("day-entry") ||
+                    styleClass.contains("month-entry") ||
+                    styleClass.contains("all-day-entry")) {
+                    return true;
+                }
+            }
+        }
+        
+        // Verificar si el userData es una entrada
+        if (node.getUserData() instanceof Entry) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Intenta encontrar la entrada asociada a un nodo
+     */
+    private Entry<?> findEntryForNode(Node node) {
+        // Intentar obtener el Entry del userData
+        if (node.getUserData() instanceof Entry) {
+            return (Entry<?>) node.getUserData();
+        }
+        
+        // Intentar obtener el Entry mediante propiedades
+        for (Calendar calendar : calendars) {
+            // Obtener las entradas del calendario para un periodo amplio
+            Map<LocalDate, List<Entry<?>>> entriesMap = calendar.findEntries(
+                LocalDate.now().minusDays(30), 
+                LocalDate.now().plusDays(365), 
+                ZoneId.systemDefault()
+            );
+            
+            // Iterar por cada día y sus entradas
+            for (List<Entry<?>> entries : entriesMap.values()) {
+                for (Entry<?> entry : entries) {
+                    // Intentar comparar el título del entry con algún texto en el nodo
+                    if (containsEntryInfo(node, entry)) {
+                        return entry;
+                    }
+                }
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Verifica si un nodo contiene información sobre una entrada específica
+     */
+    private boolean containsEntryInfo(Node node, Entry<?> entry) {
+        // Buscar todos los textos dentro del nodo
+        List<Text> textNodes = findTextNodes(node);
+        
+        for (Text text : textNodes) {
+            // Si el texto contiene el título del entry, probablemente es este entry
+            if (text.getText() != null && 
+                entry.getTitle() != null && 
+                text.getText().contains(entry.getTitle())) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Encuentra todos los nodos de texto dentro de un nodo padre
+     */
+    private List<Text> findTextNodes(Node node) {
+        List<Text> result = new ArrayList<>();
+        
+        if (node instanceof Text) {
+            result.add((Text) node);
+        } else if (node instanceof Parent) {
+            for (Node child : ((Parent) node).getChildrenUnmodifiable()) {
+                result.addAll(findTextNodes(child));
+            }
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Verifica si un nodo es específicamente un nodo de entrada en la vista de mes
+     */
+    private boolean isMonthEntryNode(Node node) {
+        if (node == null) return false;
+        
+        // Clases específicas de la vista de mes
+        if (node.getStyleClass() != null) {
+            for (String styleClass : node.getStyleClass()) {
+                if (styleClass.contains("month-day-entry") || 
+                    styleClass.contains("month-entry") ||
+                    styleClass.contains("month-view-entry") ||
+                    styleClass.contains("badge") ||
+                    styleClass.contains("pill") ||
+                    styleClass.contains("event")) {
+                    return true;
+                }
+            }
+        }
+        
+        // Verificar por el tipo de nodo
+        String className = node.getClass().getSimpleName();
+        if (className.contains("EntryView") || 
+            className.contains("MonthEntryView") ||
+            className.contains("DayEntryView")) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Encuentra la entrada exacta para un día en particular basado en la posición del cursor
+     */
+    private Entry<?> findExactEntryForDay(Node node, double x, double y) {
+        // Intentar obtener el día del mes
+        LocalDate day = extractDayFromNode(node);
+        if (day == null) {
+            return null;
+        }
+        
+        // Obtener entradas para este día específico
+        List<Entry<?>> entriesForDay = new ArrayList<>();
+        for (Calendar calendar : calendars) {
+            Map<LocalDate, List<Entry<?>>> entriesMap = calendar.findEntries(
+                day, day, ZoneId.systemDefault()
+            );
+            
+            if (entriesMap.containsKey(day)) {
+                entriesForDay.addAll(entriesMap.get(day));
+            }
+        }
+        
+        if (entriesForDay.isEmpty()) {
+            return null;
+        }
+        
+        // Si solo hay una entrada, devolver esa
+        if (entriesForDay.size() == 1) {
+            return entriesForDay.get(0);
+        }
+        
+        // Si hay múltiples entradas, intentar con el texto
+        String nodeText = extractTextFromNode(node);
+        if (nodeText != null && !nodeText.isEmpty()) {
+            for (Entry<?> entry : entriesForDay) {
+                if (entry.getTitle() != null && nodeText.contains(entry.getTitle())) {
+                    return entry;
+                }
+            }
+        }
+        
+        // Fallback: devolver la primera entrada
+        return entriesForDay.get(0);
+    }
+    
+    /**
+     * Extrae la fecha del día de un nodo de la vista de mes
+     */
+    private LocalDate extractDayFromNode(Node node) {
+        // Intentar encontrar la fecha en el nodo o en sus padres
+        Node current = node;
+        while (current != null) {
+            if (current.getUserData() instanceof LocalDate) {
+                return (LocalDate) current.getUserData();
+            }
+            
+            // También buscar texto que sea una fecha
+            String text = extractTextFromNode(current);
+            if (text != null && !text.isEmpty()) {
+                try {
+                    // Buscar patrones de fecha
+                    if (text.matches("\\d{1,2}/\\d{1,2}/\\d{4}")) {
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                        return LocalDate.parse(text, formatter);
+                    }
+                } catch (Exception e) {
+                    // Ignorar errores de parseo
+                }
+            }
+            
+            current = current.getParent();
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Encuentra una entrada exacta por texto
+     */
+    private Entry<?> findExactEntryByText(String text, Node node) {
+        if (text == null || text.isEmpty()) {
+            return null;
+        }
+        
+        // Buscar en todos los calendarios las entradas exactas
+        for (Calendar calendar : calendars) {
+            // Obtener las entradas para un período amplio
+            Map<LocalDate, List<Entry<?>>> entriesMap = calendar.findEntries(
+                LocalDate.now().minusDays(30), 
+                LocalDate.now().plusDays(365), 
+                ZoneId.systemDefault()
+            );
+            
+            // Revisar todas las entradas por coincidencia exacta
+            for (List<Entry<?>> entries : entriesMap.values()) {
+                for (Entry<?> entry : entries) {
+                    if (entry.getTitle() != null && 
+                        text.contains(entry.getTitle())) {
+                        return entry;
+                    }
+                }
+            }
+        }
+        
+        return null;
     }
 }
