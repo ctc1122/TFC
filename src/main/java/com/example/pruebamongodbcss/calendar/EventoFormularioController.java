@@ -1,6 +1,7 @@
 package com.example.pruebamongodbcss.calendar;
 
 import com.example.pruebamongodbcss.Data.Usuario;
+import com.example.pruebamongodbcss.PanelInicioController;
 import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.calendar.CalendarEvent.EventoTipo;
 
@@ -24,6 +25,8 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import com.example.pruebamongodbcss.Modulos.InicioSesion.PanelInicioSesionController;
 
 /**
  * Controlador para el formulario de eventos (reuniones y recordatorios)
@@ -377,6 +380,10 @@ public class EventoFormularioController implements Initializable {
             
             // Estado (pendiente por defecto)
             evento.setEstado("PENDIENTE");
+
+
+
+            evento.setUsuario(PanelInicioController.getUsuarioSesion().getUsuario());
             
             // Guardar en la base de datos
             CalendarEvent guardado = servicio.saveAppointment(evento);

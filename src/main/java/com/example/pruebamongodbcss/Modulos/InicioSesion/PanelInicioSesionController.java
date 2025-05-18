@@ -583,6 +583,7 @@ public class PanelInicioSesionController extends Application implements Initiali
             
             // Obtener el controlador y establecer el usuario
             com.example.pruebamongodbcss.PanelInicioController controller = loader.getController();
+            //Establecer el usuario actual
             controller.setUsuarioActual(usuario);
             
             // Obtener la ventana actual

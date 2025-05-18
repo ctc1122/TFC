@@ -137,19 +137,37 @@ public class CalendarService {
                 // Remover el _id para evitar error de actualización
                 doc.remove("_id");
                 
-                // Actualizar utilizando el ID como filtro
-                ObjectId objectId = new ObjectId(event.getId().startsWith("_") ? 
-                                       event.getId().substring(1) : event.getId());
-                
-                UpdateResult result = appointmentsCollection.updateOne(
-                    Filters.eq("_id", objectId),
-                    new Document("$set", doc)
-                );
-                
-                if (result.getModifiedCount() == 0 && result.getMatchedCount() == 0) {
-                    LOGGER.warning("No se encontró la cita para actualizar. Intentando insertar.");
-                    // Si no existe, intentar insertarla (caso poco común)
-                    doc.put("_id", objectId);
+                // Verificar si el ID es un ObjectId válido
+                ObjectId objectId;
+                try {
+                    // Intentar crear un ObjectId con el ID (quitando el prefijo "_" si existe)
+                    objectId = new ObjectId(event.getId().startsWith("_") ? 
+                                event.getId().substring(1) : event.getId());
+                    
+                    // Si es válido, actualizar usando el ID como filtro
+                    UpdateResult result = appointmentsCollection.updateOne(
+                        Filters.eq("_id", objectId),
+                        new Document("$set", doc)
+                    );
+                    
+                    if (result.getModifiedCount() == 0 && result.getMatchedCount() == 0) {
+                        LOGGER.warning("No se encontró la cita para actualizar. Intentando insertar.");
+                        // Si no existe, intentar insertarla (caso poco común)
+                        doc.put("_id", objectId);
+                        appointmentsCollection.insertOne(doc);
+                    }
+                } catch (IllegalArgumentException e) {
+                    // El ID no es un ObjectId válido, crear uno nuevo
+                    LOGGER.warning("ID no válido como ObjectId: " + event.getId() + ". Generando uno nuevo.");
+                    
+                    // Generar un nuevo ID y asignarlo al evento
+                    ObjectId nuevoId = new ObjectId();
+                    event.setId("_" + nuevoId.toString());
+                    
+                    // Configurar el documento con el nuevo ID
+                    doc.put("_id", nuevoId);
+                    
+                    // Insertar como nuevo documento
                     appointmentsCollection.insertOne(doc);
                 }
                 

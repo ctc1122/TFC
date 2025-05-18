@@ -65,7 +65,7 @@ public class PanelInicioController implements Initializable {
     private BorderPane sidebarContainer;
     
     // Usuario actual de la sesión
-    private Usuario usuarioActual;
+    private static Usuario usuarioActual;
     private ServicioUsuarios servicioUsuarios;
 
     private boolean menuVisible = false;
@@ -270,6 +270,18 @@ public class PanelInicioController implements Initializable {
                 lblClinica.setText("Clínica Veterinaria");
             }
         }
+    }
+
+    public Usuario getUsuarioActual() {
+        return usuarioActual;
+    }
+    
+    /**
+     * Método estático para obtener el usuario actual de la sesión
+     * @return El usuario actual
+     */
+    public static Usuario getUsuarioSesion() {
+        return usuarioActual;
     }
     
     /**

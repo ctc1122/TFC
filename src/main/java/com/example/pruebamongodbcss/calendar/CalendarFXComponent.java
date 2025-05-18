@@ -49,6 +49,7 @@ import javafx.scene.control.Control;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 
+import com.example.pruebamongodbcss.PanelInicioController;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
 import com.example.pruebamongodbcss.calendar.EventoFormularioController;
 import java.time.format.DateTimeFormatter;
@@ -96,17 +97,18 @@ public class CalendarFXComponent extends BorderPane {
      * Constructor que inicializa el componente del calendario con el usuario actual.
      * @param usuario El usuario actual logueado en el sistema
      */
-    public CalendarFXComponent(com.example.pruebamongodbcss.Data.Usuario usuario) {
-        this.usuarioActual = usuario;
+    public CalendarFXComponent() {
+
         initialize();
     }
     
     /**
      * Constructor que inicializa el componente del calendario sin usuario.
-     */
+     
     public CalendarFXComponent() {
         this(null);
     }
+    */
     
     /**
      * Inicializa el componente del calendario.
@@ -349,7 +351,7 @@ public class CalendarFXComponent extends BorderPane {
             
             // Cargar citas según el rol del usuario
             if (usuarioActual != null) {
-                String username = usuarioActual.getUsuario();
+                String username = PanelInicioController.getUsuarioSesion().getUsuario();
                 com.example.pruebamongodbcss.Data.Usuario.Rol rol = usuarioActual.getRol();
                 
                 System.out.println("Usuario actual: " + username + ", Rol: " + (rol != null ? rol.name() : "null"));
