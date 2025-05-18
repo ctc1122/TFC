@@ -959,17 +959,90 @@ public class PanelInicioController implements Initializable {
                         // Actualizar el texto con el total
                         btnEventCounter.setText(String.valueOf(summary.getTotal()));
                         
-                        // Actualizar el tooltip con el desglose
-                        String tooltipText = String.format(
-                            "Eventos pendientes:\n• %d reuniones\n• %d recordatorios\n• %d citas médicas", 
-                            summary.getMeetings(), 
-                            summary.getReminders(), 
+                        // Crear el contenido HTML para el tooltip con el estilo moderno
+                        String tooltipContent = String.format(
+                            "<html><head><style>" +
+                            "body { margin: 0; padding: 0; overflow: hidden; }" +
+                            ".radio-container {" +
+                            "  --main-color: #f7e479;" +
+                            "  --main-color-opacity: #f7e4791c;" +
+                            "  --total-radio: 3;" +
+                            "  background: #1a1a1a;" +
+                            "  padding: 12px;" +
+                            "  border-radius: 8px;" +
+                            "  width: 200px;" +
+                            "  box-sizing: border-box;" +
+                            "}" +
+                            ".event-type {" +
+                            "  color: #ffffff;" +
+                            "  padding: 6px 10px;" +
+                            "  margin: 3px 0;" +
+                            "  position: relative;" +
+                            "  display: flex;" +
+                            "  justify-content: space-between;" +
+                            "  align-items: center;" +
+                            "  border-left: 2px solid transparent;" +
+                            "  transition: all 0.3s ease;" +
+                            "  font-size: 13px;" +
+                            "}" +
+                            ".event-type:hover {" +
+                            "  background: rgba(247, 228, 121, 0.1);" +
+                            "  border-left-color: #f7e479;" +
+                            "  padding-left: 15px;" +
+                            "}" +
+                            ".event-count {" +
+                            "  color: #f7e479;" +
+                            "  font-weight: bold;" +
+                            "  margin-left: 10px;" +
+                            "}" +
+                            ".total-events {" +
+                            "  color: #f7e479;" +
+                            "  font-size: 14px;" +
+                            "  font-weight: bold;" +
+                            "  text-align: center;" +
+                            "  padding: 5px 0;" +
+                            "  margin-bottom: 8px;" +
+                            "  border-bottom: 1px solid rgba(247, 228, 121, 0.2);" +
+                            "}" +
+                            "</style></head><body>" +
+                            "<div class='radio-container'>" +
+                            "<div class='total-events'>Total de Eventos: %d</div>" +
+                            "<div class='event-type'>Reuniones<span class='event-count'>%d</span></div>" +
+                            "<div class='event-type'>Recordatorios<span class='event-count'>%d</span></div>" +
+                            "<div class='event-type'>Citas Médicas<span class='event-count'>%d</span></div>" +
+                            "</div></body></html>",
+                            summary.getTotal(),
+                            summary.getMeetings(),
+                            summary.getReminders(),
                             summary.getAppointments()
                         );
                         
-                        // Crear un nuevo tooltip (solución para evitar problemas de actualización)
-                        Tooltip tooltip = new Tooltip(tooltipText);
-                        tooltip.setStyle("-fx-font-size: 12px;");
+                        // Crear un nuevo tooltip con WebView para soportar HTML
+                        Tooltip tooltip = new Tooltip();
+                        tooltip.setStyle("-fx-background-color: transparent; -fx-padding: 0;");
+                        
+                        // Usar WebView para mostrar el contenido HTML
+                        javafx.scene.web.WebView webView = new javafx.scene.web.WebView();
+                        webView.setPrefSize(200, 140); // Ajustado para el contenido exacto
+                        webView.setMaxSize(200, 140);
+                        webView.setMinSize(200, 140);
+                        webView.setContextMenuEnabled(false);
+                        
+                        // Deshabilitar scroll
+                        webView.getEngine().setJavaScriptEnabled(true);
+                        webView.getEngine().loadContent(tooltipContent);
+                        
+                        // Hacer el fondo del WebView transparente
+                        webView.setStyle("-fx-background-color: transparent;");
+                        
+                        tooltip.setGraphic(webView);
+                        tooltip.setContentDisplay(javafx.scene.control.ContentDisplay.GRAPHIC_ONLY);
+                        
+                        // Configurar los tiempos del tooltip
+                        tooltip.setShowDelay(javafx.util.Duration.millis(100));
+                        tooltip.setShowDuration(javafx.util.Duration.seconds(20));
+                        tooltip.setHideDelay(javafx.util.Duration.millis(200));
+                        
                         btnEventCounter.setTooltip(tooltip);
                         
                         // Hacer visible el botón
@@ -992,7 +1065,16 @@ public class PanelInicioController implements Initializable {
                 // En caso de error, mostrar "?" en el contador
                 javafx.application.Platform.runLater(() -> {
                     btnEventCounter.setText("?");
-                    btnEventCounter.setTooltip(new Tooltip("Error al cargar eventos"));
+                    Tooltip errorTooltip = new Tooltip("Error al cargar eventos");
+                    errorTooltip.setStyle(
+                        "-fx-background-color: #1a1a1a;" +
+                        "-fx-text-fill: #ff4444;" +
+                        "-fx-font-size: 12px;" +
+                        "-fx-padding: 10px;" +
+                        "-fx-border-radius: 5px;" +
+                        "-fx-background-radius: 5px;"
+                    );
+                    btnEventCounter.setTooltip(errorTooltip);
                     btnEventCounter.setVisible(true);
                 });
             }
