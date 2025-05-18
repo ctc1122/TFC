@@ -823,4 +823,130 @@ public class CalendarService {
     public boolean esRecordatorio(CalendarEvent event) {
         return event.getTipoEvento() == EventoTipo.RECORDATORIO;
     }
+    
+    /**
+     * Obtiene el número total de eventos de un usuario
+     * @param usuario El nombre de usuario
+     * @return Número total de eventos
+     */
+    public int getEventCountForUser(String usuario) {
+        try {
+            if (usuario == null || usuario.isEmpty()) {
+                return 0;
+            }
+            
+            long count = appointmentsCollection.countDocuments(
+                Filters.eq("usuarioAsignado", usuario)
+            );
+            return (int) count;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error al contar eventos del usuario", e);
+            return 0;
+        }
+    }
+    
+    /**
+     * Obtiene el número de eventos de un usuario por tipo
+     * @param usuario El nombre de usuario
+     * @param tipoEvento El tipo de evento (REUNION, RECORDATORIO, CITA_MEDICA)
+     * @return Número de eventos del tipo especificado
+     */
+    public int getEventCountByType(String usuario, EventoTipo tipoEvento) {
+        try {
+            if (usuario == null || usuario.isEmpty() || tipoEvento == null) {
+                return 0;
+            }
+            
+            // Filtrar por usuario y tipo de evento
+            long count = appointmentsCollection.countDocuments(
+                Filters.and(
+                    Filters.eq("usuarioAsignado", usuario),
+                    Filters.eq("tipoEvento", tipoEvento.name())
+                )
+            );
+            return (int) count;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error al contar eventos por tipo", e);
+            return 0;
+        }
+    }
+    
+    /**
+     * Obtiene un resumen de eventos por tipo para un usuario
+     * @param usuario El nombre de usuario
+     * @return Un objeto con el conteo de cada tipo de evento
+     */
+    public EventSummary getEventSummaryForUser(String usuario) {
+        EventSummary summary = new EventSummary();
+        
+        if (usuario == null || usuario.isEmpty()) {
+            return summary;
+        }
+        
+        try {
+            // Contar reuniones
+            summary.setMeetings(getEventCountByType(usuario, EventoTipo.REUNION));
+            
+            // Contar recordatorios
+            summary.setReminders(getEventCountByType(usuario, EventoTipo.RECORDATORIO));
+            
+            // Contar citas médicas
+            summary.setAppointments(getEventCountByType(usuario, EventoTipo.CITA_MEDICA));
+            
+            // Total
+            summary.setTotal(summary.getMeetings() + summary.getReminders() + summary.getAppointments());
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error al obtener resumen de eventos", e);
+        }
+        
+        return summary;
+    }
+    
+    /**
+     * Clase que representa un resumen de eventos
+     */
+    public static class EventSummary {
+        private int meetings = 0;      // Reuniones
+        private int reminders = 0;     // Recordatorios
+        private int appointments = 0;  // Citas médicas
+        private int total = 0;         // Total de eventos
+        
+        public int getMeetings() {
+            return meetings;
+        }
+        
+        public void setMeetings(int meetings) {
+            this.meetings = meetings;
+        }
+        
+        public int getReminders() {
+            return reminders;
+        }
+        
+        public void setReminders(int reminders) {
+            this.reminders = reminders;
+        }
+        
+        public int getAppointments() {
+            return appointments;
+        }
+        
+        public void setAppointments(int appointments) {
+            this.appointments = appointments;
+        }
+        
+        public int getTotal() {
+            return total;
+        }
+        
+        public void setTotal(int total) {
+            this.total = total;
+        }
+        
+        @Override
+        public String toString() {
+            return String.format("Eventos: %d total\n- %d reuniones\n- %d recordatorios\n- %d citas", 
+                total, meetings, reminders, appointments);
+        }
+    }
 } 

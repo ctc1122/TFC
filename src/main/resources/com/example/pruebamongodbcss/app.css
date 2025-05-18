@@ -225,3 +225,51 @@
     -fx-fit-width: 32px;
     -fx-fit-height: 32px;
 }
+
+/* Estilos para el contador de eventos */
+.event-counter-badge {
+    -fx-background-radius: 50%;
+    -fx-min-width: 28px;
+    -fx-min-height: 28px;
+    -fx-pref-width: 28px;
+    -fx-pref-height: 28px;
+    -fx-background-color: #e0e0e0;
+    -fx-text-fill: #424242;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-padding: 0 0 0 0;
+    -fx-content-display: right;
+    -fx-alignment: center;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 3, 0, 0, 1);
+    -fx-border-radius: 50%;
+    -fx-border-width: 0;
+}
+
+.event-counter-badge .jfx-rippler {
+    -jfx-rippler-fill: #bdbdbd;
+}
+
+.event-counter-badge.has-events {
+    -fx-background-color: #e53935;
+    -fx-text-fill: white;
+}
+
+.dark-theme .event-counter-badge {
+    -fx-background-color: #424242;
+    -fx-text-fill: white;
+}
+
+.dark-theme .event-counter-badge.has-events {
+    -fx-background-color: #ff5252;
+    -fx-text-fill: white;
+}
+
+.event-counter-badge .tooltip {
+    -fx-font-size: 12px;
+}
+
+/* Ajustar la posición del icono en el badge */
+.event-counter-badge .image-view {
+    -fx-translate-x: -2px;
+}

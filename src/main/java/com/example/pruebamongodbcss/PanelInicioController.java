@@ -7,6 +7,7 @@ import java.util.ResourceBundle;
 import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.calendar.CalendarScreen;
+import com.example.pruebamongodbcss.calendar.CalendarService;
 import com.example.pruebamongodbcss.theme.ThemeManager;
 import com.example.pruebamongodbcss.theme.ThemeToggleSwitch;
 import com.example.pruebamongodbcss.theme.ThemeUtil;
@@ -44,7 +45,7 @@ public class PanelInicioController implements Initializable {
     private VBox sidebar;
 
     @FXML
-    private JFXButton btnMenuPrincipal, btnAnimales, btnFichaje, btnSalir, btnToggleSidebar, but_clientes, btnEmpresa, btnChicha, btnGoogleCalendar;
+    private JFXButton btnMenuPrincipal, btnAnimales, btnFichaje, btnSalir, btnToggleSidebar, but_clientes, btnEmpresa, btnChicha, btnGoogleCalendar, btnEventCounter;
 
     @FXML
     private JFXButton btnMenuPrincipalCarousel, btnAnimalesCarousel, btnFichajeCarousel, btnSalirCarousel, but_clientesCarousel, btnEmpresaCarousel, btnGoogleCalendarCarousel;
@@ -67,6 +68,7 @@ public class PanelInicioController implements Initializable {
     // Usuario actual de la sesión
     private static Usuario usuarioActual;
     private ServicioUsuarios servicioUsuarios;
+    private CalendarService calendarService;
 
     private boolean menuVisible = false;
     private boolean isCarouselMode = false;
@@ -205,6 +207,7 @@ public class PanelInicioController implements Initializable {
 
         // Inicializar servicio
         servicioUsuarios = new ServicioUsuarios();
+        calendarService = new CalendarService();
         
         // Configurar arrastre del botón
         configurarArrastreBoton(btnChicha);
@@ -228,6 +231,18 @@ public class PanelInicioController implements Initializable {
         // Marcar visualmente el botón de Menú Principal como seleccionado
         if (btnMenuPrincipal != null) {
             btnMenuPrincipal.getStyleClass().add("menu-button-selected");
+        }
+
+        // Configurar el contador de eventos
+        if (btnEventCounter != null) {
+            btnEventCounter.setTooltip(new Tooltip("Cargando eventos..."));
+            btnEventCounter.setOnAction(event -> abrirModuloGoogleCalendar());
+            
+            // Estilizar el botón como un badge circular
+            btnEventCounter.getStyleClass().add("event-counter-badge");
+            
+            // Configurar actualización periódica del contador (cada 5 minutos)
+            configurarActualizacionPeriodicaEventos();
         }
     }
     
@@ -269,6 +284,11 @@ public class PanelInicioController implements Initializable {
             } else {
                 lblClinica.setText("Clínica Veterinaria");
             }
+        }
+
+        // Actualizar el contador de eventos si el usuario existe
+        if (usuario != null) {
+            actualizarContadorEventos();
         }
     }
 
@@ -917,5 +937,85 @@ public class PanelInicioController implements Initializable {
             e.printStackTrace();
             mostrarError("Error", "No se pudo cargar el módulo de calendario: " + e.getMessage());
         }
+    }
+
+    /**
+     * Actualiza el contador de eventos para el usuario actual
+     */
+    private void actualizarContadorEventos() {
+        if (usuarioActual == null || btnEventCounter == null) {
+            return;
+        }
+        
+        // Usar un hilo secundario para no bloquear la UI
+        new Thread(() -> {
+            try {
+                // Obtener el resumen de eventos para el usuario
+                final CalendarService.EventSummary summary = calendarService.getEventSummaryForUser(usuarioActual.getUsuario());
+                
+                // Actualizar el botón en el hilo de la UI
+                javafx.application.Platform.runLater(() -> {
+                    try {
+                        // Actualizar el texto con el total
+                        btnEventCounter.setText(String.valueOf(summary.getTotal()));
+                        
+                        // Actualizar el tooltip con el desglose
+                        String tooltipText = String.format(
+                            "Eventos pendientes:\n• %d reuniones\n• %d recordatorios\n• %d citas médicas", 
+                            summary.getMeetings(), 
+                            summary.getReminders(), 
+                            summary.getAppointments()
+                        );
+                        
+                        // Crear un nuevo tooltip (solución para evitar problemas de actualización)
+                        Tooltip tooltip = new Tooltip(tooltipText);
+                        tooltip.setStyle("-fx-font-size: 12px;");
+                        btnEventCounter.setTooltip(tooltip);
+                        
+                        // Hacer visible el botón
+                        btnEventCounter.setVisible(true);
+                        
+                        // Aplicar estilo adicional según la cantidad
+                        if (summary.getTotal() > 0) {
+                            if (!btnEventCounter.getStyleClass().contains("has-events")) {
+                                btnEventCounter.getStyleClass().add("has-events");
+                            }
+                        } else {
+                            btnEventCounter.getStyleClass().remove("has-events");
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error al actualizar UI del contador: " + e.getMessage());
+                    }
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+                // En caso de error, mostrar "?" en el contador
+                javafx.application.Platform.runLater(() -> {
+                    btnEventCounter.setText("?");
+                    btnEventCounter.setTooltip(new Tooltip("Error al cargar eventos"));
+                    btnEventCounter.setVisible(true);
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * Configura una actualización periódica del contador de eventos
+     */
+    private void configurarActualizacionPeriodicaEventos() {
+        // Crear un Timeline que se ejecute cada 5 minutos
+        javafx.animation.Timeline timeline = new javafx.animation.Timeline(
+            new javafx.animation.KeyFrame(
+                javafx.util.Duration.minutes(5),
+                event -> {
+                    // Solo actualizar si hay un usuario activo
+                    if (usuarioActual != null) {
+                        actualizarContadorEventos();
+                    }
+                }
+            )
+        );
+        timeline.setCycleCount(javafx.animation.Animation.INDEFINITE);
+        timeline.play();
     }
 }

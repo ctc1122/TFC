@@ -4,6 +4,7 @@
 <?import io.github.palexdev.mfxcore.controls.Label?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
@@ -49,11 +50,25 @@
             </VBox>
          </center>
          <bottom>
-            <VBox alignment="BOTTOM_LEFT">
+            <VBox alignment="BOTTOM_LEFT" spacing="15.0">
                <padding>
-                  <Insets bottom="25.0" left="20.0" />
+                  <Insets bottom="10.0"  />
                </padding>
+               <children>
+                  <JFXButton fx:id="btnEventCounter" styleClass="event-counter-badge" text="0" alignment="CENTER">
+                     <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../Iconos/iconClock2.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                     <tooltip>
+                        <Tooltip text="Cargando eventos..." />
+                     </tooltip>
+                  </JFXButton>
                   <ThemeToggleSwitch fx:id="themeToggle" />
+               </children>
             </VBox>
          </bottom>
          
