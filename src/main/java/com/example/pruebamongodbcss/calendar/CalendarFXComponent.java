@@ -54,6 +54,9 @@ import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
 import com.example.pruebamongodbcss.calendar.EventoFormularioController;
 import java.time.format.DateTimeFormatter;
 import org.bson.types.ObjectId;
+import javafx.scene.control.Tooltip;
+import javafx.scene.input.MouseEvent;
+import javafx.util.Duration;
 
 /**
  * Componente de calendario basado en CalendarFX.
@@ -1009,6 +1012,9 @@ public class CalendarFXComponent extends BorderPane {
             return null;
         });
         
+        // Configurar tooltips personalizados para los elementos del calendario
+        setupCustomTooltips();
+        
         // Menú contextual para clic derecho sobre una entrada (cita)
         calendarView.setEntryContextMenuCallback(param -> {
             Entry<?> entry = param.getEntry();
@@ -1107,6 +1113,279 @@ public class CalendarFXComponent extends BorderPane {
                 return contextMenu;
             }
         });
+    }
+    
+    /**
+     * Configura tooltips personalizados para las entradas del calendario
+     */
+    private void setupCustomTooltips() {
+        System.out.println("Iniciando configuración de tooltips personalizados...");
+        
+        // Programar múltiples intentos para asegurar que capturamos todas las entradas
+        for (int i = 0; i < 5; i++) {
+            final int delay = 1000 * (i + 1); // Mayores retrasos para asegurar que el calendario esté completamente renderizado
+            new Thread(() -> {
+                try {
+                    Thread.sleep(delay);
+                    Platform.runLater(() -> {
+                        System.out.println("Intentando aplicar tooltips después de " + delay + "ms");
+                        
+                        // Configurar listeners para detectar nuevas entradas
+                        if (calendarView.getDayPage() != null && calendarView.getDayPage().getDetailedDayView() != null) {
+                            System.out.println("Configurando tooltips para vista de día");
+                            setupMouseListeners(calendarView.getDayPage().getDetailedDayView().getDayView());
+                        }
+                        
+                        if (calendarView.getWeekPage() != null && calendarView.getWeekPage().getDetailedWeekView() != null) {
+                            System.out.println("Configurando tooltips para vista de semana");
+                            setupMouseListeners(calendarView.getWeekPage().getDetailedWeekView().getWeekView());
+                        }
+                        
+                        if (calendarView.getMonthPage() != null) {
+                            System.out.println("Configurando tooltips para vista de mes");
+                            setupMouseListeners(calendarView.getMonthPage().getMonthView());
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        }
+    }
+    
+    /**
+     * Configura listeners de ratón para detectar entradas del calendario
+     */
+    private void setupMouseListeners(DateControl view) {
+        if (view == null) {
+            System.out.println("Vista de calendario nula, no se pueden configurar listeners");
+            return;
+        }
+        
+        System.out.println("Configurando listeners para: " + view.getClass().getSimpleName());
+        
+        // Configurar un listener para eventos de movimiento del ratón
+        view.addEventFilter(MouseEvent.MOUSE_MOVED, e -> {
+            Node node = e.getPickResult().getIntersectedNode();
+            if (node != null) {
+                // Buscar en los padres hasta encontrar un nodo de entrada
+                Node current = node;
+                while (current != null && current != view) {
+                    if (isEntryNode(current)) {
+                        Entry<?> entry = findEntryForNode(current);
+                        if (entry != null) {
+                            createTooltipForEntry(current, entry);
+                        }
+                        break;
+                    }
+                    current = current.getParent();
+                }
+            }
+        });
+    }
+    
+    /**
+     * Encuentra todos los posibles nodos de entrada en el árbol de nodos
+     */
+    private List<Node> findAllEntryNodes(Node rootNode) {
+        List<Node> entryNodes = new ArrayList<>();
+        
+        if (rootNode == null) return entryNodes;
+        
+        // Verificar si este nodo parece una entrada
+        if (isEntryNode(rootNode)) {
+            entryNodes.add(rootNode);
+        }
+        
+        // También verificar nodos con ciertas clases CSS que podrían ser entradas
+        if (rootNode.getStyleClass() != null) {
+            for (String styleClass : rootNode.getStyleClass()) {
+                if (styleClass.contains("entry") || styleClass.contains("appointment")) {
+                    entryNodes.add(rootNode);
+                    break;
+                }
+            }
+        }
+        
+        // Buscar recursivamente en los hijos
+        if (rootNode instanceof Parent) {
+            for (Node child : ((Parent) rootNode).getChildrenUnmodifiable()) {
+                entryNodes.addAll(findAllEntryNodes(child));
+            }
+        }
+        
+        return entryNodes;
+    }
+    
+    /**
+     * Verifica si un nodo es un nodo de entrada de calendario
+     */
+    private boolean isEntryNode(Node node) {
+        if (node == null) return false;
+        
+        // Verificar por estructura o clase específica
+        if (node.getStyleClass() != null) {
+            for (String styleClass : node.getStyleClass()) {
+                if (styleClass.contains("entry") || 
+                    styleClass.contains("calendar-entry") || 
+                    styleClass.contains("day-entry") ||
+                    styleClass.contains("month-entry") ||
+                    styleClass.contains("all-day-entry")) {
+                    return true;
+                }
+            }
+        }
+        
+        // Verificar si el userData es una entrada
+        if (node.getUserData() instanceof Entry) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Intenta encontrar la entrada asociada a un nodo
+     */
+    private Entry<?> findEntryForNode(Node node) {
+        // Intentar obtener el Entry del userData
+        if (node.getUserData() instanceof Entry) {
+            return (Entry<?>) node.getUserData();
+        }
+        
+        // Intentar obtener el Entry mediante propiedades
+        for (Calendar calendar : calendars) {
+            // Obtener las entradas del calendario para un periodo amplio
+            Map<LocalDate, List<Entry<?>>> entriesMap = calendar.findEntries(
+                LocalDate.now().minusDays(30), 
+                LocalDate.now().plusDays(365), 
+                ZoneId.systemDefault()
+            );
+            
+            // Iterar por cada día y sus entradas
+            for (List<Entry<?>> entries : entriesMap.values()) {
+                for (Entry<?> entry : entries) {
+                    // Intentar comparar el título del entry con algún texto en el nodo
+                    if (containsEntryInfo(node, entry)) {
+                        return entry;
+                    }
+                }
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Verifica si un nodo contiene información sobre una entrada específica
+     */
+    private boolean containsEntryInfo(Node node, Entry<?> entry) {
+        // Buscar todos los textos dentro del nodo
+        List<Text> textNodes = findTextNodes(node);
+        
+        for (Text text : textNodes) {
+            // Si el texto contiene el título del entry, probablemente es este entry
+            if (text.getText() != null && 
+                entry.getTitle() != null && 
+                text.getText().contains(entry.getTitle())) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Encuentra todos los nodos de texto dentro de un nodo padre
+     */
+    private List<Text> findTextNodes(Node node) {
+        List<Text> result = new ArrayList<>();
+        
+        if (node instanceof Text) {
+            result.add((Text) node);
+        } else if (node instanceof Parent) {
+            for (Node child : ((Parent) node).getChildrenUnmodifiable()) {
+                result.addAll(findTextNodes(child));
+            }
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Crea un tooltip para una entrada específica
+     */
+    private void createTooltipForEntry(Node node, Entry<?> entry) {
+        try {
+            // Verificar si ya tiene un tooltip instalado
+            Tooltip existingTooltip = null;
+            if (node instanceof Control) {
+                existingTooltip = ((Control) node).getTooltip();
+            }
+            
+            if (existingTooltip != null) {
+                // Ya tiene tooltip, no hacer nada
+                return;
+            }
+            
+            // Buscar información detallada
+            String description = "";
+            String usuario = "No asignado";
+            
+            if (entry.getId() != null && entryDescriptions.containsKey(entry.getId())) {
+                description = entryDescriptions.get(entry.getId());
+            }
+            
+            // Obtener el usuario asignado a este evento
+            if (entry.getId() != null && !entry.getId().isEmpty()) {
+                CalendarEvent calEvent = calendarService.getEventById(entry.getId());
+                if (calEvent != null && calEvent.getUsuario() != null) {
+                    usuario = calEvent.getUsuario();
+                }
+            }
+            
+            // Crear un tooltip elaborado
+            Tooltip tooltip = new Tooltip();
+            
+            // Estilo avanzado con CSS
+            tooltip.setStyle("-fx-background-color: #333333; " +
+                          "-fx-text-fill: white; " +
+                          "-fx-font-size: 12px; " +
+                          "-fx-padding: 10 15 10 15; " +
+                          "-fx-background-radius: 6;");
+            
+            // Construir contenido
+            StringBuilder content = new StringBuilder();
+            content.append(entry.getTitle()).append("\n\n");
+            content.append("📅 ").append(entry.getStartDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))).append("\n");
+            content.append("⏰ ").append(entry.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm")))
+                  .append(" - ").append(entry.getEndTime().format(DateTimeFormatter.ofPattern("HH:mm"))).append("\n");
+            
+            if (entry.getLocation() != null && !entry.getLocation().isEmpty()) {
+                content.append("📍 ").append(entry.getLocation()).append("\n");
+            }
+            
+            content.append("👤 ").append(usuario).append("\n");
+            
+            if (!description.isEmpty()) {
+                content.append("\n📝 ").append(description);
+            }
+            
+            tooltip.setText(content.toString());
+            
+            // Configurar el tooltip
+            tooltip.setShowDelay(Duration.millis(200));
+            tooltip.setShowDuration(Duration.seconds(30));
+            tooltip.setHideDelay(Duration.millis(200));
+            
+            // Aplicar el tooltip al nodo
+            Tooltip.install(node, tooltip);
+            
+            System.out.println("Tooltip instalado correctamente para: " + entry.getTitle());
+        } catch (Exception e) {
+            System.err.println("Error al crear tooltip: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
     
     /**

@@ -259,6 +259,41 @@ public class CalendarService {
     }
     
     /**
+     * Obtiene un evento de calendario por su ID
+     * @param eventId ID del evento
+     * @return El evento o null si no se encuentra
+     */
+    public CalendarEvent getEventById(String eventId) {
+        try {
+            if (eventId == null || eventId.isEmpty()) {
+                return null;
+            }
+            
+            // Primero intentar en la colección appointments
+            Optional<CalendarEvent> appointmentOpt = getAppointmentById(eventId);
+            if (appointmentOpt.isPresent()) {
+                return appointmentOpt.get();
+            }
+            
+            // Si no se encuentra, intentar en la colección citas
+            try {
+                String idToSearch = eventId.startsWith("_") ? eventId.substring(1) : eventId;
+                Document doc = citasCollection.find(Filters.eq("_id", new ObjectId(idToSearch))).first();
+                if (doc != null) {
+                    return citaDocumentToCalendarEvent(doc);
+                }
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Error al buscar en colección de citas", e);
+            }
+            
+            return null;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error al obtener evento por ID", e);
+            return null;
+        }
+    }
+    
+    /**
      * Busca citas por texto en título o descripción
      * @param searchText Texto a buscar
      * @return Lista de citas que coinciden
