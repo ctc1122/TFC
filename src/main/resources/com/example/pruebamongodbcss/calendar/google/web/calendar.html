@@ -2,25 +2,198 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendario de Citas</title>
+    
+    <!-- Custom CSS -->
     <link href="styles.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    
     <!-- FullCalendar CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@5.11.3/main.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@5.11.3/main.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@5.11.3/main.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/list@5.11.3/main.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
 </head>
 <body>
-    <div id="calendar"></div>
+    <div class="app-container">
+        <!-- Panel lateral -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Acciones</h2>
+            </div>
+            <div class="sidebar-content">
+                <button id="newEventBtn" class="action-button primary">
+                    <i class="fas fa-plus"></i> Nueva Cita
+                </button>
+                <button id="editEventBtn" class="action-button" disabled>
+                    <i class="fas fa-edit"></i> Editar Cita
+                </button>
+                <button id="deleteEventBtn" class="action-button danger" disabled>
+                    <i class="fas fa-trash"></i> Eliminar Cita
+                </button>
+                <hr>
+                <div class="filter-section">
+                    <h3>Filtros</h3>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filterCitas" checked>
+                        <label for="filterCitas">Citas</label>
+                        <span class="color-dot" style="background-color: #4d79f6;"></span>
+                    </div>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filterReuniones" checked>
+                        <label for="filterReuniones">Reuniones</label>
+                        <span class="color-dot" style="background-color: #ff9800;"></span>
+                    </div>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filterRecordatorios" checked>
+                        <label for="filterRecordatorios">Recordatorios</label>
+                        <span class="color-dot" style="background-color: #4caf50;"></span>
+                    </div>
+                </div>
+                <hr>
+                <div class="theme-toggle-container">
+                    <span>Tema:</span>
+                    <button id="themeToggle" title="Cambiar tema">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contenido principal -->
+        <div class="main-content">
+            <div class="calendar-header">
+                <h1><i class="fas fa-calendar-alt"></i> Calendario de Citas</h1>
+                <div id="calendarControls" class="calendar-controls">
+                    <div class="current-period-label">
+                        <span id="currentPeriod">Mayo 2023</span>
+                    </div>
+                    <div class="navigation-controls">
+                        <button id="prevBtn" class="control-button">
+                            <i class="fas fa-chevron-left"></i> Anterior
+                        </button>
+                        <button id="todayBtn" class="control-button">
+                            <i class="fas fa-calendar-day"></i> Hoy
+                        </button>
+                        <button id="nextBtn" class="control-button">
+                            <i class="fas fa-chevron-right"></i> Siguiente
+                        </button>
+                    </div>
+                    <div class="view-controls">
+                        <button id="monthViewBtn" class="control-button active">Mes</button>
+                        <button id="weekViewBtn" class="control-button">Semana</button>
+                        <button id="dayViewBtn" class="control-button">Día</button>
+                        <button id="listViewBtn" class="control-button">Lista</button>
+                    </div>
+                </div>
+            </div>
+            <div id="calendar"></div>
+        </div>
+    </div>
 
-    <!-- FullCalendar JS -->
-    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@5.11.3/main.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@5.11.3/main.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@5.11.3/main.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/list@5.11.3/main.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@5.11.3/main.min.js"></script>
+    <!-- Modal para crear/editar eventos -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Nueva Cita</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="eventForm">
+                    <input type="hidden" id="eventId">
+                    <div class="form-group">
+                        <label for="eventTitle">Título:</label>
+                        <input type="text" id="eventTitle" required placeholder="Título de la cita">
+                    </div>
+                    <div class="form-group">
+                        <label for="eventType">Tipo:</label>
+                        <select id="eventType" required>
+                            <option value="CITA_MEDICA">Cita Médica</option>
+                            <option value="REUNION">Reunión</option>
+                            <option value="RECORDATORIO">Recordatorio</option>
+                            <option value="OTRO">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventStart">Fecha inicio:</label>
+                        <input type="datetime-local" id="eventStart" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventEnd">Fecha fin:</label>
+                        <input type="datetime-local" id="eventEnd" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventLocation">Ubicación:</label>
+                        <input type="text" id="eventLocation" placeholder="Ubicación (opcional)">
+                    </div>
+                    <div class="form-group">
+                        <label for="eventDescription">Descripción:</label>
+                        <textarea id="eventDescription" rows="3" placeholder="Descripción (opcional)"></textarea>
+                    </div>
+                    <div class="form-group checkbox">
+                        <input type="checkbox" id="eventAllDay">
+                        <label for="eventAllDay">Todo el día</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelEventBtn" class="button secondary">Cancelar</button>
+                <button id="saveEventBtn" class="button primary">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación para eliminar -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Confirmar eliminación</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro de que desea eliminar esta cita?</p>
+                <p id="deleteEventTitle"></p>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelDeleteBtn" class="button secondary">Cancelar</button>
+                <button id="confirmDeleteBtn" class="button danger">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FullCalendar Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
     
     <!-- Custom JS -->
+    <script src="calendar-api.js"></script>
     <script src="calendar.js"></script>
+    <script src="calendar-ui.js"></script>
+    
+    <script>
+        // Cambiar tema manualmente (para pruebas sin Java)
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            // Si está disponible JavaConnector, usar ese método
+            if (window.javaConnector) {
+                window.javaConnector.processEvent('toggleTheme', '{}');
+            } else {
+                // Modo prueba sin Java
+                const isDark = document.body.classList.contains('dark-theme');
+                window.calendarApi.toggleDarkMode(!isDark);
+                
+                // Cambiar icono
+                const themeIcon = this.querySelector('i');
+                if (isDark) {
+                    themeIcon.classList.remove('fa-sun');
+                    themeIcon.classList.add('fa-moon');
+                } else {
+                    themeIcon.classList.remove('fa-moon');
+                    themeIcon.classList.add('fa-sun');
+                }
+            }
+        });
+    </script>
 </body>
 </html> 

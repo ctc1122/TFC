@@ -4,11 +4,11 @@ import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.example.pruebamongodbcss.PanelInicioController;
 import com.example.pruebamongodbcss.calendar.CalendarEvent;
 import com.example.pruebamongodbcss.calendar.CalendarService;
 import com.example.pruebamongodbcss.theme.ThemeManager;
@@ -55,22 +55,17 @@ public class GoogleCalendarWebView extends BorderPane {
     // Servicio de calendario
     private CalendarService calendarService;
     
-    private com.example.pruebamongodbcss.Data.Usuario usuarioActual;
+  
     
     /**
      * Constructor que recibe el usuario actual
      */
-    public GoogleCalendarWebView(com.example.pruebamongodbcss.Data.Usuario usuarioActual) {
-        this.usuarioActual = usuarioActual;
+    public GoogleCalendarWebView() {
+
         initialize();
     }
     
-    /**
-     * Constructor por defecto (para compatibilidad, pero no filtra por usuario)
-     */
-    public GoogleCalendarWebView() {
-        this(null);
-    }
+
     
     /**
      * Inicializa el componente
@@ -152,42 +147,34 @@ public class GoogleCalendarWebView extends BorderPane {
                         System.out.println("Página cargada correctamente, configurando puente JS-Java");
                         
                         try {
-                            // Esperar un momento para asegurar que JavaScript ha inicializado completamente
-                            Thread.sleep(500);
-                            
                             // Crear puente entre Java y JavaScript
                             JSObject window = (JSObject) webEngine.executeScript("window");
                             window.setMember("javaConnector", new JavaConnector(this));
                             
-                            // Verificar si la API de calendario está disponible
-                            boolean apiAvailable = (boolean) webEngine.executeScript(
-                                "(() => { return (typeof window.calendarApi !== 'undefined'); })();"
+                            // Esperar a que la API del calendario esté lista (usar setTimeout)
+                            webEngine.executeScript(
+                                "setTimeout(() => { " +
+                                "   if (window.calendarApi) { " +
+                                "       console.log('API del calendario lista'); " +
+                                "       const isDarkTheme = " + ThemeManager.getInstance().isDarkTheme() + "; " +
+                                "       window.calendarApi.toggleDarkMode(isDarkTheme); " +
+                                "   } else { " +
+                                "       console.error('API del calendario no disponible'); " +
+                                "   } " +
+                                "}, 500);"
                             );
                             
-                            System.out.println("API de calendario disponible: " + apiAvailable);
+                            // Cargar los eventos después de que todo esté listo
+                            Platform.runLater(() -> {
+                                try {
+                                    Thread.sleep(800);
+                                    System.out.println("Cargando eventos...");
+                                    loadEventsFromDatabase();
+                                } catch (Exception e) {
+                                    System.err.println("Error al cargar eventos: " + e.getMessage());
+                                }
+                            });
                             
-                            if (apiAvailable) {
-                                // PRIMERO: Cargar eventos desde la base de datos
-                                // Esto debe hacerse antes de aplicar el tema para evitar recargas
-                                System.out.println("Cargando eventos ANTES de configurar tema...");
-                                loadEventsFromDatabase();
-                                
-                                // DESPUÉS: Establecer el tema actual
-                                boolean isDarkTheme = ThemeManager.getInstance().isDarkTheme();
-                                webEngine.executeScript(
-                                    "(() => { "
-                                    + "console.log('Configurando tema inicial: " + (isDarkTheme ? "oscuro" : "claro") + "'); "
-                                    + "if(window.calendarApi) { "
-                                    + "    window.calendarApi.toggleDarkMode(" + isDarkTheme + "); "
-                                    + "} else { "
-                                    + "    console.error('calendarApi no está disponible'); "
-                                    + "}"
-                                    + "})();"
-                                );
-                                System.out.println("Tema configurado: " + (isDarkTheme ? "oscuro" : "claro"));
-                            } else {
-                                System.err.println("ERROR: La API del calendario no está disponible en la página");
-                            }
                         } catch (Exception e) {
                             System.err.println("Error al configurar puente JS-Java: " + e.getMessage());
                             e.printStackTrace();
@@ -201,10 +188,10 @@ public class GoogleCalendarWebView extends BorderPane {
             // Obtener URL del archivo HTML
             URL url = getClass().getResource(CALENDAR_HTML_PATH);
             if (url != null) {
-                System.out.println("Cargando React desde: " + url.toExternalForm());
+                System.out.println("Cargando calendario desde: " + url.toExternalForm());
                 webEngine.load(url.toExternalForm());
             } else {
-                throw new Exception("No se pudo encontrar el archivo HTML del calendario React");
+                throw new Exception("No se pudo encontrar el archivo HTML del calendario");
             }
             
             // Añadir el WebView al contenedor
@@ -236,19 +223,104 @@ public class GoogleCalendarWebView extends BorderPane {
         try {
             System.out.println("Cargando eventos del calendario...");
             
-            // Cargar eventos según el rol del usuario
-            this.events = loadEventsByUserRole();
+            // Obtener el usuario actual
+            String username = null;
+            try {
+                username = PanelInicioController.getUsuarioSesion().getUsuario();
+                System.out.println("Usuario actual: " + username);
+            } catch (Exception e) {
+                System.err.println("Error al obtener usuario actual: " + e.getMessage());
+                username = "jvazquez"; // Usuario por defecto
+            }
             
-            if (events != null && !events.isEmpty()) {
-                System.out.println("Se cargaron " + events.size() + " eventos");
+            // Cargar citas según el usuario
+            List<CalendarEvent> loadedEvents = calendarService.getAppointmentsByUser(username);
+            System.out.println("Cargadas " + loadedEvents.size() + " citas para el usuario: " + username);
+            
+            // FILTRAR: Solo mantener citas médicas (CITA_MEDICA)
+            List<CalendarEvent> filteredEvents = new ArrayList<>();
+            for (CalendarEvent event : loadedEvents) {
+                // IMPORTANTE: Verificamos por cualquier indicio de que sea una cita médica
+                boolean isCitaMedica = false;
+                
+                // 1. Por tipo de evento (enum)
+                if (event.getTipoEvento() == CalendarEvent.EventoTipo.CITA_MEDICA) {
+                    isCitaMedica = true;
+                }
+                // 2. Por eventType (string)
+                else if (event.getEventType() != null && 
+                    (event.getEventType().equalsIgnoreCase("CITA_MEDICA") ||
+                     event.getEventType().equalsIgnoreCase("cita") ||
+                     event.getEventType().equalsIgnoreCase("appointment"))) {
+                    isCitaMedica = true;
+                }
+                // 3. Por título (para documentos de 'citas')
+                else if (event.getTitle() != null && 
+                        (event.getTitle().toLowerCase().contains("cita") ||
+                         event.getTitle().toLowerCase().contains("consulta") ||
+                         event.getTitle().toLowerCase().contains("revisión") ||
+                         event.getTitle().toLowerCase().contains("revision"))) {
+                    isCitaMedica = true;
+                }
+                // 4. Por ID (si viene de la colección 'citas')
+                else if (event.getId() != null && event.getId().contains("citas")) {
+                    isCitaMedica = true;
+                }
+                
+                // IMPORTANTE: Debugging de cada evento para ver qué está pasando
+                System.out.println("DEBUG EVENTO: " + event.getId() + 
+                                  ", Título: " + event.getTitle() + 
+                                  ", Tipo: " + event.getTipoEvento() + 
+                                  ", EventType: " + event.getEventType() + 
+                                  ", ¿Es cita médica? " + isCitaMedica);
+                
+                if (isCitaMedica) {
+                    // Asegurar que tiene el tipo correcto antes de añadirlo
+                    event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
+                    event.setEventType("CITA_MEDICA");
+                    filteredEvents.add(event);
+                }
+            }
+            System.out.println("Filtradas " + filteredEvents.size() + " citas médicas de " + loadedEvents.size() + " eventos totales");
+            
+            // SOLUCIÓN DE EMERGENCIA: si no hay eventos, buscar todas las citas sin filtrar por usuario
+            if (filteredEvents.isEmpty()) {
+                System.out.println("No se encontraron citas. Intentando buscar todas las citas...");
+                List<CalendarEvent> allCitas = calendarService.getAllAppointments();
+                
+                // Igual que antes, filtrar solo las citas médicas
+                for (CalendarEvent event : allCitas) {
+                    boolean isCitaMedica = false;
+                    
+                    // Aplicar los mismos criterios de filtrado
+                    if (event.getTipoEvento() == CalendarEvent.EventoTipo.CITA_MEDICA ||
+                        (event.getEventType() != null && event.getEventType().contains("CITA")) ||
+                        (event.getTitle() != null && event.getTitle().toLowerCase().contains("cita"))) {
+                        
+                        isCitaMedica = true;
+                    }
+                    
+                    if (isCitaMedica) {
+                        event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
+                        event.setEventType("CITA_MEDICA");
+                        filteredEvents.add(event);
+                    }
+                }
+                
+                System.out.println("Encontradas " + filteredEvents.size() + " citas médicas de todas las citas");
+            }
+            
+            // Actualizar la lista local
+            this.events = filteredEvents;
+            
+            // Enviar al JavaScript
+            if (webEngine != null && webEngine.getLoadWorker().getState() == Worker.State.SUCCEEDED) {
+                // Actualizar el calendario con los eventos cargados
                 updateCalendarEvents();
-            } else {
-                System.out.println("No se encontraron eventos para mostrar");
             }
         } catch (Exception e) {
             System.err.println("Error al cargar eventos: " + e.getMessage());
             e.printStackTrace();
-            events = new ArrayList<>();
         }
     }
     
@@ -264,15 +336,10 @@ public class GoogleCalendarWebView extends BorderPane {
         List<CalendarEvent> result = new ArrayList<>();
         
         try {
-            // Verificar si hay usuario logueado
-            if (usuarioActual == null) {
-                System.out.println("ERROR CRÍTICO: No hay usuario logueado. Revisar cómo se inicializa GoogleCalendarWebView");
-                System.out.println("El usuario debe ser pasado en el constructor GoogleCalendarWebView(usuario)");
-                throw new IllegalStateException("No hay usuario logueado para cargar citas");
-            }
+
             
-            String username = usuarioActual.getUsuario();
-            com.example.pruebamongodbcss.Data.Usuario.Rol rol = usuarioActual.getRol();
+            String username = PanelInicioController.getUsuarioSesion().getUsuario();
+            com.example.pruebamongodbcss.Data.Usuario.Rol rol = PanelInicioController.getUsuarioSesion().getRol();
             System.out.println("Cargando citas para: " + username + " (Rol: " + rol + ")");
             
             // Determinar qué citas mostrar según el rol
@@ -286,12 +353,7 @@ public class GoogleCalendarWebView extends BorderPane {
                 System.out.println("Usuario normal: cargando solo sus citas");
                 result = calendarService.getAppointmentsByUser(username);
                 
-                // Si no se encontraron citas, intentar buscar por nombre
-                if (result.isEmpty() && usuarioActual.getNombre() != null && usuarioActual.getApellido() != null) {
-                    String nombreCompleto = usuarioActual.getNombre() + " " + usuarioActual.getApellido();
-                    System.out.println("No se encontraron citas por usuario, buscando por nombre: " + nombreCompleto);
-                    result = calendarService.searchAppointments(nombreCompleto);
-                }
+
             }
             
             System.out.println("Total de citas encontradas: " + result.size());
@@ -397,7 +459,23 @@ public class GoogleCalendarWebView extends BorderPane {
             jsonEvent.put("location", event.getLocation());
         }
         
-        if (event.getColor() != null && !event.getColor().isEmpty()) {
+        // Establecer colores basados en tipo de evento
+        if (event.getTipoEvento() != null) {
+            switch (event.getTipoEvento()) {
+                case CITA_MEDICA:
+                    jsonEvent.put("color", "#4d79f6");
+                    break;
+                case REUNION:
+                    jsonEvent.put("color", "#ff9800");
+                    break;
+                case RECORDATORIO:
+                    jsonEvent.put("color", "#4caf50");
+                    break;
+                case OTRO:
+                    jsonEvent.put("color", "#6c757d");
+                    break;
+            }
+        } else if (event.getColor() != null && !event.getColor().isEmpty()) {
             jsonEvent.put("color", event.getColor());
         }
         
@@ -407,37 +485,42 @@ public class GoogleCalendarWebView extends BorderPane {
         
         jsonEvent.put("allDay", event.isAllDay());
         
-        // Añadir tipo de evento para clasificar en React
+        // Añadir tipo de evento para visualización
         String eventType = "default";
         if (event.getType() != null) {
             eventType = event.getType();
-        } else if (event.getTitle() != null) {
-            String title = event.getTitle().toLowerCase();
-            if (title.contains("urgente") || title.contains("urgencia")) {
-                eventType = "urgent";
-            } else if (title.contains("completada") || title.contains("realizada")) {
-                eventType = "completed";
-            } else if (title.contains("cancelada")) {
-                eventType = "cancelled";
+        } else if (event.getEstado() != null) {
+            switch (event.getEstado()) {
+                case "EN_CURSO":
+                    eventType = "urgent";
+                    break;
+                case "COMPLETADA":
+                    eventType = "completed";
+                    break;
+                case "CANCELADA":
+                    eventType = "cancelled";
+                    break;
+                default:
+                    eventType = "default";
+                    break;
             }
         }
         jsonEvent.put("type", eventType);
         
-        // Añadir eventType para filtros de eventos vs citas
-        if (event.getEventType() != null) {
+        // Añadir eventType para filtros
+        if (event.getTipoEvento() != null) {
+            jsonEvent.put("eventType", event.getTipoEvento().name());
+        } else if (event.getEventType() != null) {
             jsonEvent.put("eventType", event.getEventType());
         } else {
-            // Si no tiene eventType pero tiene estado, es una cita, no un evento
-            if (event.getEstado() == null || event.getEstado().isEmpty()) {
-                // Determinar eventType según el título si parece un evento y no una cita
-                String title = event.getTitle().toLowerCase();
-                if (title.contains("reunión") || title.contains("reunion") || title.contains("meeting")) {
-                    jsonEvent.put("eventType", "meeting");
-                } else if (title.contains("recordatorio") || title.contains("reminder")) {
-                    jsonEvent.put("eventType", "reminder");
-                } else {
-                    jsonEvent.put("eventType", "other");
-                }
+            // Determinar según título como fallback
+            String title = event.getTitle() != null ? event.getTitle().toLowerCase() : "";
+            if (title.contains("reunión") || title.contains("reunion")) {
+                jsonEvent.put("eventType", "REUNION");
+            } else if (title.contains("recordatorio")) {
+                jsonEvent.put("eventType", "RECORDATORIO");
+            } else {
+                jsonEvent.put("eventType", "CITA_MEDICA");
             }
         }
         
@@ -445,21 +528,14 @@ public class GoogleCalendarWebView extends BorderPane {
         if (event.getEstado() != null) {
             jsonEvent.put("estado", event.getEstado());
         } else {
-            // Determinar estado según el tipo si no hay estado asignado
-            switch (eventType) {
-                case "urgent":
-                    jsonEvent.put("estado", "EN_CURSO");
-                    break;
-                case "completed":
-                    jsonEvent.put("estado", "COMPLETADA");
-                    break;
-                case "cancelled":
-                    jsonEvent.put("estado", "CANCELADA");
-                    break;
-                default:
-                    jsonEvent.put("estado", "PENDIENTE");
-                    break;
-            }
+            jsonEvent.put("estado", "PENDIENTE");
+        }
+        
+        // Asegurarse de incluir el usuario
+        if (event.getUsuario() != null) {
+            jsonEvent.put("usuario", event.getUsuario());
+        } else if (PanelInicioController.getUsuarioSesion() != null) {
+            jsonEvent.put("usuario", PanelInicioController.getUsuarioSesion().getUsuario());
         }
         
         return jsonEvent;
@@ -575,63 +651,233 @@ public class GoogleCalendarWebView extends BorderPane {
                 }
             }
             
-            // Acción para abrir el formulario de cita clínica
-            if ("openClinicaForm".equals(action)) {
-                try {
-                    JSONObject requestData = new JSONObject(eventData);
-                    String dateStr = requestData.optString("date", "");
-                    System.out.println("Solicitando apertura de formulario de cita para fecha: " + dateStr);
-                    
-                    // Informar al usuario que esta funcionalidad requiere integración adicional
-                    Platform.runLater(() -> {
-                        try {
-                            // Intentar notificar a la escena actual
-                            Scene scene = getScene();
-                            if (scene != null) {
-                                Node root = scene.getRoot();
-                                if (root != null) {
-                                    // Verificar si la raíz tiene un método para abrir el formulario de citas
-                                    boolean success = triggerFormOpeningInParent(dateStr);
-                                    if (!success) {
-                                        System.out.println("No se pudo abrir el formulario de citas automáticamente");
-                                    }
-                                }
-                            }
-                        } catch (Exception e) {
-                            System.err.println("Error al intentar abrir formulario de citas: " + e.getMessage());
-                            e.printStackTrace();
-                        }
-                    });
-                    return;
-                } catch (Exception e) {
-                    System.err.println("Error al procesar solicitud de apertura de formulario clínico: " + e.getMessage());
-                    e.printStackTrace();
-                }
+            // Acción para cambiar el tema
+            if ("toggleTheme".equals(action)) {
+                boolean isDark = ThemeManager.getInstance().isDarkTheme();
+                ThemeManager.getInstance().setDarkTheme(!isDark);
+                return;
             }
             
-            // Para otras acciones, convertir JSON a objeto CalendarEvent
-            CalendarEvent event = parseEventFromJson(eventData);
+            // Acción para abrir el formulario de cita clínica
+            if ("openClinicaForm".equals(action)) {
+                JSONObject requestData = new JSONObject(eventData);
+                String dateStr = requestData.getString("date");
+                openClinicaForm(dateStr);
+                return;
+            }
             
-            // Procesar según la acción
-            switch (action) {
-                case "save":
-                    saveEvent(event);
-                    break;
-                case "update":
-                    updateEvent(event);
-                    break;
-                case "delete":
-                    deleteEvent(event);
-                    break;
-                case "click":
-                    // Solo registrar el clic para depuración
-                    System.out.println("Clic en evento: " + event.getId() + " - " + event.getTitle());
-                    break;
-                default:
-                    System.out.println("Acción desconocida: " + action);
+            // Si se trata de una de las acciones de evento CRUD, procesar el evento
+            // Todas estas acciones requieren parsear el evento desde JSON
+            if ("click".equals(action) || "update".equals(action) || "delete".equals(action) || "create".equals(action)) {
+                CalendarEvent event = parseEventFromJson(eventData);
+                
+                // Procesar según la acción
+                switch (action) {
+                    case "create":
+                        saveEvent(event);
+                        // Enviar de vuelta todos los eventos para actualizar 
+                        sendEventsToJs();
+                        break;
+                    case "update":
+                        updateEvent(event);
+                        // Enviar de vuelta todos los eventos para actualizar
+                        sendEventsToJs();
+                        break;
+                    case "delete":
+                        deleteEvent(event);
+                        // Enviar de vuelta todos los eventos para actualizar
+                        sendEventsToJs();
+                        break;
+                    case "click":
+                        // Solo registrar el clic para depuración
+                        System.out.println("Clic en evento: " + event.getId() + " - " + event.getTitle());
+                        break;
+                    default:
+                        System.out.println("Acción desconocida: " + action);
+                }
             }
         } catch (Exception e) {
             System.err.println("Error al procesar evento: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Envía todos los eventos al calendario JavaScript
+     */
+    private void sendEventsToJs() {
+        try {
+            if (webEngine != null && webEngine.getLoadWorker().getState() == Worker.State.SUCCEEDED) {
+                // Convertir a JSON
+                JSONArray jsonEvents = new JSONArray();
+                for (CalendarEvent event : events) {
+                    jsonEvents.put(convertEventToJsonObject(event));
+                }
+                
+                // Escapar correctamente para JavaScript
+                String jsonString = jsonEvents.toString()
+                    .replace("\\", "\\\\")
+                    .replace("'", "\\'")
+                    .replace("\n", "\\n");
+                
+                System.out.println("Enviando " + events.size() + " eventos a JavaScript");
+                
+                // Enviar al calendario JS usando el método receiveEventsFromJava
+                String script = "if (window.calendarApi) { window.calendarApi.receiveEventsFromJava('" + jsonString + "'); } else { console.error('calendarApi no está disponible'); }";
+                webEngine.executeScript(script);
+            }
+        } catch (Exception e) {
+            System.err.println("Error al enviar eventos a JavaScript: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Convierte un evento a un objeto JSON para enviarlo a JavaScript
+     * @param event Evento a convertir
+     * @return JSONObject con los datos del evento
+     */
+    private JSONObject eventToJsonObject(CalendarEvent event) {
+        JSONObject json = new JSONObject();
+        
+        // Datos básicos
+        json.put("id", event.getId());
+        json.put("title", event.getTitle());
+        json.put("start", event.getStart());
+        json.put("end", event.getEnd());
+        json.put("allDay", event.isAllDay());
+        
+        // Datos adicionales
+        if (event.getDescription() != null) {
+            json.put("description", event.getDescription());
+        }
+        
+        if (event.getLocation() != null) {
+            json.put("location", event.getLocation());
+        }
+        
+        if (event.getColor() != null) {
+            json.put("color", event.getColor());
+        }
+        
+        if (event.getTextColor() != null) {
+            json.put("textColor", event.getTextColor());
+        }
+        
+        if (event.getTipoEvento() != null) {
+            json.put("eventType", event.getTipoEvento().name());
+        }
+        
+        return json;
+    }
+    
+    /**
+     * Abre el formulario de citas clínicas en una fecha específica
+     * @param dateStr Fecha para la nueva cita
+     */
+    private void openClinicaForm(String dateStr) {
+        try {
+            System.out.println("Solicitando apertura de formulario de cita para fecha: " + dateStr);
+            
+            // Informar al usuario que esta funcionalidad requiere integración adicional
+            Platform.runLater(() -> {
+                try {
+                    // Intentar notificar a la escena actual
+                    Scene scene = getScene();
+                    if (scene != null) {
+                        Node root = scene.getRoot();
+                        if (root != null) {
+                            // Verificar si la raíz tiene un método para abrir el formulario de citas
+                            boolean success = triggerFormOpeningInParent(dateStr);
+                            if (!success) {
+                                // Si no se puede abrir desde el padre, intentar abrir directamente
+                                showFormularioCita(dateStr);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error al intentar abrir formulario de citas: " + e.getMessage());
+                    e.printStackTrace();
+                    // Intentar mostrar formulario directamente como fallback
+                    showFormularioCita(dateStr);
+                }
+            });
+        } catch (Exception e) {
+            System.err.println("Error al procesar solicitud de apertura de formulario clínico: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Abre directamente un formulario de citas 
+     */
+    private void showFormularioCita(String dateStr) {
+        try {
+            // Crear un nuevo evento con la fecha seleccionada
+            CalendarEvent newEvent = new CalendarEvent();
+            newEvent.setStart(dateStr);
+            
+            // Calcular fecha fin (1 hora después)
+            LocalDateTime start = LocalDateTime.parse(dateStr.substring(0, 19));
+            LocalDateTime end = start.plusHours(1);
+            newEvent.setEnd(end.toString());
+            
+
+            
+            // Asignar tipo por defecto (CITA)
+            newEvent.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
+            
+            // Abrir formulario propio
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/calendar/cita-formulario.fxml"));
+            
+            try {
+                Parent root = loader.load();
+                
+                // Intentar obtener y configurar el controlador
+                Object controller = loader.getController();
+                
+                // Usar reflexión para configurar el controlador
+                try {
+                    // Buscar y llamar al método para establecer el servicio
+                    java.lang.reflect.Method setServiceMethod = controller.getClass().getMethod("setServicio", CalendarService.class);
+                    setServiceMethod.invoke(controller, calendarService);
+                    
+                    // Buscar y llamar al método para establecer la cita
+                    java.lang.reflect.Method setEventMethod = controller.getClass().getMethod("setCita", CalendarEvent.class);
+                    setEventMethod.invoke(controller, newEvent);
+                    
+                    // Buscar y llamar al método para establecer callback
+                    java.lang.reflect.Method setCallbackMethod = controller.getClass().getMethod("setCitaGuardadaCallback", Runnable.class);
+                    setCallbackMethod.invoke(controller, (Runnable) () -> {
+                        loadEventsFromDatabase();
+                    });
+                } catch (Exception e) {
+                    System.err.println("Error al configurar controlador: " + e.getMessage());
+                }
+                
+                // Mostrar formulario
+                Stage stage = new Stage();
+                stage.setTitle("Nueva Cita");
+                stage.initModality(Modality.APPLICATION_MODAL);
+                stage.setScene(new Scene(root));
+                stage.showAndWait();
+                
+                // Actualizar el calendario
+                loadEventsFromDatabase();
+                
+            } catch (Exception e) {
+                System.err.println("Error al cargar formulario: " + e.getMessage());
+                e.printStackTrace();
+                
+                // Como último recurso, mostrar una alerta
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText("No se pudo abrir el formulario de citas");
+                alert.setContentText("Intente crear la cita desde el menú principal.");
+                alert.showAndWait();
+            }
+        } catch (Exception e) {
+            System.err.println("Error al mostrar formulario de cita: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -706,7 +952,7 @@ public class GoogleCalendarWebView extends BorderPane {
                             if (paramTypes[i].isAssignableFrom(LocalDateTime.class)) {
                                 params[i] = finalDate;
                             } else if (paramTypes[i].isAssignableFrom(com.example.pruebamongodbcss.Data.Usuario.class)) {
-                                params[i] = usuarioActual;
+                                params[i] = PanelInicioController.getUsuarioSesion();
                             } else {
                                 params[i] = null;
                             }
@@ -852,12 +1098,12 @@ public class GoogleCalendarWebView extends BorderPane {
                         // Usar reflexión para invocar métodos en el controlador
                         try {
                             // Intentar establecer el usuario
-                            if (usuarioActual != null) {
+                            if (PanelInicioController.getUsuarioSesion() != null) {
                                 java.lang.reflect.Method setUsuarioMethod = findSuitableMethod(
                                     finalClinicaControllerClass, "setUsuarioActual", "setUsuario");
                                 
                                 if (setUsuarioMethod != null) {
-                                    setUsuarioMethod.invoke(controller, usuarioActual);
+                                    setUsuarioMethod.invoke(controller, PanelInicioController.getUsuarioSesion());
                                 }
                             }
                             
@@ -928,25 +1174,7 @@ public class GoogleCalendarWebView extends BorderPane {
      * Carga las citas del usuario actual desde el módulo de citas
      */
     private void loadUserAppointments() {
-        try {
-            System.out.println("Actualizando citas desde botón de refresco...");
-            
-            // Usar el mismo método basado en roles
-            List<CalendarEvent> userAppointments = loadEventsByUserRole();
-            
-            if (userAppointments != null && !userAppointments.isEmpty()) {
-                System.out.println("Se cargaron " + userAppointments.size() + " citas");
-                this.events = userAppointments;
-            } else {
-                System.out.println("No se encontraron citas para mostrar");
-                this.events = new ArrayList<>();
-            }
-            
-            updateCalendarEvents();
-        } catch (Exception e) {
-            System.err.println("Error al cargar citas del usuario: " + e.getMessage());
-            e.printStackTrace();
-        }
+        loadEventsFromDatabase();
     }
     
     /**
@@ -993,60 +1221,75 @@ public class GoogleCalendarWebView extends BorderPane {
                 event.setAllDay(jsonEvent.getBoolean("allDay"));
             }
             
-            // Manejar el tipo de evento
+            // Manejar correctamente el tipo de evento
+            if (jsonEvent.has("eventType")) {
+                String eventTypeStr = jsonEvent.getString("eventType");
+                event.setEventType(eventTypeStr);
+                
+                // Intentar convertir a enum si es posible
+                try {
+                    CalendarEvent.EventoTipo tipoEvento = CalendarEvent.EventoTipo.valueOf(eventTypeStr);
+                    event.setTipoEvento(tipoEvento);
+                } catch (IllegalArgumentException e) {
+                    // Si no es un enum válido, usar el método fromString
+                    CalendarEvent.EventoTipo tipoEvento = CalendarEvent.EventoTipo.fromString(eventTypeStr);
+                    if (tipoEvento != null) {
+                        event.setTipoEvento(tipoEvento);
+                    } else {
+                        // Valor por defecto
+                        event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
+                    }
+                }
+            } else if (jsonEvent.has("type")) {
+                // Determinar tipo según el tipo visual
+                String tipo = jsonEvent.getString("type");
+                
+                switch (tipo) {
+                    case "urgent":
+                        event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
+                        event.setEstado("EN_CURSO");
+                        break;
+                    case "completed":
+                        event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
+                        event.setEstado("COMPLETADA");
+                        break;
+                    case "cancelled":
+                        event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
+                        event.setEstado("CANCELADA");
+                        break;
+                    default:
+                        event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
+                        event.setEstado("PENDIENTE");
+                        break;
+                }
+            } else {
+                // Por defecto es una cita médica
+                event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
+            }
+            
+            // Manejar tipo para visualización
             if (jsonEvent.has("type")) {
                 String type = jsonEvent.getString("type");
                 event.setType(type);
-                
-                // Asignar colores según el tipo si no se especificaron
-                if (!jsonEvent.has("color")) {
-                    switch (type) {
-                        case "urgent":
-                            event.setColor("#ff9800");
-                            break;
-                        case "completed":
-                            event.setColor("#4caf50");
-                            break;
-                        case "cancelled":
-                            event.setColor("#f44336");
-                            break;
-                        default:
-                            event.setColor("#1a73e8");
-                    }
-                }
-            }
-            
-            // Manejar eventType (meeting, reminder, other)
-            if (jsonEvent.has("eventType")) {
-                event.setEventType(jsonEvent.getString("eventType"));
             }
             
             // Estado de la cita
             if (jsonEvent.has("estado")) {
                 event.setEstado(jsonEvent.getString("estado"));
             } else if (jsonEvent.has("type")) {
-                // Determinar estado según el tipo si no hay estado asignado
-                String tipo = jsonEvent.getString("type");
-                switch (tipo) {
-                    case "urgent":
-                        event.setEstado("EN_CURSO");
-                        break;
-                    case "completed":
-                        event.setEstado("COMPLETADA");
-                        break;
-                    case "cancelled":
-                        event.setEstado("CANCELADA");
-                        break;
-                    default:
-                        event.setEstado("PENDIENTE");
-                        break;
-                }
+                // Ya manejado arriba
             } else {
                 event.setEstado("PENDIENTE");
             }
             
+            // Asegurarse de que el evento tiene un usuario asignado
+            if (!jsonEvent.has("usuario") && PanelInicioController.getUsuarioSesion() != null) {
+                event.setUsuario(PanelInicioController.getUsuarioSesion().getUsuario());
+            }
+            
             return event;
         } catch (Exception e) {
+            System.err.println("Error al parsear evento desde JSON: " + e.getMessage());
             e.printStackTrace();
             return new CalendarEvent();
         }
@@ -1057,34 +1300,17 @@ public class GoogleCalendarWebView extends BorderPane {
      */
     private void saveEvent(CalendarEvent event) {
         try {
-            // Asignar el usuario actual al evento si está disponible
-            if (usuarioActual != null) {
-                event.setUsuario(usuarioActual.getUsuario()); 
-            } else {
-                // Si no hay usuario logueado, no asignar usuario
-                System.out.println("ADVERTENCIA: No hay usuario logueado al guardar la cita");
-            }
+            CalendarEvent savedEvent = calendarService.saveAppointment(event);
             
-            // Verificar si ya existe
-            if (event.getId() != null && !event.getId().isEmpty()) {
-                Optional<CalendarEvent> existingEvent = events.stream()
-                    .filter(e -> e.getId().equals(event.getId()))
-                    .findFirst();
-                if (existingEvent.isPresent()) {
-                    calendarService.updateAppointment(event);
-                } else {
-                    CalendarEvent savedEvent = calendarService.saveAppointment(event);
-                    if (savedEvent != null) {
-                        events.add(savedEvent);
-                    }
-                }
-            } else {
-                CalendarEvent savedEvent = calendarService.saveAppointment(event);
-                if (savedEvent != null) {
-                    events.add(savedEvent);
-                }
+            if (savedEvent != null) {
+                // Añadir a la lista local
+                events.add(savedEvent);
+                
+                // Actualizar el calendario en JavaScript
+                sendEventsToJs();
             }
         } catch (Exception e) {
+            System.err.println("Error al guardar evento: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -1096,17 +1322,23 @@ public class GoogleCalendarWebView extends BorderPane {
         try {
             if (event.getId() != null && !event.getId().isEmpty()) {
                 // Actualizar en la base de datos
-                calendarService.updateAppointment(event);
+                boolean updated = calendarService.updateAppointment(event);
                 
-                // Actualizar en la lista local
-                for (int i = 0; i < events.size(); i++) {
-                    if (events.get(i).getId().equals(event.getId())) {
-                        events.set(i, event);
-                        break;
+                if (updated) {
+                    // Actualizar en la lista local
+                    for (int i = 0; i < events.size(); i++) {
+                        if (events.get(i).getId().equals(event.getId())) {
+                            events.set(i, event);
+                            break;
+                        }
                     }
+                    
+                    // Actualizar el calendario en JavaScript
+                    sendEventsToJs();
                 }
             }
         } catch (Exception e) {
+            System.err.println("Error al actualizar evento: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -1118,12 +1350,18 @@ public class GoogleCalendarWebView extends BorderPane {
         try {
             if (event.getId() != null && !event.getId().isEmpty()) {
                 // Eliminar de la base de datos
-                calendarService.deleteAppointment(event.getId());
+                boolean deleted = calendarService.deleteAppointment(event.getId());
                 
-                // Eliminar de la lista local
-                events.removeIf(e -> e.getId().equals(event.getId()));
+                if (deleted) {
+                    // Eliminar de la lista local
+                    events.removeIf(e -> e.getId().equals(event.getId()));
+                    
+                    // Actualizar el calendario en JavaScript
+                    sendEventsToJs();
+                }
             }
         } catch (Exception e) {
+            System.err.println("Error al eliminar evento: " + e.getMessage());
             e.printStackTrace();
         }
     }
