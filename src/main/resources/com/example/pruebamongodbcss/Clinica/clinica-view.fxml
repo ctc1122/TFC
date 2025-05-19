@@ -18,9 +18,9 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.layout.Region?>
 
-<BorderPane fx:id="mainPane" prefHeight="700.0" prefWidth="1024.0" styleClass="panel-content" stylesheets="@../css/clinica-styles.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.ClinicaController">
+<BorderPane fx:id="mainPane" styleClass="panel-content" stylesheets="@../css/clinica-styles.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.ClinicaController">
    <top>
-      <HBox alignment="CENTER_LEFT" prefHeight="60.0" styleClass="panel-header" BorderPane.alignment="CENTER">
+      <HBox alignment="CENTER_LEFT" styleClass="panel-header" BorderPane.alignment="CENTER">
          <children>
             <Label text="Gestión de Clínica Veterinaria">
                <font>
@@ -31,18 +31,21 @@
                </HBox.margin>
             </Label>
          </children>
+         <padding>
+            <Insets bottom="10.0" top="10.0" />
+         </padding>
       </HBox>
    </top>
    <center>
-      <VBox  styleClass="panel-content">
+      <VBox styleClass="panel-content" VBox.vgrow="ALWAYS" BorderPane.alignment="CENTER">
          <VBox.margin>
             <Insets top="2" left="32" right="32" bottom="2"/>
          </VBox.margin>
-         <TabPane fx:id="tabPane" BorderPane.alignment="CENTER">
+         <TabPane fx:id="tabPane" BorderPane.alignment="CENTER" VBox.vgrow="ALWAYS" tabClosingPolicy="UNAVAILABLE">
             <tabs>
                <Tab fx:id="tabPacientes" closable="false" text="Pacientes">
                   <content>
-                     <VBox spacing="10.0" styleClass="panel-content">
+                     <VBox spacing="10.0" styleClass="panel-content" VBox.vgrow="ALWAYS">
                         <children>
                            <HBox alignment="CENTER_LEFT" spacing="10.0">
                               <children>
@@ -62,18 +65,21 @@
                            </HBox>
                            <StackPane VBox.vgrow="ALWAYS">
                               <children>
-                                 <ScrollPane fitToHeight="true" fitToWidth="true">
+                                 <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">
                                     <content>
-                                       <TableView fx:id="tablaPacientes" prefHeight="400.0">
+                                       <TableView fx:id="tablaPacientes" VBox.vgrow="ALWAYS">
                                           <columns>
-                                             <TableColumn fx:id="colNombrePaciente" prefWidth="200.0" text="Nombre" />
-                                             <TableColumn fx:id="colEspecie" prefWidth="150.0" text="Especie" />
-                                             <TableColumn fx:id="colRaza" prefWidth="150.0" text="Raza" />
-                                             <TableColumn fx:id="colPropietario" prefWidth="250.0" text="Propietario" />
-                                             <TableColumn fx:id="colSexoPaciente" prefWidth="100.0" text="Sexo" />
-                                             <TableColumn fx:id="colPesoPaciente" prefWidth="100.0" text="Peso" />
-                                             <TableColumn fx:id="colFechaNacPaciente" prefWidth="150.0" text="Fecha de Nacimiento" />
+                                             <TableColumn fx:id="colNombrePaciente" text="Nombre" />
+                                             <TableColumn fx:id="colEspecie" text="Especie" />
+                                             <TableColumn fx:id="colRaza" text="Raza" />
+                                             <TableColumn fx:id="colPropietario" text="Propietario" />
+                                             <TableColumn fx:id="colSexoPaciente" text="Sexo" />
+                                             <TableColumn fx:id="colPesoPaciente" text="Peso" />
+                                             <TableColumn fx:id="colFechaNacPaciente" text="Fecha de Nacimiento" />
                                           </columns>
+                                          <columnResizePolicy>
+                                             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                          </columnResizePolicy>
                                        </TableView>
                                     </content>
                                  </ScrollPane>
@@ -88,7 +94,7 @@
                </Tab>
                <Tab fx:id="tabPropietarios" closable="false" text="Propietarios">
                   <content>
-                     <VBox spacing="10.0">
+                     <VBox spacing="10.0" VBox.vgrow="ALWAYS">
                         <children>
                            <HBox alignment="CENTER_LEFT" spacing="10.0">
                               <children>
@@ -108,15 +114,18 @@
                            </HBox>
                            <StackPane VBox.vgrow="ALWAYS">
                               <children>
-                                 <ScrollPane fitToHeight="true" fitToWidth="true">
+                                 <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">
                                     <content>
-                                       <TableView fx:id="tablaPropietarios" prefHeight="400.0" style="-fx-background-color: white;">
+                                       <TableView fx:id="tablaPropietarios" VBox.vgrow="ALWAYS" style="-fx-background-color: white;">
                                           <columns>
-                                             <TableColumn fx:id="colNombrePropietario" prefWidth="250.0" text="Nombre" />
-                                             <TableColumn fx:id="colDNI" prefWidth="120.0" text="DNI" />
-                                             <TableColumn fx:id="colTelefono" prefWidth="150.0" text="Teléfono" />
-                                             <TableColumn fx:id="colEmail" prefWidth="200.0" text="Email" />
+                                             <TableColumn fx:id="colNombrePropietario" text="Nombre" />
+                                             <TableColumn fx:id="colDNI" text="DNI" />
+                                             <TableColumn fx:id="colTelefono" text="Teléfono" />
+                                             <TableColumn fx:id="colEmail" text="Email" />
                                           </columns>
+                                          <columnResizePolicy>
+                                             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                          </columnResizePolicy>
                                        </TableView>
                                     </content>
                                  </ScrollPane>
@@ -131,9 +140,9 @@
                </Tab>
                <Tab fx:id="tabDiagnosticos" closable="false" text="Diagnósticos">
                   <content>
-                     <VBox spacing="10.0">
+                     <VBox spacing="10.0" VBox.vgrow="ALWAYS">
                         <children>
-                           <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <HBox alignment="CENTER_LEFT" spacing="10.0" minHeight="-Infinity">
                               <children>
                                  <Label text="Desde:">
                                     <HBox.margin>
@@ -160,12 +169,12 @@
                                        <Insets right="5.0" />
                                     </HBox.margin>
                                  </Label>
-                                 <ComboBox fx:id="cmbPacientesDiagnostico" prefWidth="200.0" promptText="Seleccionar paciente">
+                                 <ComboBox fx:id="cmbPacientesDiagnostico" minWidth="150.0" promptText="Seleccionar paciente" HBox.hgrow="SOMETIMES">
                                     <HBox.margin>
                                        <Insets right="10.0" />
                                     </HBox.margin>
                                  </ComboBox>
-                                 <TextField fx:id="txtBuscarDiagnostico" promptText="Buscar diagnóstico..." style="-fx-background-color: #f5f5f5;" >
+                                 <TextField fx:id="txtBuscarDiagnostico" promptText="Buscar diagnóstico..." style="-fx-background-color: #f5f5f5;" HBox.hgrow="ALWAYS">
                                     <padding>
                                        <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
                                     </padding>
@@ -175,8 +184,11 @@
                               <VBox.margin>
                                  <Insets left="10.0" right="10.0" top="10.0" />
                               </VBox.margin>
+                              <padding>
+                                 <Insets bottom="5.0" top="5.0" />
+                              </padding>
                            </HBox>
-                           <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <HBox alignment="CENTER_LEFT" spacing="10.0" minHeight="-Infinity">
                               <children>
                                  <Button fx:id="btnNuevoDiagnostico" onAction="#onNuevoDiagnostico" styleClass="btn-primary" text="Nuevo Diagnóstico" />
                                  <Button fx:id="btnVerDiagnostico" onAction="#onVerDiagnostico" styleClass="btn-info" text="Ver Detalles" />
@@ -189,19 +201,25 @@
                               <VBox.margin>
                                  <Insets left="10.0" right="10.0" />
                               </VBox.margin>
+                              <padding>
+                                 <Insets bottom="5.0" top="5.0" />
+                              </padding>
                            </HBox>
                            <StackPane VBox.vgrow="ALWAYS">
                               <children>
-                                 <ScrollPane fitToHeight="true" fitToWidth="true">
+                                 <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">
                                     <content>
-                                       <TableView fx:id="tablaDiagnosticos" prefHeight="400.0" style="-fx-background-color: white;">
+                                       <TableView fx:id="tablaDiagnosticos" VBox.vgrow="ALWAYS" style="-fx-background-color: white;">
                                           <columns>
-                                             <TableColumn fx:id="colFechaDiagnostico" prefWidth="120.0" text="Fecha" />
-                                             <TableColumn fx:id="colPacienteDiagnostico" prefWidth="200.0" text="Paciente" />
-                                             <TableColumn fx:id="colMotivo" prefWidth="200.0" text="Motivo" />
-                                             <TableColumn fx:id="colDiagnostico" prefWidth="200.0" text="Diagnóstico" />
-                                             <TableColumn fx:id="colVeterinario" prefWidth="150.0" text="Veterinario" />
+                                             <TableColumn fx:id="colFechaDiagnostico" text="Fecha" />
+                                             <TableColumn fx:id="colPacienteDiagnostico" text="Paciente" />
+                                             <TableColumn fx:id="colMotivo" text="Motivo" />
+                                             <TableColumn fx:id="colDiagnostico" text="Diagnóstico" />
+                                             <TableColumn fx:id="colVeterinario" text="Veterinario" />
                                           </columns>
+                                          <columnResizePolicy>
+                                             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                          </columnResizePolicy>
                                        </TableView>
                                     </content>
                                  </ScrollPane>
@@ -216,9 +234,9 @@
                </Tab>
                <Tab fx:id="tabCitas" closable="false" text="Citas">
                   <content>
-                     <StackPane>
+                     <StackPane VBox.vgrow="ALWAYS">
                         <children>
-                           <BorderPane fx:id="citasContainer">
+                           <BorderPane fx:id="citasContainer" VBox.vgrow="ALWAYS">
                               
                            </BorderPane>
                         </children>

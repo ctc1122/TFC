@@ -61,6 +61,16 @@ window.calendarApi = {
                 // Event handler para actualizar etiqueta de periodo
                 datesSet: (info) => {
                     this.updateCurrentPeriodLabel(info);
+                    // Forzar actualización al cambiar fechas
+                    this.refreshCalendarView();
+                },
+                loading: (isLoading) => {
+                    // Cuando termine de cargar, asegurar que todos los eventos son visibles
+                    if (!isLoading) {
+                        setTimeout(() => {
+                            this.refreshCalendarView();
+                        }, 100);
+                    }
                 },
                 // Mejorar los estilos y la visualización
                 eventDidMount: function(info) {
@@ -150,7 +160,7 @@ window.calendarApi = {
             // Forzar renderizado tras un breve retraso para asegurar que todos los eventos son visibles
             setTimeout(() => {
                 console.log('Forzando renderizado completo del calendario...');
-                this.calendar.render();
+                this.refreshCalendarView();
             }, 1000);
             
             // Añadir manejador para deseleccionar eventos al hacer clic fuera
@@ -159,6 +169,24 @@ window.calendarApi = {
                     this.deselectEvent();
                 }
             });
+            
+            // Añadir evento al elemento del calendario para forzar el renderizado cuando sea visible
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        console.log('Calendario visible, forzando renderizado...');
+                        this.refreshCalendarView();
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            observer.observe(calendarEl);
+            
+            // También forzar renderizado cuando la ventana cambie de tamaño
+            window.addEventListener('resize', () => {
+                this.refreshCalendarView();
+            });
+            
         } catch (error) {
             console.error('Error al inicializar el calendario:', error);
             this.showError(calendarEl, 'Error al inicializar el calendario: ' + error.message);
