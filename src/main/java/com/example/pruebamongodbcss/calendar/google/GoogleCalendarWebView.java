@@ -1,4 +1,4 @@
-package com.example.pruebamongodbcss.calendar;
+package com.example.pruebamongodbcss.calendar.google;
 
 import java.net.URL;
 import java.time.LocalDateTime;
@@ -9,6 +9,8 @@ import java.util.Optional;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.example.pruebamongodbcss.calendar.CalendarEvent;
+import com.example.pruebamongodbcss.calendar.CalendarService;
 import com.example.pruebamongodbcss.theme.ThemeManager;
 
 import javafx.application.Platform;
@@ -41,8 +43,8 @@ public class GoogleCalendarWebView extends BorderPane {
     private WebEngine webEngine;
     private StackPane browserContainer;
     
-    // Ruta al archivo HTML del calendario - Usando versión para pruebas
-    private static final String CALENDAR_HTML_PATH = "/com/example/pruebamongodbcss/calendar/test-calendar.html";
+    // Ruta al archivo HTML del calendario
+    private static final String CALENDAR_HTML_PATH = "/com/example/pruebamongodbcss/calendar/google/web/calendar.html";
     
     // Listener para cambios de tema
     private ChangeListener<Boolean> themeChangeListener;

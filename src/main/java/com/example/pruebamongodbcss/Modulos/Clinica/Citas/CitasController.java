@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -13,6 +12,7 @@ import java.util.ResourceBundle;
 import com.example.pruebamongodbcss.Data.EstadoCita;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
 import com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica;
+import com.example.pruebamongodbcss.calendar.google.GoogleCalendarWebView;
 
 import io.github.palexdev.materialfx.controls.MFXDatePicker;
 import javafx.application.Platform;
@@ -26,6 +26,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
@@ -38,7 +39,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -68,8 +68,10 @@ public class CitasController implements Initializable {
     
     // Tab de Calendario
     @FXML private Tab tabCalendario;
-    @FXML private GridPane gridCalendario;
+    @FXML private BorderPane calendarContainer;
     @FXML private Label lblMesActual;
+    @FXML private Button btnMesAnterior;
+    @FXML private Button btnMesSiguiente;
     
     // Servicio de clínica
     private ServicioClinica servicio;
@@ -77,9 +79,7 @@ public class CitasController implements Initializable {
     // Lista observable para la tabla de citas
     private ObservableList<ModeloCita> citasObservable;
     
-    // Estado actual del calendario
-    private YearMonth mesActual;
-    private DateTimeFormatter formateadorMes = DateTimeFormatter.ofPattern("MMMM yyyy");
+    private GoogleCalendarWebView calendarView;
     
     // Formato para la fecha y hora
     private DateTimeFormatter formatoFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -106,18 +106,16 @@ public class CitasController implements Initializable {
             dpFechaFin.setValue(hoy.withDayOfMonth(hoy.lengthOfMonth()));
             
             // Configurar calendario
-            mesActual = YearMonth.now();
-            actualizarLabelMes();
+            configurarCalendario();
             
             // Agregar listener para búsqueda en tiempo real
             txtBuscarCita.textProperty().addListener((obs, oldVal, newVal) -> {
                 cargarCitas();
             });
             
-            // Cargar citas iniciales (hacerlo después de configurar todos los componentes)
+            // Cargar citas iniciales
             Platform.runLater(() -> {
                 cargarCitas();
-                generarCalendario();
             });
         } catch (Exception e) {
             e.printStackTrace();
@@ -240,9 +238,6 @@ public class CitasController implements Initializable {
             
             citasObservable.addAll(citas);
         }
-        
-        // Actualizar el calendario
-        generarCalendario();
     }
     
     /**
@@ -370,9 +365,7 @@ public class CitasController implements Initializable {
      */
     @FXML
     private void onMesAnterior(ActionEvent event) {
-        mesActual = mesActual.minusMonths(1);
-        actualizarLabelMes();
-        generarCalendario();
+        // Implementar la lógica para cambiar al mes anterior
     }
     
     /**
@@ -380,16 +373,14 @@ public class CitasController implements Initializable {
      */
     @FXML
     private void onMesSiguiente(ActionEvent event) {
-        mesActual = mesActual.plusMonths(1);
-        actualizarLabelMes();
-        generarCalendario();
+        // Implementar la lógica para cambiar al mes siguiente
     }
     
     /**
      * Actualiza la etiqueta del mes actual
      */
     private void actualizarLabelMes() {
-        lblMesActual.setText(mesActual.format(formateadorMes));
+        // Implementar la lógica para actualizar la etiqueta del mes actual
     }
     
     /**
@@ -430,138 +421,29 @@ public class CitasController implements Initializable {
     }
     
     /**
-     * Genera el calendario visual para el mes actual
+     * Configura el calendario
      */
-    private void generarCalendario() {
-        // Limpiar el grid
-        gridCalendario.getChildren().clear();
-        
-        // Aplicar estilo al grid
-        gridCalendario.getStyleClass().add("calendario-grid");
-        
-        // Añadir encabezados de días de la semana
-        String[] diasSemana = {"Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"};
-        for (int i = 0; i < 7; i++) {
-            Label lblDiaSemana = new Label(diasSemana[i]);
-            lblDiaSemana.getStyleClass().add("week-day");
-            lblDiaSemana.setMaxWidth(Double.MAX_VALUE);
-            lblDiaSemana.setAlignment(javafx.geometry.Pos.CENTER);
-            gridCalendario.add(lblDiaSemana, i, 0);
-        }
-        
-        // Mes actual
-        YearMonth mes = mesActual;
-        
-        // Primer día del mes
-        LocalDate primerDia = mes.atDay(1);
-        
-        // Día de la semana del primer día (0 = Lunes, 6 = Domingo)
-        int diaSemana = primerDia.getDayOfWeek().getValue() - 1; // Ajustar para que lunes sea 0
-        
-        // Número de días en el mes
-        int diasEnMes = mes.lengthOfMonth();
-        
-        // Cargar las citas del mes actual
-        List<ModeloCita> citasDelMes = servicio.buscarCitasPorRangoFechas(
-                mes.atDay(1), 
-                mes.atDay(mes.lengthOfMonth()));
-        
-        // Añadir días del mes anterior para completar la primera semana
-        LocalDate diaAnterior = primerDia.minusDays(1);
-        for (int i = diaSemana - 1; i >= 0; i--) {
-            LocalDate fecha = diaAnterior;
-            
-            // Filtrar citas para este día
-            List<ModeloCita> citasDelDia = citasDelMes.stream()
-                    .filter(cita -> cita.getFechaHora().toLocalDate().equals(fecha))
-                    .toList();
-            
-            // Crear celda de calendario para este día
-            crearCeldaCalendario(fecha, citasDelDia, i, 1);
-            
-            diaAnterior = diaAnterior.minusDays(1);
-        }
-        
-        // Crear celdas para todos los días del mes
-        int row = 1; // Fila 0 son los encabezados
-        int col = diaSemana;
-        
-        for (int dia = 1; dia <= diasEnMes; dia++) {
-            LocalDate fecha = mes.atDay(dia);
-            
-            // Filtrar citas para este día
-            List<ModeloCita> citasDelDia = citasDelMes.stream()
-                    .filter(cita -> cita.getFechaHora().toLocalDate().equals(fecha))
-                    .toList();
-            
-            // Crear celda de calendario para este día
-            crearCeldaCalendario(fecha, citasDelDia, col, row);
-            
-            // Avanzar a la siguiente columna
-            col++;
-            if (col > 6) {
-                col = 0;
-                row++;
-            }
-        }
-        
-        // Añadir días del mes siguiente para completar la última semana
-        LocalDate diaSiguiente = mes.atEndOfMonth().plusDays(1);
-        while (col <= 6 && col > 0) {
-            LocalDate fecha = diaSiguiente;
-            
-            // Filtrar citas para este día
-            List<ModeloCita> citasDelDia = citasDelMes.stream()
-                    .filter(cita -> cita.getFechaHora().toLocalDate().equals(fecha))
-                    .toList();
-            
-            // Crear celda de calendario para este día
-            crearCeldaCalendario(fecha, citasDelDia, col, row);
-            
-            diaSiguiente = diaSiguiente.plusDays(1);
-            col++;
-        }
-        
-        // Si terminamos en la última columna, añadir una fila más con días del mes siguiente
-        if (col == 0 && row < 6) {
-            for (col = 0; col <= 6; col++) {
-                LocalDate fecha = diaSiguiente;
-                
-                // Filtrar citas para este día
-                List<ModeloCita> citasDelDia = citasDelMes.stream()
-                        .filter(cita -> cita.getFechaHora().toLocalDate().equals(fecha))
-                        .toList();
-                
-                // Crear celda de calendario para este día
-                crearCeldaCalendario(fecha, citasDelDia, col, row + 1);
-                
-                diaSiguiente = diaSiguiente.plusDays(1);
-            }
-        }
-    }
-    
-    /**
-     * Crea una celda de calendario y la añade al grid
-     * 
-     * @param fecha Fecha para la celda
-     * @param citas Citas para esta fecha
-     * @param columna Columna en el grid
-     * @param fila Fila en el grid
-     */
-    private void crearCeldaCalendario(LocalDate fecha, List<ModeloCita> citas, int columna, int fila) {
+    private void configurarCalendario() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Citas/celda-calendario.fxml"));
-            Parent celda = loader.load();
+            // Crear y configurar el calendario
+            calendarView = new GoogleCalendarWebView();
             
-            CeldaCalendarioController controlador = loader.getController();
-            controlador.configurar(fecha, citas, cita -> abrirFormularioCita(cita));
+            // Asignar el calendario al contenedor
+            if (calendarContainer != null) {
+                calendarContainer.setCenter(calendarView);
+            } else {
+                System.err.println("Error: calendarContainer es null");
+            }
             
-            // Añadir al grid
-            gridCalendario.add(celda, columna, fila);
-        } catch (IOException e) {
+            // Ocultar los botones de navegación ya que el calendario web tiene los suyos
+            if (btnMesAnterior != null) btnMesAnterior.setVisible(false);
+            if (btnMesSiguiente != null) btnMesSiguiente.setVisible(false);
+            if (lblMesActual != null) lblMesActual.setVisible(false);
+            
+        } catch (Exception e) {
             e.printStackTrace();
-            mostrarAlerta("Error", "Error al crear celda", 
-                "No se pudo crear la celda del calendario: " + e.getMessage());
+            mostrarAlerta("Error", "Error al configurar calendario", 
+                         "No se pudo configurar el calendario web: " + e.getMessage());
         }
     }
     

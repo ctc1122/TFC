@@ -1493,7 +1493,7 @@ public class CalendarFXComponent extends BorderPane {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error al aplicar texto negro: " + e.getMessage());
+
         }
     }
     

@@ -1,0 +1,61 @@
+/* Estilos generales */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+#calendar {
+    margin: 20px;
+    height: calc(100vh - 40px);
+}
+
+/* Tema claro */
+:root {
+    --fc-border-color: #ddd;
+    --fc-button-text-color: #333;
+    --fc-button-bg-color: #f8f9fa;
+    --fc-button-border-color: #ddd;
+    --fc-button-hover-bg-color: #e9ecef;
+    --fc-button-hover-border-color: #ddd;
+    --fc-button-active-bg-color: #e9ecef;
+    --fc-button-active-border-color: #ddd;
+}
+
+/* Tema oscuro */
+.dark-theme {
+    --fc-border-color: #444;
+    --fc-button-text-color: #fff;
+    --fc-button-bg-color: #333;
+    --fc-button-border-color: #444;
+    --fc-button-hover-bg-color: #444;
+    --fc-button-hover-border-color: #555;
+    --fc-button-active-bg-color: #444;
+    --fc-button-active-border-color: #555;
+    background-color: #222;
+    color: #fff;
+}
+
+/* Estilos para tipos de eventos */
+.fc-event.urgent {
+    background-color: #ff9800;
+    border-color: #f57c00;
+}
+
+.fc-event.completed {
+    background-color: #4caf50;
+    border-color: #388e3c;
+}
+
+.fc-event.cancelled {
+    background-color: #f44336;
+    border-color: #d32f2f;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    #calendar {
+        margin: 10px;
+        height: calc(100vh - 20px);
+    }
+} 
