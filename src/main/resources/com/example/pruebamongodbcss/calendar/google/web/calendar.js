@@ -87,29 +87,40 @@ window.calendarApi = {
                         info.el.appendChild(tooltip);
                     }
                     
-                    // Añadir iconos basados en el tipo de evento
-                    if (info.event.extendedProps.eventType) {
+                    // Añadir iconos utilizando clases CSS en lugar de caracteres Unicode
+                    const titleEl = info.el.querySelector('.fc-event-title');
+                    if (titleEl) {
+                        // Crear el span para el icono pero usar clases en lugar de caracteres Unicode
                         const icon = document.createElement('span');
                         icon.className = 'event-icon';
                         
-                        switch(info.event.extendedProps.eventType) {
-                            case 'CITA_MEDICA':
-                                icon.innerHTML = '🩺';
-                                break;
-                            case 'REUNION':
-                                icon.innerHTML = '👥';
-                                break;
-                            case 'RECORDATORIO':
-                                icon.innerHTML = '⏰';
-                                break;
-                            default:
-                                icon.innerHTML = '📅';
+                        // Asignar clase según el tipo de evento
+                        if (info.event.extendedProps.eventType) {
+                            switch(info.event.extendedProps.eventType) {
+                                case 'CITA_MEDICA':
+                                    icon.className += ' icon-medical';
+                                    icon.textContent = 'M'; // Texto alternativo
+                                    break;
+                                case 'REUNION':
+                                    icon.className += ' icon-meeting';
+                                    icon.textContent = 'R'; // Texto alternativo
+                                    break;
+                                case 'RECORDATORIO':
+                                    icon.className += ' icon-reminder';
+                                    icon.textContent = 'A'; // Texto alternativo
+                                    break;
+                                default:
+                                    icon.className += ' icon-default';
+                                    icon.textContent = 'C'; // Texto alternativo
+                            }
+                        } else {
+                            // Por defecto, si no tiene tipo
+                            icon.className += ' icon-default';
+                            icon.textContent = 'C'; // Texto alternativo
                         }
                         
-                        const titleEl = info.el.querySelector('.fc-event-title');
-                        if (titleEl) {
-                            titleEl.prepend(icon);
-                        }
+                        // Insertar icono al principio del título
+                        titleEl.insertBefore(icon, titleEl.firstChild);
                     }
                     
                     // Si este evento está seleccionado, aplicar clase destacada
@@ -217,7 +228,9 @@ window.calendarApi = {
             if (todayBtn) {
                 todayBtn.addEventListener('click', () => {
                     this.calendar.today();
-                    this.calendar.render(); // Forzar renderizado completo
+                    
+                    // Forzar renderizado completo y refrescar eventos
+                    this.refreshCalendarView();
                     
                     // Actualizar etiqueta de periodo
                     this.updateCurrentPeriodLabel({
@@ -233,7 +246,9 @@ window.calendarApi = {
             if (prevBtn) {
                 prevBtn.addEventListener('click', () => {
                     this.calendar.prev();
-                    this.calendar.render(); // Forzar renderizado completo
+                    
+                    // Forzar renderizado completo y refrescar eventos
+                    this.refreshCalendarView();
                     
                     // Actualizar etiqueta de periodo
                     this.updateCurrentPeriodLabel({
@@ -248,7 +263,9 @@ window.calendarApi = {
             if (nextBtn) {
                 nextBtn.addEventListener('click', () => {
                     this.calendar.next();
-                    this.calendar.render(); // Forzar renderizado completo
+                    
+                    // Forzar renderizado completo y refrescar eventos
+                    this.refreshCalendarView();
                     
                     // Actualizar etiqueta de periodo
                     this.updateCurrentPeriodLabel({
@@ -262,19 +279,11 @@ window.calendarApi = {
             // Botones de vista
             const setView = (viewName) => {
                 if (this.calendar) {
+                    // Cambiar vista
                     this.calendar.changeView(viewName);
                     
                     // Forzar renderizado completo después de cambiar vista
-                    setTimeout(() => {
-                        this.calendar.render();
-                        
-                        // Actualizar etiqueta de periodo
-                        this.updateCurrentPeriodLabel({
-                            view: this.calendar.view,
-                            start: this.calendar.view.activeStart,
-                            end: this.calendar.view.activeEnd
-                        });
-                    }, 50);
+                    this.refreshCalendarView();
                     
                     // Actualizar clases active
                     document.querySelectorAll('.view-controls .control-button').forEach(btn => {
@@ -293,6 +302,13 @@ window.calendarApi = {
                     if (activeBtn) {
                         activeBtn.classList.add('active');
                     }
+                    
+                    // Actualizar etiqueta de periodo
+                    this.updateCurrentPeriodLabel({
+                        view: this.calendar.view,
+                        start: this.calendar.view.activeStart,
+                        end: this.calendar.view.activeEnd
+                    });
                 }
             };
             
@@ -309,16 +325,52 @@ window.calendarApi = {
                 if (btn) {
                     btn.addEventListener('click', () => {
                         setView(viewName);
-                        // Re-aplicar filtros después de cambiar vista
-                        if (typeof applyFilters === 'function') {
-                            setTimeout(applyFilters, 100);
-                        }
                     });
                 }
             });
         } catch (error) {
             console.error('Error al conectar botones de vista:', error);
         }
+    },
+    
+    // Método para refrescar completamente la vista del calendario
+    refreshCalendarView() {
+        // Primero, forzar un rerender
+        this.calendar.render();
+        
+        // Luego, hacer una secuencia de operaciones para asegurar que todo esté visible
+        setTimeout(() => {
+            // 1. Volver a renderizar el calendario
+            this.calendar.updateSize();
+            
+            // 2. Refrescar los eventos (forzar redibujado)
+            const events = this.calendar.getEvents();
+            if (events.length > 0) {
+                // Opción 1: Quitar y volver a poner los eventos
+                const eventsCopy = events.map(e => {
+                    return {
+                        id: e.id,
+                        title: e.title,
+                        start: e.start,
+                        end: e.end,
+                        allDay: e.allDay,
+                        color: e.backgroundColor,
+                        extendedProps: e.extendedProps
+                    };
+                });
+                
+                this.calendar.removeAllEvents();
+                this.calendar.addEventSource(eventsCopy);
+            }
+            
+            // 3. Aplicar filtros si la función existe
+            if (typeof applyFilters === 'function') {
+                applyFilters();
+            }
+            
+            // 4. Forzar una actualización final
+            this.calendar.updateSize();
+        }, 50);
     },
     
     // Mostrar mensaje de error
@@ -412,22 +464,45 @@ window.calendarApi = {
     updateEvents(events) {
         if (!this.calendar) return;
         
+        // Asegurar que no hay caracteres extraños en los eventos
+        const cleanEvents = events.map(event => {
+            // Asegurar que el título no tiene caracteres extraños
+            if (event.title) {
+                event.title = this.cleanString(event.title);
+            }
+            
+            // Limpiar descripción si existe
+            if (event.description) {
+                event.description = this.cleanString(event.description);
+            }
+            
+            // Limpiar ubicación si existe
+            if (event.location) {
+                event.location = this.cleanString(event.location);
+            }
+            
+            return event;
+        });
+        
         // Primero eliminar todos los eventos existentes
         this.calendar.removeAllEvents();
         
         // Luego añadir los nuevos eventos
-        this.calendar.addEventSource(events);
+        this.calendar.addEventSource(cleanEvents);
         
         // Forzar una actualización completa del calendario
-        setTimeout(() => {
-            console.log('Forzando renderizado después de actualizar eventos...');
-            this.calendar.render();
-            
-            // Aplicar filtros si la función existe
-            if (typeof applyFilters === 'function') {
-                setTimeout(applyFilters, 100);
-            }
-        }, 200);
+        this.refreshCalendarView();
+    },
+
+    // Método para limpiar strings de caracteres extraños
+    cleanString(str) {
+        if (!str) return '';
+        
+        // Reemplazar caracteres unicode que pueden causar problemas
+        return str
+            .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '') // Eliminar emojis y otros caracteres de 4 bytes
+            .replace(/[^\x20-\x7E\xA0-\xFF]/g, '') // Mantener solo caracteres ASCII y extendidos comunes
+            .trim();
     },
 
     // Cambiar tema
