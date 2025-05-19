@@ -14,6 +14,7 @@ import com.example.pruebamongodbcss.Data.Clinica;
 import com.example.pruebamongodbcss.Data.PatronExcepcion;
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.example.pruebamongodbcss.theme.ThemeManager;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
@@ -555,12 +556,12 @@ public class PanelInicioSesionController extends Application implements Initiali
         try {
             System.out.println("Cambiando a menú principal con usuario: " + usuario.getNombre());
             
+            // Cargar el FXML
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/panelInicio.fxml"));
             Parent root = loader.load();
             
             // Obtener el controlador y establecer el usuario
             com.example.pruebamongodbcss.PanelInicioController controller = loader.getController();
-            //Establecer el usuario actual
             controller.setUsuarioActual(usuario);
             
             // Obtener la ventana actual
@@ -568,6 +569,9 @@ public class PanelInicioSesionController extends Application implements Initiali
             
             // Crear una nueva escena con dimensiones específicas
             Scene scene = new Scene(root, 1200, 800);
+            
+            // Registrar la escena en el ThemeManager
+            ThemeManager.getInstance().registerScene(scene);
             
             // Si necesitamos una ventana decorada, y la actual no lo es, crear una nueva
             if (currentStage.getStyle() == StageStyle.UNDECORATED) {
@@ -578,6 +582,8 @@ public class PanelInicioSesionController extends Application implements Initiali
                     event.consume();
                     cerrarAplicacion();
                 });
+                
+                // Establecer la escena
                 newStage.setScene(scene);
                 
                 // Cerrar la ventana original
