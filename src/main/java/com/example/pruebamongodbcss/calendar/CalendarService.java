@@ -381,6 +381,46 @@ public class CalendarService {
         }
     }
     
+
+
+        /**
+     * Obtiene todas las citas solo citas de un usuario
+     * @param usuario nombre de usuario
+     * @return Lista de citas
+     */
+    public List<CalendarEvent> getsoloCitasporUsuario(String usuario) {
+        List<CalendarEvent> appointments = new ArrayList<>();
+        try {
+            // Verificar que el usuario no sea null
+            if (usuario == null || usuario.isEmpty()) {
+                LOGGER.warning("Usuario null o vacío, no se puede buscar");
+                return appointments;
+            }
+            
+            System.out.println("Buscando citas para usuario: '" + usuario + "'");
+            
+
+            FindIterable<Document> citasUsuario2 = citasCollection.find(
+                Filters.eq("usuarioAsignado", usuario)
+            );
+            
+
+            for (Document doc : citasUsuario2) {
+                appointments.add(citaDocumentToCalendarEvent(doc));
+                
+                System.out.println("Cita encontrada: " + doc.getObjectId("_id") + 
+                                 ", título: " + doc.getString("title"));
+            }
+            
+            LOGGER.info("Se encontraron " + appointments.size() + " citas para el usuario: " + usuario);
+            return appointments;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error al obtener citas por usuario", e);
+            return appointments;
+        }
+    }
+
+
     /**
      * Convierte un documento MongoDB a un objeto CalendarEvent
      * @param doc Documento a convertir
