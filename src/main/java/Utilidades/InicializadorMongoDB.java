@@ -23,6 +23,7 @@ public class InicializadorMongoDB {
             inventarioDB.createCollection("productos");
             inventarioDB.createCollection("proveedores");
             inventarioDB.createCollection("stock");
+            inventarioDB.createCollection("farmacia");
             
             // Crear índices para Inventario
             inventarioDB.getCollection("productos").createIndex(new Document("codigo", 1));
@@ -39,7 +40,7 @@ public class InicializadorMongoDB {
                     "Administrador", 
                     "Sistema",
                     "admin", 
-                    "admin12345", 
+                    "admin", 
                     "admin@sistema.com", 
                     "123456789",
                     "admin12345" // Contraseña de administrador
@@ -67,41 +68,21 @@ public class InicializadorMongoDB {
                 System.err.println("Error al crear usuario administrador: " + e.getMessage());
             }
             
-            // También crear un usuario normal en la base de datos Clinica
-            try {
-                // Crear usuario normal con la nueva estructura
-                Usuario usuarioNormal = new Usuario(
-                    "Usuario", 
-                    "Normal", 
-                    "usuario", 
-                    "usuario12345", 
-                    "usuario@sistema.com", 
-                    "987654321"
-                );
-                
-                // Crear documento MongoDB a partir del objeto Usuario normal
-                Document usuarioNormalDocument = new Document()
-                    .append("nombre", usuarioNormal.getNombre())
-                    .append("apellido", usuarioNormal.getApellido())
-                    .append("usuario", usuarioNormal.getUsuario())
-                    .append("password", usuarioNormal.getPassword())
-                    .append("email", usuarioNormal.getEmail())
-                    .append("telefono", usuarioNormal.getTelefono())
-                    .append("rol", usuarioNormal.getRol().toString())
-                    .append("fechaCreacion", usuarioNormal.getFechaCreacion());
-                
-                // Insertar en la colección usuarios de la clínica
-                clinicaDB.getCollection("usuarios").insertOne(usuarioNormalDocument);
-                
-                System.out.println("Usuario normal creado exitosamente");
-            } catch (Exception e) {
-                System.err.println("Error al crear usuario normal: " + e.getMessage());
-            }
+
 
             System.out.println("Bases de datos y colecciones creadas exitosamente en MongoDB ");
 
         } catch (Exception e) {
             System.err.println("Error al inicializar las bases de datos: " + e.getMessage());
         }
+
+ 
+    }
+
+
+    public static void importardatosCIMA(){
+
+
+
     }
 } 
