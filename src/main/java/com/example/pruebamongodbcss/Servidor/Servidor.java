@@ -10,16 +10,12 @@ import java.util.concurrent.Executors;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 
-import com.mongodb.client.MongoDatabase;
-
-import Utilidades.GestorConexion;
-
 public class Servidor {
     private static final int PUERTO_DEFAULT = 50002;
     private final int puerto;
     private ServerSocket serverSocket;
     private final ExecutorService pool;
-    private final MongoDatabase database;
+
     private boolean running;
 
     /**
@@ -36,20 +32,6 @@ public class Servidor {
     public Servidor(int puerto) {
         this.puerto = puerto;
         this.pool = Executors.newCachedThreadPool();
-        
-        // Intentar conectar a MongoDB
-        try {
-            this.database = GestorConexion.conectarEmpresa();
-            if (this.database != null) {
-                System.out.println("Conexión a MongoDB establecida exitosamente.");
-            } else {
-                throw new RuntimeException("No se pudo establecer conexión con MongoDB");
-            }
-        } catch (Exception e) {
-            System.err.println("Error al conectar con MongoDB: " + e.getMessage());
-            throw new RuntimeException("No se pudo establecer conexión con MongoDB", e);
-        }
-        
         this.running = true;
     }
 
@@ -68,7 +50,7 @@ public class Servidor {
                     Socket clientSocket = serverSocket.accept();
                     System.out.println("Nuevo cliente conectado: " + clientSocket.getInetAddress());
                     // Crear un nuevo hilo para manejar la conexión del cliente
-                    ClienteHandler handler = new ClienteHandler(clientSocket, database);
+                    ClienteHandler handler = new ClienteHandler(clientSocket);
                     // Ejecutar el hilo en el pool de hilos
                     pool.execute(handler);
                 } catch (IOException e) {

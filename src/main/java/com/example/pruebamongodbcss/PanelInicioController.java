@@ -6,6 +6,8 @@ import java.util.ResourceBundle;
 
 import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.Data.Usuario;
+import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 import com.example.pruebamongodbcss.calendar.CalendarScreen;
 import com.example.pruebamongodbcss.calendar.CalendarService;
 import com.example.pruebamongodbcss.theme.ThemeManager;
@@ -80,169 +82,179 @@ public class PanelInicioController implements Initializable {
     private Pane zonaAnclaje;
     private boolean zonaAnclajeCreada = false;
 
+    private GestorSocket gestorSocket;
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        // Configurar el contenedor del carrusel
-        carouselContainer = new Pane();
-        carouselContainer.setPrefWidth(200);
-        carouselContainer.setStyle("-fx-background-color: transparent;");
-        
-        // Configurar iconos personalizados para los ThemeToggleSwitch
-        configurarThemeToggles();
-        
-        // Inicializar el gestor de temas y registrar la escena actual
-        // Se hace de forma postergada ya que la escena aún no está disponible
-        javafx.application.Platform.runLater(() -> {
-            if (root.getScene() != null) {
-                // Registrar la escena en el ThemeManager para aplicar el tema
-                ThemeManager.getInstance().registerScene(root.getScene());
-                
-                // Aplicar el tema a todas las ventanas abiertas
-                ThemeUtil.applyThemeToAllOpenWindows();
-                
-                // Cargar automáticamente la vista home
-                restaurarVistaPrincipal();
-            }
-        });
-        
-        // Agregar un listener al toggle de tema para mantener actualizadas todas las ventanas
-        if (themeToggle != null) {
-            themeToggle.selectedProperty().addListener((obs, oldVal, newVal) -> {
-                javafx.application.Platform.runLater(() -> {
+        try {
+            // Inicializar el gestor de socket
+            gestorSocket = GestorSocket.getInstance();
+            
+            // Configurar el contenedor del carrusel
+            carouselContainer = new Pane();
+            carouselContainer.setPrefWidth(200);
+            carouselContainer.setStyle("-fx-background-color: transparent;");
+            
+            // Configurar iconos personalizados para los ThemeToggleSwitch
+            configurarThemeToggles();
+            
+            // Inicializar el gestor de temas y registrar la escena actual
+            // Se hace de forma postergada ya que la escena aún no está disponible
+            javafx.application.Platform.runLater(() -> {
+                if (root.getScene() != null) {
+                    // Registrar la escena en el ThemeManager para aplicar el tema
+                    ThemeManager.getInstance().registerScene(root.getScene());
+                    
+                    // Aplicar el tema a todas las ventanas abiertas
                     ThemeUtil.applyThemeToAllOpenWindows();
-                });
-            });
-        }
-        
-        // Configurar iconos y tooltips para el menú lateral
-        setButtonIcon(btnMenuPrincipal, "/Iconos/iconInicio4.png", 32, 32);
-        setButtonIcon(btnAnimales, "/Iconos/iconPet2.png", 32, 32);
-        setButtonIcon(but_clientes, "/Iconos/IconPruebaClientes.png", 32, 32);
-        setButtonIcon(btnFichaje, "/Iconos/iconClock2.png", 32, 32);
-        setButtonIcon(btnEmpresa, "/Iconos/iconAdministrador2.png", 35, 38);
-        setButtonIcon(btnSalir, "/Iconos/iconSalir.png", 32, 32);
-        setButtonIcon(btnGoogleCalendar, "/Iconos/iconClock2.png", 32, 32);
-
-        // Configurar iconos y tooltips para los botones del carrusel
-        setButtonIcon(btnMenuPrincipalCarousel, "/Iconos/iconInicio4.png", 32, 32);
-        setButtonIcon(btnAnimalesCarousel, "/Iconos/iconPet2.png", 32, 32);
-        setButtonIcon(but_clientesCarousel, "/Iconos/IconPruebaClientes.png", 32, 32);
-        setButtonIcon(btnFichajeCarousel, "/Iconos/iconClock2.png", 32, 32);
-        setButtonIcon(btnEmpresaCarousel, "/Iconos/iconAdministrador2.png", 35, 38);
-        setButtonIcon(btnSalirCarousel, "/Iconos/iconSalir.png", 32, 32);
-        setButtonIcon(btnGoogleCalendarCarousel, "/Iconos/iconClock2.png", 32, 32);
-
-        // Tooltips para los botones del carrusel
-        btnMenuPrincipalCarousel.setTooltip(new Tooltip("Menú Principal"));
-        btnAnimalesCarousel.setTooltip(new Tooltip("Animales"));
-        but_clientesCarousel.setTooltip(new Tooltip("Clientes"));
-        btnFichajeCarousel.setTooltip(new Tooltip("Fichaje"));
-        btnSalirCarousel.setTooltip(new Tooltip("Cerrar sesión"));
-        btnGoogleCalendarCarousel.setTooltip(new Tooltip("Calendario de Citas"));
-
-        // Configurar eventos del carrusel
-        btnChicha.setOnAction(e -> toggleMenuRadial());
-        btnMenuPrincipalCarousel.setOnAction(event -> {
-            restaurarVistaPrincipal();
-            mantenerCarruselVisible(); // Mantener el carrusel visible después de la acción
-        });
-        btnAnimalesCarousel.setOnAction(event -> {
-            abrirModuloClinica();
-            mantenerCarruselVisible(); // Mantener el carrusel visible después de la acción
-        });
-        but_clientesCarousel.setOnAction(event -> {
-            abrirModuloClinicaConCitas();
-            mantenerCarruselVisible(); // Mantener el carrusel visible después de la acción
-        });
-        btnFichajeCarousel.setOnAction(event -> {
-            abrirModuloFichaje();
-            mantenerCarruselVisible(); // Mantener el carrusel visible después de la acción
-        });
-        btnSalirCarousel.setOnAction(event -> cerrarSesion());
-        btnGoogleCalendarCarousel.setOnAction(event -> {
-            abrirModuloGoogleCalendar();
-            mantenerCarruselVisible(); // Mantener el carrusel visible después de la acción
-        });
-
-        // Configurar eventos del menú lateral
-        btnToggleSidebar.setOnMousePressed(event -> {
-            isHoldingToggle = true;
-            holdTimer = new javafx.animation.PauseTransition(Duration.seconds(0.5));
-            holdTimer.setOnFinished(e -> {
-                if (isHoldingToggle) {
-                    activarModoCarrusel();
+                    
+                    // Cargar automáticamente la vista home
+                    restaurarVistaPrincipal();
                 }
             });
-            holdTimer.play();
-        });
-        btnToggleSidebar.setOnMouseReleased(event -> {
-            isHoldingToggle = false;
-            if (holdTimer != null) holdTimer.stop();
-        });
-        btnToggleSidebar.setOnMouseDragged(event -> {
-            if (isHoldingToggle && holdTimer != null && holdTimer.getCurrentTime().greaterThanOrEqualTo(Duration.seconds(0.5))) {
-                activarModoCarrusel();
+            
+            // Agregar un listener al toggle de tema para mantener actualizadas todas las ventanas
+            if (themeToggle != null) {
+                themeToggle.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                    javafx.application.Platform.runLater(() -> {
+                        ThemeUtil.applyThemeToAllOpenWindows();
+                    });
+                });
+            }
+            
+            // Configurar iconos y tooltips para el menú lateral
+            setButtonIcon(btnMenuPrincipal, "/Iconos/iconInicio4.png", 32, 32);
+            setButtonIcon(btnAnimales, "/Iconos/iconPet2.png", 32, 32);
+            setButtonIcon(but_clientes, "/Iconos/IconPruebaClientes.png", 32, 32);
+            setButtonIcon(btnFichaje, "/Iconos/iconClock2.png", 32, 32);
+            setButtonIcon(btnEmpresa, "/Iconos/iconAdministrador2.png", 35, 38);
+            setButtonIcon(btnSalir, "/Iconos/iconSalir.png", 32, 32);
+            setButtonIcon(btnGoogleCalendar, "/Iconos/iconClock2.png", 32, 32);
+
+            // Configurar iconos y tooltips para los botones del carrusel
+            setButtonIcon(btnMenuPrincipalCarousel, "/Iconos/iconInicio4.png", 32, 32);
+            setButtonIcon(btnAnimalesCarousel, "/Iconos/iconPet2.png", 32, 32);
+            setButtonIcon(but_clientesCarousel, "/Iconos/IconPruebaClientes.png", 32, 32);
+            setButtonIcon(btnFichajeCarousel, "/Iconos/iconClock2.png", 32, 32);
+            setButtonIcon(btnEmpresaCarousel, "/Iconos/iconAdministrador2.png", 35, 38);
+            setButtonIcon(btnSalirCarousel, "/Iconos/iconSalir.png", 32, 32);
+            setButtonIcon(btnGoogleCalendarCarousel, "/Iconos/iconClock2.png", 32, 32);
+
+            // Tooltips para los botones del carrusel
+            btnMenuPrincipalCarousel.setTooltip(new Tooltip("Menú Principal"));
+            btnAnimalesCarousel.setTooltip(new Tooltip("Animales"));
+            but_clientesCarousel.setTooltip(new Tooltip("Clientes"));
+            btnFichajeCarousel.setTooltip(new Tooltip("Fichaje"));
+            btnSalirCarousel.setTooltip(new Tooltip("Cerrar sesión"));
+            btnGoogleCalendarCarousel.setTooltip(new Tooltip("Calendario de Citas"));
+
+            // Configurar eventos del carrusel
+            btnChicha.setOnAction(e -> toggleMenuRadial());
+            btnMenuPrincipalCarousel.setOnAction(event -> {
+                restaurarVistaPrincipal();
+                mantenerCarruselVisible(); // Mantener el carrusel visible después de la acción
+            });
+            btnAnimalesCarousel.setOnAction(event -> {
+                abrirModuloClinica();
+                mantenerCarruselVisible(); // Mantener el carrusel visible después de la acción
+            });
+            but_clientesCarousel.setOnAction(event -> {
+                abrirModuloClinicaConCitas();
+                mantenerCarruselVisible(); // Mantener el carrusel visible después de la acción
+            });
+            btnFichajeCarousel.setOnAction(event -> {
+                abrirModuloFichaje();
+                mantenerCarruselVisible(); // Mantener el carrusel visible después de la acción
+            });
+            btnSalirCarousel.setOnAction(event -> cerrarSesion());
+            btnGoogleCalendarCarousel.setOnAction(event -> {
+                abrirModuloGoogleCalendar();
+                mantenerCarruselVisible(); // Mantener el carrusel visible después de la acción
+            });
+
+            // Configurar eventos del menú lateral
+            btnToggleSidebar.setOnMousePressed(event -> {
+                isHoldingToggle = true;
+                holdTimer = new javafx.animation.PauseTransition(Duration.seconds(0.5));
+                holdTimer.setOnFinished(e -> {
+                    if (isHoldingToggle) {
+                        activarModoCarrusel();
+                    }
+                });
+                holdTimer.play();
+            });
+            btnToggleSidebar.setOnMouseReleased(event -> {
                 isHoldingToggle = false;
-                holdTimer.stop();
+                if (holdTimer != null) holdTimer.stop();
+            });
+            btnToggleSidebar.setOnMouseDragged(event -> {
+                if (isHoldingToggle && holdTimer != null && holdTimer.getCurrentTime().greaterThanOrEqualTo(Duration.seconds(0.5))) {
+                    activarModoCarrusel();
+                    isHoldingToggle = false;
+                    holdTimer.stop();
+                }
+            });
+            btnToggleSidebar.setOnAction(event -> {
+                if (!isCarouselMode) {
+                    toggleSidebar();
+                }
+            });
+
+            // Vincular botones del menú lateral a sus métodos
+            btnMenuPrincipal.setOnAction(event -> restaurarVistaPrincipal());
+            btnAnimales.setOnAction(event -> abrirModuloClinica());
+            but_clientes.setOnAction(event -> abrirModuloClinicaConCitas());
+            btnFichaje.setOnAction(event -> abrirModuloFichaje());
+            btnSalir.setOnAction(event -> cerrarSesion());
+            if (btnEmpresa != null) {
+                btnEmpresa.setOnAction(event -> abrirModuloEmpresa());
             }
-        });
-        btnToggleSidebar.setOnAction(event -> {
-            if (!isCarouselMode) {
-                toggleSidebar();
+            if (btnGoogleCalendar != null) {
+                btnGoogleCalendar.setOnAction(event -> abrirModuloGoogleCalendar());
             }
-        });
 
-        // Vincular botones del menú lateral a sus métodos
-        btnMenuPrincipal.setOnAction(event -> restaurarVistaPrincipal());
-        btnAnimales.setOnAction(event -> abrirModuloClinica());
-        but_clientes.setOnAction(event -> abrirModuloClinicaConCitas());
-        btnFichaje.setOnAction(event -> abrirModuloFichaje());
-        btnSalir.setOnAction(event -> cerrarSesion());
-        if (btnEmpresa != null) {
-            btnEmpresa.setOnAction(event -> abrirModuloEmpresa());
-        }
-        if (btnGoogleCalendar != null) {
-            btnGoogleCalendar.setOnAction(event -> abrirModuloGoogleCalendar());
-        }
-
-        // Inicializar servicio
-        servicioUsuarios = new ServicioUsuarios();
-        calendarService = new CalendarService();
-        
-        // Configurar arrastre del botón
-        configurarArrastreBoton(btnChicha);
-        
-        // Configurar z-order y estilo circular para los botones del carrusel
-        JFXButton[] botonesCarousel = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel, btnGoogleCalendarCarousel};
-        for (JFXButton boton : botonesCarousel) {
-            boton.getStyleClass().removeAll("itemMenu");
-            if (!boton.getStyleClass().contains("circleMenuButton")) {
-                boton.getStyleClass().add("circleMenuButton");
-            }
-            boton.setViewOrder(-1.0); // Valor negativo para estar más adelante en el orden de visualización
-        }
-
-        // Mostrar sidebar por defecto
-        mostrarSidebar();
-
-        // Asegurarse de que el botón del carrusel siempre esté en primer plano
-        btnChicha.setViewOrder(-1.0); // Valor negativo para estar más adelante en el orden de visualización
-        
-        // Marcar visualmente el botón de Menú Principal como seleccionado
-        if (btnMenuPrincipal != null) {
-            btnMenuPrincipal.getStyleClass().add("menu-button-selected");
-        }
-
-        // Configurar el contador de eventos
-        if (btnEventCounter != null) {
-            btnEventCounter.setTooltip(new Tooltip("Cargando eventos..."));
-            btnEventCounter.setOnAction(event -> abrirModuloGoogleCalendar());
+            // Inicializar servicio
+            servicioUsuarios = new ServicioUsuarios();
+            calendarService = new CalendarService();
             
-            // Estilizar el botón como un badge circular
-            btnEventCounter.getStyleClass().add("event-counter-badge");
+            // Configurar arrastre del botón
+            configurarArrastreBoton(btnChicha);
             
-            // Configurar actualización periódica del contador (cada 5 minutos)
-            configurarActualizacionPeriodicaEventos();
+            // Configurar z-order y estilo circular para los botones del carrusel
+            JFXButton[] botonesCarousel = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel, btnGoogleCalendarCarousel};
+            for (JFXButton boton : botonesCarousel) {
+                boton.getStyleClass().removeAll("itemMenu");
+                if (!boton.getStyleClass().contains("circleMenuButton")) {
+                    boton.getStyleClass().add("circleMenuButton");
+                }
+                boton.setViewOrder(-1.0); // Valor negativo para estar más adelante en el orden de visualización
+            }
+
+            // Mostrar sidebar por defecto
+            mostrarSidebar();
+
+            // Asegurarse de que el botón del carrusel siempre esté en primer plano
+            btnChicha.setViewOrder(-1.0); // Valor negativo para estar más adelante en el orden de visualización
+            
+            // Marcar visualmente el botón de Menú Principal como seleccionado
+            if (btnMenuPrincipal != null) {
+                btnMenuPrincipal.getStyleClass().add("menu-button-selected");
+            }
+
+            // Configurar el contador de eventos
+            if (btnEventCounter != null) {
+                btnEventCounter.setTooltip(new Tooltip("Cargando eventos..."));
+                btnEventCounter.setOnAction(event -> abrirModuloGoogleCalendar());
+                
+                // Estilizar el botón como un badge circular
+                btnEventCounter.getStyleClass().add("event-counter-badge");
+                
+                // Configurar actualización periódica del contador (cada 5 minutos)
+                configurarActualizacionPeriodicaEventos();
+            }
+        } catch (Exception e) {
+            System.err.println("Error al inicializar el controlador: " + e.getMessage());
+            mostrarError("Error de Inicialización", "No se pudo inicializar correctamente la aplicación.");
         }
     }
     
@@ -415,6 +427,9 @@ public class PanelInicioController implements Initializable {
      */
     @FXML
     public void cerrarSesion(){
+        if (gestorSocket != null) {
+            gestorSocket.cerrarConexion();
+        }
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/InicioSesion/PruebaDoblePanel.fxml"));
             Parent root = loader.load();
@@ -943,6 +958,18 @@ public class PanelInicioController implements Initializable {
      * Actualiza el contador de eventos para el usuario actual
      */
     private void actualizarContadorEventos() {
+
+        try {
+            gestorSocket.enviarPeticion(Protocolo.ACTUALIZAREVENTOS+Protocolo.SEPARADOR_CODIGO);
+            //Salida por consola confirmacion de envio
+            System.out.println("Envio de peticion de actualizacion de eventos confirmado");
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+
+
         if (usuarioActual == null || btnEventCounter == null) {
             return;
         }
@@ -1099,5 +1126,18 @@ public class PanelInicioController implements Initializable {
         );
         timeline.setCycleCount(javafx.animation.Animation.INDEFINITE);
         timeline.play();
+    }
+
+
+
+    private void procesarRespuestaServidor(int tipoRespuesta) {
+        // Implementar el procesamiento de las respuestas según el protocolo
+        switch (tipoRespuesta) {
+            case Protocolo.CREARPROPIETARIO_RESPONSE:
+                // Procesar la respuesta específica
+
+                break;
+            // Añadir más casos según sea necesario
+        }
     }
 }

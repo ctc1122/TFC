@@ -1,9 +1,8 @@
 package com.example.pruebamongodbcss.Modulos.InicioSesion;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -14,6 +13,7 @@ import com.example.pruebamongodbcss.Data.Clinica;
 import com.example.pruebamongodbcss.Data.PatronExcepcion;
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 import com.example.pruebamongodbcss.theme.ThemeManager;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -50,9 +50,7 @@ public class PanelInicioSesionController extends Application implements Initiali
     private static final int SERVER_PORT = 5000;  // Puerto principal (Docker)
     private static final int SERVER_PORT_ALT = 50002;  // Puerto alternativo (local)
     
-    private Socket socket;
-    private ObjectOutputStream salida;
-    private ObjectInputStream entrada;
+    private GestorSocket gestorSocket;
     private boolean conectado = false;
     private ScreensaverManager screensaverManager;
 
@@ -170,7 +168,7 @@ public class PanelInicioSesionController extends Application implements Initiali
         
         // Cargar la imagen del icono para mostrar/ocultar contraseña
         try {
-            mostrarPasswordBtn.setImage(new Image(getClass().getResourceAsStream("/Iconos/ojo.png")));
+            mostrarPasswordBtn.setImage(new Image(getClass().getResourceAsStream("/Iconos/iconPassword.png")));
         } catch (Exception e) {
             System.err.println("No se pudo cargar el icono del ojo: " + e.getMessage());
         }
@@ -186,28 +184,17 @@ public class PanelInicioSesionController extends Application implements Initiali
     }
 
     private void conectarAlServidor() {
-        
-        // Si no se pudo conectar al principal, intentamos el alternativo
         try {
-            System.out.println("Intentando conectar al servidor alternativo: " + SERVER_HOST + ":" + SERVER_PORT_ALT);
-            
-            socket = new Socket(SERVER_HOST, SERVER_PORT_ALT);
-            
-            // Importante: primero crear el ObjectOutputStream antes que el ObjectInputStream
-            // para evitar bloqueos
-            salida = new ObjectOutputStream(socket.getOutputStream());
-            salida.flush(); // Es importante hacer flush después de crear el ObjectOutputStream
-            
-            entrada = new ObjectInputStream(socket.getInputStream());
-            
-            conectado = true;
-            System.out.println("Conectado al servidor alternativo correctamente.");
-
-            
-        } catch (IOException e) {
-            System.err.println("Error al conectar con el servidor alternativo: " + e.getMessage());
+            gestorSocket = GestorSocket.getInstance();
+            conectado = gestorSocket.isConectado();
+            System.out.println("Conectado: " + conectado);
+            if (!conectado) {
+                mostrarMensaje("No se pudo conectar al servidor.\nUsando modo local.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error al conectar con el servidor: " + e.getMessage());
             conectado = false;
-            mostrarMensaje("No se pudo conectar a ningún servidor.\nUsando modo local.");
+            mostrarMensaje("No se pudo conectar al servidor.\nUsando modo local.");
         }
     }
 
@@ -419,14 +406,14 @@ public class PanelInicioSesionController extends Application implements Initiali
     @FXML
     private void inicioSesion() {
         // Obtener el usuario tal como se escribe (respetando mayúsculas/minúsculas)
-        final String usuario = campoUsuario.getText();
+        final String usuario = campoUsuario.getText().trim();
         
         // Obtener la contraseña del campo visible o invisible según corresponda
         final String password;
         if (passwordVisible) {
-            password = campoPasswordVisible.getText();
+            password = campoPasswordVisible.getText().trim();
         } else {
-            password = campoPassword.getText();
+            password = campoPassword.getText().trim();
         }
 
         // Si el usuario o la contraseña están vacíos, mostrar un mensaje de error
@@ -445,33 +432,60 @@ public class PanelInicioSesionController extends Application implements Initiali
                 boolean autenticado = false;
                 Usuario usuarioAutenticado = null;
 
+                System.out.println("Conectado: " + conectado);
+
                 // Si estamos conectados al servidor, intentar autenticar a través de él
                 if (conectado) {
                     try {
                         System.out.println("Enviando solicitud de inicio de sesión al servidor...");
-                        // Enviar petición de login usando los métodos adecuados (writeInt y writeUTF)
-                        salida.writeInt(Protocolo.LOGIN_REQUEST);
-                        salida.writeUTF(usuario);
-                        salida.writeUTF(password);
-                        //flush para enviar los datos al servidor
-                        salida.flush();
+                        // Construir el mensaje con el formato correcto
+                        String mensaje = Protocolo.LOGIN_REQUEST + Protocolo.SEPARADOR_CODIGO + 
+                                      usuario + Protocolo.SEPARADOR_PARAMETROS + password;
+                        System.out.println("Mensaje a enviar: " + mensaje);
+                        
+                        // Obtener el stream de entrada ANTES de enviar la petición
+                        ObjectInputStream entrada = gestorSocket.getEntrada();
+                        if (entrada == null) {
+                            throw new IOException("No se pudo obtener el stream de entrada");
+                        }
+                        
+                        // Enviar la petición
+                        gestorSocket.enviarPeticion(mensaje);
                         System.out.println("Datos enviados al servidor. Esperando respuesta...");
 
-                        // Recibir respuesta
-                        int tipoRespuesta = entrada.readInt();
-                        System.out.println("Respuesta recibida. Tipo: " + tipoRespuesta);
-                        if (tipoRespuesta == Protocolo.LOGIN_RESPONSE) {
-                            int codigoRespuesta = entrada.readInt();
-                            System.out.println("Código de respuesta: " + codigoRespuesta);
-                            // Si el código de respuesta es LOGIN_SUCCESS, se ha iniciado sesión correctamente
-                            if (codigoRespuesta == Protocolo.LOGIN_SUCCESS) {
-                                autenticado = true;
+                        try {
+                            System.out.println("Leyendo tipo de respuesta...");
+                            int tipoRespuesta = entrada.readInt();
+                            System.out.println("Tipo de respuesta recibido: " + tipoRespuesta);
+                            
+                            if (tipoRespuesta == Protocolo.LOGIN_RESPONSE) {
+                                System.out.println("Leyendo código de respuesta...");
+                                int codigoRespuesta = entrada.readInt();
+                                System.out.println("Código de respuesta recibido: " + codigoRespuesta);
+                                
+                                if (codigoRespuesta == Protocolo.LOGIN_SUCCESS) {
+                                    System.out.println("Login exitoso");
+                                    autenticado = true;
+                                } else if (codigoRespuesta == Protocolo.INVALID_CREDENTIALS) {
+                                    System.out.println("Credenciales inválidas");
+                                    mostrarMensaje("Credenciales inválidas. Por favor, verifique su usuario y contraseña.");
+                                } else {
+                                    System.out.println("Login fallido");
+                                    mostrarMensaje("Error al iniciar sesión. Por favor, intente nuevamente.");
+                                }
+                            } else {
+                                System.out.println("Tipo de respuesta no esperado: " + tipoRespuesta);
+                                mostrarMensaje("Error de comunicación con el servidor.");
                             }
+                        } catch (EOFException e) {
+                            System.err.println("Error al leer la respuesta: conexión cerrada inesperadamente");
+                            throw new IOException("La conexión se cerró mientras se leía la respuesta");
                         }
                     } catch (IOException e) {
                         System.err.println("Error en la comunicación con el servidor: " + e.getMessage());
                         e.printStackTrace();
                         conectado = false; // Marcar como desconectado para usar modo local
+                        mostrarMensaje("Error de conexión con el servidor. Usando modo local.");
                     }
                 }
 
@@ -642,30 +656,8 @@ public class PanelInicioSesionController extends Application implements Initiali
      * @return void
      */
     public void cerrarConexion() {
-        try {
-            if (conectado) {
-                System.out.println("Cerrando conexión con el servidor...");
-                
-                if (entrada != null) {
-                    entrada.close();
-                    entrada = null;
-                }
-                
-                if (salida != null) {
-                    salida.close();
-                    salida = null;
-                }
-                
-                if (socket != null && !socket.isClosed()) {
-                    socket.close();
-                    socket = null;
-                }
-                
-                conectado = false;
-                System.out.println("Conexión cerrada correctamente.");
-            }
-        } catch (IOException e) {
-            System.err.println("Error al cerrar la conexión: " + e.getMessage());
+        if (gestorSocket != null) {
+            gestorSocket.cerrarConexion();
         }
     }
 
