@@ -69,6 +69,9 @@ public class HomeViewController implements Initializable {
     
     @FXML
     private JFXButton btnBack;
+    
+    @FXML
+    private JFXButton btnViewCalendar;
    
     private boolean isPage1Visible = true;
     private boolean isAnimating = false;
@@ -316,6 +319,9 @@ public class HomeViewController implements Initializable {
         // Add back button handler
         btnBack.setOnAction(e -> navigateToPage1());
         
+        // Añadir acción al botón VER CALENDARIO
+        btnViewCalendar.setOnAction(e -> navigateToPage2());
+        
         // Add hover effects to all buttons
         homeContainer.lookupAll(".btn-card, .btn-footer, .btn-back").forEach(node -> {
             if (node instanceof JFXButton) {
@@ -326,7 +332,7 @@ public class HomeViewController implements Initializable {
                 button.setOnMouseExited(e -> button.setStyle("-fx-scale-x: 1.0; -fx-scale-y: 1.0;"));
                 
                 // Add click handler for non-navigation buttons
-                if (button != btnLearnMore && button != btnBack) {
+                if (button != btnLearnMore && button != btnBack && button != btnViewCalendar) {
                     button.setOnAction(e -> handleButtonClick(button));
                 }
             }
@@ -619,41 +625,18 @@ public class HomeViewController implements Initializable {
      */
     private void initializeCalendarPreview() {
         try {
-            // Crear el componente de vista previa
             calendarPreview = new CalendarPreview();
-            
-            // Añadir a la página 1
             if (page1 != null) {
-                // Buscar el contenedor del calendario en la página 1
-                BorderPane calendarContainer = null;
-                
-                // Buscar en el GridPane
-                if (page1Grid != null) {
-                    for (Node node : page1Grid.getChildren()) {
-                        if (node instanceof BorderPane && 
-                            node.getStyleClass().contains("card-main")) {
-                            calendarContainer = (BorderPane) node;
-                            break;
+                // Buscar el HBox dentro de page1
+                for (Node node : page1.getChildren()) {
+                    if (node instanceof HBox) {
+                        HBox hbox = (HBox) node;
+                        for (Node child : hbox.getChildren()) {
+                            if (child instanceof BorderPane && child.getStyleClass().contains("card-main")) {
+                                ((BorderPane) child).setCenter(calendarPreview);
+                                return;
+                            }
                         }
-                    }
-                }
-                
-                // Si encontramos el contenedor, añadir el calendario
-                if (calendarContainer != null) {
-                    // Buscar el contenedor específico dentro del BorderPane
-                    Node innerContainer = null;
-                    for (Node node : calendarContainer.getChildren()) {
-                        if (node.getId() != null && node.getId().equals("calendarContainer")) {
-                            innerContainer = node;
-                            break;
-                        }
-                    }
-                    
-                    if (innerContainer instanceof BorderPane) {
-                        ((BorderPane) innerContainer).setCenter(calendarPreview);
-                    } else {
-                        // Si no encuentra el contenedor específico, usar el centro del BorderPane principal
-                        calendarContainer.setCenter(calendarPreview);
                     }
                 }
             }

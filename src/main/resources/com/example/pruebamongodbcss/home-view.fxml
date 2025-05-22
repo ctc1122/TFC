@@ -17,18 +17,7 @@
 
 <BorderPane fx:id="homeContainer" prefHeight="600.0" prefWidth="800.0" styleClass="home-container" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.HomeViewController">
     <!-- Header section with title -->
-    <top>
-        <HBox alignment="CENTER_LEFT" styleClass="home-header" fillHeight="true" HBox.hgrow="ALWAYS">
-            <padding>
-                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-            </padding>
-            <Label styleClass="home-title" text="EMBRACE THE FUTURE OF ENERGY" wrapText="true">
-                <font>
-                    <Font name="System Bold" size="24.0" />
-                </font>
-            </Label>
-        </HBox>
-    </top>
+    <top/>
     
     <!-- Main content area with stacked pages -->
     <center>
@@ -48,85 +37,90 @@
             <center>
                 <StackPane fx:id="pagesContainer" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
                     <!-- Page 1: Grid Cards -->
-                    <VBox fx:id="page1" styleClass="home-page" visible="true" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
-                        <GridPane fx:id="page1Grid" hgap="20.0" styleClass="home-grid" vgap="20.0" VBox.vgrow="ALWAYS" GridPane.hgrow="ALWAYS">
-                            <columnConstraints>
-                                <ColumnConstraints hgrow="ALWAYS" percentWidth="50" />
-                                <ColumnConstraints hgrow="ALWAYS" percentWidth="50" />
-                            </columnConstraints>
-                            <rowConstraints>
-                                <RowConstraints vgrow="ALWAYS" percentHeight="60" />
-                                <RowConstraints vgrow="ALWAYS" percentHeight="40" />
-                            </rowConstraints>
-                            <padding>
-                                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-                            </padding>
-                            
-                            <!-- Feature Card 1: Calendar Component -->
-                            <BorderPane styleClass="card, card-main" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="0" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
+                    <VBox fx:id="page1" styleClass="home-page" visible="true" VBox.vgrow="ALWAYS">
+                        <HBox spacing="20.0" VBox.vgrow="ALWAYS">
+                            <!-- Izquierda: Calendario de vista previa extendido -->
+                            <BorderPane styleClass="card, card-main" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
                                 <center>
                                     <fx:include source="calendar-component.fxml" />
                                 </center>
                                 <bottom>
-                                    <HBox alignment="CENTER_RIGHT">
+                                    <HBox alignment="CENTER_RIGHT" spacing="10.0" styleClass="card-footer">
                                         <padding>
-                                            <Insets top="10" right="10" bottom="10" left="10" />
+                                            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                         </padding>
-                                        <JFXButton fx:id="btnLearnMore" styleClass="btn-card" text="LEARN MORE" />
+                                        <JFXButton fx:id="btnViewCalendar" styleClass="btn-card" text="VER CALENDARIO" />
                                     </HBox>
                                 </bottom>
                             </BorderPane>
-                            
-                            <!-- Feature Card 2: Secondary card with placeholder rectangle instead of image -->
-                            <BorderPane styleClass="card, card-secondary" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
-                                <center>
-                                    <VBox alignment="TOP_CENTER" spacing="10.0" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
-                                        <!-- Replace ImageView with Rectangle as placeholder -->
-                                        <Rectangle width="160.0" height="120.0" arcHeight="10.0" arcWidth="10.0" VBox.vgrow="ALWAYS">
-                                            <fill>
-                                                <LinearGradient endX="1.0" endY="1.0">
-                                                    <stops>
-                                                        <Stop color="#4d7eff" />
-                                                        <Stop color="#3fd9fb" offset="1.0" />
-                                                    </stops>
-                                                </LinearGradient>
-                                            </fill>
-                                        </Rectangle>
-                                        <Label styleClass="card-title-secondary" text="ELECTRIC PERFORMANCE" wrapText="true">
-                                            <font>
-                                                <Font name="System Bold" size="14.0" />
-                                            </font>
-                                        </Label>
-                                        <Label styleClass="card-text" text="Experience the power of zero emissions with exceptional acceleration and range." textAlignment="CENTER" wrapText="true" />
-                                    </VBox>
-                                </center>
-                            </BorderPane>
-                            
-                            <!-- Feature Card 3: Charging stations card with placeholder rectangle -->
-                            <BorderPane styleClass="card, card-secondary" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
-                                <center>
-                                    <VBox alignment="TOP_CENTER" spacing="10.0" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
-                                        <!-- Replace ImageView with Rectangle as placeholder -->
-                                        <Rectangle width="160.0" height="120.0" arcHeight="10.0" arcWidth="10.0" VBox.vgrow="ALWAYS">
-                                            <fill>
-                                                <LinearGradient endX="1.0" endY="1.0">
-                                                    <stops>
-                                                        <Stop color="#50e3b9" />
-                                                        <Stop color="#1cc88a" offset="1.0" />
-                                                    </stops>
-                                                </LinearGradient>
-                                            </fill>
-                                        </Rectangle>
-                                        <Label styleClass="card-title-secondary" text="CHARGING SOLUTIONS" wrapText="true">
-                                            <font>
-                                                <Font name="System Bold" size="14.0" />
-                                            </font>
-                                        </Label>
-                                        <Label styleClass="card-text" text="Innovative charging network provides quick and convenient power for your journey." textAlignment="CENTER" wrapText="true" />
-                                    </VBox>
-                                </center>
-                            </BorderPane>
-                        </GridPane>
+                            <!-- Derecha: Tarjetas secundarias apiladas -->
+                            <VBox spacing="20.0" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS" style="-fx-min-width: 180; -fx-max-width: 220;">
+                                <!-- Tarjeta ELECTRIC -->
+                                <BorderPane styleClass="card, card-secondary" VBox.vgrow="ALWAYS">
+                                    <top>
+                                        <VBox alignment="CENTER" spacing="10.0" styleClass="card-header">
+                                            <padding>
+                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                            </padding>
+                                            <Label styleClass="card-title" text="ELECTRIC">
+                                                <font>
+                                                    <Font size="18.0" />
+                                                </font>
+                                            </Label>
+                                            <Label styleClass="card-subtitle" text="Gestiona tus citas" />
+                                        </VBox>
+                                    </top>
+                                    <center>
+                                        <VBox alignment="CENTER" spacing="10.0" styleClass="card-content">
+                                            <padding>
+                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                            </padding>
+                                            <Label styleClass="card-description" text="Accede a tu agenda y gestiona tus citas de forma rápida y sencilla." />
+                                        </VBox>
+                                    </center>
+                                    <bottom>
+                                        <HBox alignment="CENTER_RIGHT" spacing="10.0" styleClass="card-footer">
+                                            <padding>
+                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                            </padding>
+                                            <JFXButton fx:id="btnViewAppointments" styleClass="btn-card" text="VER CITAS" />
+                                        </HBox>
+                                    </bottom>
+                                </BorderPane>
+                                <!-- Tarjeta LEARN MORE -->
+                                <BorderPane styleClass="card, card-secondary" VBox.vgrow="ALWAYS">
+                                    <top>
+                                        <VBox alignment="CENTER" spacing="10.0" styleClass="card-header">
+                                            <padding>
+                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                            </padding>
+                                            <Label styleClass="card-title" text="LEARN MORE">
+                                                <font>
+                                                    <Font size="18.0" />
+                                                </font>
+                                            </Label>
+                                            <Label styleClass="card-subtitle" text="Descubre más" />
+                                        </VBox>
+                                    </top>
+                                    <center>
+                                        <VBox alignment="CENTER" spacing="10.0" styleClass="card-content">
+                                            <padding>
+                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                            </padding>
+                                            <Label styleClass="card-description" text="Explora todas las funcionalidades y aprende a sacar el máximo partido a tu agenda." />
+                                        </VBox>
+                                    </center>
+                                    <bottom>
+                                        <HBox alignment="CENTER_RIGHT" spacing="10.0" styleClass="card-footer">
+                                            <padding>
+                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                            </padding>
+                                            <JFXButton fx:id="btnLearnMore" styleClass="btn-card" text="LEARN MORE" />
+                                        </HBox>
+                                    </bottom>
+                                </BorderPane>
+                            </VBox>
+                        </HBox>
                     </VBox>
                     
                     <!-- Page 2: Feature details -->
