@@ -17,6 +17,12 @@ public interface Protocolo {
     int INVALID_CREDENTIALS = 102;
     int SERVER_ERROR = 500;
 
+    static final int REGISTRO_REQUEST=200;
+    static final int REGISTRO_RESPONSE=201;
+    static final int REGISTRO_SUCCESS=202;
+    static final int REGISTRO_FAILED=203;
+    static final int REGISTRO_OK=200;
+    static final int REGISTRO_ERROR=201;
 
     static final int CREARPROPIETARIO=1000;
     static final int CREARPROPIETARIO_RESPONSE=1001;

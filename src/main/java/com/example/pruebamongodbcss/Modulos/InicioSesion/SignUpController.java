@@ -3,11 +3,13 @@ package com.example.pruebamongodbcss.Modulos.InicioSesion;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-import com.example.pruebamongodbcss.Data.Clinica;
 import com.example.pruebamongodbcss.Data.PatronExcepcion;
 import com.example.pruebamongodbcss.Data.Usuario;
+import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -57,7 +59,7 @@ public class SignUpController implements Initializable {
     private PasswordField adminPasswordField;
 
     @FXML
-    private ComboBox<String> rolComboBox;
+    private ComboBox<Usuario.Rol> rolComboBox;
 
     @FXML
     private Button submitButton;
@@ -66,18 +68,15 @@ public class SignUpController implements Initializable {
     private Hyperlink loginLink;
 
     private ProgressIndicator spinnerCarga;
+    private GestorSocket gestor;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        this.gestor=GestorSocket.getInstance();
+        
         // Inicializar el ComboBox de roles
-        rolComboBox.getItems().addAll(
-            "ADMINISTRADOR",
-            "VETERINARIO",
-            "RECEPCIONISTA",
-            "AUXILIAR",
-            "NORMAL"
-        );
-        rolComboBox.setValue("NORMAL"); // Valor por defecto
+        rolComboBox.setItems(FXCollections.observableArrayList(Usuario.Rol.values()));
+        rolComboBox.setValue(Usuario.Rol.NORMAL); // Valor por defecto
         
         // Crear el spinner de carga para usarlo más tarde
         spinnerCarga = new ProgressIndicator();
@@ -135,7 +134,7 @@ public class SignUpController implements Initializable {
         final String password = passwordSignUpField.getText();
         final String confirmPassword = confirmPasswordField.getText();
         final String adminPassword = adminPasswordField.getText();
-        final String rolSeleccionado = rolComboBox.getValue();
+        final Usuario.Rol rolSeleccionado = rolComboBox.getValue();
         
         // Validar en un hilo separado para no bloquear la UI
         new Thread(() -> {
@@ -156,16 +155,18 @@ public class SignUpController implements Initializable {
                 if (!adminPassword.equals(ADMIN_PASSWORD)) {
                     throw new PatronExcepcion("La contraseña de administrador es incorrecta");
                 }
+
+                
                 
                 // Crear el usuario (esto ya valida los patrones de los campos)
-                Usuario nuevoUsuario = new Usuario(nombre, apellido, usuario, password, email, telefono);
-                
-                // Establecer el rol seleccionado
-                nuevoUsuario.setRol(Usuario.Rol.valueOf(rolSeleccionado));
-                
-                // Registrar el usuario en la base de datos
-                Clinica clinica = new Clinica("12345678A", "ChichaVet", "Dirección de la clínica");
-                clinica.registrarUsuario(nuevoUsuario);
+                 Usuario nuevoUsuario = new Usuario(nombre, apellido, usuario, password, email, telefono);
+                 nuevoUsuario.setRol(rolComboBox.getValue());
+
+                //Peticion de crear registro
+                String peticion=Protocolo.REGISTRO_REQUEST+Protocolo.SEPARADOR_CODIGO+nuevoUsuario;
+                gestor.enviarPeticion(peticion);
+               
+
                 
                 // Si llegamos aquí, el registro fue exitoso
                 Platform.runLater(() -> {
@@ -213,7 +214,7 @@ public class SignUpController implements Initializable {
         passwordSignUpField.clear();
         confirmPasswordField.clear();
         adminPasswordField.clear();
-        rolComboBox.setValue("NORMAL");
+        rolComboBox.setValue(Usuario.Rol.NORMAL);
     }
 
     /**

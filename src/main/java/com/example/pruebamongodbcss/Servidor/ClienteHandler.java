@@ -7,6 +7,8 @@ import java.net.Socket;
 
 import org.bson.Document;
 
+import com.example.pruebamongodbcss.Data.ServicioUsuarios;
+import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -79,6 +81,31 @@ public class ClienteHandler implements Runnable {
                                 }
                             }
                             break;
+                        case Protocolo.REGISTRO_REQUEST:
+                            try {
+                                // El usuario viene en formato texto después de la barra
+                                String usuarioStr = mensajeCompleto.substring(mensajeCompleto.indexOf("|") + 1);
+                                // Convertir el string a un objeto Usuario
+                                Document doc = Document.parse(usuarioStr);
+                                Usuario nuevoUsuario = new Usuario(doc);
+                                procesarRegistro(nuevoUsuario);
+                                
+                                // Enviar respuesta de éxito
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.REGISTRO_RESPONSE);
+                                    salida.writeInt(Protocolo.REGISTRO_SUCCESS);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al procesar registro: " + e.getMessage());
+                                e.printStackTrace();
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.REGISTRO_RESPONSE);
+                                    salida.writeInt(Protocolo.REGISTRO_FAILED);
+                                    salida.flush();
+                                }
+                            }
+                            break;
                         case Protocolo.CREARPROPIETARIO:
                             procesarCrearPropietario();
                             break;
@@ -142,6 +169,11 @@ public class ClienteHandler implements Runnable {
             e.printStackTrace();
             throw new IOException("Error al procesar login: " + e.getMessage());
         }
+    }
+
+    private void procesarRegistro(Usuario usuario) {
+        ServicioUsuarios servicioUsuarios=new ServicioUsuarios();
+        servicioUsuarios.guardarUsuario(usuario);
     }
 
     private void cerrarConexion() {

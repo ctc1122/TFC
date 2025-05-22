@@ -9,8 +9,6 @@ import java.util.ResourceBundle;
 
 import org.bson.Document;
 
-import com.example.pruebamongodbcss.Data.Clinica;
-import com.example.pruebamongodbcss.Data.PatronExcepcion;
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.Utilidades.GestorSocket;
@@ -488,32 +486,6 @@ public class PanelInicioSesionController extends Application implements Initiali
                         mostrarMensaje("Error de conexión con el servidor. Usando modo local.");
                     }
                 }
-
-                // Si no estamos conectados al servidor o falló la autenticación remota, usar la clase Clinica
-                if (!conectado || !autenticado) {
-                    try {
-                        System.out.println("Intentando iniciar sesión en modo local con MongoDB...");
-                        // Crear una instancia de la clínica
-                        Clinica clinica = new Clinica("12345678A", "ChichaVet", "Dirección de la clínica");
-                        
-                        // Usar el método de iniciarSesion de la clase Clinica
-                        usuarioAutenticado = clinica.iniciarSesion(usuario, password);
-                        
-                        // Si no lanza excepción, el usuario se autenticó correctamente
-                        autenticado = (usuarioAutenticado != null);
-                        
-                        // Imprimir información adicional para debug
-                        System.out.println("Intentando iniciar sesión con: usuario='" + usuario + "', password='" + password + "'");
-                        
-                    } catch (PatronExcepcion e) {
-                        System.err.println("Error de autenticación: " + e.getMessage());
-                        autenticado = false;
-                    } catch (Exception e) {
-                        System.err.println("Error general al iniciar sesión con la clase Clinica: " + e.getMessage());
-                        autenticado = false;
-                    }
-                }
-
                 // Procesar el resultado de la autenticación en el hilo de la UI
                 final boolean resultadoFinal = autenticado;
                 final Usuario usuarioFinal = usuarioAutenticado;
@@ -565,6 +537,7 @@ public class PanelInicioSesionController extends Application implements Initiali
             }
         }).start();
     }
+    
     
     private void cambiarAMenuPrincipal(Usuario usuario) {
         try {
