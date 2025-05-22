@@ -89,5 +89,11 @@ public class GestorSocket {
         } catch (IOException e) {
             System.err.println("Error al cerrar la conexión: " + e.getMessage());
         }
+        
+    }
+
+
+    public ObjectOutputStream getSalida() {
+        return salida;
     }
 } 

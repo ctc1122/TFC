@@ -1,5 +1,7 @@
 package com.example.pruebamongodbcss.Modulos.InicioSesion;
 
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -163,17 +165,28 @@ public class SignUpController implements Initializable {
                  nuevoUsuario.setRol(rolComboBox.getValue());
 
                 //Peticion de crear registro
-                String peticion=Protocolo.REGISTRO_REQUEST+Protocolo.SEPARADOR_CODIGO+nuevoUsuario;
+                String peticion=Protocolo.REGISTRO_REQUEST+Protocolo.SEPARADOR_CODIGO;
                 gestor.enviarPeticion(peticion);
-               
-
+                ObjectOutputStream salida=gestor.getSalida();
+                salida.writeObject(nuevoUsuario);
                 
+                ObjectInputStream entrada=gestor.getEntrada();
+                int codigo=entrada.readInt();
+                if(codigo==Protocolo.REGISTRO_RESPONSE){
+                    int resultado=entrada.readInt();
+                    if(resultado==Protocolo.REGISTRO_SUCCESS){
+                        mostrarMensaje("Usuario registrado exitosamente");
+                    }
+                    else if(resultado==Protocolo.REGISTRO_FAILED){
+                        mostrarMensaje("Error,no se pudo registrar el usuario");
+                    }
+                }
+
                 // Si llegamos aquí, el registro fue exitoso
                 Platform.runLater(() -> {
                     // Eliminar el spinner
                     signUpPanel.getChildren().remove(spinnerCarga);
                     
-                    mostrarMensaje("Usuario registrado exitosamente");
                     
                     // Limpiar los campos
                     limpiarCampos();

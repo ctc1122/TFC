@@ -1,5 +1,6 @@
 package com.example.pruebamongodbcss.Data;
 
+import java.io.Serializable;
 import java.util.Date;
 
 import org.bson.Document;
@@ -10,7 +11,7 @@ import org.bson.types.ObjectId;
  * Representa un usuario del sistema con sus diferentes roles y características.
  * Este modelo unificado maneja tanto usuarios regulares como veterinarios.
  */
-public class Usuario {
+public class Usuario implements Serializable{
 
     /**
      * Enumeración de los roles disponibles en el sistema.

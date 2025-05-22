@@ -83,11 +83,7 @@ public class ClienteHandler implements Runnable {
                             break;
                         case Protocolo.REGISTRO_REQUEST:
                             try {
-                                // El usuario viene en formato texto después de la barra
-                                String usuarioStr = mensajeCompleto.substring(mensajeCompleto.indexOf("|") + 1);
-                                // Convertir el string a un objeto Usuario
-                                Document doc = Document.parse(usuarioStr);
-                                Usuario nuevoUsuario = new Usuario(doc);
+                                Usuario nuevoUsuario = (Usuario) entrada.readObject();
                                 procesarRegistro(nuevoUsuario);
                                 
                                 // Enviar respuesta de éxito
@@ -117,8 +113,13 @@ public class ClienteHandler implements Runnable {
                         System.out.println("Cliente desconectado normalmente");
                         break;
                     }
+                    if (e instanceof java.io.EOFException) {
+                        System.out.println("Conexión cerrada por el cliente");
+                        break;
+                    }
                     System.err.println("Error al procesar mensaje: " + e.getMessage());
                     e.printStackTrace();
+                    break;
                 } catch (NumberFormatException e) {
                     System.err.println("Error: Código de operación inválido");
                     e.printStackTrace();
