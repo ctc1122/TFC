@@ -44,6 +44,13 @@
                      <JFXButton fx:id="btnFichaje" styleClass="itemMenu" prefWidth="200" text="Fichaje" alignment="BASELINE_LEFT" />
                      <JFXButton fx:id="btnEmpresa" styleClass="itemMenu" prefWidth="200" text="Empresa" alignment="BASELINE_LEFT" />
                      <JFXButton fx:id="btnGoogleCalendar" styleClass="itemMenu" prefWidth="200" text="Google Calendar" alignment="BASELINE_LEFT" />
+                     <JFXButton fx:id="btnChat" text="Chat" styleClass="itemMenu" >
+                        <graphic>
+                           <ImageView fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
+                              <Image url="@../../../Iconos/iconChat.png"/>
+                           </ImageView>
+                        </graphic>
+                     </JFXButton>
                      <JFXButton fx:id="btnSalir" styleClass="itemMenu,item-salir" prefWidth="200" text="Cerrar sesión" alignment="BASELINE_LEFT" />
                   </children>
                </VBox>

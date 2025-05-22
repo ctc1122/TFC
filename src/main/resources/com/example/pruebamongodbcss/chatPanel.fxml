@@ -1,47 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.geometry.Insets?>
+<?import javafx.scene.shape.Circle?>
 
-<BorderPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.example.pruebamongodbcss.Modulos.AppChat.VentanaChat">
-
-    <!-- BARRA LATERAL IZQUIERDA -->
-    <left>
-        <VBox spacing="10" style="-fx-padding: 10;">
-            <Label text="Contactos" style="-fx-text-fill: white; -fx-font-weight: bold;" />
-            <ListView fx:id="listaContactos" prefWidth="150"/>
-        </VBox>
-    </left>
-
+<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" 
+            fx:controller="com.example.pruebamongodbcss.Modulos.AppChat.VentanaChat"
+            stylesheets="@../../../Estilos/chatOscuro.css"
+            styleClass="window-root">
+    
+    <!-- Barra de título personalizada -->
     <top>
-        <HBox fx:id="barraTitulo" alignment="CENTER_RIGHT" spacing="10" style="-fx-padding: 10;">
-            <Button fx:id="btnLlamar" text="📞 Llamar" />
-            <Button fx:id="btnCerrar" text="✕" styleClass="boton-circulo"/>
-            <Button fx:id="btnMaximizar" text="⬜" styleClass="boton-circulo"/>
+        <HBox fx:id="barraTitulo" styleClass="barra-titulo">
+            <padding>
+                <Insets top="8" right="15" bottom="8" left="15"/>
+            </padding>
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Circle fx:id="btnCerrar" radius="6" styleClass="window-button, close-button"/>
+                <Circle fx:id="btnMinimizar" radius="6" styleClass="window-button, minimize-button"/>
+                <Circle fx:id="btnMaximizar" radius="6" styleClass="window-button, maximize-button"/>
+            </HBox>
+            <Label text="Chat" styleClass="titulo-ventana" HBox.hgrow="ALWAYS"/>
         </HBox>
     </top>
 
+    <!-- Panel principal -->
     <center>
-        <ScrollPane fx:id="scrollPane" fitToWidth="true" styleClass="chat-scroll"
-                    style="-fx-background-color: transparent; -fx-background: transparent;">
-            <VBox fx:id="contenedorMensajes" spacing="10">
+        <SplitPane dividerPositions="0.25">
+            <!-- Lista de contactos -->
+            <VBox spacing="10" styleClass="panel-lateral">
                 <padding>
-                    <Insets top="10" right="10" bottom="10" left="10"/>
+                    <Insets top="15" right="15" bottom="15" left="15"/>
                 </padding>
+                <Label text="Contactos" styleClass="titulo-seccion"/>
+                <ListView fx:id="listaContactos" VBox.vgrow="ALWAYS" styleClass="lista-contactos"/>
             </VBox>
-        </ScrollPane>
+
+            <!-- Área de chat -->
+            <VBox spacing="10" styleClass="panel-chat">
+                <!-- Área de mensajes -->
+                <ScrollPane fx:id="scrollPane" fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="scroll-pane">
+                    <VBox fx:id="contenedorMensajes" spacing="10" styleClass="contenedor-mensajes">
+                        <padding>
+                            <Insets top="15" right="15" bottom="15" left="15"/>
+                        </padding>
+                        <Label fx:id="lblNoUsuarios" text="No hay usuarios conectados" styleClass="mensaje-sistema" visible="false"/>
+                    </VBox>
+                </ScrollPane>
+
+                <!-- Área de entrada de mensaje -->
+                <HBox spacing="10" alignment="CENTER" styleClass="panel-entrada">
+                    <Button fx:id="btnAdjuntar" styleClass="boton-adjuntar"/>
+                    <TextField fx:id="campoMensaje" HBox.hgrow="ALWAYS" promptText="Escribe un mensaje..."/>
+                    <Button fx:id="btnEnviar" text="Enviar" styleClass="boton-enviar"/>
+                    <padding>
+                        <Insets top="10" right="15" bottom="10" left="15"/>
+                    </padding>
+                </HBox>
+            </VBox>
+        </SplitPane>
     </center>
-
-    <bottom>
-        <HBox spacing="10" alignment="CENTER">
-            <padding>
-                <Insets top="10" right="10" bottom="10" left="10"/>
-            </padding>
-            <TextField fx:id="campoMensaje" promptText="Escribe un mensaje..." HBox.hgrow="ALWAYS"/>
-            <Button fx:id="btnAdjuntar" text="📁"/>
-            <Button fx:id="btnEnviar" text="Enviar" onAction="#enviarMensajeBoton"/>
-        </HBox>
-    </bottom>
-
 </BorderPane>

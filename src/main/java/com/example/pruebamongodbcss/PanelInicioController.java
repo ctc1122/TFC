@@ -6,6 +6,8 @@ import java.util.ResourceBundle;
 
 import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.Data.Usuario;
+import com.example.pruebamongodbcss.Modulos.AppChat.ServidorAppChat;
+import com.example.pruebamongodbcss.Modulos.AppChat.VentanaChat;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 import com.example.pruebamongodbcss.calendar.CalendarScreen;
@@ -36,6 +38,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
 
 public class PanelInicioController implements Initializable {
@@ -47,7 +50,7 @@ public class PanelInicioController implements Initializable {
     private VBox sidebar;
 
     @FXML
-    private JFXButton btnMenuPrincipal, btnAnimales, btnFichaje, btnSalir, btnToggleSidebar, but_clientes, btnEmpresa, btnChicha, btnGoogleCalendar, btnEventCounter;
+    private JFXButton btnMenuPrincipal, btnAnimales, btnFichaje, btnSalir, btnToggleSidebar, but_clientes, btnEmpresa, btnChicha, btnGoogleCalendar, btnEventCounter, btnChat;
 
     @FXML
     private JFXButton btnMenuPrincipalCarousel, btnAnimalesCarousel, btnFichajeCarousel, btnSalirCarousel, but_clientesCarousel, btnEmpresaCarousel, btnGoogleCalendarCarousel;
@@ -166,6 +169,9 @@ public class PanelInicioController implements Initializable {
                 abrirModuloFichaje();
                 mantenerCarruselVisible(); // Mantener el carrusel visible después de la acción
             });
+
+
+
             btnSalirCarousel.setOnAction(event -> cerrarSesion());
             btnGoogleCalendarCarousel.setOnAction(event -> {
                 abrirModuloGoogleCalendar();
@@ -205,6 +211,7 @@ public class PanelInicioController implements Initializable {
             btnAnimales.setOnAction(event -> abrirModuloClinica());
             but_clientes.setOnAction(event -> abrirModuloClinicaConCitas());
             btnFichaje.setOnAction(event -> abrirModuloFichaje());
+            btnChat.setOnAction(event -> abrirChat());
             btnSalir.setOnAction(event -> cerrarSesion());
             if (btnEmpresa != null) {
                 btnEmpresa.setOnAction(event -> abrirModuloEmpresa());
@@ -1138,6 +1145,77 @@ public class PanelInicioController implements Initializable {
 
                 break;
             // Añadir más casos según sea necesario
+        }
+    }
+
+    private void abrirModuloChat() {
+        try {
+            // Desmarcar otros botones y marcar el seleccionado
+            desmarcaTodosLosBotones();
+            btnChat.getStyleClass().add("menu-button-selected");
+            
+            // Iniciar el servidor de chat si no está corriendo
+            ServidorAppChat servidor = ServidorAppChat.getInstance();
+            servidor.iniciar();
+            
+            // Cargar la ventana de chat
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/chatPanel.fxml"));
+            Parent root = loader.load();
+            
+            VentanaChat controller = loader.getController();
+            controller.setUsuarioActual(usuarioActual.getId().toString(), usuarioActual.getNombre());
+            
+            Scene scene = new Scene(root, 620, 450);
+            scene.getStylesheets().add(getClass().getResource("/Estilos/chatOscuro.css").toExternalForm());
+            
+            Stage stage = new Stage();
+            stage.setTitle("Chat - " + usuarioActual.getNombre());
+            stage.setScene(scene);
+            
+            // Habilitar redimensión
+            controller.habilitarRedimension(stage, scene);
+            
+            // Mostrar la ventana
+            stage.show();
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostrarError("Error", "No se pudo abrir el módulo de chat: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void abrirChat() {
+        try {
+            Usuario usuario = getUsuarioActual();
+            if (usuario != null) {
+                // Iniciar el servidor primero y esperar un momento
+                ServidorAppChat servidor = ServidorAppChat.getInstance();
+                servidor.iniciar();
+                
+                // Pequeña pausa para asegurar que el servidor está listo
+                Thread.sleep(500);
+                
+                // Configurar el estilo de la ventana antes de cargar el FXML
+                Stage stage = new Stage();
+                stage.initStyle(StageStyle.TRANSPARENT);
+                
+                FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/chatPanel.fxml"));
+                Scene scene = new Scene(fxmlLoader.load());
+                scene.setFill(null); // Hacer el fondo transparente
+                stage.setScene(scene);
+                
+                VentanaChat ventanaChat = fxmlLoader.getController();
+                ventanaChat.setUsuarioActual(usuario.getId().toString(), usuario.getNombre());
+                ventanaChat.habilitarRedimension(stage, scene);
+                
+                stage.show();
+            } else {
+                mostrarError("Error", "No hay usuario activo en la sesión");
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            mostrarError("Error", "Error al abrir el chat: " + e.getMessage());
         }
     }
 }

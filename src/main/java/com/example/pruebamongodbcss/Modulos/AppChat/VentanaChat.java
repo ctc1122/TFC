@@ -1,19 +1,14 @@
 package com.example.pruebamongodbcss.Modulos.AppChat;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 
-import javafx.event.ActionEvent;
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -21,264 +16,305 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputDialog;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class VentanaChat {
-
-    @FXML
-    private VBox contenedorMensajes;
-
-    @FXML
-    private TextField campoMensaje;
-
-    @FXML
-    private Button btnAdjuntar;
-
-
-    //-----------
-    //BLOQUE DE LLAMADA
-    //-----------
-
-    @FXML
-    private Button btnLlamar;
-
-    @FXML
-    private ScrollPane scrollPane;
-
-    private AudioSenderUDP emisor;
-    private AudioReceiverUDP receptor;
-    private boolean enLlamada = false;
-
-    @FXML
-    private ListView<String> listaContactos;
-
-
-    @FXML private Button btnCerrar;
-    @FXML private Button btnMaximizar;
+    @FXML private VBox contenedorMensajes;
+    @FXML private TextField campoMensaje;
+    @FXML private Button btnEnviar;
+    @FXML private Button btnAdjuntar;
+    @FXML private ListView<String> listaContactos;
+    @FXML private Circle btnCerrar;
+    @FXML private Circle btnMaximizar;
+    @FXML private Circle btnMinimizar;
     @FXML private HBox barraTitulo;
+    @FXML private ScrollPane scrollPane;
+    @FXML private Label lblNoUsuarios;
 
     private double xOffset = 0;
     private double yOffset = 0;
-
+    private ChatClient chatClient;
+    private String usuarioSeleccionado;
+    private String idUsuarioSeleccionado;
+    private final ObservableList<String> contactos = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
-        // Drag & Drop de archivos
-        contenedorMensajes.setOnDragOver(event -> {
-            if (event.getGestureSource() != contenedorMensajes && event.getDragboard().hasFiles()) {
-                event.acceptTransferModes(TransferMode.COPY);
-            }
-            event.consume();
-        });
+        configurarInterfaz();
+        listaContactos.setItems(contactos);
+        
+        // Configurar el mensaje de no usuarios
+        lblNoUsuarios = new Label("No hay usuarios conectados");
+        lblNoUsuarios.getStyleClass().add("mensaje-sistema");
+        lblNoUsuarios.setVisible(false);
+        contenedorMensajes.getChildren().add(lblNoUsuarios);
+        
+        // Configurar el drag and drop
+        configurarDragAndDrop();
+    }
 
-        contenedorMensajes.setOnDragDropped(event -> {
-            Dragboard db = event.getDragboard();
-            if (db.hasFiles()) {
-                for (File archivo : db.getFiles()) {
-                    mostrarArchivoEnviado(archivo);
-                }
-            }
-            event.setDropCompleted(true);
-            event.consume();
-        });
-
+    private void configurarInterfaz() {
+        // Configurar envío de mensajes
         campoMensaje.setOnAction(e -> enviarMensaje());
+        btnEnviar.setOnAction(e -> enviarMensaje());
+        btnAdjuntar.setOnAction(e -> mostrarSelectorArchivos());
 
-        btnAdjuntar.setOnAction(e -> {
-            FileChooser fileChooser = new FileChooser();
-            File archivo = fileChooser.showOpenDialog(null);
-            if (archivo != null) {
-                mostrarArchivoEnviado(archivo);
+        // Configurar botones de ventana
+        btnCerrar.setOnMouseClicked(e -> {
+            if (chatClient != null) {
+                chatClient.desconectar();
             }
+            ((Stage) btnCerrar.getScene().getWindow()).close();
         });
 
-
-        //VENTANA FUNCIONALIDAD
-        // Acción de cerrar
-        btnCerrar.setOnAction(e -> ((Stage) btnCerrar.getScene().getWindow()).close());
-
-        btnMaximizar.setOnAction(e -> {
+        btnMaximizar.setOnMouseClicked(e -> {
             Stage stage = (Stage) btnMaximizar.getScene().getWindow();
             stage.setMaximized(!stage.isMaximized());
         });
 
+        btnMinimizar.setOnMouseClicked(e -> {
+            Stage stage = (Stage) btnMinimizar.getScene().getWindow();
+            stage.setIconified(true);
+        });
 
-        // Arrastrar ventana
+        // Configurar arrastre de ventana
         barraTitulo.setOnMousePressed(event -> {
             xOffset = event.getSceneX();
             yOffset = event.getSceneY();
         });
+
         barraTitulo.setOnMouseDragged(event -> {
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setX(event.getScreenX() - xOffset);
             stage.setY(event.getScreenY() - yOffset);
         });
 
-        btnLlamar.setOnAction(e -> toggleLlamada());
-
-        //
-        //PRUEBA DE LISTA CONTACTOS
-        //
-        listaContactos.getItems().addAll("Alice", "Bob", "Charlie");
+        // Configurar selección de contactos
         listaContactos.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
-                Label cambio = new Label("🔄 Cambiaste a chatear con: " + newVal);
-                cambio.getStyleClass().add("mensaje-ajeno");
-                contenedorMensajes.getChildren().add(cambio);
-
-                // En el futuro: aquí cambiarías el destino del mensaje o socket
+                String[] partes = newVal.split(" \\(ID: ");
+                usuarioSeleccionado = partes[0];
+                idUsuarioSeleccionado = partes[1].replace(")", "");
+                mostrarMensajeSistema("Ahora estás chateando con: " + usuarioSeleccionado);
+                campoMensaje.setDisable(false);
+                btnEnviar.setDisable(false);
+                btnAdjuntar.setDisable(false);
             }
         });
 
+        // Deshabilitar inicialmente el campo de mensaje y botones
+        campoMensaje.setDisable(true);
+        btnEnviar.setDisable(true);
+        btnAdjuntar.setDisable(true);
+    }
 
+    private void configurarDragAndDrop() {
+        contenedorMensajes.setOnDragOver(event -> {
+            if (event.getGestureSource() != contenedorMensajes && event.getDragboard().hasFiles()) {
+                event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+                contenedorMensajes.getStyleClass().add("drag-over");
+            }
+            event.consume();
+        });
+
+        contenedorMensajes.setOnDragExited(event -> {
+            contenedorMensajes.getStyleClass().remove("drag-over");
+            event.consume();
+        });
+
+        contenedorMensajes.setOnDragDropped(event -> {
+            Dragboard db = event.getDragboard();
+            boolean success = false;
+            
+            if (db.hasFiles() && usuarioSeleccionado != null) {
+                File file = db.getFiles().get(0);
+                chatClient.enviarArchivo(idUsuarioSeleccionado, usuarioSeleccionado, file);
+                mostrarMensajeEnviado("Archivo enviado: " + file.getName());
+                success = true;
+            } else if (usuarioSeleccionado == null) {
+                mostrarMensajeSistema("Selecciona un usuario para enviar archivos");
+            }
+            
+            event.setDropCompleted(success);
+            contenedorMensajes.getStyleClass().remove("drag-over");
+            event.consume();
+        });
+    }
+
+    public void setUsuarioActual(String userId, String userName) {
+        try {
+            chatClient = new ChatClient(userId, userName);
+            
+            // Configurar manejadores de eventos
+            chatClient.addMessageHandler(this::procesarMensajeRecibido);
+            chatClient.addUserListHandler(usuarios -> {
+                Platform.runLater(() -> {
+                    contactos.clear();
+                    for (ChatClient.Usuario usuario : usuarios) {
+                        if (!usuario.id.equals(userId)) {
+                            contactos.add(usuario.nombre + " (ID: " + usuario.id + ")");
+                        }
+                    }
+                    
+                    // Mostrar/ocultar mensaje de no usuarios
+                    boolean hayUsuarios = !contactos.isEmpty();
+                    lblNoUsuarios.setVisible(!hayUsuarios);
+                    if (!hayUsuarios) {
+                        campoMensaje.setDisable(true);
+                        btnEnviar.setDisable(true);
+                        btnAdjuntar.setDisable(true);
+                    }
+                });
+            });
+
+            // Conectar al servidor
+            chatClient.conectar();
+            mostrarMensajeSistema("Conectado al servidor de chat");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostrarMensajeSistema("Error al conectar al servidor: " + e.getMessage());
+        }
     }
 
     private void enviarMensaje() {
-        String texto = campoMensaje.getText().trim();
-        if (!texto.isEmpty()) {
-            Label mensaje = new Label(texto);
-            mensaje.getStyleClass().add("mensaje-propio");
-            mensaje.setWrapText(true);
-            mensaje.setMaxWidth(350); // Ajusta si quieres que el texto se vea más corto/largo
-
-            HBox burbuja = new HBox(mensaje);
-            burbuja.setAlignment(Pos.CENTER_RIGHT);
-            VBox.setMargin(burbuja, new Insets(5));
-
-            contenedorMensajes.getChildren().add(burbuja);
+        String mensaje = campoMensaje.getText().trim();
+        if (!mensaje.isEmpty() && usuarioSeleccionado != null) {
+            chatClient.enviarMensajePrivado(idUsuarioSeleccionado, usuarioSeleccionado, mensaje);
+            mostrarMensajeEnviado(mensaje);
             campoMensaje.clear();
         }
     }
 
-    private void mostrarArchivoEnviado(File archivo) {
-        Label mensaje = new Label("📎 Tú adjuntaste: " + archivo.getName());
-        mensaje.getStyleClass().add("mensaje-propio");
-        mensaje.setWrapText(true);
-        mensaje.setMaxWidth(300);
-
-        Button btnDescargar = new Button("⬇");
-        btnDescargar.setOnAction(e -> {
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setInitialFileName(archivo.getName());
-            File destino = fileChooser.showSaveDialog(null);
-            if (destino != null) {
-                copiarArchivo(archivo, destino);
+    private void procesarMensajeRecibido(ChatMessage mensaje) {
+        Platform.runLater(() -> {
+            switch (mensaje.getTipo()) {
+                case MENSAJE_PRIVADO:
+                    mostrarMensajeRecibido(mensaje.getRemitente() + ": " + mensaje.getContenido());
+                    break;
+                case ARCHIVO:
+                    String nombreArchivo = mensaje.getNombreArchivo();
+                    mostrarMensajeRecibido(mensaje.getRemitente() + " envió un archivo: " + nombreArchivo);
+                    
+                    // Guardar el archivo en la carpeta de descargas
+                    String userHome = System.getProperty("user.home");
+                    File downloadsDir = new File(userHome, "Downloads");
+                    File archivoDestino = new File(downloadsDir, nombreArchivo);
+                    
+                    try {
+                        java.nio.file.Files.write(archivoDestino.toPath(), mensaje.getArchivoData());
+                        mostrarMensajeSistema("Archivo guardado en: " + archivoDestino.getAbsolutePath());
+                    } catch (IOException e) {
+                        mostrarMensajeSistema("Error al guardar el archivo: " + e.getMessage());
+                    }
+                    break;
             }
         });
-
-        HBox caja = new HBox(10, mensaje, btnDescargar);
-        caja.setAlignment(Pos.CENTER_RIGHT);
-        VBox.setMargin(caja, new Insets(5));
-
-        contenedorMensajes.getChildren().add(caja);
     }
 
-    public void mostrarArchivoRecibido(String nombreArchivo) {
-        Label mensaje = new Label("📎 Archivo recibido: " + nombreArchivo);
-        mensaje.getStyleClass().add("mensaje-ajeno");
-        mensaje.setWrapText(true);
-        mensaje.setMaxWidth(300);
+    private void mostrarMensajeSistema(String mensaje) {
+        Platform.runLater(() -> {
+            Label mensajeLabel = new Label(mensaje);
+            mensajeLabel.getStyleClass().add("mensaje-sistema");
+            mensajeLabel.setWrapText(true);
+            mensajeLabel.setMaxWidth(350);
 
-        Button btnDescargar = new Button("⬇");
-        btnDescargar.setOnAction(e -> {
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setInitialFileName(nombreArchivo);
-            File destino = fileChooser.showSaveDialog(null);
-            if (destino != null) {
-                simularDescarga(nombreArchivo, destino);
-            }
+            HBox burbuja = new HBox(mensajeLabel);
+            burbuja.setAlignment(Pos.CENTER);
+            VBox.setMargin(burbuja, new Insets(5));
+
+            contenedorMensajes.getChildren().add(burbuja);
+            scrollPane.setVvalue(1.0);
         });
-
-        HBox caja = new HBox(10, mensaje, btnDescargar);
-        caja.setAlignment(Pos.CENTER_LEFT);
-        VBox.setMargin(caja, new Insets(5));
-
-        contenedorMensajes.getChildren().add(caja);
     }
 
-    private void simularDescarga(String nombreArchivo, File destino) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(destino))) {
-            writer.write("Contenido simulado de: " + nombreArchivo);
-        } catch (IOException e) {
-            e.printStackTrace();
+    private void mostrarMensajeEnviado(String mensaje) {
+        Label mensajeLabel = new Label("Tú: " + mensaje);
+        mensajeLabel.getStyleClass().add("mensaje-propio");
+        mensajeLabel.setWrapText(true);
+        mensajeLabel.setMaxWidth(350);
+
+        HBox burbuja = new HBox(mensajeLabel);
+        burbuja.setAlignment(Pos.CENTER_RIGHT);
+        VBox.setMargin(burbuja, new Insets(5));
+
+        contenedorMensajes.getChildren().add(burbuja);
+        scrollPane.setVvalue(1.0);
+    }
+
+    private void mostrarMensajeRecibido(String mensaje) {
+        Label mensajeLabel = new Label(mensaje);
+        mensajeLabel.getStyleClass().add("mensaje-ajeno");
+        mensajeLabel.setWrapText(true);
+        mensajeLabel.setMaxWidth(350);
+
+        HBox burbuja = new HBox(mensajeLabel);
+        burbuja.setAlignment(Pos.CENTER_LEFT);
+        VBox.setMargin(burbuja, new Insets(5));
+
+        contenedorMensajes.getChildren().add(burbuja);
+        scrollPane.setVvalue(1.0);
+    }
+
+    private void mostrarSelectorArchivos() {
+        if (usuarioSeleccionado == null) {
+            mostrarMensajeSistema("Selecciona un usuario para enviar archivos");
+            return;
         }
-    }
 
-    private void copiarArchivo(File origen, File destino) {
-        try (InputStream in = new FileInputStream(origen);
-             OutputStream out = new FileOutputStream(destino)) {
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-            while ((bytesRead = in.read(buffer)) != -1) {
-                out.write(buffer, 0, bytesRead);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Seleccionar archivo");
+        
+        // Configurar directorio inicial a Descargas
+        String userHome = System.getProperty("user.home");
+        File downloadsDir = new File(userHome, "Downloads");
+        if (downloadsDir.exists()) {
+            fileChooser.setInitialDirectory(downloadsDir);
+        }
+        
+        // Configurar filtros de archivo
+        fileChooser.getExtensionFilters().addAll(
+            new FileChooser.ExtensionFilter("Todos los archivos", "*.*"),
+            new FileChooser.ExtensionFilter("Imágenes", "*.png", "*.jpg", "*.gif", "*.bmp"),
+            new FileChooser.ExtensionFilter("Documentos", "*.pdf", "*.doc", "*.docx", "*.txt")
+        );
+
+        Stage stage = (Stage) btnAdjuntar.getScene().getWindow();
+        File selectedFile = fileChooser.showOpenDialog(stage);
+        
+        if (selectedFile != null) {
+            // Mostrar mensaje de envío
+            mostrarMensajeSistema("Enviando archivo: " + selectedFile.getName());
+            
+            // Enviar el archivo
+            chatClient.enviarArchivo(idUsuarioSeleccionado, usuarioSeleccionado, selectedFile);
+            
+            // Mostrar mensaje en el chat
+            mostrarMensajeEnviado("Archivo enviado: " + selectedFile.getName());
         }
     }
 
     public void habilitarRedimension(Stage stage, Scene scene) {
         final int borde = 8;
-
         scene.setOnMouseMoved(event -> {
             if (event.getSceneX() >= scene.getWidth() - borde && event.getSceneY() >= scene.getHeight() - borde) {
-                scene.setCursor(Cursor.SE_RESIZE);
+                scene.setCursor(javafx.scene.Cursor.SE_RESIZE);
             } else {
-                scene.setCursor(Cursor.DEFAULT);
+                scene.setCursor(javafx.scene.Cursor.DEFAULT);
             }
         });
 
         scene.setOnMouseDragged(event -> {
-            if (scene.getCursor() == Cursor.SE_RESIZE) {
+            if (scene.getCursor() == javafx.scene.Cursor.SE_RESIZE) {
                 stage.setWidth(event.getSceneX());
                 stage.setHeight(event.getSceneY());
             }
         });
-    }
-
-
-    private void toggleLlamada() {
-        if (!enLlamada) {
-            TextInputDialog dialog = new TextInputDialog("127.0.0.1");
-            dialog.setTitle("Iniciar llamada");
-            dialog.setHeaderText("Introduce la IP del destinatario:");
-            dialog.setContentText("IP:");
-            dialog.showAndWait().ifPresent(ip -> {
-                receptor = new AudioReceiverUDP(50000);
-                receptor.start();
-
-                emisor = new AudioSenderUDP(ip, 50000);
-                emisor.start();
-
-                enLlamada = true;
-                btnLlamar.setText("❌ Colgar");
-
-                Label llamando = new Label("📡 Llamando a " + ip);
-                llamando.getStyleClass().add("mensaje-propio");
-                contenedorMensajes.getChildren().add(llamando);
-            });
-        } else {
-            emisor.terminar();
-            receptor.terminar();
-            emisor = null;
-            receptor = null;
-            enLlamada = false;
-            btnLlamar.setText("📞 Llamar");
-
-            Label fin = new Label("📴 Llamada finalizada");
-            fin.getStyleClass().add("mensaje-propio");
-            contenedorMensajes.getChildren().add(fin);
-        }
-    }
-
-    @FXML
-    private void enviarMensajeBoton(ActionEvent event) {
-        enviarMensaje();
     }
 }

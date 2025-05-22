@@ -1,78 +1,287 @@
-/* === FONDO GENERAL === */
-.root {
-    -fx-background-color: linear-gradient(to bottom, #0f0f1c, #1a1a2e);
-    -fx-text-fill: white;
+/* === VARIABLES === */
+* {
+    -fx-dark-bg: #1e1e1e;
+    -fx-dark-bg-alt: #2d2d2d;
+    -fx-dark-text: white;
+    -fx-dark-text-alt: #808080;
+    -fx-accent: #4e60ff;
+    -fx-accent-hover: #6a79ff;
+    
+    -fx-light-bg: #ffffff;
+    -fx-light-bg-alt: #f5f5f5;
+    -fx-light-text: #2d2d2d;
+    -fx-light-text-alt: #666666;
 }
 
-/* ScrollPane */
-.chat-scroll {
+/* === VENTANA PRINCIPAL === */
+.window-root {
     -fx-background-color: transparent;
-    -fx-border-color: transparent;
+    -fx-border-width: 0;
+}
+
+/* === FONDO GENERAL === */
+.root {
+    -fx-background-color: -fx-dark-bg;
+    -fx-text-fill: -fx-dark-text;
+    -fx-background-radius: 10;
+}
+
+.root:light {
+    -fx-background-color: -fx-light-bg;
+    -fx-text-fill: -fx-light-text;
 }
 
 /* === ÁREA DE TEXTO === */
 .text-field {
-    -fx-background-color: rgba(255, 255, 255, 0.05);
-    -fx-text-fill: white;
-    -fx-prompt-text-fill: #888;
+    -fx-background-color: #404040;
+    -fx-text-fill: -fx-dark-text;
+    -fx-prompt-text-fill: -fx-dark-text-alt;
+    -fx-padding: 10;
     -fx-background-radius: 20;
-    -fx-border-color: transparent;
-    -fx-padding: 8 14;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 0);
+}
+
+.text-field:light {
+    -fx-background-color: -fx-light-bg-alt;
+    -fx-text-fill: -fx-light-text;
+    -fx-prompt-text-fill: -fx-light-text-alt;
 }
 
 /* === BOTONES === */
 .button {
-    -fx-background-color: #4e60ff;
+    -fx-background-color: -fx-accent;
     -fx-text-fill: white;
     -fx-background-radius: 20;
     -fx-font-weight: bold;
     -fx-cursor: hand;
-    -fx-padding: 6 16;
+    -fx-padding: 8 20;
+    -fx-effect: dropshadow(gaussian, rgba(78,96,255,0.3), 5, 0, 0, 0);
 }
 
 .button:hover {
-    -fx-background-color: #6a79ff;
+    -fx-background-color: -fx-accent-hover;
+    -fx-effect: dropshadow(gaussian, rgba(78,96,255,0.5), 8, 0, 0, 0);
 }
 
-/* === MENSAJES PROPIOS === */
+/* === BOTONES DE VENTANA ESTILO MAC === */
+.window-button {
+    -fx-stroke: none;
+    -fx-cursor: hand;
+}
+
+.close-button {
+    -fx-fill: #ff5f56;
+}
+
+.minimize-button {
+    -fx-fill: #ffbd2e;
+}
+
+.maximize-button {
+    -fx-fill: #27c93f;
+}
+
+.window-button:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 0);
+}
+
+/* === BOTÓN DE ADJUNTAR === */
+.boton-adjuntar {
+    -fx-background-color: transparent;
+    -fx-background-image: url('/Iconos/clip.png');
+    -fx-background-size: 20px;
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center;
+    -fx-min-width: 30px;
+    -fx-min-height: 30px;
+    -fx-padding: 0;
+    -fx-effect: none;
+}
+
+.boton-adjuntar:hover {
+    -fx-background-color: rgba(78,96,255,0.1);
+}
+
+/* === MENSAJES === */
 .mensaje-propio {
-    -fx-background-color: #3949ab;
+    -fx-background-color: -fx-accent;
     -fx-text-fill: white;
-    -fx-padding: 10;
-    -fx-background-radius: 20;
-    -fx-font-size: 13px;
+    -fx-padding: 12;
+    -fx-background-radius: 20 20 0 20;
+    -fx-max-width: 350;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 0);
 }
 
-/* === MENSAJES RECIBIDOS === */
 .mensaje-ajeno {
-    -fx-background-color: #2b2b3d;
-    -fx-text-fill: white;
-    -fx-padding: 10;
-    -fx-background-radius: 20;
-    -fx-font-size: 13px;
+    -fx-background-color: #404040;
+    -fx-text-fill: -fx-dark-text;
+    -fx-padding: 12;
+    -fx-background-radius: 20 20 20 0;
+    -fx-max-width: 350;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 0);
 }
 
-/* VBox mensajes */
-VBox {
+.mensaje-ajeno:light {
+    -fx-background-color: -fx-light-bg-alt;
+    -fx-text-fill: -fx-light-text;
+}
+
+.mensaje-sistema {
+    -fx-background-color: -fx-dark-bg-alt;
+    -fx-text-fill: -fx-dark-text-alt;
+    -fx-padding: 8 15;
+    -fx-background-radius: 15;
+    -fx-font-style: italic;
+    -fx-alignment: center;
+    -fx-max-width: infinity;
+}
+
+.mensaje-sistema:light {
+    -fx-background-color: -fx-light-bg-alt;
+    -fx-text-fill: -fx-light-text-alt;
+}
+
+/* === BARRA DE TÍTULO === */
+.barra-titulo {
+    -fx-background-color: -fx-dark-bg-alt;
+    -fx-padding: 10 15;
     -fx-spacing: 10;
-    -fx-padding: 10;
-    -fx-background-color: transparent; /* quita el fondo gris */
+    -fx-background-radius: 10 10 0 0;
 }
 
+.barra-titulo:light {
+    -fx-background-color: -fx-light-bg-alt;
+}
 
-
-.boton-circulo {
-    -fx-background-color: #ff5f56; /* rojo estilo Mac */
-    -fx-text-fill: white;
+.titulo-ventana {
+    -fx-text-fill: -fx-dark-text;
+    -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-background-radius: 50%;
-    -fx-min-width: 20px;
-    -fx-min-height: 20px;
-    -fx-max-width: 20px;
-    -fx-max-height: 20px;
+    -fx-padding: 0 0 0 10;
+}
+
+.titulo-ventana:light {
+    -fx-text-fill: -fx-light-text;
+}
+
+/* === PANEL LATERAL === */
+.panel-lateral {
+    -fx-background-color: -fx-dark-bg-alt;
+    -fx-padding: 15;
+}
+
+.panel-lateral:light {
+    -fx-background-color: -fx-light-bg-alt;
+}
+
+.titulo-seccion {
+    -fx-text-fill: -fx-dark-text;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.titulo-seccion:light {
+    -fx-text-fill: -fx-light-text;
+}
+
+/* === LISTA DE CONTACTOS === */
+.lista-contactos {
+    -fx-background-color: -fx-dark-bg-alt;
+    -fx-control-inner-background: -fx-dark-bg-alt;
+    -fx-background-radius: 10;
+}
+
+.lista-contactos:light {
+    -fx-background-color: -fx-light-bg-alt;
+    -fx-control-inner-background: -fx-light-bg-alt;
+}
+
+.lista-contactos .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -fx-dark-text;
+    -fx-padding: 10 15;
+}
+
+.lista-contactos .list-cell:light {
+    -fx-text-fill: -fx-light-text;
+}
+
+.lista-contactos .list-cell:selected {
+    -fx-background-color: rgba(78,96,255,0.2);
+    -fx-background-radius: 8;
+}
+
+.lista-contactos .list-cell:hover {
+    -fx-background-color: rgba(78,96,255,0.1);
+    -fx-background-radius: 8;
+}
+
+/* === PANEL DE CHAT === */
+.panel-chat {
+    -fx-background-color: -fx-dark-bg;
+    -fx-padding: 15;
+}
+
+.panel-chat:light {
+    -fx-background-color: -fx-light-bg;
+}
+
+/* === SCROLL PANE === */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
     -fx-padding: 0;
 }
 
-.boton-circulo:hover {
-    -fx-background-color: #e0483e;
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-padding: 0 5;
+}
+
+.scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: rgba(255,255,255,0.2);
+    -fx-background-radius: 5;
+}
+
+.scroll-pane .scroll-bar:vertical .thumb:light {
+    -fx-background-color: rgba(0,0,0,0.1);
+}
+
+/* === PANEL DE ENTRADA === */
+.panel-entrada {
+    -fx-background-color: -fx-dark-bg-alt;
+    -fx-padding: 15;
+    -fx-background-radius: 10;
+    -fx-spacing: 15;
+}
+
+.panel-entrada:light {
+    -fx-background-color: -fx-light-bg-alt;
+}
+
+/* === SPLIT PANE === */
+.split-pane {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.split-pane-divider {
+    -fx-background-color: rgba(255,255,255,0.1);
+    -fx-padding: 0 1;
+}
+
+.split-pane-divider:light {
+    -fx-background-color: rgba(0,0,0,0.1);
+}
+
+/* === EFECTOS DE DRAG AND DROP === */
+.contenedor-mensajes.drag-over {
+    -fx-border-color: -fx-accent;
+    -fx-border-width: 2;
+    -fx-border-radius: 10;
+    -fx-border-style: dashed;
 }
