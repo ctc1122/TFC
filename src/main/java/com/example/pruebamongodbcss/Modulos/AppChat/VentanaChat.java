@@ -16,9 +16,11 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
@@ -57,6 +59,17 @@ public class VentanaChat {
         
         // Configurar el drag and drop
         configurarDragAndDrop();
+        
+        // Hacer visible el botón de adjuntar
+        if (btnAdjuntar != null) {
+            btnAdjuntar.setVisible(true);
+            
+            // Configurar icono para el botón adjuntar
+            Region iconoAdjuntar = new Region();
+            iconoAdjuntar.getStyleClass().add("icono-adjuntar");
+            btnAdjuntar.setGraphic(iconoAdjuntar);
+            btnAdjuntar.setTooltip(new Tooltip("Adjuntar archivo"));
+        }
     }
 
     private void configurarInterfaz() {
@@ -134,8 +147,7 @@ public class VentanaChat {
             
             if (db.hasFiles() && usuarioSeleccionado != null) {
                 File file = db.getFiles().get(0);
-                chatClient.enviarArchivo(idUsuarioSeleccionado, usuarioSeleccionado, file);
-                mostrarMensajeEnviado("Archivo enviado: " + file.getName());
+                enviarArchivo(file);
                 success = true;
             } else if (usuarioSeleccionado == null) {
                 mostrarMensajeSistema("Selecciona un usuario para enviar archivos");
@@ -199,20 +211,7 @@ public class VentanaChat {
                     mostrarMensajeRecibido(mensaje.getRemitente() + ": " + mensaje.getContenido());
                     break;
                 case ARCHIVO:
-                    String nombreArchivo = mensaje.getNombreArchivo();
-                    mostrarMensajeRecibido(mensaje.getRemitente() + " envió un archivo: " + nombreArchivo);
-                    
-                    // Guardar el archivo en la carpeta de descargas
-                    String userHome = System.getProperty("user.home");
-                    File downloadsDir = new File(userHome, "Downloads");
-                    File archivoDestino = new File(downloadsDir, nombreArchivo);
-                    
-                    try {
-                        java.nio.file.Files.write(archivoDestino.toPath(), mensaje.getArchivoData());
-                        mostrarMensajeSistema("Archivo guardado en: " + archivoDestino.getAbsolutePath());
-                    } catch (IOException e) {
-                        mostrarMensajeSistema("Error al guardar el archivo: " + e.getMessage());
-                    }
+                    procesarArchivoRecibido(mensaje);
                     break;
             }
         });
@@ -289,14 +288,148 @@ public class VentanaChat {
         File selectedFile = fileChooser.showOpenDialog(stage);
         
         if (selectedFile != null) {
-            // Mostrar mensaje de envío
-            mostrarMensajeSistema("Enviando archivo: " + selectedFile.getName());
+            enviarArchivo(selectedFile);
+        }
+    }
+
+    private void enviarArchivo(File archivo) {
+        if (!archivo.exists() || !archivo.isFile()) {
+            mostrarMensajeSistema("Error: El archivo no existe o no es válido");
+            return;
+        }
+
+        // Mostrar mensaje de envío
+        mostrarMensajeSistema("Enviando archivo: " + archivo.getName());
+        
+        // Crear copia en la carpeta de archivos enviados
+        String userHome = System.getProperty("user.home");
+        File sentDir = new File(userHome, "ChatFiles/Sent");
+        sentDir.mkdirs();
+        
+        try {
+            // Copiar archivo a la carpeta de enviados
+            File archivoCopiado = new File(sentDir, archivo.getName());
+            java.nio.file.Files.copy(
+                archivo.toPath(), 
+                archivoCopiado.toPath(),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING
+            );
             
             // Enviar el archivo
-            chatClient.enviarArchivo(idUsuarioSeleccionado, usuarioSeleccionado, selectedFile);
+            chatClient.enviarArchivo(idUsuarioSeleccionado, usuarioSeleccionado, archivo);
             
-            // Mostrar mensaje en el chat
-            mostrarMensajeEnviado("Archivo enviado: " + selectedFile.getName());
+            // Crear el contenedor del mensaje
+            HBox burbuja = new HBox(10); // 10px de espacio entre elementos
+            burbuja.setAlignment(Pos.CENTER_RIGHT);
+            VBox.setMargin(burbuja, new Insets(5));
+            burbuja.getStyleClass().add("mensaje-archivo-propio");
+
+            // Crear el contenedor para el texto
+            VBox textoContainer = new VBox(2); // 2px de espacio vertical
+            
+            // Etiqueta "Archivo enviado"
+            Label tipoLabel = new Label("Archivo enviado");
+            tipoLabel.getStyleClass().add("mensaje-archivo-tipo");
+            
+            // Nombre del archivo
+            Label nombreLabel = new Label(archivo.getName());
+            nombreLabel.getStyleClass().add("mensaje-archivo-nombre");
+            
+            textoContainer.getChildren().addAll(tipoLabel, nombreLabel);
+
+            // Crear botón de descarga con icono
+            Button btnDescargar = crearBotonDescarga();
+            btnDescargar.setOnAction(e -> abrirArchivo(archivoCopiado));
+
+            // Añadir elementos a la burbuja
+            burbuja.getChildren().addAll(textoContainer, btnDescargar);
+            
+            // Añadir la burbuja al chat
+            contenedorMensajes.getChildren().add(burbuja);
+            scrollPane.setVvalue(1.0);
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostrarMensajeSistema("Error al enviar el archivo: " + e.getMessage());
+        }
+    }
+
+    private void procesarArchivoRecibido(ChatMessage mensaje) {
+        String nombreArchivo = mensaje.getNombreArchivo();
+        
+        // Crear directorio para archivos recibidos
+        String userHome = System.getProperty("user.home");
+        File receivedDir = new File(userHome, "ChatFiles/Received");
+        receivedDir.mkdirs();
+        
+        File archivoDestino = new File(receivedDir, nombreArchivo);
+        
+        try {
+            // Guardar el archivo
+            java.nio.file.Files.write(archivoDestino.toPath(), mensaje.getArchivoData());
+            
+            // Mostrar mensaje con el archivo
+            Platform.runLater(() -> {
+                // Crear el contenedor del mensaje
+                HBox burbuja = new HBox(10); // 10px de espacio entre elementos
+                burbuja.setAlignment(Pos.CENTER_LEFT);
+                VBox.setMargin(burbuja, new Insets(5));
+                burbuja.getStyleClass().add("mensaje-archivo-ajeno");
+
+                // Crear el contenedor para el texto
+                VBox textoContainer = new VBox(2); // 2px de espacio vertical
+                
+                // Remitente
+                Label remitenteLabel = new Label(mensaje.getRemitente());
+                remitenteLabel.getStyleClass().add("mensaje-archivo-remitente");
+                
+                // Nombre del archivo
+                Label nombreLabel = new Label(nombreArchivo);
+                nombreLabel.getStyleClass().add("mensaje-archivo-nombre");
+                
+                textoContainer.getChildren().addAll(remitenteLabel, nombreLabel);
+
+                // Crear botón de descarga con icono
+                Button btnDescargar = crearBotonDescarga();
+                btnDescargar.setOnAction(e -> abrirArchivo(archivoDestino));
+
+                // Añadir elementos a la burbuja
+                burbuja.getChildren().addAll(textoContainer, btnDescargar);
+                
+                // Añadir la burbuja al chat
+                contenedorMensajes.getChildren().add(burbuja);
+                scrollPane.setVvalue(1.0);
+                
+                // Notificación de sistema
+                mostrarMensajeSistema("Archivo guardado en: " + archivoDestino.getAbsolutePath());
+            });
+        } catch (IOException e) {
+            Platform.runLater(() -> 
+                mostrarMensajeSistema("Error al guardar el archivo: " + e.getMessage())
+            );
+        }
+    }
+
+    private Button crearBotonDescarga() {
+        Button btnDescargar = new Button();
+        btnDescargar.getStyleClass().add("boton-descarga");
+        
+        // Crear el icono de flecha hacia abajo
+        Region iconoFlecha = new Region();
+        iconoFlecha.getStyleClass().add("icono-flecha-descarga");
+        
+        // Configurar el botón
+        btnDescargar.setGraphic(iconoFlecha);
+        btnDescargar.setTooltip(new Tooltip("Descargar archivo"));
+        
+        return btnDescargar;
+    }
+
+    private void abrirArchivo(File archivo) {
+        try {
+            java.awt.Desktop.getDesktop().open(archivo);
+        } catch (IOException e) {
+            mostrarMensajeSistema("Error al abrir el archivo: " + e.getMessage());
         }
     }
 
