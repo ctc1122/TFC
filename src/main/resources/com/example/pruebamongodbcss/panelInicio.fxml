@@ -44,7 +44,7 @@
                      <JFXButton fx:id="btnFichaje" styleClass="itemMenu" prefWidth="200" text="Fichaje" alignment="BASELINE_LEFT" />
                      <JFXButton fx:id="btnEmpresa" styleClass="itemMenu" prefWidth="200" text="Empresa" alignment="BASELINE_LEFT" />
                      <JFXButton fx:id="btnGoogleCalendar" styleClass="itemMenu" prefWidth="200" text="Google Calendar" alignment="BASELINE_LEFT" />
-                     <JFXButton fx:id="btnChat" text="Chat" styleClass="itemMenu" >
+                     <JFXButton fx:id="btnChat" text="Chat" styleClass="itemMenu" alignment="BASELINE_LEFT" prefWidth="200"/>
                         <graphic>
                            <ImageView fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
                               <Image url="@../../../Iconos/iconChat.png"/>
@@ -103,6 +103,7 @@
                   <JFXButton fx:id="btnFichajeCarousel" styleClass="boton-carrusel" prefWidth="50" prefHeight="50" visible="false" />
                   <JFXButton fx:id="btnEmpresaCarousel" styleClass="boton-carrusel" prefWidth="50" prefHeight="50" visible="false" />
                   <JFXButton fx:id="btnGoogleCalendarCarousel" styleClass="boton-carrusel" prefWidth="50" prefHeight="50" visible="false" />
+                  <JFXButton fx:id="btnChatCarousel" styleClass="boton-carrusel" prefWidth="50" prefHeight="50" visible="false" />
                   <JFXButton fx:id="btnSalirCarousel" styleClass="boton-carrusel" prefWidth="50" prefHeight="50" visible="false" />
                </children>
             </Pane>

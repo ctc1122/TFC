@@ -53,7 +53,7 @@ public class PanelInicioController implements Initializable {
     private JFXButton btnMenuPrincipal, btnAnimales, btnFichaje, btnSalir, btnToggleSidebar, but_clientes, btnEmpresa, btnChicha, btnGoogleCalendar, btnEventCounter, btnChat;
 
     @FXML
-    private JFXButton btnMenuPrincipalCarousel, btnAnimalesCarousel, btnFichajeCarousel, btnSalirCarousel, but_clientesCarousel, btnEmpresaCarousel, btnGoogleCalendarCarousel;
+    private JFXButton btnMenuPrincipalCarousel, btnAnimalesCarousel, btnFichajeCarousel, btnSalirCarousel, but_clientesCarousel, btnEmpresaCarousel, btnGoogleCalendarCarousel, btnChatCarousel;
 
     @FXML
     private Label lblClinica;
@@ -133,6 +133,7 @@ public class PanelInicioController implements Initializable {
             setButtonIcon(btnEmpresa, "/Iconos/iconAdministrador2.png", 35, 38);
             setButtonIcon(btnSalir, "/Iconos/iconSalir.png", 32, 32);
             setButtonIcon(btnGoogleCalendar, "/Iconos/iconClock2.png", 32, 32);
+            setButtonIcon(btnChat, "/Iconos/iconChat.png", 32, 32);
 
             // Configurar iconos y tooltips para los botones del carrusel
             setButtonIcon(btnMenuPrincipalCarousel, "/Iconos/iconInicio4.png", 32, 32);
@@ -142,6 +143,7 @@ public class PanelInicioController implements Initializable {
             setButtonIcon(btnEmpresaCarousel, "/Iconos/iconAdministrador2.png", 35, 38);
             setButtonIcon(btnSalirCarousel, "/Iconos/iconSalir.png", 32, 32);
             setButtonIcon(btnGoogleCalendarCarousel, "/Iconos/iconClock2.png", 32, 32);
+            setButtonIcon(btnChatCarousel, "/Iconos/iconChat.png", 32, 32);
 
             // Tooltips para los botones del carrusel
             btnMenuPrincipalCarousel.setTooltip(new Tooltip("Menú Principal"));
@@ -228,7 +230,7 @@ public class PanelInicioController implements Initializable {
             configurarArrastreBoton(btnChicha);
             
             // Configurar z-order y estilo circular para los botones del carrusel
-            JFXButton[] botonesCarousel = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel, btnGoogleCalendarCarousel};
+            JFXButton[] botonesCarousel = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel, btnGoogleCalendarCarousel, btnChatCarousel};
             for (JFXButton boton : botonesCarousel) {
                 boton.getStyleClass().removeAll("itemMenu");
                 if (!boton.getStyleClass().contains("circleMenuButton")) {
