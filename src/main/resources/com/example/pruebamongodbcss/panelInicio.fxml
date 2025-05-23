@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import com.example.pruebamongodbcss.theme.ThemeToggleSwitch?>
 
-<BorderPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="436.0" prefWidth="781.0" styleClass="panel-azul-fondo" stylesheets="@../InicioSesion/PanelInicioSesionEstilo.css, @custom-fonts.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.PanelInicioController">
+<BorderPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="436.0" prefWidth="781.0" styleClass="panel-azul-fondo" stylesheets="@custom-fonts.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.PanelInicioController">
    <left>
       <BorderPane fx:id="sidebarContainer" prefWidth="200.0">
          <BorderPane.margin>
@@ -45,12 +45,6 @@
                      <JFXButton fx:id="btnEmpresa" styleClass="itemMenu" prefWidth="200" text="Empresa" alignment="BASELINE_LEFT" />
                      <JFXButton fx:id="btnGoogleCalendar" styleClass="itemMenu" prefWidth="200" text="Google Calendar" alignment="BASELINE_LEFT" />
                      <JFXButton fx:id="btnChat" text="Chat" styleClass="itemMenu" alignment="BASELINE_LEFT" prefWidth="200"/>
-                        <graphic>
-                           <ImageView fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
-                              <Image url="@../../../Iconos/iconChat.png"/>
-                           </ImageView>
-                        </graphic>
-                     </JFXButton>
                      <JFXButton fx:id="btnSalir" styleClass="itemMenu,item-salir" prefWidth="200" text="Cerrar sesión" alignment="BASELINE_LEFT" />
                   </children>
                </VBox>

@@ -486,7 +486,7 @@ public class PanelInicioController implements Initializable {
      * Desmarca todos los botones del menú lateral
      */
     private void desmarcaTodosLosBotones() {
-        JFXButton[] botones = {btnMenuPrincipal, btnAnimales, but_clientes, btnFichaje, btnEmpresa, btnSalir, btnGoogleCalendar};
+        JFXButton[] botones = {btnMenuPrincipal, btnAnimales, but_clientes, btnFichaje, btnEmpresa, btnSalir, btnGoogleCalendar, btnChat};
         for (JFXButton boton : botones) {
             if (boton != null) {
                 boton.getStyleClass().remove("menu-button-selected");
@@ -636,10 +636,11 @@ public class PanelInicioController implements Initializable {
     }
 
     private void toggleMenuRadial() {
-        JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel,btnEmpresaCarousel ,btnSalirCarousel, btnGoogleCalendarCarousel};
+        JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnEmpresaCarousel, btnSalirCarousel, btnGoogleCalendarCarousel, btnChatCarousel};
+        double baseRadio = 100;
+        double radio = baseRadio + (botones.length - 6) * 30; // Aumenta el radio si hay más de 6 botones
         double centerX = btnChicha.getLayoutX() + btnChicha.getWidth() / 2;
         double centerY = btnChicha.getLayoutY() + btnChicha.getHeight() / 2;
-        double radio = 120; // Distancia desde el centro
         int n = botones.length;
         
         // Asegurarnos de que todos los botones estén en la escena
@@ -743,7 +744,7 @@ public class PanelInicioController implements Initializable {
         btnChicha.toFront();
         
         // Asegurar que los botones del carrusel existen pero están inicialmente ocultos
-        JFXButton[] botonesCarousel = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel,btnEmpresaCarousel , btnSalirCarousel, btnGoogleCalendarCarousel};
+        JFXButton[] botonesCarousel = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnEmpresaCarousel, btnSalirCarousel, btnGoogleCalendarCarousel};
         for (JFXButton boton : botonesCarousel) {
             if (!mainPane.getChildren().contains(boton)) {
                 mainPane.getChildren().add(boton);
@@ -830,7 +831,7 @@ public class PanelInicioController implements Initializable {
         btnChicha.setVisible(false);
         
         // Ocultar los botones del carrusel
-        JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel, btnGoogleCalendarCarousel};
+        JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel, btnGoogleCalendarCarousel, btnChatCarousel};
         for (JFXButton boton : botones) {
             boton.setVisible(false);
         }
@@ -873,7 +874,7 @@ public class PanelInicioController implements Initializable {
             
             // Si el menú está visible, asegurarse de que los botones del menú también estén visibles
             if (menuVisible) {
-                JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel,btnEmpresaCarousel , btnSalirCarousel, btnGoogleCalendarCarousel};
+                JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnEmpresaCarousel, btnSalirCarousel, btnGoogleCalendarCarousel, btnChatCarousel};
                 for (JFXButton boton : botones) {
                     if (!mainPane.getChildren().contains(boton)) {
                         mainPane.getChildren().add(boton);
@@ -902,7 +903,7 @@ public class PanelInicioController implements Initializable {
             
             // Si el menú está desplegado, traer también los botones al frente
             if (menuVisible) {
-                JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel,btnEmpresaCarousel , btnSalirCarousel, btnGoogleCalendarCarousel};
+                JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnEmpresaCarousel, btnSalirCarousel, btnGoogleCalendarCarousel, btnChatCarousel};
                 for (JFXButton boton : botones) {
                     boton.toFront();
                 }
