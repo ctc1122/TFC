@@ -6,12 +6,15 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.Data.Usuario;
+import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
+import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario;
+import com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
@@ -22,9 +25,16 @@ public class ClienteHandler implements Runnable {
     private ObjectInputStream entrada;
     private ObjectOutputStream salida;
 
+    //Declaro los servicios
+    private ServicioUsuarios servicioUsuarios;
+    private ServicioClinica servicioClinica;
+
+    
+    //Declaro el constructor
     public ClienteHandler(Socket socket) {
         this.clientSocket = socket;
- 
+        this.servicioUsuarios = new ServicioUsuarios();
+        this.servicioClinica = new ServicioClinica();
     }
 
     @Override
@@ -128,9 +138,94 @@ public class ClienteHandler implements Runnable {
                                 }
                             }
                             break;
-                        case Protocolo.CREARPROPIETARIO:
-                            procesarCrearPropietario();
+                        case Protocolo.OBTENERPACIENTE_POR_ID:
+                            System.out.println("Procesando solicitud de obtener paciente por ID...");
+                            if (parametros.length >= 1) {
+                                ModeloPaciente paciente = procesarObtenerPacientePorId(parametros[0]);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENERPACIENTE_POR_ID_RESPONSE);
+                                    salida.writeObject(paciente);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud OBTENERPACIENTE_POR_ID");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROROBTENERPACIENTE_POR_ID);
+                                    salida.flush();
+                                }
+                            }
                             break;
+                        case Protocolo.CREARPACIENTE:
+                            System.out.println("Procesando solicitud de crear paciente...");
+                            ModeloPaciente paciente = (ModeloPaciente) entrada.readObject();
+                            if (paciente != null) {
+                                procesarCrearPaciente(paciente);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.CREARPACIENTE_RESPONSE);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud CREARPACIENTE");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERRORCREARPACIENTE);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.ACTUALIZARPACIENTE:
+                            System.out.println("Procesando solicitud de actualizar paciente...");
+                            ModeloPaciente pacienteActualizado = (ModeloPaciente) entrada.readObject();
+                            if (pacienteActualizado != null) {
+                                procesarActualizarPaciente(pacienteActualizado);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ACTUALIZAREVENTOS_RESPONSE);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud ACTUALIZARPACIENTE");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERRORACTUALIZARPACIENTE);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.OBTENERPROPIETARIO_POR_ID:
+                            System.out.println("Procesando solicitud de obtener propietario por ID...");
+                            if (parametros.length >= 1) {
+                                ModeloPropietario propietario = procesarObtenerPropietarioPorId(parametros[0]);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENERPROPIETARIO_POR_ID_RESPONSE);
+                                    salida.writeObject(propietario);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud OBTENERPROPIETARIO_POR_ID");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROROBTENERPROPIETARIO_POR_ID);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.CREARPROPIETARIO:
+                            System.out.println("Procesando solicitud de crear propietario...");
+                            ModeloPropietario propietario = (ModeloPropietario) entrada.readObject();
+                            if (propietario != null) {
+                                ObjectId id = procesarGuardarPropietario(propietario);
+                                propietario.setId(id);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.CREARPROPIETARIO_RESPONSE);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud CREARPROPIETARIO");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROPROPIETARIO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                            
                         default:
                             System.out.println("Mensaje no reconocido: " + codigo);
                     }
@@ -213,15 +308,7 @@ public class ClienteHandler implements Runnable {
         }
     }
 
-    private void procesarCrearPropietario() {
-        MongoDatabase database = GestorConexion.conectarClinica();
-        MongoCollection<Document> propietarios = database.getCollection("propietarios");
-        Document propietario = new Document();
-        propietario.append("nombre", "Juan Perez");
-        propietario.append("telefono", "123456789");
-        propietario.append("email", "juan.perez@example.com");
-        propietarios.insertOne(propietario);
-    }
+
 
     private Usuario procesarGetUserConectado(String usuario, String password) {
         MongoCollection<Document> usuarios = GestorConexion.conectarEmpresa().getCollection("usuarios");
@@ -237,4 +324,26 @@ public class ClienteHandler implements Runnable {
             return null;
         }
     }
+
+    /*METODOS DE CLINICA CONTROLADOS POR EL SERVIDOR*/
+
+    private ModeloPaciente procesarObtenerPacientePorId(String parametro) {
+        return servicioClinica.obtenerPacientePorId(new ObjectId(parametro));
+    }
+
+    private void procesarCrearPaciente(ModeloPaciente paciente) {
+        servicioClinica.agregarPaciente(paciente);
+    }
+
+    private void procesarActualizarPaciente(ModeloPaciente paciente) {
+        servicioClinica.actualizarPaciente(paciente);
+    }
+
+    private ModeloPropietario procesarObtenerPropietarioPorId(String parametro) {
+        return servicioClinica.obtenerPropietarioPorId(new ObjectId(parametro));
+    }
+
+    private ObjectId procesarGuardarPropietario(ModeloPropietario propietario) {
+        return servicioClinica.guardarPropietario(propietario);
+    }   
 } 

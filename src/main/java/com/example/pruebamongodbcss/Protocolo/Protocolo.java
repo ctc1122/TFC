@@ -42,9 +42,7 @@ public interface Protocolo {
     static final int MODIFICARPACIENTE_RESPONSE=1012;
     static final int ELIMINARPACIENTE=1013;
     static final int ELIMINARPACIENTE_RESPONSE=1014;
-    static final int BUSCARPACIENTE=1015;
-    static final int BUSCARPACIENTE_RESPONSE=1016;
-    static final int ERROPACIENTE=1017;
+    static final int ERRORCREARPACIENTE=1015;
 
 
     static final int CREARDIAGNOSTICO=1018;
@@ -66,6 +64,21 @@ public interface Protocolo {
     static final int GET_USER_REQUEST=1030;
     static final int GET_USER_RESPONSE=1031;
     static final int ERRORGET_USER=1032;
+
+
+    static final int OBTENERPACIENTE_POR_ID=1033;
+    static final int OBTENERPACIENTE_POR_ID_RESPONSE=1034;
+    static final int ERROROBTENERPACIENTE_POR_ID=1035;
+    static final int ACTUALIZARPACIENTE=1036;
+    static final int ACTUALIZARPACIENTE_RESPONSE=1037;
+    static final int ERRORACTUALIZARPACIENTE=1038;
+
+    static final int OBTENERPROPIETARIO_POR_ID=1039;
+    static final int OBTENERPROPIETARIO_POR_ID_RESPONSE=1040;
+    static final int ERROROBTENERPROPIETARIO_POR_ID=1041;
+
+
+
 
 
 } 

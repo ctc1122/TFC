@@ -3,6 +3,8 @@ package com.example.pruebamongodbcss.Modulos.Clinica;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -20,6 +22,8 @@ import java.util.ArrayList;
 import org.bson.types.ObjectId;
 
 import com.example.pruebamongodbcss.Modulos.Clinica.Citas.CitasController;
+import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 
 import io.github.palexdev.materialfx.controls.MFXDatePicker;
 import io.github.palexdev.materialfx.controls.MFXProgressSpinner;
@@ -129,7 +133,7 @@ public class ClinicaController implements Initializable {
     @FXML private BorderPane citasContainer;
     
     // Servicio clínico
-    private ServicioClinica servicioClinica;
+    //private ServicioClinica servicioClinica;
     
     // Listas observables para las tablas
     private ObservableList<ModeloPaciente> pacientesObservable;
@@ -142,10 +146,15 @@ public class ClinicaController implements Initializable {
     // Controlador de citas
     private CitasController citasController;
 
+    //Lanza peticiones al servidor
+    private GestorSocket gestorPeticiones;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Inicializar el servicio clínico
-        servicioClinica = new ServicioClinica();
+        //servicioClinica = new ServicioClinica();
+
+        gestorPeticiones = GestorSocket.getInstance();
         
         // Configurar las listas observables
         pacientesObservable = FXCollections.observableArrayList();
@@ -1103,40 +1112,40 @@ public class ClinicaController implements Initializable {
                         mostrarAlergiasPaciente(paciente);
                     }
                 });
-                
+
                 btnGuardar.setOnAction(event -> {
                     int index = getIndex();
                     if (index >= 0 && index < getTableView().getItems().size()) {
                         ModeloPaciente paciente = getTableView().getItems().get(index);
-                        
+
                         // Validar campos obligatorios antes de guardar
                         if (paciente.getNombre() == null || paciente.getNombre().trim().isEmpty()) {
-                            mostrarAlerta("Error de validación", "Nombre requerido", 
-                                "El nombre del paciente es obligatorio.");
+                            mostrarAlerta("Error de validación", "Nombre requerido",
+                                    "El nombre del paciente es obligatorio.");
                             return;
                         }
-                        
+
                         if (paciente.getEspecie() == null || paciente.getEspecie().trim().isEmpty()) {
-                            mostrarAlerta("Error de validación", "Especie requerida", 
-                                "La especie del paciente es obligatoria.");
+                            mostrarAlerta("Error de validación", "Especie requerida",
+                                    "La especie del paciente es obligatoria.");
                             return;
                         }
-                        
+
                         if (paciente.getPropietarioId() == null) {
-                            mostrarAlerta("Error de validación", "Propietario requerido", 
-                                "Debe asignar un propietario al paciente.");
+                            mostrarAlerta("Error de validación", "Propietario requerido",
+                                    "Debe asignar un propietario al paciente.");
                             return;
                         }
-                        
+
                         // Guardar el paciente
                         guardarPaciente(paciente);
-                        
+
                         // Desactivar modo edición
                         paciente.setEditando(false);
                         getTableView().refresh();
                     }
                 });
-                
+
                 btnCancelar.setOnAction(event -> {
                     int index = getIndex();
                     if (index >= 0 && index < getTableView().getItems().size()) {
@@ -1145,12 +1154,33 @@ public class ClinicaController implements Initializable {
                             // Si es nuevo, eliminarlo de la lista
                             getTableView().getItems().remove(index);
                         } else {
-                            // Si es existente, recargar sus datos
-                            ModeloPaciente pacienteOriginal = servicioClinica.obtenerPacientePorId(paciente.getId());
-                            if (pacienteOriginal != null) {
-                                pacientesObservable.set(index, pacienteOriginal);
+                            try {
+                                // Si es existente, recargar sus datos
+                                //Hacemos una peticion al servidor para obtener los datos del paciente
+                                gestorPeticiones.enviarPeticion(Protocolo.OBTENERPACIENTE_POR_ID + Protocolo.SEPARADOR_CODIGO + paciente.getId());
+                            } catch (IOException ex) {
                             }
-                            paciente.setEditando(false);
+
+                            ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                            try {
+                                if (entrada.readInt() == Protocolo.OBTENERPACIENTE_POR_ID_RESPONSE) {
+
+                                    ModeloPaciente pacienteOriginal = (ModeloPaciente) entrada.readObject();
+                                    if (pacienteOriginal != null) {
+                                        pacientesObservable.set(index, pacienteOriginal);
+                                    }
+                                    paciente.setEditando(false);
+                                } else {
+                                    mostrarAlerta("Error", "Error al obtener el paciente", "No se pudo obtener el paciente. Inténtelo de nuevo.");
+                                }
+                            } catch (ClassNotFoundException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            } catch (IOException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+
                         }
                         getTableView().refresh();
                     }
@@ -1210,7 +1240,7 @@ public class ClinicaController implements Initializable {
         tablaPacientes.getSelectionModel().select(0);
         tablaPacientes.scrollTo(0);
     }
-    
+
     /**
      * Guarda un paciente
      */
@@ -1218,59 +1248,70 @@ public class ClinicaController implements Initializable {
         try {
             // Validar datos requeridos
             if (paciente.getNombre() == null || paciente.getNombre().trim().isEmpty()) {
-                mostrarAlerta("Error de validación", "Nombre requerido", 
+                mostrarAlerta("Error de validación", "Nombre requerido",
                         "El nombre del paciente es obligatorio.");
                 return;
             }
-            
+
             if (paciente.getEspecie() == null || paciente.getEspecie().trim().isEmpty()) {
-                mostrarAlerta("Error de validación", "Especie requerida", 
+                mostrarAlerta("Error de validación", "Especie requerida",
                         "La especie del paciente es obligatoria.");
                 return;
             }
-            
+
             if (paciente.getPropietarioId() == null) {
-                mostrarAlerta("Error de validación", "Propietario requerido", 
+                mostrarAlerta("Error de validación", "Propietario requerido",
                         "Debe asignar un propietario al paciente.");
                 return;
             }
-            
+
             if (paciente.getSexo() == null || paciente.getSexo().trim().isEmpty()) {
-                mostrarAlerta("Error de validación", "Sexo requerido", 
+                mostrarAlerta("Error de validación", "Sexo requerido",
                         "El sexo del paciente es obligatorio.");
                 return;
             }
-            
+
             if (paciente.getId() == null) {
                 // Nuevo paciente
-                if (servicioClinica.agregarPaciente(paciente)) {
-                    mostrarMensaje("Éxito", "Paciente agregado", 
+                //Hacemos una peticion al servidor para agregar el paciente
+                gestorPeticiones.enviarPeticion(Protocolo.CREARPACIENTE + Protocolo.SEPARADOR_CODIGO);
+                ObjectOutputStream salida = gestorPeticiones.getSalida();
+                salida.writeObject(paciente);
+                salida.flush();
+
+                ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                if (entrada.readInt() == Protocolo.CREARPACIENTE_RESPONSE) {
+                    mostrarMensaje("Éxito", "Paciente agregado",
                             "El paciente ha sido agregado correctamente.");
-                    // Recargar datos
-                    cargarPacientes();
                 } else {
-                    mostrarAlerta("Error", "Error al agregar paciente", 
+                    mostrarAlerta("Error", "Error al agregar paciente",
                             "No se pudo agregar el paciente. Inténtelo de nuevo.");
                 }
+
             } else {
                 // Actualizar paciente existente
-                if (servicioClinica.actualizarPaciente(paciente)) {
-                    mostrarMensaje("Éxito", "Paciente actualizado", 
-                            "El paciente ha sido actualizado correctamente.");
-                    // Refrescar la tabla para mostrar datos actualizados
-                    cargarPacientes();
+                //Hacemos una peticion al servidor para actualizar el paciente
+                gestorPeticiones.enviarPeticion(Protocolo.ACTUALIZARPACIENTE + Protocolo.SEPARADOR_CODIGO);
+                ObjectOutputStream salida = gestorPeticiones.getSalida();
+                salida.writeObject(paciente);
+                salida.flush();
+
+                ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                if (entrada.readInt() == Protocolo.ACTUALIZAREVENTOS_RESPONSE) {
+                    mostrarMensaje("Éxito", "Paciente agregado",
+                            "El paciente ha sido agregado correctamente.");
                 } else {
-                    mostrarAlerta("Error", "Error al actualizar paciente", 
-                            "No se pudo actualizar el paciente. Inténtelo de nuevo.");
+                    mostrarAlerta("Error", "Error al agregar paciente",
+                            "No se pudo agregar el paciente. Inténtelo de nuevo.");
                 }
+
             }
         } catch (Exception e) {
             e.printStackTrace();
-            mostrarAlerta("Error", "Error al guardar paciente", 
+            mostrarAlerta("Error", "Error al guardar paciente",
                     "Ha ocurrido un error al intentar guardar el paciente: " + e.getMessage());
         }
     }
-    
     /**
      * Actualiza el modo de edición de un paciente
      */
@@ -1700,19 +1741,19 @@ public class ClinicaController implements Initializable {
                 // Configurar estilos y propiedades
                 btnEditar.getStyleClass().add("btn-secondary");
                 btnEditar.setMinWidth(60);
-                
+
                 btnVerMascotas.getStyleClass().add("btn-info");
                 btnVerMascotas.setMinWidth(60);
-                
+
                 btnGuardar.getStyleClass().add("btn-primary");
                 btnGuardar.setMinWidth(60);
-                
+
                 btnCancelar.getStyleClass().add("btn-danger");
                 btnCancelar.setMinWidth(60);
-                
+
                 botonesNormales.getChildren().addAll(btnEditar, btnVerMascotas);
                 botonesEdicion.getChildren().addAll(btnGuardar, btnCancelar);
-                
+
                 // Configurar eventos
                 btnEditar.setOnAction(event -> {
                     ModeloPropietario propietario = getTableView().getItems().get(getIndex());
@@ -1720,12 +1761,12 @@ public class ClinicaController implements Initializable {
                     propietario.setEditando(true);
                     actualizarModoPropietario(propietario);
                 });
-                
+
                 btnVerMascotas.setOnAction(event -> {
                     ModeloPropietario propietario = getTableView().getItems().get(getIndex());
                     verMascotasPropietario(propietario);
                 });
-                
+
                 btnGuardar.setOnAction(event -> {
                     ModeloPropietario propietario = getTableView().getItems().get(getIndex());
                     guardarPropietario(propietario);
@@ -1734,18 +1775,33 @@ public class ClinicaController implements Initializable {
                     tablaPropietarios.setEditable(false);
                     tablaPropietarios.refresh();
                 });
-                
+
                 btnCancelar.setOnAction(event -> {
                     ModeloPropietario propietario = getTableView().getItems().get(getIndex());
                     if (propietario.getId() == null) {
                         // Si es nuevo, eliminarlo de la lista
                         propietariosObservable.remove(propietario);
                     } else {
-                        // Si es existente, recargar sus datos
-                        ModeloPropietario propietarioOriginal = servicioClinica.obtenerPropietarioPorId(propietario.getId());
-                        int index = propietariosObservable.indexOf(propietario);
-                        if (index >= 0 && propietarioOriginal != null) {
-                            propietariosObservable.set(index, propietarioOriginal);
+                        try {
+                            // Si es existente, recargar sus datos
+                            //Hacemos una peticion al servidor para obtener los datos del propietario
+                            gestorPeticiones.enviarPeticion(Protocolo.OBTENERPROPIETARIO_POR_ID + Protocolo.SEPARADOR_CODIGO + propietario.getId());
+
+                            ObjectInputStream entrada = gestorPeticiones.getEntrada();
+
+                            if (entrada.readInt() == Protocolo.OBTENERPROPIETARIO_POR_ID_RESPONSE) {
+                                ModeloPropietario propietarioOriginal = (ModeloPropietario) entrada.readObject();
+                                int index = propietariosObservable.indexOf(propietario);
+                                if (index >= 0 && propietarioOriginal != null) {
+                                    propietariosObservable.set(index, propietarioOriginal);
+                                }
+                            } else {
+                                mostrarAlerta("Error", "Error al obtener el propietario", "No se pudo obtener el propietario. Inténtelo de nuevo.");
+                            }
+                        } catch (IOException ex) {
+                        } catch (ClassNotFoundException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
                         }
                     }
                     tablaPropietarios.setEditable(false);
@@ -1824,11 +1880,21 @@ public class ClinicaController implements Initializable {
             
             if (propietario.getId() == null) {
                 // Nuevo propietario
-                ObjectId id = servicioClinica.guardarPropietario(propietario);
-                propietario.setId(id);
+                //Hacemos una peticion al servidor para guardar el propietario
+                gestorPeticiones.enviarPeticion(Protocolo.CREARPROPIETARIO + Protocolo.SEPARADOR_CODIGO);
+                ObjectOutputStream salida = gestorPeticiones.getSalida();
+                salida.writeObject(propietario);
+                salida.flush();
+
+                ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                if (entrada.readInt() == Protocolo.CREARPROPIETARIO_RESPONSE) {
+                    mostrarMensaje("Éxito", "Propietario agregado", 
+                            "El propietario ha sido agregado correctamente.");
+                } else {
+                    mostrarAlerta("Error", "Error al agregar propietario", 
+                            "No se pudo agregar el propietario. Inténtelo de nuevo.");
+                }
                 
-                mostrarMensaje("Éxito", "Propietario agregado", 
-                        "El propietario ha sido agregado correctamente.");
             } else {
                 // Actualizar propietario existente
                 if (servicioClinica.actualizarPropietario(propietario)) {
