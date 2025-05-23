@@ -762,19 +762,36 @@ public class CalendarFXComponent extends BorderPane {
      */
     private void showEntryDetailsDialog(Entry<?> entry) {
         try {
-            // Determinar si es una nueva entrada (sin ID)
+            // Determinar si es una nueva entrada (sin ID o con UUID)
             boolean esNuevaCita = (entry.getId() == null || entry.getId().isEmpty());
+            
+            // Verificar si el ID es un UUID (formato no compatible con MongoDB ObjectId)
+            if (!esNuevaCita && entry.getId() != null) {
+                String entryId = entry.getId();
+                // Remover prefijo si existe
+                if (entryId.startsWith("_")) {
+                    entryId = entryId.substring(1);
+                }
+                
+                // Detectar formato UUID (contiene guiones y tiene 36 caracteres)
+                if (entryId.contains("-") && entryId.length() == 36) {
+                    System.out.println("UUID detectado en showEntryDetailsDialog: " + entryId + ". Tratando como nueva cita.");
+                    esNuevaCita = true;
+                    // Limpiar el ID para que se trate como nueva cita
+                    entry.setId("");
+                }
+            }
             
             // Convertir la entrada a un evento
             CalendarEvent event = entryToCalendarEvent(entry);
             
             // Si es una nueva cita, asegurarse de que no tenga ID
             if (esNuevaCita) {
-                event.setId(null);
+                event.setId("");
             }
             
-            // Agregar descripción si existe
-            if (entryDescriptions.containsKey(entry.getId())) {
+            // Agregar descripción si existe y no es nueva cita
+            if (!esNuevaCita && entry.getId() != null && entryDescriptions.containsKey(entry.getId())) {
                 event.setDescription(entryDescriptions.get(entry.getId()));
             }
             
@@ -1023,6 +1040,9 @@ public class CalendarFXComponent extends BorderPane {
             entry.setCalendar(calendars.get(0));
         }
         
+        // Asegurar que el ID sea una cadena vacía para nuevas entradas
+        entry.setId("");
+        
         // Mostrar el diálogo de detalles sin añadir la entrada al calendario permanentemente
         // Se añadirá solo si el usuario guarda correctamente
         
@@ -1135,6 +1155,7 @@ public class CalendarFXComponent extends BorderPane {
                     Entry<String> entry = new Entry<>("Nueva cita médica");
                     entry.setInterval(param.getZonedDateTime(), param.getZonedDateTime().plusHours(1));
                     entry.setCalendar(calendars.get(0)); // Pendientes
+                    entry.setId(""); // Asegurar que sea cadena vacía para nuevas citas
                     showEntryDetailsDialog(entry);
                 });
                 
@@ -1142,6 +1163,7 @@ public class CalendarFXComponent extends BorderPane {
                     Entry<String> entry = new Entry<>("Nueva reunión");
                     entry.setInterval(param.getZonedDateTime(), param.getZonedDateTime().plusHours(1));
                     entry.setCalendar(calendars.get(4)); // Reuniones
+                    entry.setId(""); // Asegurar que sea cadena vacía para nuevas reuniones
                     showEntryDetailsDialog(entry);
                 });
                 
@@ -1149,6 +1171,7 @@ public class CalendarFXComponent extends BorderPane {
                     Entry<String> entry = new Entry<>("Nuevo recordatorio");
                     entry.setInterval(param.getZonedDateTime(), param.getZonedDateTime().plusHours(1));
                     entry.setCalendar(calendars.get(5)); // Recordatorios
+                    entry.setId(""); // Asegurar que sea cadena vacía para nuevos recordatorios
                     showEntryDetailsDialog(entry);
                 });
                 
@@ -1337,9 +1360,30 @@ public class CalendarFXComponent extends BorderPane {
             
             // Obtener el usuario asignado a este evento
             if (entry.getId() != null && !entry.getId().isEmpty()) {
-                CalendarEvent calEvent = calendarService.getEventById(entry.getId());
-                if (calEvent != null && calEvent.getUsuario() != null) {
-                    usuario = calEvent.getUsuario();
+                String entryId = entry.getId();
+                
+                // Remover prefijo si existe
+                if (entryId.startsWith("_")) {
+                    entryId = entryId.substring(1);
+                }
+                
+                // Verificar si es un UUID (formato no compatible con MongoDB ObjectId)
+                boolean isUUID = entryId.contains("-") && entryId.length() == 36;
+                
+                if (!isUUID) {
+                    // Solo buscar en la base de datos si NO es UUID
+                    try {
+                        CalendarEvent calEvent = calendarService.getEventById(entry.getId());
+                        if (calEvent != null && calEvent.getUsuario() != null) {
+                            usuario = calEvent.getUsuario();
+                        }
+                    } catch (Exception e) {
+                        // Si hay error al buscar, usar valor por defecto
+                        System.out.println("Error al obtener usuario para tooltip: " + e.getMessage());
+                    }
+                } else {
+                    // Si es UUID, es una entrada nueva, usar valor por defecto
+                    usuario = "Nueva cita";
                 }
             }
             
