@@ -7,16 +7,11 @@ import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 
-import org.bson.Document;
-
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 import com.example.pruebamongodbcss.theme.ThemeManager;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 
-import Utilidades.GestorConexion;
 import Utilidades.ScreensaverManager;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -503,19 +498,23 @@ public class PanelInicioSesionController extends Application implements Initiali
                                 cambiarAMenuPrincipal(usuarioFinal);
                             } else {
                                 // Buscar el usuario completo en la base de datos
-                                MongoDatabase db = GestorConexion.conectarEmpresa();
-                                MongoCollection<Document> usuariosCollection = db.getCollection("usuarios");
-                                Document query = new Document("usuario", usuario);
-                                Document result = usuariosCollection.find(query).first();
+                                //Vamos a hacer una petición al servidor para obtener el usuario completo
+                                String mensaje = Protocolo.GET_USER_REQUEST + Protocolo.SEPARADOR_CODIGO + usuario + Protocolo.SEPARADOR_PARAMETROS + password;
+                                gestorSocket.enviarPeticion(mensaje);
                                 
-                                if (result != null) {
-                                    // Crear usuario a partir del documento de MongoDB
-                                    Usuario usuarioCompleto = new Usuario(result);
+                                ObjectInputStream entrada = gestorSocket.getEntrada();
+                                if (entrada == null) {
+                                    throw new IOException("No se pudo obtener el stream de entrada");
+                                }
+
+                                int tipoRespuesta = entrada.readInt();
+                                if (tipoRespuesta == Protocolo.GET_USER_RESPONSE) {
+                                    Usuario usuarioCompleto = (Usuario) entrada.readObject();
                                     cambiarAMenuPrincipal(usuarioCompleto);
                                 } else {
-                                    // Si no podemos obtener el usuario de la base de datos, notificar al usuario
                                     mostrarMensaje("Error: No se pudo obtener información completa del usuario.");
                                 }
+
                             }
                         } catch (Exception e) {
                             System.err.println("Error al obtener usuario completo: " + e.getMessage());

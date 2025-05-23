@@ -56,6 +56,8 @@ public class ClienteHandler implements Runnable {
                     
                     int codigo = Integer.parseInt(partes[0]);
                     System.out.println("Código recibido: " + codigo);
+                    System.out.println("GET_USER_REQUEST valor: " + Protocolo.GET_USER_REQUEST);
+                    System.out.println("¿Código == GET_USER_REQUEST? " + (codigo == Protocolo.GET_USER_REQUEST));
                     
                     // Separar los parámetros si existen
                     String[] parametros = new String[0];
@@ -98,6 +100,30 @@ public class ClienteHandler implements Runnable {
                                 synchronized (salida) {
                                     salida.writeInt(Protocolo.REGISTRO_RESPONSE);
                                     salida.writeInt(Protocolo.REGISTRO_FAILED);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.GET_USER_REQUEST:
+                            System.out.println("Procesando solicitud de obtener usuario...");
+                            if (parametros.length >= 2) {
+                                Usuario usuario = procesarGetUserConectado(parametros[0], parametros[1]);
+                                synchronized (salida) {
+                                    if (usuario != null) {
+                                        salida.writeInt(Protocolo.GET_USER_RESPONSE);
+                                        salida.writeObject(usuario);
+                                        salida.flush();
+                                        System.out.println("Usuario encontrado y enviado");
+                                    } else {
+                                        salida.writeInt(Protocolo.ERRORGET_USER);
+                                        salida.flush();
+                                        System.out.println("Usuario no encontrado, enviando error");
+                                    }
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud GET_USER");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERRORGET_USER);
                                     salida.flush();
                                 }
                             }
@@ -195,5 +221,20 @@ public class ClienteHandler implements Runnable {
         propietario.append("telefono", "123456789");
         propietario.append("email", "juan.perez@example.com");
         propietarios.insertOne(propietario);
+    }
+
+    private Usuario procesarGetUserConectado(String usuario, String password) {
+        MongoCollection<Document> usuarios = GestorConexion.conectarEmpresa().getCollection("usuarios");
+        Document usuarioDoc = usuarios.find(and(
+            eq("usuario", usuario),
+            eq("password", password)
+        )).first();
+
+
+        if (usuarioDoc != null) {
+            return new Usuario(usuarioDoc);
+        }else{
+            return null;
+        }
     }
 } 

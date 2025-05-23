@@ -63,7 +63,9 @@ public interface Protocolo {
     
 
 
-
+    static final int GET_USER_REQUEST=1030;
+    static final int GET_USER_RESPONSE=1031;
+    static final int ERRORGET_USER=1032;
 
 
 } 

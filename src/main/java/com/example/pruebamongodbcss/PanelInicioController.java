@@ -965,7 +965,7 @@ public class PanelInicioController implements Initializable {
     }
 
     /**
-     * Actualiza el contador de eventos para el usuario actual
+     * Actualiza el contador de eventos para el usuario actual usando web View
      */
     private void actualizarContadorEventos() {
 
@@ -1140,16 +1140,7 @@ public class PanelInicioController implements Initializable {
 
 
 
-    private void procesarRespuestaServidor(int tipoRespuesta) {
-        // Implementar el procesamiento de las respuestas según el protocolo
-        switch (tipoRespuesta) {
-            case Protocolo.CREARPROPIETARIO_RESPONSE:
-                // Procesar la respuesta específica
 
-                break;
-            // Añadir más casos según sea necesario
-        }
-    }
 
     private void abrirModuloChat() {
         try {
