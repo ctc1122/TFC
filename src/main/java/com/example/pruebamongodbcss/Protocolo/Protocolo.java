@@ -33,49 +33,51 @@ public interface Protocolo {
     static final int BUSCARPROPIETARIO=1006;
     static final int BUSCARPROPIETARIO_RESPONSE=1007;
     static final int ERROPROPIETARIO=1008;
+    static final int ACTUALIZARPROPIETARIO=1009;
+    static final int ACTUALIZARPROPIETARIO_RESPONSE=1010;
+    static final int ERRORACTUALIZARPROPIETARIO=1011;
+
+
+    static final int CREARPACIENTE=1012;
+    static final int CREARPACIENTE_RESPONSE=1013;
+    static final int MODIFICARPACIENTE=1014;
+    static final int MODIFICARPACIENTE_RESPONSE=1015;
+    static final int ELIMINARPACIENTE=1016;
+    static final int ELIMINARPACIENTE_RESPONSE=1017;
+    static final int ERRORCREARPACIENTE=1018;
+
+
+    static final int CREARDIAGNOSTICO=1019;
+    static final int CREARDIAGNOSTICO_RESPONSE=1020;
+    static final int MODIFICARDIAGNOSTICO=1021;
+    static final int MODIFICARDIAGNOSTICO_RESPONSE=1022;
+    static final int ELIMINARDIAGNOSTICO=1023;
+    static final int ELIMINARDIAGNOSTICO_RESPONSE=1024;
+    static final int BUSCARDIAGNOSTICO=1025;
+    static final int BUSCARDIAGNOSTICO_RESPONSE=1026;
+    static final int ERRODIAGNOSTICO=1027;
+
+    static final int ACTUALIZAREVENTOS=1028;
+    static final int ACTUALIZAREVENTOS_RESPONSE=1029;
+    static final int ERRORACTUALIZAREVENTOS=1030;
     
 
 
-    static final int CREARPACIENTE=1009;
-    static final int CREARPACIENTE_RESPONSE=1010;
-    static final int MODIFICARPACIENTE=1011;
-    static final int MODIFICARPACIENTE_RESPONSE=1012;
-    static final int ELIMINARPACIENTE=1013;
-    static final int ELIMINARPACIENTE_RESPONSE=1014;
-    static final int ERRORCREARPACIENTE=1015;
+    static final int GET_USER_REQUEST=1031;
+    static final int GET_USER_RESPONSE=1032;
+    static final int ERRORGET_USER=1033;
 
 
-    static final int CREARDIAGNOSTICO=1018;
-    static final int CREARDIAGNOSTICO_RESPONSE=1019;
-    static final int MODIFICARDIAGNOSTICO=1020;
-    static final int MODIFICARDIAGNOSTICO_RESPONSE=1021;
-    static final int ELIMINARDIAGNOSTICO=1022;
-    static final int ELIMINARDIAGNOSTICO_RESPONSE=1023;
-    static final int BUSCARDIAGNOSTICO=1024;
-    static final int BUSCARDIAGNOSTICO_RESPONSE=1025;
-    static final int ERRODIAGNOSTICO=1026;
+    static final int OBTENERPACIENTE_POR_ID=1034;
+    static final int OBTENERPACIENTE_POR_ID_RESPONSE=1035;
+    static final int ERROROBTENERPACIENTE_POR_ID=1036;
+    static final int ACTUALIZARPACIENTE=1037;
+    static final int ACTUALIZARPACIENTE_RESPONSE=1038;
+    static final int ERRORACTUALIZARPACIENTE=1039;
 
-    static final int ACTUALIZAREVENTOS=1027;
-    static final int ACTUALIZAREVENTOS_RESPONSE=1028;
-    static final int ERRORACTUALIZAREVENTOS=1029;
-    
-
-
-    static final int GET_USER_REQUEST=1030;
-    static final int GET_USER_RESPONSE=1031;
-    static final int ERRORGET_USER=1032;
-
-
-    static final int OBTENERPACIENTE_POR_ID=1033;
-    static final int OBTENERPACIENTE_POR_ID_RESPONSE=1034;
-    static final int ERROROBTENERPACIENTE_POR_ID=1035;
-    static final int ACTUALIZARPACIENTE=1036;
-    static final int ACTUALIZARPACIENTE_RESPONSE=1037;
-    static final int ERRORACTUALIZARPACIENTE=1038;
-
-    static final int OBTENERPROPIETARIO_POR_ID=1039;
-    static final int OBTENERPROPIETARIO_POR_ID_RESPONSE=1040;
-    static final int ERROROBTENERPROPIETARIO_POR_ID=1041;
+    static final int OBTENERPROPIETARIO_POR_ID=1040;
+    static final int OBTENERPROPIETARIO_POR_ID_RESPONSE=1041;
+    static final int ERROROBTENERPROPIETARIO_POR_ID=1042;
 
 
 

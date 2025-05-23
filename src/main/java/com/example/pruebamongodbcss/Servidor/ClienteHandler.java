@@ -97,7 +97,7 @@ public class ClienteHandler implements Runnable {
                             try {
                                 Usuario nuevoUsuario = (Usuario) entrada.readObject();
                                 procesarRegistro(nuevoUsuario);
-                                
+
                                 // Enviar respuesta de éxito
                                 synchronized (salida) {
                                     salida.writeInt(Protocolo.REGISTRO_RESPONSE);
@@ -224,8 +224,24 @@ public class ClienteHandler implements Runnable {
                                 }
                             }
                             break;
-                            
-                            
+                        case Protocolo.ACTUALIZARPROPIETARIO:
+                            System.out.println("Procesando solicitud de actualizar propietario...");
+                            ModeloPropietario propietarioActualizado = (ModeloPropietario) entrada.readObject();
+                            if (propietarioActualizado != null) {
+                                servicioClinica.actualizarPropietario(propietarioActualizado);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ACTUALIZARPROPIETARIO_RESPONSE);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud ACTUALIZARPROPIETARIO");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERRORACTUALIZARPROPIETARIO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+
                         default:
                             System.out.println("Mensaje no reconocido: " + codigo);
                     }
@@ -347,3 +363,4 @@ public class ClienteHandler implements Runnable {
         return servicioClinica.guardarPropietario(propietario);
     }   
 } 
+

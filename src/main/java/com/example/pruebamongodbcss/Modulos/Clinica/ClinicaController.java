@@ -1894,16 +1894,25 @@ public class ClinicaController implements Initializable {
                     mostrarAlerta("Error", "Error al agregar propietario", 
                             "No se pudo agregar el propietario. Inténtelo de nuevo.");
                 }
-                
+
             } else {
                 // Actualizar propietario existente
-                if (servicioClinica.actualizarPropietario(propietario)) {
+                //Hacemos una peticion al servidor para actualizar el propietario
+                gestorPeticiones.enviarPeticion(Protocolo.ACTUALIZARPROPIETARIO + Protocolo.SEPARADOR_CODIGO);
+
+                ObjectOutputStream salida = gestorPeticiones.getSalida();
+                salida.writeObject(propietario);
+                salida.flush();
+
+                ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                if (entrada.readInt() == Protocolo.ACTUALIZARPROPIETARIO_RESPONSE) {
                     mostrarMensaje("Éxito", "Propietario actualizado", 
                             "El propietario ha sido actualizado correctamente.");
                 } else {
                     mostrarAlerta("Error", "Error al actualizar propietario", 
                             "No se pudo actualizar el propietario. Inténtelo de nuevo.");
                 }
+                
             }
         } catch (Exception e) {
             e.printStackTrace();
