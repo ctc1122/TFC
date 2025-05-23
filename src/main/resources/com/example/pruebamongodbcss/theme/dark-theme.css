@@ -301,18 +301,18 @@
 }
 
 /* Menu lateral - Botones (modo oscuro) */
-#btnMenuPrincipal, #btnAnimales, #but_clientes, #btnFichaje, #btnEmpresa, #btnSalir {
+#btnMenuPrincipal, #btnAnimales, #but_clientes, #btnFichaje, #btnEmpresa, #btnSalir, #btnChat, #btnGoogleCalendar {
     -fx-background-color: -fx-sidebar-button-bg;
     -fx-text-fill: -fx-sidebar-button-text;
     -fx-background-radius: 5px;
 }
 
-#btnMenuPrincipal:hover, #btnAnimales:hover, #but_clientes:hover, #btnFichaje:hover, #btnEmpresa:hover, #btnSalir:hover {
+#btnMenuPrincipal:hover, #btnAnimales:hover, #but_clientes:hover, #btnFichaje:hover, #btnEmpresa:hover, #btnSalir:hover, #btnChat:hover, #btnGoogleCalendar:hover {
     -fx-background-color: -fx-sidebar-button-hover;
 }
 
 #btnMenuPrincipal .image-view, #btnAnimales .image-view, #but_clientes .image-view, 
-#btnFichaje .image-view, #btnEmpresa .image-view, #btnSalir .image-view {
+#btnFichaje .image-view, #btnEmpresa .image-view, #btnSalir .image-view, #btnChat .image-view, #btnGoogleCalendar .image-view {
     -fx-opacity: 0.9;
 }
 

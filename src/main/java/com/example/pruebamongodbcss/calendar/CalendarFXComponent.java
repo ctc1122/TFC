@@ -299,19 +299,14 @@ public class CalendarFXComponent extends BorderPane {
             addAppointmentButton.setStyle("-fx-background-color: #4285f4; -fx-text-fill: white; -fx-font-weight: normal;");
             addAppointmentButton.setPrefWidth(120);
             
-            Button todayButton = new Button("Hoy");
-            todayButton.setId("calendar-today-button");
-            todayButton.getStyleClass().add("modern-button");
-            todayButton.setStyle("-fx-background-color: #34a853; -fx-text-fill: white; -fx-font-weight: normal;");
-            todayButton.setPrefWidth(120);
+
             
             // Agregar eventos a los botones
             refreshButton.setOnAction(e -> refreshCalendarFromDatabase());
             addAppointmentButton.setOnAction(e -> showNewAppointmentDialog());
-            todayButton.setOnAction(e -> calendarView.setDate(LocalDate.now()));
             
             // Crear contenedor para los botones con estilo fijo
-            HBox toolBar = new HBox(10, todayButton, refreshButton, addAppointmentButton);
+            HBox toolBar = new HBox(10, refreshButton, addAppointmentButton);
             toolBar.setId("calendar-toolbar");
             toolBar.setPadding(new Insets(10));
             toolBar.setStyle("-fx-background-color: #f8f9fa;");
