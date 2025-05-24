@@ -133,7 +133,7 @@ public class ClinicaController implements Initializable {
     @FXML private BorderPane citasContainer;
     
     // Servicio clínico
-    //private ServicioClinica servicioClinica;
+    private ServicioClinica servicioClinica;
     
     // Listas observables para las tablas
     private ObservableList<ModeloPaciente> pacientesObservable;
@@ -152,7 +152,7 @@ public class ClinicaController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Inicializar el servicio clínico
-        //servicioClinica = new ServicioClinica();
+        servicioClinica = new ServicioClinica();
         gestorPeticiones = GestorSocket.getInstance();
         
         // Configurar las listas observables
@@ -2069,9 +2069,23 @@ public class ClinicaController implements Initializable {
     }
     
     private void cargarPropietarios() {
-        propietariosObservable.clear();
-        List<ModeloPropietario> propietarios = servicioClinica.obtenerTodosPropietarios();
-        propietariosObservable.addAll(propietarios);
+        try {
+            propietariosObservable.clear();
+
+            //Hacemos una peticion al servidor para obtener todos los propietarios
+            gestorPeticiones.enviarPeticion(Protocolo.OBTENER_TODOS_PROPIETARIOS + Protocolo.SEPARADOR_CODIGO);
+
+            ObjectInputStream entrada = gestorPeticiones.getEntrada();
+            if (entrada.readInt() == Protocolo.OBTENER_TODOS_PROPIETARIOS_RESPONSE) {
+                List<ModeloPropietario> propietarios = (List<ModeloPropietario>) entrada.readObject();
+                propietariosObservable.addAll(propietarios);
+            }
+        } catch (IOException ex) {
+        } catch (ClassNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
     }
     
     @FXML
@@ -2079,11 +2093,34 @@ public class ClinicaController implements Initializable {
         diagnosticosObservable.clear();
         
         if (dpFechaInicio.getValue() != null && dpFechaFin.getValue() != null) {
-            Date fechaInicio = Date.from(dpFechaInicio.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant());
-            Date fechaFin = Date.from(dpFechaFin.getValue().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
-            
-            List<ModeloDiagnostico> diagnosticos = servicioClinica.buscarDiagnosticosPorFecha(fechaInicio, fechaFin);
-            diagnosticosObservable.addAll(diagnosticos);
+            try {
+                Date fechaInicio = Date.from(dpFechaInicio.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant());
+                Date fechaFin = Date.from(dpFechaFin.getValue().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+                
+                
+                //Hacemos una peticion al servidor para obtener los diagnosticos por fecha
+                gestorPeticiones.enviarPeticion(Protocolo.BUSCAR_DIAGNOSTICOS_POR_FECHA + Protocolo.SEPARADOR_CODIGO);
+
+                //Enviamos los datos al servidor
+                ObjectOutputStream salida = gestorPeticiones.getSalida();
+                salida.writeObject(fechaInicio);
+                salida.writeObject(fechaFin);
+                salida.flush();
+
+                ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                if (entrada.readInt() == Protocolo.BUSCAR_DIAGNOSTICOS_POR_FECHA_RESPONSE) {
+                    List<ModeloDiagnostico> diagnosticos = (List<ModeloDiagnostico>) entrada.readObject();
+                    diagnosticosObservable.addAll(diagnosticos);
+                } else {
+                    mostrarAlerta("Error", "Error al obtener los diagnosticos",
+                            "No se pudo obtener los diagnosticos. Inténtelo de nuevo.");
+                }
+
+            } catch (IOException ex) {
+            } catch (ClassNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
     }
     
@@ -2115,9 +2152,27 @@ public class ClinicaController implements Initializable {
     }
     
     private void buscarPacientesPorNombre(String nombre) {
-        pacientesObservable.clear();
-        List<ModeloPaciente> pacientes = servicioClinica.buscarPacientesPorNombre(nombre);
-        pacientesObservable.addAll(pacientes);
+        try {
+            pacientesObservable.clear();
+            //Hacemos una peticion al servidor para obtener los pacientes por nombre
+            gestorPeticiones.enviarPeticion(Protocolo.BUSCAR_PACIENTES_POR_NOMBRE + Protocolo.SEPARADOR_CODIGO);
+            
+            //Enviamos el nombre al servidor
+            ObjectOutputStream salida = gestorPeticiones.getSalida();
+            salida.writeObject(nombre);
+            salida.flush();
+            
+            ObjectInputStream entrada = gestorPeticiones.getEntrada();
+            if (entrada.readInt() == Protocolo.BUSCAR_PACIENTES_POR_NOMBRE_RESPONSE) {
+                List<ModeloPaciente> pacientes = (List<ModeloPaciente>) entrada.readObject();
+                pacientesObservable.addAll(pacientes);
+            } else {
+                mostrarAlerta("Error", "Error al obtener los pacientes",
+                        "No se pudo obtener los pacientes. Inténtelo de nuevo.");
+            }
+        } catch (IOException | ClassNotFoundException ex) {
+        }
+
     }
     
     private void buscarPropietariosPorNombre(String nombre) {

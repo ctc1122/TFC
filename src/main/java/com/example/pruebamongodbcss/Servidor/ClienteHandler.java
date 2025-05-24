@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.Date;
 import java.util.List;
 
 import org.bson.Document;
@@ -11,6 +12,7 @@ import org.bson.types.ObjectId;
 
 import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.Data.Usuario;
+import com.example.pruebamongodbcss.Modulos.Clinica.ModeloDiagnostico;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario;
 import com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica;
@@ -261,6 +263,64 @@ public class ClienteHandler implements Runnable {
 
                             }
                             break;
+                        case Protocolo.OBTENER_TODOS_PROPIETARIOS:
+                            System.out.println("Procesando solicitud de obtener todos los propietarios...");
+                            List<ModeloPropietario> propietarios = servicioClinica.obtenerTodosPropietarios();
+                            if (propietarios != null) {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_TODOS_PROPIETARIOS_RESPONSE);
+                                    salida.writeObject(propietarios);
+                                    salida.flush();
+                                    System.out.println("Todos los propietarios enviados");
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud OBTENER_TODOS_PROPIETARIOS");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROROBTENER_TODOS_PROPIETARIOS);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.BUSCAR_DIAGNOSTICOS_POR_FECHA:
+                            System.out.println("Procesando solicitud de obtener todos los diagnosticos...");
+                            Date fechaInicio = (Date) entrada.readObject();
+                            Date fechaFin = (Date) entrada.readObject();
+                            List<ModeloDiagnostico> diagnosticos = servicioClinica.buscarDiagnosticosPorFecha(fechaInicio, fechaFin);
+                            if (diagnosticos != null) {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.BUSCAR_DIAGNOSTICOS_POR_FECHA_RESPONSE);
+                                    salida.writeObject(diagnosticos);
+                                    salida.flush();
+                                    System.out.println("Todos los diagnosticos enviados");
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud BUSCAR_DIAGNOSTICOS_POR_FECHA");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERRORBUSCAR_DIAGNOSTICOS_POR_FECHA);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.BUSCAR_PACIENTES_POR_NOMBRE:
+                            System.out.println("Procesando solicitud de obtener pacientes por nombre...");
+                            String nombre = (String) entrada.readObject();
+                            List<ModeloPaciente> pacientes2 = servicioClinica.buscarPacientesPorNombre(nombre);
+                            if (pacientes2 != null) {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.BUSCAR_PACIENTES_POR_NOMBRE_RESPONSE);
+                                    salida.writeObject(pacientes2);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: No se encontraron pacientes con el nombre: " + nombre);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERRORBUSCAR_PACIENTES_POR_NOMBRE);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+
 
                         default:
                             System.out.println("Mensaje no reconocido: " + codigo);
