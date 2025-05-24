@@ -1,15 +1,18 @@
 package com.example.pruebamongodbcss.Modulos.Clinica;
 
-import org.bson.Document;
-import org.bson.types.ObjectId;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.ArrayList;
+
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
 /**
  * Modelo que representa un diagnóstico médico para un paciente.
  */
-public class ModeloDiagnostico {
+public class ModeloDiagnostico implements Serializable{
+    private static final long serialVersionUID = 1L;
     private ObjectId id;
     private ObjectId pacienteId;
     private String nombrePaciente;

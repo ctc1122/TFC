@@ -1,5 +1,6 @@
 package com.example.pruebamongodbcss.Modulos.Clinica;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -12,7 +13,7 @@ import com.example.pruebamongodbcss.Data.EstadoCita;
 /**
  * Modelo para representar una cita en la interfaz de usuario
  */
-public class ModeloCita {
+public class ModeloCita implements Serializable{
     private ObjectId id;
     private ObjectId pacienteId;
     private String nombrePaciente;

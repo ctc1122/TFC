@@ -1,5 +1,6 @@
 package com.example.pruebamongodbcss.Modulos.Clinica;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -10,7 +11,9 @@ import org.bson.types.ObjectId;
 /**
  * Modelo que representa a un propietario de pacientes en la clínica veterinaria.
  */
-public class ModeloPropietario {
+public class ModeloPropietario implements Serializable{
+    private static final long serialVersionUID = 1L;
+    
     private ObjectId id;
     private String nombre;
     private String apellidos;

@@ -248,19 +248,35 @@ public class ClienteHandler implements Runnable {
                             System.out.println("Procesando solicitud de obtener todos los pacientes...");
                             List<ModeloPaciente> pacientes = servicioClinica.obtenerTodosPacientes();
                             if (pacientes != null) {
+                                System.out.println("Pacientes obtenidos: " + pacientes.size());
+                                
+                                // Verificar si los pacientes son serializables
+                                for (int i = 0; i < pacientes.size(); i++) {
+                                    ModeloPaciente p = pacientes.get(i);
+                                    System.out.println("Paciente " + i + ": " + (p != null ? p.getNombre() : "null"));
+                                    
+                                    // Verificar campos problemáticos
+                                    if (p != null) {
+                                        System.out.println("  - ID: " + p.getId());
+                                        System.out.println("  - PropietarioId: " + p.getPropietarioId());
+                                        System.out.println("  - Vacunas: " + (p.getVacunas() != null ? p.getVacunas().size() : "null"));
+                                        System.out.println("  - Alergias: " + (p.getAlergias() != null ? p.getAlergias().size() : "null"));
+                                    }
+                                }
+                                
                                 synchronized (salida) {
                                     salida.writeInt(Protocolo.OBTENER_TODOS_PACIENTES_RESPONSE);
+                                    System.out.println("Enviando lista de pacientes...");
                                     salida.writeObject(pacientes);
                                     salida.flush();
-                                    System.out.println("Todos los pacientes enviados");
+                                    System.out.println("Todos los pacientes enviados correctamente");
                                 }
                             } else {
-                                System.err.println("Error: Faltan parámetros en la solicitud OBTENER_TODOS_PACIENTES");
+                                System.err.println("Error: Lista de pacientes es null");
                                 synchronized (salida) {
                                     salida.writeInt(Protocolo.ERROROBTENER_TODOS_PACIENTES);
                                     salida.flush();
                                 }
-
                             }
                             break;
                         case Protocolo.OBTENER_TODOS_PROPIETARIOS:
