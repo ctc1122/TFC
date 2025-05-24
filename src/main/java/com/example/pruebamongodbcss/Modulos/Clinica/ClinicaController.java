@@ -133,7 +133,7 @@ public class ClinicaController implements Initializable {
     @FXML private BorderPane citasContainer;
     
     // Servicio clínico
-    private ServicioClinica servicioClinica;
+    //private ServicioClinica servicioClinica;
     
     // Listas observables para las tablas
     private ObservableList<ModeloPaciente> pacientesObservable;
@@ -152,7 +152,7 @@ public class ClinicaController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Inicializar el servicio clínico
-        servicioClinica = new ServicioClinica();
+        //servicioClinica = new ServicioClinica();
         gestorPeticiones = GestorSocket.getInstance();
         
         // Configurar las listas observables
