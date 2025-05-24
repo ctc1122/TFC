@@ -23,6 +23,7 @@ public class Ejecutador extends Application {
         }
 
         // Cargar la interfaz gráfica
+        //FXMLLoader fxmlLoader = new FXMLLoader(Ejecutador.class.getResource("/com/example/pruebamongodbcss/Clinica/Diagnostico/diagnostico-view.fxml"));
         FXMLLoader fxmlLoader = new FXMLLoader(Ejecutador.class.getResource("/com/example/pruebamongodbcss/panelInicio.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 700, 450);
         scene.getStylesheets().add(getClass().getResource("/com/example/pruebamongodbcss/InicioSesion/PanelInicioSesionEstilo.css").toExternalForm());
