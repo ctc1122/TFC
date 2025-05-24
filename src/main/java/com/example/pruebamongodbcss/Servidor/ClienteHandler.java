@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.List;
 
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -239,6 +240,25 @@ public class ClienteHandler implements Runnable {
                                     salida.writeInt(Protocolo.ERRORACTUALIZARPROPIETARIO);
                                     salida.flush();
                                 }
+                            }
+                            break;
+                        case Protocolo.OBTENER_TODOS_PACIENTES:
+                            System.out.println("Procesando solicitud de obtener todos los pacientes...");
+                            List<ModeloPaciente> pacientes = servicioClinica.obtenerTodosPacientes();
+                            if (pacientes != null) {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_TODOS_PACIENTES_RESPONSE);
+                                    salida.writeObject(pacientes);
+                                    salida.flush();
+                                    System.out.println("Todos los pacientes enviados");
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud OBTENER_TODOS_PACIENTES");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROROBTENER_TODOS_PACIENTES);
+                                    salida.flush();
+                                }
+
                             }
                             break;
 

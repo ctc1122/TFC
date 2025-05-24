@@ -80,6 +80,9 @@ public interface Protocolo {
     static final int ERROROBTENERPROPIETARIO_POR_ID=1042;
 
 
+    static final int OBTENER_TODOS_PACIENTES=1043;
+    static final int OBTENER_TODOS_PACIENTES_RESPONSE=1044;
+    static final int ERROROBTENER_TODOS_PACIENTES=1045;
 
 
 

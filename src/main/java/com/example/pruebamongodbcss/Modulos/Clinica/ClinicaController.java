@@ -2000,44 +2000,73 @@ public class ClinicaController implements Initializable {
     private void onExportarPDFDiagnostico(ActionEvent event) {
         ModeloDiagnostico diagnostico = tablaDiagnosticos.getSelectionModel().getSelectedItem();
         if (diagnostico == null) {
-            mostrarAlerta("Selección requerida", "No hay diagnóstico seleccionado", 
+            mostrarAlerta("Selección requerida", "No hay diagnóstico seleccionado",
                     "Por favor, seleccione un diagnóstico para exportar a PDF.");
             return;
         }
-        
+
         try {
             // Abrir la vista de diagnóstico para exportación
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Diagnostico/diagnostico-view.fxml"));
             Parent root = loader.load();
-            
+
             // Obtener el controlador y configurarlo con el diagnóstico seleccionado
             com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico.DiagnosticoController controller = loader.getController();
-            
+
             // Buscar el paciente asociado al diagnóstico
-            ModeloPaciente paciente = servicioClinica.obtenerPacientePorId(diagnostico.getPacienteId());
-            if (paciente != null) {
-                controller.setPaciente(paciente);
-                controller.setDiagnostico(diagnostico);
-                
-                // Llamar al método de exportación a PDF
-                exportarDiagnosticoPDF(controller);
+            //Hacemos una peticion al servidor para obtener el paciente asociado al diagnóstico
+            gestorPeticiones.enviarPeticion(Protocolo.OBTENERPACIENTE_POR_ID + Protocolo.SEPARADOR_CODIGO + diagnostico.getPacienteId());
+
+            ObjectInputStream entrada = gestorPeticiones.getEntrada();
+            if (entrada.readInt() == Protocolo.OBTENERPACIENTE_POR_ID_RESPONSE) {
+                ModeloPaciente paciente = (ModeloPaciente) entrada.readObject();
+                if (paciente != null) {
+                    controller.setPaciente(paciente);
+                    controller.setDiagnostico(diagnostico);
+
+                    // Llamar al método de exportación a PDF
+                    exportarDiagnosticoPDF(controller);
+                } else {
+                    mostrarAlerta("Error", "Paciente no encontrado",
+                            "No se pudo encontrar el paciente asociado a este diagnóstico.");
+                }
             } else {
-                mostrarAlerta("Error", "Paciente no encontrado", 
-                        "No se pudo encontrar el paciente asociado a este diagnóstico.");
+                mostrarAlerta("Error", "Error al obtener el paciente",
+                        "No se pudo obtener el paciente. Inténtelo de nuevo.");
             }
+
         } catch (IOException e) {
             e.printStackTrace();
-            mostrarAlerta("Error", "Error al exportar", 
+            mostrarAlerta("Error", "Error al exportar",
                     "Ha ocurrido un error al intentar exportar el diagnóstico a PDF: " + e.getMessage());
+        } catch (ClassNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
     }
     
     // ********** CARGA DE DATOS **********
-    
     private void cargarPacientes() {
         pacientesObservable.clear();
-        List<ModeloPaciente> pacientes = servicioClinica.obtenerTodosPacientes();
-        pacientesObservable.addAll(pacientes);
+        try {
+            //Hacemos una peticion al servidor para obtener todos los pacientes
+            gestorPeticiones.enviarPeticion(Protocolo.OBTENER_TODOS_PACIENTES + Protocolo.SEPARADOR_CODIGO);
+
+            ObjectInputStream entrada = gestorPeticiones.getEntrada();
+            if (entrada.readInt() == Protocolo.OBTENER_TODOS_PACIENTES_RESPONSE) {
+                List<ModeloPaciente> pacientes = (List<ModeloPaciente>) entrada.readObject();
+                pacientesObservable.addAll(pacientes);
+            } else {
+                mostrarAlerta("Error", "Error al obtener los pacientes",
+                        "No se pudo obtener los pacientes. Inténtelo de nuevo.");
+            }
+
+        } catch (IOException ex) {
+        } catch (ClassNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+ 
     }
     
     private void cargarPropietarios() {
