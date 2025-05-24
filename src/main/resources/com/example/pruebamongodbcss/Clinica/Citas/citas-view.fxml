@@ -77,7 +77,6 @@
                         </HBox>
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
                            <children>
-                              <Button fx:id="btnNuevaCita" onAction="#onNuevaCita" styleClass="btn-primary" text="Nueva Cita" />
                               <Button fx:id="btnEditarCita" onAction="#onEditarCita" styleClass="btn-secondary" text="Editar" />
                               <Button fx:id="btnEliminarCita" onAction="#onEliminarCita" styleClass="btn-danger" text="Eliminar" />
                               <Button fx:id="btnEstadoCita" onAction="#onCambiarEstadoCita" styleClass="btn-info" text="Cambiar Estado" />

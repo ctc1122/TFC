@@ -19,6 +19,7 @@ import org.bson.types.ObjectId;
 
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloDiagnostico;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
+import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
 import com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica;
 
 import javafx.application.Platform;
@@ -42,6 +43,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.beans.property.SimpleStringProperty;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Controlador para la pantalla de diagnósticos médicos.
@@ -57,7 +60,7 @@ public class DiagnosticoController implements Initializable {
     @FXML private Label lblPeso;
     
     // Datos del diagnóstico
-    @FXML private DatePicker dpFecha;
+    // @FXML private DatePicker dpFecha;
     @FXML private TextField txtMotivo;
     @FXML private TextArea txtAnamnesis;
     @FXML private TextArea txtExamenFisico;
@@ -109,13 +112,18 @@ public class DiagnosticoController implements Initializable {
     private Runnable onGuardarCallback;
     private Runnable onCancelarCallback;
     
+    @FXML private TableView<ModeloCita> tblConsultas;
+    @FXML private TableColumn<ModeloCita, String> colFecha;
+    @FXML private TableColumn<ModeloCita, String> colHora;
+    @FXML private TableColumn<ModeloCita, String> colMotivo;
+    
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         // Configurar las partes esenciales de la interfaz primero
         configurarTabla();
         
         // Inicializar fechas inmediatamente
-        dpFecha.setValue(LocalDate.now());
+        // dpFecha.setValue(LocalDate.now());
         
         // Configurar eventos de la interfaz de usuario
         btnAgregarDiagnostico.setOnAction(event -> agregarDiagnostico());
@@ -163,6 +171,16 @@ public class DiagnosticoController implements Initializable {
                 }
             });
         });
+
+        DateTimeFormatter formatoFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter formatoHora = DateTimeFormatter.ofPattern("HH:mm");
+
+        colFecha.setCellValueFactory(data -> 
+            new SimpleStringProperty(data.getValue().getFechaHora().format(formatoFecha)));
+        colHora.setCellValueFactory(data -> 
+            new SimpleStringProperty(data.getValue().getFechaHora().format(formatoHora)));
+        colMotivo.setCellValueFactory(data -> 
+            new SimpleStringProperty(data.getValue().getMotivo()));
     }
     
     /**
@@ -413,13 +431,13 @@ public class DiagnosticoController implements Initializable {
      */
     private void cargarDatosDiagnostico() {
         if (diagnosticoActual != null) {
-            if (diagnosticoActual.getFecha() != null) {
-                dpFecha.setValue(diagnosticoActual.getFecha().toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDate());
-            }
+            // if (diagnosticoActual.getFecha() != null) {
+            //     dpFecha.setValue(diagnosticoActual.getFecha().toInstant()
+            //             .atZone(ZoneId.systemDefault())
+            //             .toLocalDate());
+            // }
             
-            txtMotivo.setText(diagnosticoActual.getMotivo());
+            // txtMotivo.setText(diagnosticoActual.getMotivo());
             txtAnamnesis.setText(diagnosticoActual.getAnamnesis());
             txtExamenFisico.setText(diagnosticoActual.getExamenFisico());
             txtTratamiento.setText(diagnosticoActual.getTratamiento());
@@ -465,10 +483,10 @@ public class DiagnosticoController implements Initializable {
             return;
         }
         
-        if (txtMotivo.getText().isBlank()) {
-            mostrarError("Datos incompletos", "El motivo de la consulta es obligatorio");
-            return;
-        }
+        // if (txtMotivo.getText().isBlank()) {
+        //     mostrarError("Datos incompletos", "El motivo de la consulta es obligatorio");
+        //     return;
+        // }
         
         if (diagnosticosSeleccionados.isEmpty()) {
             mostrarError("Datos incompletos", "Debe seleccionar al menos un diagnóstico");
@@ -482,8 +500,8 @@ public class DiagnosticoController implements Initializable {
         // Establecer datos básicos
         diagnostico.setPacienteId(paciente.getId());
         diagnostico.setNombrePaciente(paciente.getNombre());
-        diagnostico.setFecha(Date.from(dpFecha.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant()));
-        diagnostico.setMotivo(txtMotivo.getText());
+        // diagnostico.setFecha(Date.from(dpFecha.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        // diagnostico.setMotivo(txtMotivo.getText());
         diagnostico.setAnamnesis(txtAnamnesis.getText());
         diagnostico.setExamenFisico(txtExamenFisico.getText());
         
@@ -566,12 +584,12 @@ public class DiagnosticoController implements Initializable {
                     writer.write("Peso: " + paciente.getPeso() + " kg\n\n");
                     
                     // Fecha
-                    LocalDate fecha = dpFecha.getValue();
-                    writer.write("Fecha: " + fecha + "\n\n");
+                    // LocalDate fecha = dpFecha.getValue();
+                    // writer.write("Fecha: " + fecha + "\n\n");
                     
                     // Motivo
-                    writer.write("MOTIVO DE CONSULTA:\n");
-                    writer.write(txtMotivo.getText() + "\n\n");
+                    // writer.write("MOTIVO DE CONSULTA:\n");
+                    // writer.write(txtMotivo.getText() + "\n\n");
                     
                     // Anamnesis
                     writer.write("ANAMNESIS:\n");
@@ -651,7 +669,7 @@ public class DiagnosticoController implements Initializable {
                     writer.append("Paciente,Fecha,Motivo,Diagnóstico,Tratamiento\n");
                     
                     // Fecha formateada
-                    String fecha = dpFecha.getValue().toString();
+                    // String fecha = dpFecha.getValue().toString();
                     
                     // Diagnósticos concatenados
                     StringBuilder diagnosticos = new StringBuilder();
@@ -663,13 +681,13 @@ public class DiagnosticoController implements Initializable {
                     }
                     
                     // Escapar comas en campos de texto
-                    String motivo = txtMotivo.getText().replace(",", ";");
+                    // String motivo = txtMotivo.getText().replace(",", ";");
                     String tratamiento = txtTratamiento.getText().replace(",", ";");
                     
                     // Escribir línea de datos
                     writer.append(paciente.getNombre()).append(",")
-                          .append(fecha).append(",")
-                          .append(motivo).append(",")
+                          // .append(fecha).append(",")
+                          // .append(motivo).append(",")
                           .append(diagnosticos.toString()).append(",")
                           .append(tratamiento).append("\n");
                     

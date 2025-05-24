@@ -39,6 +39,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
@@ -58,6 +59,8 @@ import org.bson.types.ObjectId;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
 import javafx.util.Duration;
+import com.example.pruebamongodbcss.Data.EstadoCita;
+import com.example.pruebamongodbcss.Utils.SplashUtils;
 
 /**
  * Componente de calendario basado en CalendarFX.
@@ -218,8 +221,8 @@ public class CalendarFXComponent extends BorderPane {
             
             // Mostrar páginas relevantes
             calendarView.showDayPage();
-            calendarView.showWeekPage();
             calendarView.showMonthPage();
+            calendarView.showWeekPage(); // La última vista mostrada será la predeterminada
             
             // Configuraciones adicionales de estilo visual
             configureVisualSettings();
@@ -285,41 +288,8 @@ public class CalendarFXComponent extends BorderPane {
      * Crea una barra de herramientas personalizada para el calendario
      */
     private void createCustomToolbar() {
-        try {
-            // Crear botones con estilos modernos
-            Button refreshButton = new Button("Actualizar");
-            refreshButton.setId("calendar-refresh-button");
-            refreshButton.getStyleClass().add("modern-button");
-            refreshButton.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white; -fx-font-weight: normal;");
-            refreshButton.setPrefWidth(120);
-            
-            Button addAppointmentButton = new Button("Nueva cita");
-            addAppointmentButton.setId("calendar-new-appointment-button");
-            addAppointmentButton.getStyleClass().add("modern-button");
-            addAppointmentButton.setStyle("-fx-background-color: #4285f4; -fx-text-fill: white; -fx-font-weight: normal;");
-            addAppointmentButton.setPrefWidth(120);
-            
-
-            
-            // Agregar eventos a los botones
-            refreshButton.setOnAction(e -> refreshCalendarFromDatabase());
-            addAppointmentButton.setOnAction(e -> showNewAppointmentDialog());
-            
-            // Crear contenedor para los botones con estilo fijo
-            HBox toolBar = new HBox(10, refreshButton, addAppointmentButton);
-            toolBar.setId("calendar-toolbar");
-            toolBar.setPadding(new Insets(10));
-            toolBar.setStyle("-fx-background-color: #f8f9fa;");
-            
-            // Agregar espacio flexible para alinear los botones a la izquierda
-            HBox.setHgrow(toolBar, Priority.ALWAYS);
-            
-            // Agregar la barra de herramientas en la parte superior
-            setTop(toolBar);
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // Barra de herramientas deshabilitada para maximizar el espacio visual
+        setTop(null);
     }
     
     /**
@@ -426,12 +396,20 @@ public class CalendarFXComponent extends BorderPane {
             
             // Convertir eventos a entradas del calendario
             for (CalendarEvent event : events) {
-                // Determinar en qué calendario va según el estado o tipo
                 Calendar targetCalendar = getTargetCalendar(event);
-                
-                Entry<String> entry = new Entry<>(event.getTitle());
+                String motivo = event.getTitle() != null ? event.getTitle().toUpperCase() : "CITA";
+                String estadoStr = event.getEstado() != null ? event.getEstado().toUpperCase() : "PENDIENTE";
+                String titulo = motivo + " - " + estadoStr;
+                Entry<String> entry = new Entry<>(titulo);
                 entry.setId(event.getId());
                 entry.setLocation(event.getLocation());
+                // Asignar color de fondo según el estado
+                try {
+                    EstadoCita estadoEnum = EstadoCita.valueOf(estadoStr);
+                    entry.setCalendar(targetCalendar);
+                } catch (Exception ex) {
+                    entry.setCalendar(calendars.get(0));
+                }
                 
                 // Convertir fechas de String a LocalDateTime
                 LocalDateTime startDateTime = parseDateTime(event.getStart());
@@ -762,56 +740,69 @@ public class CalendarFXComponent extends BorderPane {
      */
     private void showEntryDetailsDialog(Entry<?> entry) {
         try {
-            // Determinar si es una nueva entrada (sin ID o con UUID)
-            boolean esNuevaCita = (entry.getId() == null || entry.getId().isEmpty());
-            
-            // Verificar si el ID es un UUID (formato no compatible con MongoDB ObjectId)
-            if (!esNuevaCita && entry.getId() != null) {
-                String entryId = entry.getId();
-                // Remover prefijo si existe
-                if (entryId.startsWith("_")) {
-                    entryId = entryId.substring(1);
-                }
-                
-                // Detectar formato UUID (contiene guiones y tiene 36 caracteres)
-                if (entryId.contains("-") && entryId.length() == 36) {
-                    System.out.println("UUID detectado en showEntryDetailsDialog: " + entryId + ". Tratando como nueva cita.");
-                    esNuevaCita = true;
-                    // Limpiar el ID para que se trate como nueva cita
-                    entry.setId("");
-                }
-            }
-            
-            // Convertir la entrada a un evento
+            // Convertir Entry a CalendarEvent
             CalendarEvent event = entryToCalendarEvent(entry);
             
-            // Si es una nueva cita, asegurarse de que no tenga ID
-            if (esNuevaCita) {
-                event.setId("");
+            // Si el evento es una cita médica y está en curso, abrir la vista de diagnóstico
+            if (event.getTipoEvento() == CalendarEvent.EventoTipo.CITA_MEDICA && 
+                "EN_CURSO".equals(event.getEstado())) {
+                abrirVistaDiagnostico(event);
+                return;
             }
             
-            // Agregar descripción si existe y no es nueva cita
-            if (!esNuevaCita && entry.getId() != null && entryDescriptions.containsKey(entry.getId())) {
-                event.setDescription(entryDescriptions.get(entry.getId()));
-            }
-            
-            // Determinar tipo de evento y mostrar el formulario correspondiente
-            if (calendarService.esCitaMedica(event)) {
-                // Es una cita médica
-                System.out.println("Abriendo formulario de cita médica...");
+            // Para otros tipos de eventos o citas no en curso, mostrar el formulario normal
+            if (event.getTipoEvento() == CalendarEvent.EventoTipo.CITA_MEDICA) {
                 showCitaFormulario(event, entry);
             } else {
-                // Es otro tipo de evento (reunión o recordatorio)
-                System.out.println("Abriendo formulario de evento general...");
                 showEventoFormulario(event, entry);
             }
             
-            // Actualizar después de cerrar cualquier formulario para asegurar sincronización
-            refreshCalendarFromDatabase();
         } catch (Exception e) {
             e.printStackTrace();
             showErrorMessage("Error al mostrar detalles", "No se pudieron mostrar los detalles: " + e.getMessage());
         }
+    }
+    
+    /**
+     * Abre la vista de diagnóstico para una cita en curso
+     */
+    private void abrirVistaDiagnostico(CalendarEvent event) {
+        // 1. Mostrar splash
+        Stage splashStage = SplashUtils.mostrarSplashDiagnostico();
+
+        // 2. Cargar el formulario en un hilo aparte
+        new Thread(() -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Diagnostico/diagnostico-view.fxml"));
+                Parent root = loader.load();
+
+                // Configura el controlador, paciente, etc.
+                com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico.DiagnosticoController controller = loader.getController();
+                com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
+                com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente paciente = servicioClinica.obtenerPacientePorId(new org.bson.types.ObjectId(event.getPacienteId()));
+                controller.setPaciente(paciente);
+                controller.setOnGuardarCallback(() -> {
+                    refreshCalendarFromDatabase();
+                });
+
+                // 3. Cuando termine, mostrar el formulario y cerrar el splash
+                Platform.runLater(() -> {
+                    Stage stage = new Stage();
+                    stage.setTitle("Diagnóstico Médico");
+                    stage.setScene(new Scene(root));
+                    stage.initModality(Modality.NONE);
+                    stage.show();
+
+                    splashStage.close();
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> {
+                    splashStage.close();
+                    showErrorMessage("Error", "No se pudo abrir la vista de diagnóstico: " + e.getMessage());
+                });
+            }
+        }).start();
     }
     
     /**
@@ -820,46 +811,67 @@ public class CalendarFXComponent extends BorderPane {
     private CalendarEvent entryToCalendarEvent(Entry<?> entry) {
         CalendarEvent event = new CalendarEvent();
         
-        // Asignar ID si lo tiene
+        // Establecer ID
         event.setId(entry.getId());
         
-        // Datos básicos
+        // Establecer título
         event.setTitle(entry.getTitle());
-        event.setLocation(entry.getLocation());
         
-        // Fechas
-        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-        LocalDateTime startDateTime = LocalDateTime.of(entry.getStartDate(), entry.getStartTime());
-        LocalDateTime endDateTime = LocalDateTime.of(entry.getEndDate(), entry.getEndTime());
-        event.setStart(startDateTime.format(formatter));
-        event.setEnd(endDateTime.format(formatter));
+        // Establecer fechas
+        event.setStart(entry.getStartDate().toString());
+        event.setEnd(entry.getEndDate().toString());
         
-        // Descripción
-        if (entry.getId() != null && entryDescriptions.containsKey(entry.getId())) {
-            event.setDescription(entryDescriptions.get(entry.getId()));
+        // Establecer ubicación si existe
+        if (entry.getLocation() != null) {
+            event.setLocation(entry.getLocation());
         }
         
-        // Determinar tipo de evento según el calendario
+        // Establecer si es todo el día
+        event.setAllDay(entry.isFullDay());
+        
+        // Establecer tipo de evento según el calendario
         if (entry.getCalendar() == calendars.get(0)) {
+            event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
             event.setEstado("PENDIENTE");
             event.setType("default");
-            event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
         } else if (entry.getCalendar() == calendars.get(1)) {
+            event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
             event.setEstado("EN_CURSO");
             event.setType("urgent");
-            event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
         } else if (entry.getCalendar() == calendars.get(2)) {
+            event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
             event.setEstado("COMPLETADA");
             event.setType("completed");
-            event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
         } else if (entry.getCalendar() == calendars.get(3)) {
+            event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
             event.setEstado("CANCELADA");
             event.setType("cancelled");
-            event.setTipoEvento(CalendarEvent.EventoTipo.CITA_MEDICA);
         } else if (entry.getCalendar() == calendars.get(4)) {
             event.setTipoEvento(CalendarEvent.EventoTipo.REUNION);
         } else if (entry.getCalendar() == calendars.get(5)) {
             event.setTipoEvento(CalendarEvent.EventoTipo.RECORDATORIO);
+        }
+        
+        // Si es una cita médica, buscar el ID del paciente
+        if (event.getTipoEvento() == CalendarEvent.EventoTipo.CITA_MEDICA && event.getId() != null && !event.getId().isEmpty()) {
+            try {
+                // Convertir el ID a ObjectId
+                String idStr = event.getId();
+                if (idStr.startsWith("_")) {
+                    idStr = idStr.substring(1);
+                }
+                org.bson.types.ObjectId citaId = new org.bson.types.ObjectId(idStr);
+                
+                // Buscar la cita en la base de datos
+                com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
+                com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = servicioClinica.obtenerCitaPorId(citaId);
+                
+                if (cita != null && cita.getPacienteId() != null) {
+                    event.setPacienteId(cita.getPacienteId().toString());
+                }
+            } catch (Exception e) {
+                System.err.println("Error al obtener el ID del paciente: " + e.getMessage());
+            }
         }
         
         return event;
@@ -887,84 +899,40 @@ public class CalendarFXComponent extends BorderPane {
             com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
             controller.setServicio(servicioClinica);
             
+            // Si es una cita existente, cargar sus datos
+            if (event.getId() != null && !event.getId().isEmpty()) {
+                // Convertir el ID a ObjectId
+                String idStr = event.getId();
+                if (idStr.startsWith("_")) {
+                    idStr = idStr.substring(1);
+                }
+                org.bson.types.ObjectId citaId = new org.bson.types.ObjectId(idStr);
+                
+                // Buscar la cita en la base de datos
+                com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = servicioClinica.obtenerCitaPorId(citaId);
+                if (cita != null) {
+                    controller.setCita(cita);
+                }
+            }
+            
             // Configurar callback para refrescar el calendario
             controller.setCitaGuardadaCallback(() -> {
                 refreshCalendarFromDatabase();
             });
             
-            // Si es edición, obtener la cita completa de la base de datos y pasarla al controlador
-            if (event.getId() != null && !event.getId().isEmpty()) {
-                // Extraer el ID limpio (sin prefijo)
-                String idStr = event.getId();
-                if (idStr.startsWith("_")) {
-                    idStr = idStr.substring(1);
-                }
-                
-                try {
-                    // Verificar si el ID tiene formato de UUID
-                    if (idStr.contains("-") && idStr.length() == 36) {
-                        // Formato UUID detectado, mostrar mensaje específico
-                        Alert alert = new Alert(AlertType.ERROR);
-                        alert.setTitle("Error");
-                        alert.setHeaderText("Error al cargar la cita");
-                        alert.setContentText("El formato del ID de la cita no es compatible (UUID: " + idStr + "). " +
-                                            "Este tipo de identificador no es válido para MongoDB ObjectId.\n\n" +
-                                            "Por favor, cree una nueva cita en lugar de editar esta.");
-                        alert.showAndWait();
-                        return;
-                    }
-                    
-                    // Cargar la cita usando el método que maneja strings
-                    com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = 
-                        servicioClinica.obtenerCitaPorIdString(idStr);
-                    
-                    if (cita != null) {
-                        controller.setCita(cita);
-                    } else {
-                        // Si no se encuentra la cita, mostrar mensaje y cerrar
-                        Alert alert = new Alert(AlertType.ERROR);
-                        alert.setTitle("Error");
-                        alert.setHeaderText("Cita no encontrada");
-                        alert.setContentText("No se pudo encontrar la cita en la base de datos.");
-                        alert.showAndWait();
-                        return;
-                    }
-                } catch (IllegalArgumentException e) {
-                    e.printStackTrace();
-                    Alert alert = new Alert(AlertType.ERROR);
-                    alert.setTitle("Error");
-                    alert.setHeaderText("Error al cargar la cita");
-                    alert.setContentText("No se pudo cargar la cita: ID inválido. Este ID no cumple con el formato requerido para MongoDB ObjectId.\n\n" +
-                                        "Por favor, cree una nueva cita en lugar de editar esta.");
-                    alert.showAndWait();
-                    return;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    Alert alert = new Alert(AlertType.ERROR);
-                    alert.setTitle("Error");
-                    alert.setHeaderText("Error al cargar la cita");
-                    alert.setContentText("No se pudo cargar la cita: " + e.getMessage());
-                    alert.showAndWait();
-                    return;
-                }
-            }
-            // Si NO tiene ID, es una NUEVA cita (no hacer nada, el formulario se abrirá vacío)
-            
             // Mostrar el formulario en una ventana modal
             Stage stage = new Stage();
-            stage.setTitle("Cita Médica");
+            stage.setTitle(event.getId() != null && !event.getId().isEmpty() ? "Editar Cita" : "Nueva Cita");
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setScene(new Scene(root));
             stage.showAndWait();
             
-            // Refrescar el calendario después de cerrar, independientemente del resultado
+            // Refrescar el calendario después de cerrar
             refreshCalendarFromDatabase();
             
         } catch (Exception e) {
             e.printStackTrace();
             showErrorMessage("Error", "No se pudo abrir el formulario de citas: " + e.getMessage());
-            // Refrescar de todos modos para asegurar consistencia
-            refreshCalendarFromDatabase();
         }
     }
     
@@ -1021,41 +989,13 @@ public class CalendarFXComponent extends BorderPane {
      * Crea una nueva entrada para el calendario
      */
     private Entry<?> createNewEntry(DateControl.CreateEntryParameter param) {
-        Entry<String> entry = new Entry<>("Nueva cita");
-        
-        // Configurar la fecha según el parámetro
+        String motivo = "NUEVA CITA";
+        String estadoStr = "PENDIENTE";
+        String titulo = motivo + " - " + estadoStr;
+        Entry<String> entry = new Entry<>(titulo);
         entry.setInterval(param.getZonedDateTime(), param.getZonedDateTime().plusHours(1));
-        
-        // Determinar el tipo de evento según dónde se hizo clic
-        // Si se hizo clic en los calendarios de reuniones o recordatorios, usar ese tipo
-        // De lo contrario, usar cita médica (predeterminado)
-        if (param.getCalendar() == calendars.get(4)) {
-            // Si se hizo clic en el calendario de reuniones
-            entry.setCalendar(calendars.get(4));
-        } else if (param.getCalendar() == calendars.get(5)) {
-            // Si se hizo clic en el calendario de recordatorios
-            entry.setCalendar(calendars.get(5));
-        } else {
-            // Si se hizo clic en cualquier otro calendario o en un área vacía, cita pendiente
-            entry.setCalendar(calendars.get(0));
-        }
-        
-        // Asegurar que el ID sea una cadena vacía para nuevas entradas
+        entry.setCalendar(calendars.get(0));
         entry.setId("");
-        
-        // Mostrar el diálogo de detalles sin añadir la entrada al calendario permanentemente
-        // Se añadirá solo si el usuario guarda correctamente
-        
-        // Importante: No añadimos la entrada al calendario aquí, lo hacemos si se guarda correctamente
-        // Si la entrada ya está en un calendario, la quitamos temporalmente
-        Calendar calendar = entry.getCalendar();
-        if (calendar != null) {
-            calendar.removeEntry(entry);
-        }
-        
-        Platform.runLater(() -> showEntryDetailsDialog(entry));
-        
-        // Retornamos la entrada creada pero sin agregarla al calendario
         return entry;
     }
     

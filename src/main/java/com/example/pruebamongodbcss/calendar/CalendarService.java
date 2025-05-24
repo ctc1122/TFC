@@ -467,78 +467,24 @@ public class CalendarService {
         
         // Campo eventType y tipoEvento (para eventos creados por el usuario)
         if (doc.containsKey("eventType")) {
-            String eventTypeStr = doc.getString("eventType");
-            event.setEventType(eventTypeStr);
-            // El setter de eventType ya actualiza tipoEvento
-        } else if (doc.containsKey("tipoEvento")) {
-            // Si tenemos el campo tipoEvento directo, usarlo (casos más nuevos)
-            String tipoEventoStr = doc.getString("tipoEvento");
-            EventoTipo tipoEvento = null;
-            try {
-                tipoEvento = EventoTipo.valueOf(tipoEventoStr);
-            } catch (Exception e) {
-                tipoEvento = EventoTipo.fromString(tipoEventoStr);
-            }
-            event.setTipoEvento(tipoEvento);
-        } else {
-            // Por defecto, los eventos antiguos son citas médicas
-            event.setTipoEvento(EventoTipo.CITA_MEDICA);
+            String eventType = doc.getString("eventType");
+            event.setEventType(eventType);
+            event.setTipoEvento(EventoTipo.fromString(eventType));
         }
         
-        // Estado de la cita (para los filtros)
+        // Campo estado
         if (doc.containsKey("estado")) {
-            String estadoStr = doc.getString("estado");
-            event.setEstado(estadoStr);
-            
-            // Determinar tipo basado en el estado
-            switch (estadoStr.toUpperCase()) {
-                case "PENDIENTE":
-                    event.setType("default");
-                    break;
-                case "EN_CURSO":
-                    event.setType("urgent");
-                    break;
-                case "COMPLETADA":
-                    event.setType("completed");
-                    break;
-                case "CANCELADA":
-                    event.setType("cancelled");
-                    break;
-                case "REPROGRAMADA":
-                    event.setType("default"); // Tipo personalizado para reprogramadas
-                    event.setColor("#9c27b0"); // Morado para reprogramadas
-                    break;
-                default:
-                    event.setType("default");
-            }
-        } else if (doc.containsKey("type")) {
-            // Si hay tipo pero no estado, mantener el tipo
-            event.setType(doc.getString("type"));
-        } else {
-            // Determinar tipo por el título para compatibilidad
-            String title = doc.getString("title").toLowerCase();
-            if (title.contains("urgente") || title.contains("urgencia")) {
-                event.setType("urgent");
-                event.setEstado("EN_CURSO");
-            } else if (title.contains("completada") || title.contains("realizada")) {
-                event.setType("completed");
-                event.setEstado("COMPLETADA");
-            } else if (title.contains("cancelada")) {
-                event.setType("cancelled");
-                event.setEstado("CANCELADA");
-            } else {
-                event.setType("default");
-                event.setEstado("PENDIENTE");
-            }
+            event.setEstado(doc.getString("estado"));
         }
         
-        // Usuario - primero buscar usuarioAsignado, luego los campos antiguos por compatibilidad
-        if (doc.containsKey("usuarioAsignado")) {
-            event.setUsuario(doc.getString("usuarioAsignado"));
-        } else if (doc.containsKey("usuarioId")) {
-            event.setUsuario(doc.getString("usuarioId"));
-        } else if (doc.containsKey("usuario")) {
+        // Campo usuario
+        if (doc.containsKey("usuario")) {
             event.setUsuario(doc.getString("usuario"));
+        }
+        
+        // Campo pacienteId
+        if (doc.containsKey("pacienteId")) {
+            event.setPacienteId(doc.getString("pacienteId"));
         }
         
         return event;
@@ -763,7 +709,12 @@ public class CalendarService {
         
         // Usuario
         if (event.getUsuario() != null) {
-            doc.append("usuarioAsignado", event.getUsuario());
+            doc.append("usuario", event.getUsuario());
+        }
+        
+        // PacienteId
+        if (event.getPacienteId() != null) {
+            doc.append("pacienteId", event.getPacienteId());
         }
         
         return doc;

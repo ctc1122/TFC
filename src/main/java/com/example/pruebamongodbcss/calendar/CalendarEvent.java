@@ -58,6 +58,7 @@ public class CalendarEvent {
     private String estado; // PENDIENTE, EN_CURSO, COMPLETADA, CANCELADA, REPROGRAMADA
     private String eventType; // Para compatibilidad con código existente
     private EventoTipo tipoEvento; // Nuevo campo para utilizar el enumerado
+    private String pacienteId; // ID del paciente asociado a la cita
 
     /**
      * Constructor por defecto
@@ -260,6 +261,14 @@ public class CalendarEvent {
         }
     }
 
+    public String getPacienteId() {
+        return pacienteId;
+    }
+
+    public void setPacienteId(String pacienteId) {
+        this.pacienteId = pacienteId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -290,6 +299,7 @@ public class CalendarEvent {
                 ", estado='" + estado + '\'' +
                 ", eventType='" + eventType + '\'' +
                 ", tipoEvento=" + tipoEvento +
+                ", pacienteId='" + pacienteId + '\'' +
                 '}';
     }
 } 

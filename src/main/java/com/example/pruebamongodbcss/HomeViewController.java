@@ -68,9 +68,6 @@ public class HomeViewController implements Initializable {
     private JFXButton btnLearnMore;
     
     @FXML
-    private JFXButton btnBack;
-    
-    @FXML
     private JFXButton btnViewCalendar;
    
     private boolean isPage1Visible = true;
@@ -316,9 +313,6 @@ public class HomeViewController implements Initializable {
         // Add learn more button handler
         btnLearnMore.setOnAction(e -> navigateToPage2());
         
-        // Add back button handler
-        btnBack.setOnAction(e -> navigateToPage1());
-        
         // Añadir acción al botón VER CALENDARIO
         btnViewCalendar.setOnAction(e -> navigateToPage2());
         
@@ -331,8 +325,8 @@ public class HomeViewController implements Initializable {
                 button.setOnMouseEntered(e -> button.setStyle("-fx-scale-x: 1.05; -fx-scale-y: 1.05;"));
                 button.setOnMouseExited(e -> button.setStyle("-fx-scale-x: 1.0; -fx-scale-y: 1.0;"));
                 
-                // Add click handler for non-navigation buttons
-                if (button != btnLearnMore && button != btnBack && button != btnViewCalendar) {
+                // Add click handler para botones que no sean navegación
+                if (button != btnLearnMore && button != btnViewCalendar) {
                     button.setOnAction(e -> handleButtonClick(button));
                 }
             }
