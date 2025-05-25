@@ -12,6 +12,7 @@ import org.bson.types.ObjectId;
 
 import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.Data.Usuario;
+import com.example.pruebamongodbcss.Data.Usuario.Rol;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloDiagnostico;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario;
@@ -458,7 +459,184 @@ public class ClienteHandler implements Runnable {
                                 }
                             }
                             break;
-                            
+                        case Protocolo.SETUSERCONECTADO:
+                            System.out.println("Procesando solicitud de establecer usuario conectado...");
+                            Usuario usuario = (Usuario) entrada.readObject();
+                            if (usuario != null) {
+                                servicioUsuarios.setUsuarioActual(usuario);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.SETUSERCONECTADO_RESPONSE);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud SETUSERCONECTADO");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERRORSETUSERCONECTADO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.GETALLUSERS:
+                            System.out.println("Procesando solicitud de obtener todos los usuarios...");
+                            List<Usuario> usuarios = servicioUsuarios.obtenerTodosUsuarios();
+                            if (usuarios != null) { 
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.GETALLUSERS_RESPONSE);
+                                    salida.writeObject(usuarios);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: No se encontraron usuarios");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERRORGETALLUSERS);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.GETALLVETERINARIOS:
+                            System.out.println("Procesando solicitud de obtener todos los veterinarios...");
+                            Rol rol = (Rol) entrada.readObject();
+                            System.out.println("Rol: " + rol);
+                            List<Usuario> veterinarios = servicioUsuarios.buscarUsuariosPorRol(rol);
+                            if (veterinarios != null) {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.GETALLVETERINARIOS_RESPONSE);
+                                    salida.writeObject(veterinarios);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: No se encontraron veterinarios");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERRORGETALLVETERINARIOS);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.DELETEUSER:
+                            System.out.println("Procesando solicitud de eliminar usuario...");
+                            String idUsuario = parametros[0];
+                            boolean eliminadoUsuario = servicioUsuarios.eliminarUsuario(new ObjectId(idUsuario));
+                            if (eliminadoUsuario) {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.DELETEUSER_RESPONSE);
+                                    salida.flush();
+                                }
+                            }
+                            else {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERRORDELETEUSER);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.RESETPASSWORD:
+                            System.out.println("Procesando solicitud de resetear contraseña...");
+                            if (parametros.length >= 2) {
+                                String idUsuarioReset = parametros[0];
+                                String nuevaContrasena = parametros[1];
+                                boolean reseteado = servicioUsuarios.resetearContrasena(new ObjectId(idUsuarioReset), nuevaContrasena);
+                                if (reseteado) {
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.RESETPASSWORD_RESPONSE);
+                                        salida.flush();
+                                    }
+                                } else {
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERRORRESETPASSWORD);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud RESETPASSWORD");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERRORRESETPASSWORD);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.CARGAR_DATOS_PRUEBA:
+                            System.out.println("Procesando solicitud de cargar datos de prueba...");
+                            try {
+                                servicioUsuarios.cargarDatosPrueba();
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.CARGAR_DATOS_PRUEBA_RESPONSE);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al cargar datos de prueba: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_CARGAR_DATOS_PRUEBA);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.RECONECTAR_DB:
+                            System.out.println("Procesando solicitud de reconectar base de datos...");
+                            try {
+                                servicioUsuarios.reiniciarConexion();
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.RECONECTAR_DB_RESPONSE);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al reconectar base de datos: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_RECONECTAR_DB);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.GUARDAR_USUARIO:
+                            System.out.println("Procesando solicitud de guardar usuario...");
+                            try {
+                                Usuario usuarioAGuardar = (Usuario) entrada.readObject();
+                                if (usuarioAGuardar != null) {
+                                    servicioUsuarios.guardarUsuario(usuarioAGuardar);
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.GUARDAR_USUARIO_RESPONSE);
+                                        salida.flush();
+                                    }
+                                } else {
+                                    System.err.println("Error: Usuario recibido es null");
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_GUARDAR_USUARIO);
+                                        salida.flush();
+                                    }
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al guardar usuario: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_GUARDAR_USUARIO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.VERIFICAR_USUARIO_EXISTE:
+                            System.out.println("Procesando solicitud de verificar si usuario existe...");
+                            if (parametros.length >= 1) {
+                                String nombreUsuario = parametros[0];
+                                try {
+                                    boolean existe = servicioUsuarios.existeUsuario(nombreUsuario);
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.VERIFICAR_USUARIO_EXISTE_RESPONSE);
+                                        salida.writeBoolean(existe);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al verificar si usuario existe: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_VERIFICAR_USUARIO_EXISTE);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud VERIFICAR_USUARIO_EXISTE");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_VERIFICAR_USUARIO_EXISTE);
+                                    salida.flush();
+                                }
+                            }
+                            break;
                         default:
                             System.out.println("Mensaje no reconocido: " + codigo);
                     }
