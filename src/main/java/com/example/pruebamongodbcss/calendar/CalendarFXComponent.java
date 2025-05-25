@@ -1,5 +1,6 @@
 package com.example.pruebamongodbcss.calendar;
 
+import java.io.ObjectInputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -53,6 +54,8 @@ import javafx.scene.Parent;
 
 import com.example.pruebamongodbcss.PanelInicioController;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
+import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 import com.example.pruebamongodbcss.calendar.EventoFormularioController;
 import java.time.format.DateTimeFormatter;
 import org.bson.types.ObjectId;
@@ -61,6 +64,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.util.Duration;
 import com.example.pruebamongodbcss.Data.EstadoCita;
 import com.example.pruebamongodbcss.Utils.SplashUtils;
+
+
 
 /**
  * Componente de calendario basado en CalendarFX.
@@ -72,9 +77,6 @@ public class CalendarFXComponent extends BorderPane {
     private CalendarView calendarView;
     private List<Calendar> calendars = new ArrayList<>();
     private CalendarSource calendarSource;
-    
-    // Servicio de calendario para cargar citas reales
-    private CalendarService calendarService;
     
     // Usuario actual
     private com.example.pruebamongodbcss.Data.Usuario usuarioActual;
@@ -99,7 +101,10 @@ public class CalendarFXComponent extends BorderPane {
         ".day-of-month-label { -fx-text-fill: black !important; }";
     
     private Map<String, String> entryDescriptions = new java.util.HashMap<>();
+
     
+    private GestorSocket gestorSocket;
+
     /**
      * Constructor que inicializa el componente del calendario con el usuario actual.
      * @param usuario El usuario actual logueado en el sistema
@@ -118,10 +123,9 @@ public class CalendarFXComponent extends BorderPane {
             System.out.println("Usuario establecido en CalendarFXComponent: " + usuario.getUsuario() + 
                                ", Rol: " + (usuario.getRol() != null ? usuario.getRol().name() : "null"));
         }
-        // Recargar las citas si el servicio ya está inicializado
-        if (calendarService != null) {
-            loadAppointmentsFromDatabase();
-        }
+
+        loadAppointmentsFromDatabase();
+        
     }
     
     /**
@@ -130,7 +134,7 @@ public class CalendarFXComponent extends BorderPane {
     private void initialize() {
         try {
             // Inicializar el servicio de calendario
-            calendarService = new CalendarService();
+            gestorSocket = GestorSocket.getInstance();
             
             // Crear el componente principal de la vista
             calendarView = new CalendarView();
@@ -352,13 +356,36 @@ public class CalendarFXComponent extends BorderPane {
                 
                 if (rol == com.example.pruebamongodbcss.Data.Usuario.Rol.ADMINISTRADOR) {
                     // Administradores ven absolutamente todo
-                    events = calendarService.getAllAppointments();
+                    //Pedir todas las citas y eventos al servidor
                     System.out.println("Administrador: Cargando todas las citas y eventos");
+
+
+                    gestorSocket.enviarPeticion(Protocolo.DAMETODASLASCITAS+Protocolo.SEPARADOR_CODIGO);
+                    ObjectInputStream ois = new ObjectInputStream(gestorSocket.getEntrada());
+                    int codigo = ois.readInt();
+                    if(codigo == Protocolo.DAMETODASLASCITAS_RESPONSE){
+                        events = (List<CalendarEvent>) ois.readObject();
+                    }else{
+                        showErrorMessage("Error", "No se pudieron cargar las citas: " + ois.readUTF());
+                    }
+
+
                 } 
                 else if (rol == com.example.pruebamongodbcss.Data.Usuario.Rol.AUXILIAR) {
                     // Auxiliares ven todas las CITAS MÉDICAS de cualquier veterinario, pero no recordatorios ni reuniones
-                    events = calendarService.getAllAppointments().stream()
-                        .filter(event -> calendarService.esCitaMedica(event))
+                    System.out.println("Auxiliar: Cargando todas las citas y eventos");
+                    
+                    gestorSocket.enviarPeticion(Protocolo.DAMETODASLASCITAS+Protocolo.SEPARADOR_CODIGO);
+                    ObjectInputStream ois = new ObjectInputStream(gestorSocket.getEntrada());
+                    int codigo = ois.readInt();
+                    if(codigo == Protocolo.DAMETODASLASCITAS_RESPONSE){
+                        events = (List<CalendarEvent>) ois.readObject();
+                    }else{
+                        showErrorMessage("Error", "No se pudieron cargar las citas: " + ois.readUTF());
+                    }
+
+                    events = events.stream()
+                        .filter(event -> esCitaMedica(event))
                         .collect(Collectors.toList());
                     System.out.println("Auxiliar: Cargando solo citas médicas (total: " + events.size() + ")");
                 } 
@@ -366,29 +393,50 @@ public class CalendarFXComponent extends BorderPane {
                     // Los veterinarios ven:
                     // 1. Sus propias citas médicas (donde usuarioAsignado == username)
                     // 2. Sus propios recordatorios y reuniones
-                    List<CalendarEvent> allEvents = calendarService.getAllAppointments();
-                    
-                    for (CalendarEvent event : allEvents) {
-                        boolean isMine = username.equals(event.getUsuario());
-                        boolean isCitaMedica = calendarService.esCitaMedica(event);
-                        boolean isReunionOrRecordatorio = 
-                            calendarService.esReunion(event) || calendarService.esRecordatorio(event);
+                    gestorSocket.enviarPeticion(Protocolo.DAMETODASLASCITAS+Protocolo.SEPARADOR_CODIGO);
+                    ObjectInputStream ois = new ObjectInputStream(gestorSocket.getEntrada());
+                    int codigo = ois.readInt();
+                    if(codigo == Protocolo.DAMETODASLASCITAS_RESPONSE){
+                        List<CalendarEvent> allEvents = (List<CalendarEvent>) ois.readObject();
                         
-                        // Si la cita está asignada a este veterinario o es un recordatorio/reunión suyo
-                        if (isMine && (isCitaMedica || isReunionOrRecordatorio)) {
-                            events.add(event);
+                        for (CalendarEvent event : allEvents) {
+                            boolean isMine = username.equals(event.getUsuario());
+                            boolean isCitaMedica = esCitaMedica(event);
+                            boolean isReunionOrRecordatorio = 
+                                esReunion(event) || esRecordatorio(event);
+                            
+                            // Si la cita está asignada a este veterinario o es un recordatorio/reunión suyo
+                            if (isMine && (isCitaMedica || isReunionOrRecordatorio)) {
+                                events.add(event);
+                            }
                         }
+                    }else{
+                        showErrorMessage("Error", "No se pudieron cargar las citas: " + ois.readUTF());
                     }
                     System.out.println("Veterinario: Cargando solo citas y eventos propios (total: " + events.size() + ")");
                 } 
                 else {
                     // Otros usuarios solo ven sus propios eventos
-                    events = calendarService.getAppointmentsByUser(username);
+                    gestorSocket.enviarPeticion(Protocolo.OBTENER_EVENTOS_POR_USUARIO+Protocolo.SEPARADOR_CODIGO+username);
+                    ObjectInputStream ois = new ObjectInputStream(gestorSocket.getEntrada());
+                    int codigo = ois.readInt();
+                    if(codigo == Protocolo.OBTENER_EVENTOS_POR_USUARIO_RESPONSE){
+                        events = (List<CalendarEvent>) ois.readObject();
+                    }else{
+                        showErrorMessage("Error", "No se pudieron cargar los eventos del usuario: " + ois.readUTF());
+                    }
                     System.out.println("Usuario estándar: Cargando solo eventos propios");
                 }
             } else {
                 // Si no hay usuario, mostrar todas las citas
-                events = calendarService.getAllAppointments();
+                gestorSocket.enviarPeticion(Protocolo.DAMETODASLASCITAS+Protocolo.SEPARADOR_CODIGO);
+                ObjectInputStream ois = new ObjectInputStream(gestorSocket.getEntrada());
+                int codigo = ois.readInt();
+                if(codigo == Protocolo.DAMETODASLASCITAS_RESPONSE){
+                    events = (List<CalendarEvent>) ois.readObject();
+                }else{
+                    showErrorMessage("Error", "No se pudieron cargar las citas: " + ois.readUTF());
+                }
                 System.out.println("Sin usuario: Cargando todas las citas");
             }
             
@@ -859,18 +907,17 @@ public class CalendarFXComponent extends BorderPane {
             try {
                 // Convertir el ID a ObjectId
                 String idStr = event.getId();
-                // Limpiar el id para que solo contenga caracteres hexadecimales
-                idStr = idStr.replaceAll("[^a-fA-F0-9]", "");
-                if (idStr.length() == 24) {
-                    org.bson.types.ObjectId citaId = new org.bson.types.ObjectId(idStr);
-                    // Buscar la cita en la base de datos
-                    com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
-                    com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = servicioClinica.obtenerCitaPorId(citaId);
-                    if (cita != null && cita.getPacienteId() != null) {
-                        event.setPacienteId(cita.getPacienteId().toString());
-                    }
-                } else {
-                    System.err.println("ID de cita no válido para ObjectId: " + event.getId());
+                if (idStr.startsWith("_")) {
+                    idStr = idStr.substring(1);
+                }
+                org.bson.types.ObjectId citaId = new org.bson.types.ObjectId(idStr);
+                
+                // Buscar la cita en la base de datos
+                com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
+                com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = servicioClinica.obtenerCitaPorId(citaId);
+                
+                if (cita != null && cita.getPacienteId() != null) {
+                    event.setPacienteId(cita.getPacienteId().toString());
                 }
             } catch (Exception e) {
                 System.err.println("Error al obtener el ID del paciente: " + e.getMessage());
@@ -898,9 +945,8 @@ public class CalendarFXComponent extends BorderPane {
             // Obtener el controlador
             com.example.pruebamongodbcss.Modulos.Clinica.Citas.CitaFormularioController controller = loader.getController();
             
-            // Configurar el controlador con el servicio de clínica
-            com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
-            controller.setServicio(servicioClinica);
+            // Configurar el controlador
+            controller.setServicio(null);
             
             // Si es una cita existente, cargar sus datos
             if (event.getId() != null && !event.getId().isEmpty()) {
@@ -912,10 +958,11 @@ public class CalendarFXComponent extends BorderPane {
                 org.bson.types.ObjectId citaId = new org.bson.types.ObjectId(idStr);
                 
                 // Buscar la cita en la base de datos
-                com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = servicioClinica.obtenerCitaPorId(citaId);
-                if (cita != null) {
-                    controller.setCita(cita);
-                }
+                // Por ahora comentamos esta funcionalidad hasta implementar el protocolo completo
+                // com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = servicioClinica.obtenerCitaPorId(citaId);
+                // if (cita != null) {
+                //     controller.setCita(cita);
+                // }
             }
             
             // Configurar callback para refrescar el calendario
@@ -958,7 +1005,7 @@ public class CalendarFXComponent extends BorderPane {
             EventoFormularioController controller = loader.getController();
             
             // Configurar el controlador
-            controller.setServicio(calendarService);
+            controller.setServicio(null);
             
             // Configurar callback para refrescar el calendario
             controller.setEventoGuardadoCallback(() -> {
@@ -1050,7 +1097,18 @@ public class CalendarFXComponent extends BorderPane {
                     String entryId = entry.getId();
                     
                     // Eliminar de la BD
-                    boolean deleted = calendarService.deleteAppointment(entryId);
+                    boolean deleted = false;
+                    try {
+                        gestorSocket.enviarPeticion(Protocolo.ELIMINAR_EVENTO_CALENDARIO+Protocolo.SEPARADOR_CODIGO+entryId);
+                        ObjectInputStream ois = new ObjectInputStream(gestorSocket.getEntrada());
+                        int codigo = ois.readInt();
+                        if(codigo == Protocolo.ELIMINAR_EVENTO_CALENDARIO_RESPONSE){
+                            deleted = ois.readBoolean();
+                        }
+                    } catch (Exception ex) {
+                        System.err.println("Error al eliminar evento: " + ex.getMessage());
+                        deleted = false;
+                    }
                     
                     if (deleted) {
                         // Eliminar del calendario visual
@@ -1316,9 +1374,14 @@ public class CalendarFXComponent extends BorderPane {
                 if (!isUUID) {
                     // Solo buscar en la base de datos si NO es UUID
                     try {
-                        CalendarEvent calEvent = calendarService.getEventById(entry.getId());
-                        if (calEvent != null && calEvent.getUsuario() != null) {
-                            usuario = calEvent.getUsuario();
+                        gestorSocket.enviarPeticion(Protocolo.OBTENER_EVENTO_POR_ID+Protocolo.SEPARADOR_CODIGO+entry.getId());
+                        ObjectInputStream ois = new ObjectInputStream(gestorSocket.getEntrada());
+                        int codigo = ois.readInt();
+                        if(codigo == Protocolo.OBTENER_EVENTO_POR_ID_RESPONSE){
+                            CalendarEvent calEvent = (CalendarEvent) ois.readObject();
+                            if (calEvent != null && calEvent.getUsuario() != null) {
+                                usuario = calEvent.getUsuario();
+                            }
                         }
                     } catch (Exception e) {
                         // Si hay error al buscar, usar valor por defecto
@@ -1756,5 +1819,32 @@ public class CalendarFXComponent extends BorderPane {
         }
         
         return null;
+    }
+    
+    /**
+     * Determina si un evento es una cita médica
+     * @param event Evento a evaluar
+     * @return true si es una cita médica
+     */
+    private boolean esCitaMedica(CalendarEvent event) {
+        return event.getTipoEvento() == CalendarEvent.EventoTipo.CITA_MEDICA;
+    }
+    
+    /**
+     * Determina si un evento es una reunión
+     * @param event Evento a evaluar
+     * @return true si es una reunión
+     */
+    private boolean esReunion(CalendarEvent event) {
+        return event.getTipoEvento() == CalendarEvent.EventoTipo.REUNION;
+    }
+    
+    /**
+     * Determina si un evento es un recordatorio
+     * @param event Evento a evaluar
+     * @return true si es un recordatorio
+     */
+    private boolean esRecordatorio(CalendarEvent event) {
+        return event.getTipoEvento() == CalendarEvent.EventoTipo.RECORDATORIO;
     }
 }

@@ -1,6 +1,7 @@
 package com.example.pruebamongodbcss;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -965,21 +966,9 @@ public class PanelInicioController implements Initializable {
     }
 
     /**
-     * Actualiza el contador de eventos para el usuario actual usando web View
+     * Actualiza el contador de eventos para el usuario actual usando petición al servidor
      */
     private void actualizarContadorEventos() {
-
-        try {
-            gestorSocket.enviarPeticion(Protocolo.ACTUALIZAREVENTOS+Protocolo.SEPARADOR_CODIGO);
-            //Salida por consola confirmacion de envio
-            System.out.println("Envio de peticion de actualizacion de eventos confirmado");
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-
-
         if (usuarioActual == null || btnEventCounter == null) {
             return;
         }
@@ -987,122 +976,149 @@ public class PanelInicioController implements Initializable {
         // Usar un hilo secundario para no bloquear la UI
         new Thread(() -> {
             try {
-                // Obtener el resumen de eventos para el usuario
-                final CalendarService.EventSummary summary = calendarService.getEventSummaryForUser(usuarioActual.getUsuario());
+                // Hacer petición al servidor para obtener el resumen de eventos
+                String peticion = Protocolo.OBTENER_RESUMEN_EVENTOS_USUARIO + Protocolo.SEPARADOR_CODIGO + usuarioActual.getUsuario();
+                gestorSocket.enviarPeticion(peticion);
                 
-                // Actualizar el botón en el hilo de la UI
-                javafx.application.Platform.runLater(() -> {
-                    try {
-                        // Actualizar el texto con el total
-                        btnEventCounter.setText(String.valueOf(summary.getTotal()));
-                        
-                        // Crear el contenido HTML para el tooltip con el estilo moderno
-                        String tooltipContent = String.format(
-                            "<html><head><style>" +
-                            "body { margin: 0; padding: 0; overflow: hidden; }" +
-                            ".radio-container {" +
-                            "  --main-color: #f7e479;" +
-                            "  --main-color-opacity: #f7e4791c;" +
-                            "  --total-radio: 3;" +
-                            "  background: #1a1a1a;" +
-                            "  padding: 12px;" +
-                            "  border-radius: 8px;" +
-                            "  width: 200px;" +
-                            "  box-sizing: border-box;" +
-                            "}" +
-                            ".event-type {" +
-                            "  color: #ffffff;" +
-                            "  padding: 6px 10px;" +
-                            "  margin: 3px 0;" +
-                            "  position: relative;" +
-                            "  display: flex;" +
-                            "  justify-content: space-between;" +
-                            "  align-items: center;" +
-                            "  border-left: 2px solid transparent;" +
-                            "  transition: all 0.3s ease;" +
-                            "  font-size: 13px;" +
-                            "}" +
-                            ".event-type:hover {" +
-                            "  background: rgba(247, 228, 121, 0.1);" +
-                            "  border-left-color: #f7e479;" +
-                            "  padding-left: 15px;" +
-                            "}" +
-                            ".event-count {" +
-                            "  color: #f7e479;" +
-                            "  font-weight: bold;" +
-                            "  margin-left: 10px;" +
-                            "}" +
-                            ".total-events {" +
-                            "  color: #f7e479;" +
-                            "  font-size: 14px;" +
-                            "  font-weight: bold;" +
-                            "  text-align: center;" +
-                            "  padding: 5px 0;" +
-                            "  margin-bottom: 8px;" +
-                            "  border-bottom: 1px solid rgba(247, 228, 121, 0.2);" +
-                            "}" +
-                            "</style></head><body>" +
-                            "<div class='radio-container'>" +
-                            "<div class='total-events'>Total de Eventos: %d</div>" +
-                            "<div class='event-type'>Reuniones<span class='event-count'>%d</span></div>" +
-                            "<div class='event-type'>Recordatorios<span class='event-count'>%d</span></div>" +
-                            "<div class='event-type'>Citas Médicas<span class='event-count'>%d</span></div>" +
-                            "</div></body></html>",
-                            summary.getTotal(),
-                            summary.getMeetings(),
-                            summary.getReminders(),
-                            summary.getAppointments()
-                        );
-                        
-                        // Crear un nuevo tooltip con WebView para soportar HTML
-                        Tooltip tooltip = new Tooltip();
-                        tooltip.setStyle("-fx-background-color: transparent; -fx-padding: 0;");
-                        
-                        // Usar WebView para mostrar el contenido HTML
-                        javafx.scene.web.WebView webView = new javafx.scene.web.WebView();
-                        webView.setPrefSize(200, 140); // Ajustado para el contenido exacto
-                        webView.setMaxSize(200, 140);
-                        webView.setMinSize(200, 140);
-                        webView.setContextMenuEnabled(false);
-                        
-                        // Deshabilitar scroll
-                        webView.getEngine().setJavaScriptEnabled(true);
-                        webView.getEngine().loadContent(tooltipContent);
-                        
-                        // Hacer el fondo del WebView transparente
-                        webView.setStyle("-fx-background-color: transparent;");
-                        
-                        tooltip.setGraphic(webView);
-                        tooltip.setContentDisplay(javafx.scene.control.ContentDisplay.GRAPHIC_ONLY);
-                        
-                        // Configurar los tiempos del tooltip
-                        tooltip.setShowDelay(javafx.util.Duration.millis(100));
-                        tooltip.setShowDuration(javafx.util.Duration.seconds(20));
-                        tooltip.setHideDelay(javafx.util.Duration.millis(200));
-                        
-                        btnEventCounter.setTooltip(tooltip);
-                        
-                        // Hacer visible el botón
-                        btnEventCounter.setVisible(true);
-                        
-                        // Aplicar estilo adicional según la cantidad
-                        if (summary.getTotal() > 0) {
-                            if (!btnEventCounter.getStyleClass().contains("has-events")) {
-                                btnEventCounter.getStyleClass().add("has-events");
+                // Leer la respuesta del servidor
+                ObjectInputStream entrada = gestorSocket.getEntrada();
+                int codigoRespuesta = entrada.readInt();
+                
+                if (codigoRespuesta == Protocolo.OBTENER_RESUMEN_EVENTOS_USUARIO_RESPONSE) {
+                    // Leer el objeto EventSummary del servidor
+                    final com.example.pruebamongodbcss.calendar.EventSummary summary = 
+                        (com.example.pruebamongodbcss.calendar.EventSummary) entrada.readObject();
+                    
+                    // Actualizar el botón en el hilo de la UI
+                    javafx.application.Platform.runLater(() -> {
+                        try {
+                            // Actualizar el texto con el total
+                            btnEventCounter.setText(String.valueOf(summary.getTotal()));
+                            
+                            // Crear el contenido HTML para el tooltip con el estilo moderno
+                            String tooltipContent = String.format(
+                                "<html><head><style>" +
+                                "body { margin: 0; padding: 0; overflow: hidden; }" +
+                                ".radio-container {" +
+                                "  --main-color: #f7e479;" +
+                                "  --main-color-opacity: #f7e4791c;" +
+                                "  --total-radio: 3;" +
+                                "  background: #1a1a1a;" +
+                                "  padding: 12px;" +
+                                "  border-radius: 8px;" +
+                                "  width: 200px;" +
+                                "  box-sizing: border-box;" +
+                                "}" +
+                                ".event-type {" +
+                                "  color: #ffffff;" +
+                                "  padding: 6px 10px;" +
+                                "  margin: 3px 0;" +
+                                "  position: relative;" +
+                                "  display: flex;" +
+                                "  justify-content: space-between;" +
+                                "  align-items: center;" +
+                                "  border-left: 2px solid transparent;" +
+                                "  transition: all 0.3s ease;" +
+                                "  font-size: 13px;" +
+                                "}" +
+                                ".event-type:hover {" +
+                                "  background: rgba(247, 228, 121, 0.1);" +
+                                "  border-left-color: #f7e479;" +
+                                "  padding-left: 15px;" +
+                                "}" +
+                                ".event-count {" +
+                                "  color: #f7e479;" +
+                                "  font-weight: bold;" +
+                                "  margin-left: 10px;" +
+                                "}" +
+                                ".total-events {" +
+                                "  color: #f7e479;" +
+                                "  font-size: 14px;" +
+                                "  font-weight: bold;" +
+                                "  text-align: center;" +
+                                "  padding: 5px 0;" +
+                                "  margin-bottom: 8px;" +
+                                "  border-bottom: 1px solid rgba(247, 228, 121, 0.2);" +
+                                "}" +
+                                "</style></head><body>" +
+                                "<div class='radio-container'>" +
+                                "<div class='total-events'>Total de Eventos: %d</div>" +
+                                "<div class='event-type'>Reuniones<span class='event-count'>%d</span></div>" +
+                                "<div class='event-type'>Recordatorios<span class='event-count'>%d</span></div>" +
+                                "<div class='event-type'>Citas Médicas<span class='event-count'>%d</span></div>" +
+                                "</div></body></html>",
+                                summary.getTotal(),
+                                summary.getMeetings(),
+                                summary.getReminders(),
+                                summary.getAppointments()
+                            );
+                            
+                            // Crear un nuevo tooltip con WebView para soportar HTML
+                            Tooltip tooltip = new Tooltip();
+                            tooltip.setStyle("-fx-background-color: transparent; -fx-padding: 0;");
+                            
+                            // Usar WebView para mostrar el contenido HTML
+                            javafx.scene.web.WebView webView = new javafx.scene.web.WebView();
+                            webView.setPrefSize(200, 140); // Ajustado para el contenido exacto
+                            webView.setMaxSize(200, 140);
+                            webView.setMinSize(200, 140);
+                            webView.setContextMenuEnabled(false);
+                            
+                            // Deshabilitar scroll
+                            webView.getEngine().setJavaScriptEnabled(true);
+                            webView.getEngine().loadContent(tooltipContent);
+                            
+                            // Hacer el fondo del WebView transparente
+                            webView.setStyle("-fx-background-color: transparent;");
+                            
+                            tooltip.setGraphic(webView);
+                            tooltip.setContentDisplay(javafx.scene.control.ContentDisplay.GRAPHIC_ONLY);
+                            
+                            // Configurar los tiempos del tooltip
+                            tooltip.setShowDelay(javafx.util.Duration.millis(100));
+                            tooltip.setShowDuration(javafx.util.Duration.seconds(20));
+                            tooltip.setHideDelay(javafx.util.Duration.millis(200));
+                            
+                            btnEventCounter.setTooltip(tooltip);
+                            
+                            // Hacer visible el botón
+                            btnEventCounter.setVisible(true);
+                            
+                            // Aplicar estilo adicional según la cantidad
+                            if (summary.getTotal() > 0) {
+                                if (!btnEventCounter.getStyleClass().contains("has-events")) {
+                                    btnEventCounter.getStyleClass().add("has-events");
+                                }
+                            } else {
+                                btnEventCounter.getStyleClass().remove("has-events");
                             }
-                        } else {
-                            btnEventCounter.getStyleClass().remove("has-events");
+                        } catch (Exception e) {
+                            System.err.println("Error al actualizar UI del contador: " + e.getMessage());
                         }
-                    } catch (Exception e) {
-                        System.err.println("Error al actualizar UI del contador: " + e.getMessage());
-                    }
-                });
+                    });
+                } else if (codigoRespuesta == Protocolo.ERROR_OBTENER_RESUMEN_EVENTOS_USUARIO) {
+                    // Error del servidor
+                    javafx.application.Platform.runLater(() -> {
+                        btnEventCounter.setText("?");
+                        Tooltip errorTooltip = new Tooltip("Error al cargar eventos desde el servidor");
+                        errorTooltip.setStyle(
+                            "-fx-background-color: #1a1a1a;" +
+                            "-fx-text-fill: #ff4444;" +
+                            "-fx-font-size: 12px;" +
+                            "-fx-padding: 10px;" +
+                            "-fx-border-radius: 5px;" +
+                            "-fx-background-radius: 5px;"
+                        );
+                        btnEventCounter.setTooltip(errorTooltip);
+                        btnEventCounter.setVisible(true);
+                    });
+                }
             } catch (Exception e) {
                 e.printStackTrace();
-                // En caso de error, mostrar "?" en el contador
+                // En caso de error de comunicación, mostrar "?" en el contador
                 javafx.application.Platform.runLater(() -> {
                     btnEventCounter.setText("?");
-                    Tooltip errorTooltip = new Tooltip("Error al cargar eventos");
+                    Tooltip errorTooltip = new Tooltip("Error de comunicación con el servidor");
                     errorTooltip.setStyle(
                         "-fx-background-color: #1a1a1a;" +
                         "-fx-text-fill: #ff4444;" +

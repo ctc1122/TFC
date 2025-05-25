@@ -113,4 +113,70 @@ public interface Protocolo {
     static final int ERRORCREARPACIENTE_DEVUELVEPACIENTE=1067;
 
 
+    static final int SETUSERCONECTADO=1068;
+    static final int SETUSERCONECTADO_RESPONSE=1069;
+    static final int ERRORSETUSERCONECTADO=1070;
+
+    static final int GETALLUSERS=1071;
+    static final int GETALLUSERS_RESPONSE=1072;
+    static final int ERRORGETALLUSERS=1073;
+
+    static final int GETALLVETERINARIOS=1074;
+    static final int GETALLVETERINARIOS_RESPONSE=1075;
+    static final int ERRORGETALLVETERINARIOS=1076;
+
+    static final int DELETEUSER=1077;
+    static final int DELETEUSER_RESPONSE=1078;
+    static final int ERRORDELETEUSER=1079;
+
+    static final int RESETPASSWORD=1080;
+    static final int RESETPASSWORD_RESPONSE=1081;
+    static final int ERRORRESETPASSWORD=1082;
+
+    static final int CARGAR_DATOS_PRUEBA=1083;
+    static final int CARGAR_DATOS_PRUEBA_RESPONSE=1084;
+    static final int ERROR_CARGAR_DATOS_PRUEBA=1085;
+
+    static final int RECONECTAR_DB=1086;
+    static final int RECONECTAR_DB_RESPONSE=1087;
+    static final int ERROR_RECONECTAR_DB=1088;
+
+    static final int GUARDAR_USUARIO=1089;
+    static final int GUARDAR_USUARIO_RESPONSE=1090;
+    static final int ERROR_GUARDAR_USUARIO=1091;
+
+    static final int VERIFICAR_USUARIO_EXISTE=1092;
+    static final int VERIFICAR_USUARIO_EXISTE_RESPONSE=1093;
+    static final int ERROR_VERIFICAR_USUARIO_EXISTE=1094;
+
+    static final int DAMETODASLASCITAS=1095;
+    static final int DAMETODASLASCITAS_RESPONSE=1096;
+    static final int ERROR_DAMETODASLASCITAS=1097;
+
+    // Códigos para operaciones del calendario
+    static final int GUARDAR_EVENTO_CALENDARIO=1098;
+    static final int GUARDAR_EVENTO_CALENDARIO_RESPONSE=1099;
+    static final int ERROR_GUARDAR_EVENTO_CALENDARIO=1100;
+
+    static final int ACTUALIZAR_EVENTO_CALENDARIO=1101;
+    static final int ACTUALIZAR_EVENTO_CALENDARIO_RESPONSE=1102;
+    static final int ERROR_ACTUALIZAR_EVENTO_CALENDARIO=1103;
+
+    static final int ELIMINAR_EVENTO_CALENDARIO=1104;
+    static final int ELIMINAR_EVENTO_CALENDARIO_RESPONSE=1105;
+    static final int ERROR_ELIMINAR_EVENTO_CALENDARIO=1106;
+
+    static final int OBTENER_EVENTO_POR_ID=1107;
+    static final int OBTENER_EVENTO_POR_ID_RESPONSE=1108;
+    static final int ERROR_OBTENER_EVENTO_POR_ID=1109;
+
+    static final int OBTENER_EVENTOS_POR_USUARIO=1110;
+    static final int OBTENER_EVENTOS_POR_USUARIO_RESPONSE=1111;
+    static final int ERROR_OBTENER_EVENTOS_POR_USUARIO=1112;
+
+    // Nuevas constantes para obtener resumen de eventos
+    static final int OBTENER_RESUMEN_EVENTOS_USUARIO=1113;
+    static final int OBTENER_RESUMEN_EVENTOS_USUARIO_RESPONSE=1114;
+    static final int ERROR_OBTENER_RESUMEN_EVENTOS_USUARIO=1115;
+
 } 

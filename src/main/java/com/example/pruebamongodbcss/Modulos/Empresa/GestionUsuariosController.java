@@ -7,9 +7,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Data.Usuario.Rol;
+import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -85,8 +86,7 @@ public class GestionUsuariosController implements Initializable {
     @FXML private Button btnEditarVeterinario;
     @FXML private Button btnEliminarVeterinario;
     
-    // Servicio
-    private ServicioUsuarios servicio;
+
     
     // Listas observables
     private ObservableList<Usuario> usuariosObservable;
@@ -100,6 +100,8 @@ public class GestionUsuariosController implements Initializable {
 
     // Add a new field for the current user
     private Usuario usuarioActual;
+
+    private GestorSocket gestorPeticiones;
     
     /**
      * Establece el usuario actual (generalmente un administrador)
@@ -107,9 +109,24 @@ public class GestionUsuariosController implements Initializable {
      */
     public void setUsuarioActual(Usuario usuario) {
         this.usuarioActual = usuario;
-        if (servicio != null && usuario != null) {
-            servicio.setUsuarioActual(usuario);
-            System.out.println("Usuario actual establecido: " + usuario.getUsuario() + " (Rol: " + usuario.getRol() + ")");
+        if ( usuario != null) {
+            try {
+                //Pedir al servidor setear el usuario actual
+                gestorPeticiones.enviarPeticion(Protocolo.SETUSERCONECTADO + Protocolo.SEPARADOR_CODIGO);
+                gestorPeticiones.getSalida().writeObject(usuarioActual);
+                gestorPeticiones.getSalida().flush();
+                
+                //Recibir la respuesta del servidor
+                int codigo = gestorPeticiones.getEntrada().readInt();
+                if (codigo == Protocolo.SETUSERCONECTADO_RESPONSE) {
+                    System.out.println("Usuario actual establecido: " + usuarioActual.getUsuario()
+                            + " (Rol: " + usuarioActual.getRol().getDescripcion() + ")");
+                } else {
+                    System.out.println("ADVERTENCIA: No hay usuario actual establecido para GestionUsuariosController");
+                }
+                System.out.println("Usuario actual establecido: " + usuario.getUsuario() + " (Rol: " + usuario.getRol() + ")");
+            } catch (IOException ex) {
+            }
         }
     }
 
@@ -118,14 +135,23 @@ public class GestionUsuariosController implements Initializable {
         try {
             System.out.println("Inicializando GestionUsuariosController...");
             
-            // Inicializar servicio
-            servicio = new ServicioUsuarios();
+            gestorPeticiones = GestorSocket.getInstance();
             
             // Verificar si hay un usuario actual
             if (usuarioActual != null) {
-                servicio.setUsuarioActual(usuarioActual);
-                System.out.println("Usuario actual establecido: " + usuarioActual.getUsuario() + 
-                                   " (Rol: " + usuarioActual.getRol().getDescripcion() + ")");
+                //Pedir al servidor setear el usuario actual
+                gestorPeticiones.enviarPeticion(Protocolo.SETUSERCONECTADO + Protocolo.SEPARADOR_CODIGO);
+                gestorPeticiones.getSalida().writeObject(usuarioActual);
+                gestorPeticiones.getSalida().flush();
+                
+                //Recibir la respuesta del servidor
+                int codigo = gestorPeticiones.getEntrada().readInt();
+                if (codigo == Protocolo.SETUSERCONECTADO_RESPONSE) {
+                    System.out.println("Usuario actual establecido: " + usuarioActual.getUsuario() + 
+                                    " (Rol: " + usuarioActual.getRol().getDescripcion() + ")");
+                } else {
+                    System.out.println("ADVERTENCIA: No hay usuario actual establecido para GestionUsuariosController");
+                }
             } else {
                 System.out.println("ADVERTENCIA: No hay usuario actual establecido para GestionUsuariosController");
             }
@@ -326,18 +352,44 @@ public class GestionUsuariosController implements Initializable {
      * Carga todos los usuarios
      */
     private void cargarUsuarios() {
-        usuariosObservable.clear();
-        List<Usuario> usuarios = servicio.obtenerTodosUsuarios();
-        usuariosObservable.addAll(usuarios);
+        try {
+            usuariosObservable.clear();
+            //Pedir al servidor obtener todos los usuarios
+            gestorPeticiones.enviarPeticion(Protocolo.GETALLUSERS + Protocolo.SEPARADOR_CODIGO);
+            gestorPeticiones.getSalida().flush();
+
+            int codigo = gestorPeticiones.getEntrada().readInt();
+            if (codigo == Protocolo.GETALLUSERS_RESPONSE) {
+                List<Usuario> usuarios = (List<Usuario>) gestorPeticiones.getEntrada().readObject();
+                usuariosObservable.addAll(usuarios);
+            } else {
+                System.err.println("Error: No se encontraron usuarios");
+            }
+        } catch (IOException | ClassNotFoundException ex) {
+        }
     }
     
     /**
      * Carga todos los veterinarios
      */
     private void cargarVeterinarios() {
-        veterinariosObservable.clear();
-        List<Usuario> veterinarios = servicio.buscarUsuariosPorRol(Rol.VETERINARIO);
-        veterinariosObservable.addAll(veterinarios);
+        try {
+            veterinariosObservable.clear();
+            //Pedir al servidor obtener todos los veterinarios
+            gestorPeticiones.enviarPeticion(Protocolo.GETALLVETERINARIOS + Protocolo.SEPARADOR_CODIGO);
+            gestorPeticiones.getSalida().flush();
+            gestorPeticiones.getSalida().writeObject(Rol.VETERINARIO);
+            gestorPeticiones.getSalida().flush();
+
+            int codigo = gestorPeticiones.getEntrada().readInt();
+            if (codigo == Protocolo.GETALLVETERINARIOS_RESPONSE) {
+                List<Usuario> veterinarios = (List<Usuario>) gestorPeticiones.getEntrada().readObject();
+                veterinariosObservable.addAll(veterinarios);
+            } else {
+                System.err.println("Error: No se encontraron veterinarios");
+            }
+        } catch (IOException | ClassNotFoundException ex) {
+        }
     }
     
     /**
@@ -349,7 +401,7 @@ public class GestionUsuariosController implements Initializable {
     }
     
     /**
-     * Carga datos de prueba en la base de datos
+     * Carga datos de prueba en la base de datos usando el protocolo
      */
     private void cargarDatosPrueba() {
         Optional<ButtonType> resultado = mostrarConfirmacion("Confirmar carga", 
@@ -360,28 +412,22 @@ public class GestionUsuariosController implements Initializable {
             try {
                 System.out.println("Iniciando carga de datos de prueba...");
                 
-                // Asegurar que tenemos una conexión válida a la base de datos
-                try {
-                    // Intentar reiniciar la conexión primero
-                    System.out.println("Verificando conexión a MongoDB...");
-                    if (!servicio.verificarConexion()) {
-                        throw new Exception("No se pudo establecer conexión con MongoDB");
-                    }
-                } catch (Exception e) {
-                    System.err.println("Error al conectar a MongoDB: " + e.getMessage());
-                    mostrarAlerta("Error de conexión", "Error al conectar a MongoDB", 
-                        "No se pudo establecer conexión con la base de datos. Detalles: " + e.getMessage());
-                    return;
+                // Enviar petición al servidor para cargar datos de prueba
+                gestorPeticiones.enviarPeticion(Protocolo.CARGAR_DATOS_PRUEBA + Protocolo.SEPARADOR_CODIGO);
+                gestorPeticiones.getSalida().flush();
+                
+                // Recibir respuesta del servidor
+                int codigo = gestorPeticiones.getEntrada().readInt();
+                if (codigo == Protocolo.CARGAR_DATOS_PRUEBA_RESPONSE) {
+                    mostrarMensaje("Datos cargados", "Datos de prueba cargados con éxito", 
+                        "Los datos de prueba han sido cargados correctamente en el sistema.");
+                    
+                    // Recargar los datos en las tablas
+                    recargarTablas();
+                } else {
+                    mostrarAlerta("Error", "Error al cargar datos", 
+                        "Se produjo un error al cargar los datos de prueba.");
                 }
-                
-                // Cargar datos de prueba
-                servicio.cargarDatosPrueba();
-                
-                mostrarMensaje("Datos cargados", "Datos de prueba cargados con éxito", 
-                    "Los datos de prueba han sido cargados correctamente en el sistema.");
-                
-                // Recargar los datos en las tablas
-                recargarTablas();
                 
             } catch (Exception e) {
                 System.err.println("Error al cargar datos: " + e.getMessage());
@@ -393,18 +439,29 @@ public class GestionUsuariosController implements Initializable {
     }
     
     /**
-     * Reconecta a la base de datos
+     * Reconecta a la base de datos usando el protocolo
      */
     private void reconectarBaseDatos() {
         try {
             System.out.println("Forzando reconexión a MongoDB...");
-            servicio.reiniciarConexion();
             
-            // Recargar datos
-            recargarTablas();
+            // Enviar petición al servidor para reconectar la base de datos
+            gestorPeticiones.enviarPeticion(Protocolo.RECONECTAR_DB + Protocolo.SEPARADOR_CODIGO);
+            gestorPeticiones.getSalida().flush();
             
-            mostrarMensaje("Conexión restablecida", "Reconexión exitosa", 
-                "La conexión a la base de datos ha sido restablecida correctamente.");
+            // Recibir respuesta del servidor
+            int codigo = gestorPeticiones.getEntrada().readInt();
+            if (codigo == Protocolo.RECONECTAR_DB_RESPONSE) {
+                // Recargar datos
+                recargarTablas();
+                
+                mostrarMensaje("Conexión restablecida", "Reconexión exitosa", 
+                    "La conexión a la base de datos ha sido restablecida correctamente.");
+            } else {
+                mostrarAlerta("Error", "Error al reconectar", 
+                    "Se produjo un error al intentar reconectar a la base de datos.");
+            }
+            
         } catch (Exception e) {
             mostrarAlerta("Error", "Error al reconectar", 
                 "Se produjo un error al intentar reconectar a la base de datos: " + e.getMessage());
@@ -448,14 +505,28 @@ public class GestionUsuariosController implements Initializable {
                 "Esta acción no se puede deshacer.");
             
             if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
-                boolean eliminado = servicio.eliminarUsuario(usuario.getId());
-                if (eliminado) {
-                    recargarTablas();
-                    mostrarMensaje("Usuario eliminado", "Usuario eliminado correctamente", 
-                        "El usuario ha sido eliminado de la base de datos.");
-                } else {
-                    mostrarAlerta("Error", "No se pudo eliminar el usuario", 
-                        "Ocurrió un error al intentar eliminar el usuario.");
+
+                try {
+                    //Pedir al servidor eliminar el usuario
+                    gestorPeticiones.enviarPeticion(Protocolo.DELETEUSER + Protocolo.SEPARADOR_CODIGO + usuario.getId());
+                    
+                    gestorPeticiones.getSalida().flush();
+                    
+                    boolean eliminado = false;
+                    int codigo = gestorPeticiones.getEntrada().readInt();
+                    if (codigo == Protocolo.DELETEUSER_RESPONSE) {
+                        eliminado = true;
+                    } else {
+                        mostrarAlerta("Error", "No se pudo eliminar el usuario",
+                                "Ocurrió un error al intentar eliminar el usuario.");
+                    }
+                    
+                    if (eliminado) {
+                        recargarTablas();
+                        mostrarMensaje("Usuario eliminado", "Usuario eliminado correctamente",
+                                "El usuario ha sido eliminado de la base de datos.");
+                    } 
+                } catch (IOException ex) {
                 }
             }
         } else {
@@ -476,16 +547,26 @@ public class GestionUsuariosController implements Initializable {
             
             Optional<String> resultado = dialog.showAndWait();
             if (resultado.isPresent() && !resultado.get().isEmpty()) {
-                String nuevaContraseña = resultado.get();
-                
-                // Resetear contraseña
-                boolean reseteo = servicio.resetearContrasena(usuario.getId(), nuevaContraseña);
-                if (reseteo) {
-                    mostrarMensaje("Contraseña reseteada", "Contraseña reseteada correctamente", 
-                        "La contraseña del usuario ha sido actualizada.");
-                } else {
-                    mostrarAlerta("Error", "No se pudo resetear la contraseña", 
-                        "Ocurrió un error al intentar resetear la contraseña.");
+                try {
+                    String nuevaContraseña = resultado.get();
+                    
+                    // Resetear contraseña
+                    //Pedir al servidor resetear la contraseña
+                    gestorPeticiones.enviarPeticion(Protocolo.RESETPASSWORD + Protocolo.SEPARADOR_CODIGO + usuario.getId() + Protocolo.SEPARADOR_CODIGO + nuevaContraseña);
+                    gestorPeticiones.getSalida().flush();
+                    
+                    boolean reseteo = false;
+                    int codigo = gestorPeticiones.getEntrada().readInt();
+                    if (codigo == Protocolo.RESETPASSWORD_RESPONSE) {
+                        reseteo = true;
+                        mostrarMensaje("Contraseña reseteada", "Contraseña cambiada correctamente", 
+                            "La contraseña del usuario ha sido actualizada correctamente.");
+                    } else {
+                        mostrarAlerta("Error", "No se pudo resetear la contraseña",
+                                "Ocurrió un error al intentar resetear la contraseña.");
+                    }
+
+                } catch (IOException ex) {
                 }
             }
         } else {
@@ -521,14 +602,27 @@ public class GestionUsuariosController implements Initializable {
                 "Esta acción no se puede deshacer.");
             
             if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
-                boolean eliminado = servicio.eliminarUsuario(veterinario.getId());
+                try {
+                    //Pedir al servidor eliminar el veterinario
+                    gestorPeticiones.enviarPeticion(Protocolo.DELETEUSER + Protocolo.SEPARADOR_CODIGO + veterinario.getId());
+                    gestorPeticiones.getSalida().flush();
+
+                    boolean eliminado = false;
+                    int codigo = gestorPeticiones.getEntrada().readInt();
+                    if (codigo == Protocolo.DELETEUSER_RESPONSE) {
+                        eliminado = true;
+                    } else {
+                        mostrarAlerta("Error", "No se pudo eliminar el veterinario",
+                                "Ocurrió un error al intentar eliminar el veterinario.");
+                    }
+                
                 if (eliminado) {
                     recargarTablas();
                     mostrarMensaje("Veterinario eliminado", "Veterinario eliminado correctamente", 
                         "El veterinario ha sido eliminado de la base de datos.");
-                } else {
-                    mostrarAlerta("Error", "No se pudo eliminar el veterinario", 
-                        "Ocurrió un error al intentar eliminar el veterinario.");
+                } 
+                
+                } catch (IOException ex) {
                 }
             }
         } else {
@@ -567,21 +661,6 @@ public class GestionUsuariosController implements Initializable {
                     "No se pudo inicializar el controlador del formulario.");
                 return;
             }
-            
-            // Establecer el servicio y asegurar que tenga el usuario actual
-            ServicioUsuarios servicioForm = new ServicioUsuarios();
-            if (usuarioActual != null) {
-                servicioForm.setUsuarioActual(usuarioActual);
-                System.out.println("Estableciendo usuario actual en formulario: " + 
-                                  usuarioActual.getUsuario() + " (Rol: " + usuarioActual.getRol().getDescripcion() + ")");
-            } else if (servicio != null && servicio.getUsuarioActual() != null) {
-                servicioForm.setUsuarioActual(servicio.getUsuarioActual());
-                System.out.println("Estableciendo usuario actual desde servicio principal: " + 
-                                  servicio.getUsuarioActual().getUsuario());
-            } else {
-                System.out.println("ADVERTENCIA: No hay usuario actual establecido para el formulario");
-            }
-            controller.setServicio(servicioForm);
             
             // Preparar usuario para edición/creación
             Usuario usuarioEdicion = null;

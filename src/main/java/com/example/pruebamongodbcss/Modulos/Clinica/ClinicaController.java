@@ -128,7 +128,7 @@ public class ClinicaController implements Initializable {
     @FXML private BorderPane citasContainer;
     
     // Servicio clínico
-    private ServicioClinica servicioClinica;
+    //private ServicioClinica servicioClinica;
     
     // Listas observables para las tablas
     private ObservableList<ModeloPaciente> pacientesObservable;
@@ -147,7 +147,7 @@ public class ClinicaController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Inicializar el servicio clínico
-        servicioClinica = new ServicioClinica();
+        //servicioClinica = new ServicioClinica();
         gestorPeticiones = GestorSocket.getInstance();
         
         // Configurar las listas observables
@@ -2656,12 +2656,23 @@ public class ClinicaController implements Initializable {
                 if (confirmado) {
                     // Si se confirmó la edición, guardar el paciente
                     try {
-                        ObjectId pacienteId = servicioClinica.guardarPaciente(pacienteEditado);
+                        //Pedir al servidor guardar el paciente
+                        gestorPeticiones.enviarPeticion(Protocolo.CREARPACIENTE + Protocolo.SEPARADOR_CODIGO);
+                        ObjectOutputStream salida = gestorPeticiones.getSalida();
+                        salida.writeObject(pacienteEditado);
+                        salida.flush();
+
+                        ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                        ObjectId pacienteId = (ObjectId) entrada.readObject();
                         if (pacienteId != null) {
                             // Refrescar datos
                             cargarPacientes();
                             mostrarMensaje("Éxito", "Paciente guardado", 
                                 "El paciente ha sido guardado correctamente.");
+                        }
+                        else {
+                            mostrarAlerta("Error", "Error al guardar", 
+                                "Ha ocurrido un error al guardar el paciente: " );
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -2710,12 +2721,25 @@ public class ClinicaController implements Initializable {
                 if (confirmado) {
                     // Si se confirmó la edición, guardar el propietario
                     try {
-                        ObjectId propietarioId = servicioClinica.guardarPropietario(propietarioEditado);
-                        if (propietarioId != null) {
-                            // Refrescar datos
-                            cargarPropietarios();
-                            mostrarMensaje("Éxito", "Propietario guardado", 
-                                "El propietario ha sido guardado correctamente.");
+                        //Pedir al servidor guardar el propietario
+                        gestorPeticiones.enviarPeticion(Protocolo.CREARPROPIETARIO + Protocolo.SEPARADOR_CODIGO);
+                        ObjectOutputStream salida = gestorPeticiones.getSalida();
+                        salida.writeObject(propietarioEditado);
+                        salida.flush();
+
+                        ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                        if (entrada.readInt() == Protocolo.CREARPROPIETARIO_RESPONSE) {
+                            ObjectId propietarioId = (ObjectId) entrada.readObject();
+                            if (propietarioId != null) {
+                                // Refrescar datos
+                                cargarPropietarios();
+                                mostrarMensaje("Éxito", "Propietario guardado", 
+                                    "El propietario ha sido guardado correctamente.");
+                            }
+                        }
+                        else {
+                            mostrarAlerta("Error", "Error al guardar", 
+                                "Ha ocurrido un error al guardar el propietario: " );
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -2853,7 +2877,7 @@ public class ClinicaController implements Initializable {
             
             // Si no hay mascotas, mostrar mensaje
             if (mascotas.isEmpty()) {
-                mostrarMensaje("Sin mascotas", "No hay mascotas para este propietario",
+                mostrarMensaje("Sin mascotas", "No hay mascotas para este propietario", 
                         "El propietario " + propietario.getNombreCompleto() + " no tiene mascotas registradas.");
             }
         }
@@ -2937,42 +2961,52 @@ public class ClinicaController implements Initializable {
      * Configura el ComboBox de pacientes para filtrar diagnósticos
      */
     private void configurarComboBoxPacientes() {
-        // Personalizar la visualización de los pacientes en el ComboBox
-        cmbPacientesDiagnostico.setCellFactory(lv -> new ListCell<ModeloPaciente>() {
-            @Override
-            protected void updateItem(ModeloPaciente item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item.getNombre() + " (" + item.getEspecie() + " - " + item.getRaza() + ")");
+        try {
+            // Personalizar la visualización de los pacientes en el ComboBox
+            cmbPacientesDiagnostico.setCellFactory(lv -> new ListCell<ModeloPaciente>() {
+                @Override
+                protected void updateItem(ModeloPaciente item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(item.getNombre() + " (" + item.getEspecie() + " - " + item.getRaza() + ")");
+                    }
                 }
-            }
-        });
-        
-        // Configurar celda del botón
-        cmbPacientesDiagnostico.setButtonCell(new ListCell<ModeloPaciente>() {
-            @Override
-            protected void updateItem(ModeloPaciente item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item.getNombre() + " (" + item.getEspecie() + " - " + item.getRaza() + ")");
+            });
+            
+            // Configurar celda del botón
+            cmbPacientesDiagnostico.setButtonCell(new ListCell<ModeloPaciente>() {
+                @Override
+                protected void updateItem(ModeloPaciente item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(item.getNombre() + " (" + item.getEspecie() + " - " + item.getRaza() + ")");
+                    }
                 }
+            });
+            
+            // Cargar todos los pacientes en el ComboBox
+            //Pedir al servidor todos los pacientes
+            gestorPeticiones.enviarPeticion(Protocolo.OBTENER_TODOS_PACIENTES + Protocolo.SEPARADOR_CODIGO);
+            ObjectInputStream entrada = gestorPeticiones.getEntrada();
+            if (entrada.readInt() == Protocolo.OBTENER_TODOS_PACIENTES_RESPONSE) {
+                List<ModeloPaciente> pacientes = (List<ModeloPaciente>) entrada.readObject();
+                cmbPacientesDiagnostico.setItems(FXCollections.observableArrayList(pacientes));
             }
-        });
-        
-        // Cargar todos los pacientes en el ComboBox
-        List<ModeloPaciente> pacientes = servicioClinica.obtenerTodosPacientes();
-        cmbPacientesDiagnostico.setItems(FXCollections.observableArrayList(pacientes));
-        
-        // Manejar cambio de selección en el ComboBox
-        cmbPacientesDiagnostico.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null) {
-                filtrarDiagnosticosPorPaciente(newVal.getId());
+            else {
+                mostrarAlerta("Error", "Error al obtener pacientes", "No se pudieron obtener los pacientes.");
             }
-        });
+            // Manejar cambio de selección en el ComboBox
+            cmbPacientesDiagnostico.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal != null) {
+                    filtrarDiagnosticosPorPaciente(newVal.getId());
+                }
+            });
+        } catch (IOException | ClassNotFoundException ex) {
+        }
     }
     
     /**
@@ -2990,9 +3024,21 @@ public class ClinicaController implements Initializable {
      */
     private void filtrarDiagnosticosPorPaciente(ObjectId pacienteId) {
         if (pacienteId != null) {
-            diagnosticosObservable.clear();
-            List<ModeloDiagnostico> diagnosticos = servicioClinica.buscarDiagnosticosPorPaciente(pacienteId);
-            diagnosticosObservable.addAll(diagnosticos);
+            try {
+                diagnosticosObservable.clear();
+                //Pedir al servidor los diagnosticos del paciente
+                gestorPeticiones.enviarPeticion(Protocolo.BUSCAR_DIAGNOSTICOS_POR_PACIENTE + Protocolo.SEPARADOR_CODIGO + pacienteId);
+                ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                if (entrada.readInt() == Protocolo.BUSCAR_DIAGNOSTICOS_POR_PACIENTE_RESPONSE) {
+                    List<ModeloDiagnostico> diagnosticos = (List<ModeloDiagnostico>) entrada.readObject();
+                    diagnosticosObservable.addAll(diagnosticos);
+                }
+                else {
+                    mostrarAlerta("Error", "Error al filtrar diagnosticos",
+                            "No se pudieron filtrar los diagnosticos del paciente.");
+                }
+            } catch (IOException | ClassNotFoundException ex) {
+            }
         }
     }
 
@@ -3059,22 +3105,41 @@ public class ClinicaController implements Initializable {
             });
             
             btnGuardar.setOnAction(e -> {
-                // Actualizar la lista de vacunas del paciente
-                paciente.setVacunas(new ArrayList<>(vacunasObservable));
-                
-                // Guardar el paciente en la base de datos
-                boolean actualizado = servicioClinica.actualizarPaciente(paciente);
-                if (actualizado) {
-                    mostrarMensaje("Éxito", "Vacunas guardadas", 
-                        "Las vacunas del paciente han sido actualizadas correctamente.");
-                    // Actualizar la vista
-                    cargarPacientes();
-                } else {
-                    mostrarAlerta("Error", "Error al guardar vacunas", 
-                        "No se pudieron guardar las vacunas del paciente.");
+                try {
+                    // Actualizar la lista de vacunas del paciente
+                    paciente.setVacunas(new ArrayList<>(vacunasObservable));
+                    
+                    // Guardar el paciente en la base de datos
+                    //Pedir al servidor actualizar el paciente
+                    gestorPeticiones.enviarPeticion(Protocolo.ACTUALIZARPACIENTE + Protocolo.SEPARADOR_CODIGO);
+                    ObjectOutputStream salida = gestorPeticiones.getSalida();
+                    salida.writeObject(paciente);
+                    salida.flush();
+                    
+                    boolean actualizado = false;
+                    
+                    ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                    if (entrada.readInt() == Protocolo.ACTUALIZARPACIENTE_RESPONSE) {
+                        actualizado = true;
+                    }
+                    else {
+                        actualizado = false;
+                    }
+                    
+                    
+                    if (actualizado) {
+                        mostrarMensaje("Éxito", "Vacunas guardadas",
+                                "Las vacunas del paciente han sido actualizadas correctamente.");
+                        // Actualizar la vista
+                        cargarPacientes();
+                    } else {
+                        mostrarAlerta("Error", "Error al guardar vacunas",
+                                "No se pudieron guardar las vacunas del paciente.");
+                    }
+                    
+                    dialogStage.close();
+                } catch (IOException ex) {
                 }
-                
-                dialogStage.close();
             });
             
             // Crear el layout
@@ -3148,22 +3213,42 @@ public class ClinicaController implements Initializable {
             });
             
             btnGuardar.setOnAction(e -> {
-                // Actualizar la lista de alergias del paciente
-                paciente.setAlergias(new ArrayList<>(alergiasObservable));
-                
-                // Guardar el paciente en la base de datos
-                boolean actualizado = servicioClinica.actualizarPaciente(paciente);
-                if (actualizado) {
-                    mostrarMensaje("Éxito", "Alergias guardadas", 
-                        "Las alergias del paciente han sido actualizadas correctamente.");
-                    // Actualizar la vista
-                    cargarPacientes();
-                } else {
-                    mostrarAlerta("Error", "Error al guardar alergias", 
-                        "No se pudieron guardar las alergias del paciente.");
+                try {
+                    // Actualizar la lista de alergias del paciente
+                    paciente.setAlergias(new ArrayList<>(alergiasObservable));
+                    
+                    // Guardar el paciente en la base de datos
+                    
+                    //Pedir al servidor actualizar el paciente
+                    gestorPeticiones.enviarPeticion(Protocolo.ACTUALIZARPACIENTE + Protocolo.SEPARADOR_CODIGO);
+                    ObjectOutputStream salida = gestorPeticiones.getSalida();
+                    salida.writeObject(paciente);
+                    salida.flush();
+                    
+                    boolean actualizado = false;
+                    
+                    ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                    if (entrada.readInt() == Protocolo.ACTUALIZARPACIENTE_RESPONSE) {
+                        actualizado = true;
+                    }
+                    else {
+                        actualizado = false;
+                    }
+                    
+                    
+                    if (actualizado) {
+                        mostrarMensaje("Éxito", "Alergias guardadas",
+                                "Las alergias del paciente han sido actualizadas correctamente.");
+                        // Actualizar la vista
+                        cargarPacientes();
+                    } else {
+                        mostrarAlerta("Error", "Error al guardar alergias",
+                                "No se pudieron guardar las alergias del paciente.");
+                    }
+                    
+                    dialogStage.close();
+                } catch (IOException ex) {
                 }
-                
-                dialogStage.close();
             });
             
             // Crear el layout

@@ -1,11 +1,13 @@
 package com.example.pruebamongodbcss.Modulos.Empresa;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
 import com.example.pruebamongodbcss.Data.PatronExcepcion;
-import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.Data.Usuario;
+import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -86,7 +88,7 @@ public class RegistroUsuarioController implements Initializable {
     private VBox panelAdmin;
 
     // Servicio
-    private ServicioUsuarios servicio;
+    private GestorSocket gestorSocket;
 
     // Usuario para editar
     private Usuario usuario;
@@ -96,7 +98,7 @@ public class RegistroUsuarioController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         try {
             // Inicializar servicio
-            servicio = new ServicioUsuarios();
+            gestorSocket = GestorSocket.getInstance();
 
             // Configurar combo de roles
             comboRol.setItems(FXCollections.observableArrayList(Usuario.Rol.values()));
@@ -294,7 +296,18 @@ public class RegistroUsuarioController implements Initializable {
             }
             
             // Guardar en la base de datos
-            servicio.guardarUsuario(usuario);
+            try {
+                gestorSocket.enviarPeticion(Protocolo.GUARDAR_USUARIO + Protocolo.SEPARADOR_CODIGO);
+                gestorSocket.getSalida().writeObject(usuario);
+                gestorSocket.getSalida().flush();
+                
+                int codigo = gestorSocket.getEntrada().readInt();
+                if (codigo != Protocolo.GUARDAR_USUARIO_RESPONSE) {
+                    throw new Exception("Error al guardar usuario en el servidor");
+                }
+            } catch (IOException e) {
+                throw new Exception("Error de comunicación con el servidor: " + e.getMessage());
+            }
             
             // Mostrar mensaje de éxito
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -370,9 +383,24 @@ public class RegistroUsuarioController implements Initializable {
             }
             
             // Validar que el usuario no exista (solo en modo creación)
-            if (!modoEdicion && servicio != null && servicio.existeUsuario(nombreUsuario)) {
-                mostrarError("Usuario existente", "El nombre de usuario ya existe en el sistema.");
-                return false;
+            if (!modoEdicion && gestorSocket != null) {
+                try {
+                    gestorSocket.enviarPeticion(Protocolo.VERIFICAR_USUARIO_EXISTE + Protocolo.SEPARADOR_CODIGO + nombreUsuario);
+                    gestorSocket.getSalida().flush();
+                    
+                    int codigo = gestorSocket.getEntrada().readInt();
+                    if (codigo == Protocolo.VERIFICAR_USUARIO_EXISTE_RESPONSE) {
+                        boolean existe = gestorSocket.getEntrada().readBoolean();
+                        if (existe) {
+                            mostrarError("Usuario existente", "El nombre de usuario ya existe en el sistema.");
+                            return false;
+                        }
+                    } else {
+                        System.err.println("Error al verificar si el usuario existe");
+                    }
+                } catch (IOException e) {
+                    System.err.println("Error de comunicación al verificar usuario: " + e.getMessage());
+                }
             }
             
             // Validar campos de veterinario si aplica
@@ -447,12 +475,5 @@ public class RegistroUsuarioController implements Initializable {
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
-    }
-
-    /**
-     * Establece el servicio de usuarios a utilizar
-     */
-    public void setServicio(ServicioUsuarios servicio) {
-        this.servicio = servicio;
     }
 } 
