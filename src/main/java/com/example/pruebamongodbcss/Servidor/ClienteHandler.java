@@ -181,7 +181,7 @@ public class ClienteHandler implements Runnable {
                             if (pacienteActualizado != null) {
                                 procesarActualizarPaciente(pacienteActualizado);
                                 synchronized (salida) {
-                                    salida.writeInt(Protocolo.ACTUALIZAREVENTOS_RESPONSE);
+                                    salida.writeInt(Protocolo.ACTUALIZARPACIENTE_RESPONSE);
                                     salida.flush();
                                 }
                             } else {
@@ -457,7 +457,7 @@ public class ClienteHandler implements Runnable {
                                     salida.flush();
                                 }
                             }
-                            
+                            break;
                             
                         default:
                             System.out.println("Mensaje no reconocido: " + codigo);
