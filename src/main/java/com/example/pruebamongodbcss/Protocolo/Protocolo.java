@@ -149,4 +149,29 @@ public interface Protocolo {
     static final int VERIFICAR_USUARIO_EXISTE_RESPONSE=1093;
     static final int ERROR_VERIFICAR_USUARIO_EXISTE=1094;
 
+    static final int DAMETODASLASCITAS=1095;
+    static final int DAMETODASLASCITAS_RESPONSE=1096;
+    static final int ERROR_DAMETODASLASCITAS=1097;
+
+    // Códigos para operaciones del calendario
+    static final int GUARDAR_EVENTO_CALENDARIO=1098;
+    static final int GUARDAR_EVENTO_CALENDARIO_RESPONSE=1099;
+    static final int ERROR_GUARDAR_EVENTO_CALENDARIO=1100;
+
+    static final int ACTUALIZAR_EVENTO_CALENDARIO=1101;
+    static final int ACTUALIZAR_EVENTO_CALENDARIO_RESPONSE=1102;
+    static final int ERROR_ACTUALIZAR_EVENTO_CALENDARIO=1103;
+
+    static final int ELIMINAR_EVENTO_CALENDARIO=1104;
+    static final int ELIMINAR_EVENTO_CALENDARIO_RESPONSE=1105;
+    static final int ERROR_ELIMINAR_EVENTO_CALENDARIO=1106;
+
+    static final int OBTENER_EVENTO_POR_ID=1107;
+    static final int OBTENER_EVENTO_POR_ID_RESPONSE=1108;
+    static final int ERROR_OBTENER_EVENTO_POR_ID=1109;
+
+    static final int OBTENER_EVENTOS_POR_USUARIO=1110;
+    static final int OBTENER_EVENTOS_POR_USUARIO_RESPONSE=1111;
+    static final int ERROR_OBTENER_EVENTOS_POR_USUARIO=1112;
+
 } 

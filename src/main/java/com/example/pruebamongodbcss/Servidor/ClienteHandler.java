@@ -10,6 +10,7 @@ import java.util.List;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import com.calendarfx.model.CalendarEvent;
 import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Data.Usuario.Rol;
@@ -18,6 +19,7 @@ import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario;
 import com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.example.pruebamongodbcss.calendar.CalendarService;
 import com.mongodb.client.MongoCollection;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -32,13 +34,14 @@ public class ClienteHandler implements Runnable {
     //Declaro los servicios
     private ServicioUsuarios servicioUsuarios;
     private ServicioClinica servicioClinica;
-
+    private CalendarService calendarService;
     
     //Declaro el constructor
     public ClienteHandler(Socket socket) {
         this.clientSocket = socket;
         this.servicioUsuarios = new ServicioUsuarios();
         this.servicioClinica = new ServicioClinica();
+        this.calendarService = new CalendarService();
     }
 
     @Override
@@ -633,6 +636,124 @@ public class ClienteHandler implements Runnable {
                                 System.err.println("Error: Faltan parámetros en la solicitud VERIFICAR_USUARIO_EXISTE");
                                 synchronized (salida) {
                                     salida.writeInt(Protocolo.ERROR_VERIFICAR_USUARIO_EXISTE);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.DAMETODASLASCITAS:
+                            System.out.println("Procesando solicitud de obtener todas las citas...");
+                            List<com.example.pruebamongodbcss.calendar.CalendarEvent> citas = calendarService.getAllAppointments();
+                            if(citas != null){
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.DAMETODASLASCITAS_RESPONSE);
+                                    salida.writeObject(citas);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: No se encontraron citas");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_DAMETODASLASCITAS);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.GUARDAR_EVENTO_CALENDARIO:
+                            System.out.println("Procesando solicitud de guardar evento de calendario...");
+                            try {
+                                com.example.pruebamongodbcss.calendar.CalendarEvent eventoAGuardar = 
+                                    (com.example.pruebamongodbcss.calendar.CalendarEvent) entrada.readObject();
+                                com.example.pruebamongodbcss.calendar.CalendarEvent eventoGuardado = 
+                                    calendarService.saveAppointment(eventoAGuardar);
+                                if (eventoGuardado != null) {
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.GUARDAR_EVENTO_CALENDARIO_RESPONSE);
+                                        salida.writeObject(eventoGuardado);
+                                        salida.flush();
+                                    }
+                                } else {
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_GUARDAR_EVENTO_CALENDARIO);
+                                        salida.flush();
+                                    }
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al guardar evento: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_GUARDAR_EVENTO_CALENDARIO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.ACTUALIZAR_EVENTO_CALENDARIO:
+                            System.out.println("Procesando solicitud de actualizar evento de calendario...");
+                            try {
+                                com.example.pruebamongodbcss.calendar.CalendarEvent eventoAActualizar = 
+                                    (com.example.pruebamongodbcss.calendar.CalendarEvent) entrada.readObject();
+                                boolean actualizado = calendarService.updateAppointment(eventoAActualizar);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ACTUALIZAR_EVENTO_CALENDARIO_RESPONSE);
+                                    salida.writeBoolean(actualizado);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al actualizar evento: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_ACTUALIZAR_EVENTO_CALENDARIO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.ELIMINAR_EVENTO_CALENDARIO:
+                            System.out.println("Procesando solicitud de eliminar evento de calendario...");
+                            if (parametros.length >= 1) {
+                                String idEvento = parametros[0];
+                                boolean eliminadoEvento = calendarService.deleteAppointment(idEvento);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ELIMINAR_EVENTO_CALENDARIO_RESPONSE);
+                                    salida.writeBoolean(eliminadoEvento);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud ELIMINAR_EVENTO_CALENDARIO");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_ELIMINAR_EVENTO_CALENDARIO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.OBTENER_EVENTO_POR_ID:
+                            System.out.println("Procesando solicitud de obtener evento por ID...");
+                            if (parametros.length >= 1) {
+                                String idEvento = parametros[0];
+                                com.example.pruebamongodbcss.calendar.CalendarEvent evento = calendarService.getEventById(idEvento);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_EVENTO_POR_ID_RESPONSE);
+                                    salida.writeObject(evento);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud OBTENER_EVENTO_POR_ID");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_EVENTO_POR_ID);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.OBTENER_EVENTOS_POR_USUARIO:
+                            System.out.println("Procesando solicitud de obtener eventos por usuario...");
+                            if (parametros.length >= 1) {
+                                String nombreUsuario = parametros[0];
+                                List<com.example.pruebamongodbcss.calendar.CalendarEvent> eventosUsuario = 
+                                    calendarService.getAppointmentsByUser(nombreUsuario);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_EVENTOS_POR_USUARIO_RESPONSE);
+                                    salida.writeObject(eventosUsuario);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud OBTENER_EVENTOS_POR_USUARIO");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_EVENTOS_POR_USUARIO);
                                     salida.flush();
                                 }
                             }
