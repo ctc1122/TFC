@@ -58,6 +58,7 @@
                      <children>
                         <ComboBox fx:id="cmbPaciente" prefWidth="300.0" HBox.hgrow="ALWAYS" />
                         <Button fx:id="btnBuscarPaciente" mnemonicParsing="false" onAction="#onBuscarPaciente" styleClass="btn-secondary" text="Buscar" />
+                        <Button fx:id="btnNuevoPaciente" mnemonicParsing="false" onAction="#onNuevoPaciente" styleClass="btn-success" text="Nuevo" />
                      </children>
                   </HBox>
                   

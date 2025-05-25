@@ -117,10 +117,8 @@ public class CalendarService {
      */
     public CalendarEvent saveAppointment(CalendarEvent event) {
         try {
-            // Si no tiene ID, crear uno nuevo
             if (event.getId() == null || event.getId().isEmpty()) {
-                event.setId("_" + new ObjectId().toString());
-                
+                event.setId(new ObjectId().toString());
                 // Insertar el documento (solo para nuevos eventos)
                 Document doc = calendarEventToDocument(event);
                 appointmentsCollection.insertOne(doc);
@@ -128,45 +126,29 @@ public class CalendarService {
             } else {
                 // Si ya tiene ID, actualizar en lugar de insertar
                 String eventId = event.getId();
-                if (!eventId.startsWith("_")) {
-                    eventId = "_" + eventId;
-                }
-                
-                // Crear documento con los datos a actualizar
                 Document doc = calendarEventToDocument(event);
-                // Remover el _id para evitar error de actualización
-                doc.remove("_id");
-                
                 // Verificar si el ID tiene formato UUID (contiene guiones)
                 if (event.getId().contains("-")) {
                     LOGGER.warning("Detectado ID con formato UUID: " + event.getId() + ". Generando nuevo ObjectId.");
-                    
                     // Generar un nuevo ID y asignarlo al evento
                     ObjectId nuevoId = new ObjectId();
-                    event.setId("_" + nuevoId.toString());
-                    
+                    event.setId(nuevoId.toString());
                     // Configurar el documento con el nuevo ID
                     doc.put("_id", nuevoId);
-                    
                     // Insertar como nuevo documento (no actualizar)
                     appointmentsCollection.insertOne(doc);
                     LOGGER.info("Convertido UUID a ObjectId y guardado como nuevo: " + event.getId());
                     return event;
                 }
-                
                 // Verificar si el ID es un ObjectId válido
                 ObjectId objectId;
                 try {
-                    // Intentar crear un ObjectId con el ID (quitando el prefijo "_" si existe)
-                    objectId = new ObjectId(event.getId().startsWith("_") ? 
-                                event.getId().substring(1) : event.getId());
-                    
+                    objectId = new ObjectId(event.getId());
                     // Si es válido, actualizar usando el ID como filtro
                     UpdateResult result = appointmentsCollection.updateOne(
                         Filters.eq("_id", objectId),
                         new Document("$set", doc)
                     );
-                    
                     if (result.getModifiedCount() == 0 && result.getMatchedCount() == 0) {
                         LOGGER.warning("No se encontró la cita para actualizar. Intentando insertar.");
                         // Si no existe, intentar insertarla (caso poco común)
@@ -176,18 +158,14 @@ public class CalendarService {
                 } catch (IllegalArgumentException e) {
                     // El ID no es un ObjectId válido, crear uno nuevo
                     LOGGER.warning("ID no válido como ObjectId: " + event.getId() + ". Generando uno nuevo.");
-                    
                     // Generar un nuevo ID y asignarlo al evento
                     ObjectId nuevoId = new ObjectId();
-                    event.setId("_" + nuevoId.toString());
-                    
+                    event.setId(nuevoId.toString());
                     // Configurar el documento con el nuevo ID
                     doc.put("_id", nuevoId);
-                    
                     // Insertar como nuevo documento
                     appointmentsCollection.insertOne(doc);
                 }
-                
                 LOGGER.info("Cita existente actualizada correctamente: " + event.getId());
             }
             
@@ -381,9 +359,7 @@ public class CalendarService {
         }
     }
     
-
-
-        /**
+    /**
      * Obtiene todas las citas solo citas de un usuario
      * @param usuario nombre de usuario
      * @return Lista de citas
@@ -399,12 +375,10 @@ public class CalendarService {
             
             System.out.println("Buscando citas para usuario: '" + usuario + "'");
             
-
             FindIterable<Document> citasUsuario2 = citasCollection.find(
                 Filters.eq("usuarioAsignado", usuario)
             );
             
-
             for (Document doc : citasUsuario2) {
                 appointments.add(citaDocumentToCalendarEvent(doc));
                 
@@ -420,7 +394,6 @@ public class CalendarService {
         }
     }
 
-
     /**
      * Convierte un documento MongoDB a un objeto CalendarEvent
      * @param doc Documento a convertir
@@ -428,9 +401,8 @@ public class CalendarService {
      */
     private CalendarEvent documentToCalendarEvent(Document doc) {
         CalendarEvent event = new CalendarEvent();
-        
-        // Asignar ID (prefijo _ para diferenciar de los IDs generados por el frontend)
-        event.setId("_" + doc.getObjectId("_id").toString());
+        // Asignar ID puro de MongoDB
+        event.setId(doc.getObjectId("_id").toString());
         
         // Datos básicos
         event.setTitle(doc.getString("title"));
@@ -498,9 +470,8 @@ public class CalendarService {
     private CalendarEvent citaDocumentToCalendarEvent(Document doc) {
         try {
             CalendarEvent event = new CalendarEvent();
-            
-            // ID con prefijo especial para diferenciar
-            event.setId("_" + doc.getObjectId("_id").toString());
+            // Asignar ID puro de MongoDB
+            event.setId(doc.getObjectId("_id").toString());
             
             // Extraer datos del documento de la cita
             // Título: combinar el motivo y paciente si están disponibles

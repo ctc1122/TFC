@@ -24,19 +24,13 @@
             <!-- Especie -->
             <VBox spacing="2">
                 <Label text="Especie *" />
-                <MFXTextField fx:id="txtEspecie" prefWidth="150" />
+                <MFXComboBox fx:id="cmbEspecie" prefWidth="150" />
             </VBox>
             
             <!-- Raza -->
             <VBox spacing="2">
                 <Label text="Raza" />
                 <MFXTextField fx:id="txtRaza" prefWidth="150" />
-            </VBox>
-            
-            <!-- Color -->
-            <VBox spacing="2">
-                <Label text="Color" />
-                <MFXTextField fx:id="txtColor" prefWidth="120" />
             </VBox>
         </HBox>
         
@@ -51,12 +45,6 @@
             <VBox spacing="2">
                 <Label text="F. Nacimiento *" />
                 <MFXDatePicker fx:id="dpFechaNacimiento" prefWidth="150" />
-            </VBox>
-            
-            <!-- Estado -->
-            <VBox spacing="2">
-                <Label text="Estado" />
-                <MFXComboBox fx:id="cmbEstado" prefWidth="120" />
             </VBox>
             
             <!-- Peso -->

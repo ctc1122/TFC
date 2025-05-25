@@ -17,7 +17,6 @@ import io.github.palexdev.materialfx.controls.MFXComboBox;
 import io.github.palexdev.materialfx.controls.MFXDatePicker;
 import io.github.palexdev.materialfx.controls.MFXTextField;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -36,19 +35,15 @@ import javafx.stage.Stage;
  */
 public class PacienteEditRowController implements Initializable {
     
+    // =========================
+    // 1. ATRIBUTOS FXML Y DE CLASE
+    // =========================
     @FXML private HBox rowContainer;
-    @FXML private MFXTextField txtNombre;
-    @FXML private MFXTextField txtEspecie;
-    @FXML private MFXTextField txtRaza;
-    @FXML private MFXTextField txtColor;
-    @FXML private MFXComboBox<String> cmbSexo;
+    @FXML private MFXTextField txtNombre, txtRaza, txtPeso;
+    @FXML private MFXComboBox<String> cmbSexo, cmbEspecie;
     @FXML private MFXDatePicker dpFechaNacimiento;
-    @FXML private MFXComboBox<String> cmbEstado;
-    @FXML private MFXTextField txtPeso;
     @FXML private Label lblPropietario;
-    @FXML private MFXButton btnBuscarPropietario;
-    @FXML private MFXButton btnGuardar;
-    @FXML private MFXButton btnCancelar;
+    @FXML private MFXButton btnBuscarPropietario, btnGuardar, btnCancelar;
     
     private ModeloPaciente paciente;
     private ModeloPropietario propietario;
@@ -56,31 +51,40 @@ public class PacienteEditRowController implements Initializable {
     private Runnable onCancelarCallback;
     private boolean esNuevo;
     private GestorSocket gestorServidor;
+    private ServicioClinica servicio;
     
+    // =========================
+    // 2. INICIALIZACIÓN Y CONFIGURACIÓN
+    // =========================
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         gestorServidor = GestorSocket.getInstance();
-        
-        // Configurar combos
-        cmbSexo.setItems(FXCollections.observableArrayList("Macho", "Hembra"));
-        
-        ObservableList<String> estadosString = FXCollections.observableArrayList();
-        estadosString.addAll("Activo", "Inactivo", "Fallecido");
-        cmbEstado.setItems(estadosString);
-        
-        // Configurar validaciones
-        txtPeso.setTextFormatter(new TextFormatter<>(change -> {
-            String newText = change.getControlNewText();
-            if (newText.matches("^\\d*\\.?\\d*$")) {
-                return change;
-            }
-            return null;
-        }));
-        
-        // Configurar botones
+        configurarCombos();
+        configurarValidaciones();
         configurarBotones();
     }
     
+    private void configurarCombos() {
+        cmbSexo.setItems(FXCollections.observableArrayList("Macho", "Hembra"));
+        cmbEspecie.setItems(FXCollections.observableArrayList("Perro", "Gato", "Ave", "Reptil", "Otro"));
+    }
+    
+    private void configurarValidaciones() {
+        txtPeso.setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            return newText.matches("^\\d*\\.?\\d*$") ? change : null;
+        }));
+    }
+    
+    private void configurarBotones() {
+        btnBuscarPropietario.setOnAction(event -> buscarPropietario());
+        btnGuardar.setOnAction(this::onGuardar);
+        btnCancelar.setOnAction(this::onCancelar);
+    }
+    
+    // =========================
+    // 3. CARGA Y ACTUALIZACIÓN DE DATOS
+    // =========================
     /**
      * Configura el controlador con los valores necesarios
      * @param servicio Servicio de clínica
@@ -99,7 +103,6 @@ public class PacienteEditRowController implements Initializable {
         
         // Si es nuevo, establecer valores predeterminados
         if (esNuevo) {
-            cmbEstado.setValue("Activo");
             dpFechaNacimiento.setValue(LocalDate.now());
         }
         
@@ -114,52 +117,42 @@ public class PacienteEditRowController implements Initializable {
     }
     
     /**
-     * Establece el propietario para este paciente
-     */
-    public void setPropietario(ModeloPropietario propietario) {
-        this.propietario = propietario;
-        actualizarLabelPropietario();
-    }
-    
-    /**
      * Carga los datos del paciente en los controles
      */
     private void cargarDatosPaciente() {
         txtNombre.setText(paciente.getNombre());
-        txtEspecie.setText(paciente.getEspecie());
+        cmbEspecie.setValue(paciente.getEspecie());
         txtRaza.setText(paciente.getRaza());
-        txtColor.setText(paciente.getColor());
         cmbSexo.setValue(paciente.getSexo());
-        
+
         if (paciente.getFechaNacimiento() != null) {
             dpFechaNacimiento.setValue(LocalDate.from(paciente.getFechaNacimiento().toInstant().atZone(java.time.ZoneId.systemDefault())));
         }
-        
-        // Estado - asumiendo que el paciente tiene un campo de estado como String
-        if (paciente.getEstadoPaciente() != null) {
-            cmbEstado.setValue(paciente.getEstadoPaciente());
-        }
-        
+
         if (paciente.getPeso() > 0) {
             txtPeso.setText(String.valueOf(paciente.getPeso()));
         }
-        
+
         // Cargar propietario si existe
         if (paciente.getPropietarioId() != null) {
-            try {
-                //Pedir al servidor el propietario
-                gestorServidor.enviarPeticion(Protocolo.OBTENERPROPIETARIO_POR_ID + Protocolo.SEPARADOR_CODIGO + paciente.getPropietarioId());
-                ObjectInputStream entrada = gestorServidor.getEntrada();
-                if (entrada.readInt() == Protocolo.OBTENERPROPIETARIO_POR_ID_RESPONSE) {
-                    propietario = (ModeloPropietario) entrada.readObject();
-                    actualizarLabelPropietario();
-                }
-                else {
-                    mostrarAlerta("Error", "Error al obtener el propietario",
-                            "Ha ocurrido un error al intentar obtener el propietario.");
-                }
-            } catch (IOException | ClassNotFoundException ex) {
+            cargarPropietario();
+        }
+    }
+    
+    private void cargarPropietario() {
+        try {
+            //Pedir al servidor el propietario
+            gestorServidor.enviarPeticion(Protocolo.OBTENERPROPIETARIO_POR_ID + Protocolo.SEPARADOR_CODIGO + paciente.getPropietarioId());
+            ObjectInputStream entrada = gestorServidor.getEntrada();
+            if (entrada.readInt() == Protocolo.OBTENERPROPIETARIO_POR_ID_RESPONSE) {
+                propietario = (ModeloPropietario) entrada.readObject();
+                actualizarLabelPropietario();
             }
+            else {
+                mostrarAlerta("Error", "Error al obtener el propietario",
+                        "Ha ocurrido un error al intentar obtener el propietario.");
+            }
+        } catch (IOException | ClassNotFoundException ex) {
         }
     }
     
@@ -174,20 +167,9 @@ public class PacienteEditRowController implements Initializable {
         }
     }
     
-    /**
-     * Configura los botones de la fila
-     */
-    private void configurarBotones() {
-        // Configurar botón de buscar propietario
-        btnBuscarPropietario.setOnAction(event -> buscarPropietario());
-        
-        // Configurar botón guardar
-        btnGuardar.setOnAction(this::onGuardar);
-        
-        // Configurar botón cancelar
-        btnCancelar.setOnAction(this::onCancelar);
-    }
-    
+    // =========================
+    // 4. GESTIÓN DE EVENTOS (BOTONES)
+    // =========================
     /**
      * Abre el diálogo para buscar un propietario
      */
@@ -203,6 +185,8 @@ public class PacienteEditRowController implements Initializable {
                 this.propietario = propietario;
                 actualizarLabelPropietario();
             });
+            
+            controller.setServicio(this.servicio);
             
             Stage stage = new Stage();
             stage.setTitle("Seleccionar Propietario");
@@ -223,82 +207,8 @@ public class PacienteEditRowController implements Initializable {
     @FXML
     private void onGuardar(ActionEvent event) {
         if (validarCampos()) {
-            // Actualizar paciente con los datos del formulario
-            paciente.setNombre(txtNombre.getText().trim());
-            paciente.setEspecie(txtEspecie.getText().trim());
-            paciente.setRaza(txtRaza.getText().trim());
-            paciente.setColor(txtColor.getText().trim());
-            paciente.setSexo(cmbSexo.getValue());
-
-            if (dpFechaNacimiento.getValue() != null) {
-                // Convertir LocalDate a Date
-                java.util.Date fecha = java.util.Date.from(dpFechaNacimiento.getValue().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
-                paciente.setFechaNacimiento(fecha);
-            }
-
-            // Asumiendo que hay un método setEstadoPaciente
-            paciente.setEstadoPaciente(cmbEstado.getValue());
-
-            try {
-                double peso = Double.parseDouble(txtPeso.getText().replace(",", "."));
-                paciente.setPeso(peso);
-            } catch (NumberFormatException e) {
-                paciente.setPeso(0);
-            }
-
-            // Asignar propietario
-            if (propietario != null) {
-                paciente.setPropietarioId(propietario.getId());
-                paciente.setNombrePropietario(propietario.getNombre() + " " + propietario.getApellidos());
-            }
-
-            // Guardar cambios
-            boolean guardado;
-            if (esNuevo) {
-                try {
-                    //Pedir al servidor agregar el paciente
-                    gestorServidor.enviarPeticion(Protocolo.CREARPACIENTE_DEVUELVEPACIENTE + Protocolo.SEPARADOR_CODIGO);
-                    ObjectOutputStream salida = gestorServidor.getSalida();
-                    salida.writeObject(paciente);
-                    salida.flush();
-
-                    ObjectInputStream entrada = gestorServidor.getEntrada();
-                    if (entrada.readInt() == Protocolo.CREARPACIENTE_DEVUELVEPACIENTE_RESPONSE) {
-                        paciente = (ModeloPaciente) entrada.readObject();
-                        guardado = true;
-                    } else {
-                        guardado = false;
-                    }
-                } catch (IOException | ClassNotFoundException ex) {
-                }
-            } else {
-                try {
-                    //Pedir al servidor actualizar el paciente
-                    gestorServidor.enviarPeticion(Protocolo.ACTUALIZARPACIENTE + Protocolo.SEPARADOR_CODIGO);
-                    ObjectOutputStream salida = gestorServidor.getSalida();
-                    salida.writeObject(paciente);
-                    salida.flush();
-                    
-                    ObjectInputStream entrada = gestorServidor.getEntrada();
-                    if (entrada.readInt() == Protocolo.ACTUALIZARPACIENTE_RESPONSE) {
-                        guardado = true;
-                    }
-                    else {
-                        guardado = false;
-                    }
-                    
-                    if (guardado) {
-                        if (onGuardarCallback != null) {
-                            onGuardarCallback.accept(paciente);
-                        }
-                    } else {
-                        mostrarAlerta("Error", "Error al guardar",
-                                "Ha ocurrido un error al intentar guardar el paciente.");
-                    }
-                } catch (IOException ex) {
-                }
-            }
-
+            actualizarPacienteDesdeFormulario();
+            guardarPaciente();
         }
     }
     
@@ -312,82 +222,133 @@ public class PacienteEditRowController implements Initializable {
         }
     }
     
+    // =========================
+    // 5. VALIDACIÓN
+    // =========================
     /**
      * Valida que todos los campos obligatorios estén completos
      */
     private boolean validarCampos() {
         if (txtNombre.getText().trim().isEmpty()) {
-            mostrarAlerta("Validación", "Campo obligatorio", "El nombre del paciente es obligatorio.");
-            txtNombre.requestFocus();
+            mostrarYFoco("El nombre del paciente es obligatorio.", txtNombre);
             return false;
         }
         
-        if (txtEspecie.getText().trim().isEmpty()) {
-            mostrarAlerta("Validación", "Campo obligatorio", "La especie del paciente es obligatoria.");
-            txtEspecie.requestFocus();
+        if (cmbEspecie.getValue() == null || cmbEspecie.getValue().trim().isEmpty()) {
+            mostrarYFoco("La especie del paciente es obligatoria.", cmbEspecie);
             return false;
         }
         
         if (cmbSexo.getValue() == null) {
-            mostrarAlerta("Validación", "Campo obligatorio", "El sexo del paciente es obligatorio.");
-            cmbSexo.requestFocus();
+            mostrarYFoco("El sexo del paciente es obligatorio.", cmbSexo);
             return false;
         }
         
         if (dpFechaNacimiento.getValue() == null) {
-            mostrarAlerta("Validación", "Campo obligatorio", "La fecha de nacimiento es obligatoria.");
-            dpFechaNacimiento.requestFocus();
+            mostrarYFoco("La fecha de nacimiento es obligatoria.", dpFechaNacimiento);
             return false;
         }
         
         if (propietario == null) {
-            mostrarAlerta("Validación", "Campo obligatorio", "Debe seleccionar un propietario para el paciente.");
-            btnBuscarPropietario.requestFocus();
+            mostrarYFoco("Debe seleccionar un propietario para el paciente.", btnBuscarPropietario);
             return false;
         }
         
         return true;
     }
     
-    /**
-     * Configura el paciente a editar (para compatibilidad)
-     */
-    public void setPaciente(ModeloPaciente paciente, boolean esNuevo) {
-        this.paciente = paciente;
-        this.esNuevo = esNuevo;
-        
-        if (paciente != null) {
-            cargarDatosPaciente();
-        }
-        
-        // Si es nuevo, establecer valores predeterminados
-        if (esNuevo) {
-            cmbEstado.setValue("Activo");
-            dpFechaNacimiento.setValue(LocalDate.now());
-        }
-    }
-
-    /**
-     * Establece el callback para cuando se guarda un paciente
-     */
-    public void setOnGuardarCallback(Consumer<ModeloPaciente> callback) {
-        this.onGuardarCallback = callback;
+    private boolean mostrarYFoco(String mensaje, javafx.scene.Node nodo) {
+        mostrarAlerta("Validación", "Campo obligatorio", mensaje);
+        nodo.requestFocus();
+        return false;
     }
     
-    /**
-     * Establece el callback para cuando se cancela la edición
-     */
-    public void setOnCancelarCallback(Runnable callback) {
-        this.onCancelarCallback = callback;
-    }
-    
-    // Métodos de utilidad para mostrar diálogos
-    
+    // =========================
+    // 6. UTILIDADES
+    // =========================
     private void mostrarAlerta(String titulo, String encabezado, String contenido) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(titulo);
         alert.setHeaderText(encabezado);
         alert.setContentText(contenido);
         alert.showAndWait();
+    }
+    
+    private void actualizarPacienteDesdeFormulario() {
+        paciente.setNombre(txtNombre.getText().trim());
+        paciente.setEspecie(cmbEspecie.getValue());
+        paciente.setRaza(txtRaza.getText().trim());
+        paciente.setSexo(cmbSexo.getValue());
+
+        if (dpFechaNacimiento.getValue() != null) {
+            paciente.setFechaNacimiento(java.util.Date.from(dpFechaNacimiento.getValue().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()));
+        }
+
+        try {
+            double peso = Double.parseDouble(txtPeso.getText().replace(",", "."));
+            paciente.setPeso(peso);
+        } catch (NumberFormatException e) {
+            paciente.setPeso(0);
+        }
+
+        // Asignar propietario
+        if (propietario != null) {
+            paciente.setPropietarioId(propietario.getId());
+            paciente.setNombrePropietario(propietario.getNombre() + " " + propietario.getApellidos());
+        }
+    }
+    
+    private void guardarPaciente() {
+        // Lógica para guardar el paciente (igual que antes)
+        // Llama a onGuardarCallback si todo va bien
+        boolean guardado;
+        if (esNuevo) {
+            try {
+                //Pedir al servidor agregar el paciente
+                gestorServidor.enviarPeticion(Protocolo.CREARPACIENTE_DEVUELVEPACIENTE + Protocolo.SEPARADOR_CODIGO);
+                ObjectOutputStream salida = gestorServidor.getSalida();
+                salida.writeObject(paciente);
+                salida.flush();
+
+                ObjectInputStream entrada = gestorServidor.getEntrada();
+                if (entrada.readInt() == Protocolo.CREARPACIENTE_DEVUELVEPACIENTE_RESPONSE) {
+                    paciente = (ModeloPaciente) entrada.readObject();
+                    guardado = true;
+                } else {
+                    guardado = false;
+                }
+            } catch (IOException | ClassNotFoundException ex) {
+            }
+        } else {
+            try {
+                //Pedir al servidor actualizar el paciente
+                gestorServidor.enviarPeticion(Protocolo.ACTUALIZARPACIENTE + Protocolo.SEPARADOR_CODIGO);
+                ObjectOutputStream salida = gestorServidor.getSalida();
+                salida.writeObject(paciente);
+                salida.flush();
+                
+                ObjectInputStream entrada = gestorServidor.getEntrada();
+                if (entrada.readInt() == Protocolo.ACTUALIZARPACIENTE_RESPONSE) {
+                    guardado = true;
+                }
+                else {
+                    guardado = false;
+                }
+                
+                if (guardado) {
+                    if (onGuardarCallback != null) {
+                        onGuardarCallback.accept(paciente);
+                    }
+                } else {
+                    mostrarAlerta("Error", "Error al guardar",
+                            "Ha ocurrido un error al intentar guardar el paciente.");
+                }
+            } catch (IOException ex) {
+            }
+        }
+    }
+
+    public void setServicio(ServicioClinica servicio) {
+        this.servicio = servicio;
     }
 } 

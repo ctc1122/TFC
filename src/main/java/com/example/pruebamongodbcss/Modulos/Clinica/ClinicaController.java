@@ -2015,7 +2015,10 @@ public class ClinicaController implements Initializable {
             if (entrada.readInt() == Protocolo.OBTENERPACIENTE_POR_ID_RESPONSE) {
                 ModeloPaciente paciente = (ModeloPaciente) entrada.readObject();
                 if (paciente != null) {
-                    controller.setPaciente(paciente);
+                    // Obtener la cita más reciente del paciente
+                    List<ModeloCita> citas = servicioClinica.buscarCitasPorPaciente(paciente.getId());
+                    ModeloCita cita = citas.isEmpty() ? null : citas.get(0); // La primera cita es la más reciente porque están ordenadas
+                    controller.setPaciente(paciente, cita);
                     controller.setDiagnostico(diagnostico);
 
                     // Llamar al método de exportación a PDF
@@ -2509,7 +2512,10 @@ public class ClinicaController implements Initializable {
                         try {
                             // Si hay un paciente seleccionado, asignarlo
                             if (pacienteSeleccionado != null) {
-                                controller.setPaciente(pacienteSeleccionado);
+                                // Obtener la cita más reciente del paciente
+                                List<ModeloCita> citas = servicioClinica.buscarCitasPorPaciente(pacienteSeleccionado.getId());
+                                ModeloCita cita = citas.isEmpty() ? null : citas.get(0);
+                                controller.setPaciente(pacienteSeleccionado, cita);
                             }
                             
                             // Configurar callbacks
@@ -2847,7 +2853,7 @@ public class ClinicaController implements Initializable {
             
             // Si no hay mascotas, mostrar mensaje
             if (mascotas.isEmpty()) {
-                mostrarMensaje("Sin mascotas", "No hay mascotas para este propietario", 
+                mostrarMensaje("Sin mascotas", "No hay mascotas para este propietario",
                         "El propietario " + propietario.getNombreCompleto() + " no tiene mascotas registradas.");
             }
         }
@@ -2860,22 +2866,22 @@ public class ClinicaController implements Initializable {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/propietario-selector.fxml"));
             Parent root = loader.load();
-            
             PropietarioSelectorController controller = loader.getController();
-            
+            controller.setServicio(servicioClinica); // <--- AÑADE ESTA LÍNEA
+
             controller.setPropietarioSeleccionadoCallback(propietario -> {
                 // Asignar el propietario al paciente
                 paciente.setPropietarioId(propietario.getId());
                 paciente.setNombrePropietario(propietario.getNombreCompleto());
                 tablaPacientes.refresh();
             });
-            
+
             Stage stage = new Stage();
             stage.setTitle("Seleccionar Propietario");
             stage.setScene(new Scene(root));
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.showAndWait();
-            
+
         } catch (IOException e) {
             e.printStackTrace();
             mostrarAlerta("Error", "Error al abrir selector de propietarios", 

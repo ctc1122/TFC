@@ -6,13 +6,18 @@ import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
 import com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica;
+import com.example.pruebamongodbcss.Modulos.Clinica.PacienteEditRowController;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import org.bson.types.ObjectId;
@@ -584,5 +589,34 @@ public class CitaFormularioController implements Initializable {
     private void cerrarVentana() {
         Stage stage = (Stage) btnCancelar.getScene().getWindow();
         stage.close();
+    }
+
+    @FXML
+    private void onNuevoPaciente() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/paciente-edit-row.fxml"));
+            Parent root = loader.load();
+            PacienteEditRowController controller = loader.getController();
+
+            // PASAR EL SERVICIO
+            controller.setServicio(this.servicio);
+
+            // Crear un nuevo paciente vacío
+            ModeloPaciente nuevoPaciente = new ModeloPaciente();
+            controller.configurar(nuevoPaciente, true, (pacienteCreado, confirmado) -> {
+                if (confirmado && pacienteCreado != null) {
+                    pacientesObservable.add(pacienteCreado);
+                    cmbPaciente.getSelectionModel().select(pacienteCreado);
+                }
+            });
+
+            Stage stage = new Stage();
+            stage.setTitle("Nuevo Paciente");
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(root));
+            stage.showAndWait();
+        } catch (Exception e) {
+            mostrarError("No se pudo abrir el formulario de nuevo paciente: " + e.getMessage());
+        }
     }
 } 

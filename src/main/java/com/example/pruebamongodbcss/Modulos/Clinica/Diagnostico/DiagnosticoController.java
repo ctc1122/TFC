@@ -4,9 +4,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
-import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -17,9 +16,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.bson.types.ObjectId;
 
+import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloDiagnostico;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
-import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
 import com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica;
 
 import javafx.application.Platform;
@@ -29,10 +28,8 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -43,8 +40,6 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.beans.property.SimpleStringProperty;
-import java.time.format.DateTimeFormatter;
 
 /**
  * Controlador para la pantalla de diagnósticos médicos.
@@ -77,11 +72,6 @@ public class DiagnosticoController implements Initializable {
     @FXML private Button btnAgregarDiagnostico;
     @FXML private Button btnQuitarDiagnostico;
     
-    // Filtrado por paciente
-    @FXML private ComboBox<ModeloPaciente> cmbPacientes;
-    @FXML private Button btnFiltrarPaciente;
-    @FXML private Button btnLimpiarFiltro;
-    
     // Exportación
     @FXML private Button btnExportarPDF;
     @FXML private Button btnExportarCSV;
@@ -112,10 +102,9 @@ public class DiagnosticoController implements Initializable {
     private Runnable onGuardarCallback;
     private Runnable onCancelarCallback;
     
-    @FXML private TableView<ModeloCita> tblConsultas;
-    @FXML private TableColumn<ModeloCita, String> colFecha;
-    @FXML private TableColumn<ModeloCita, String> colHora;
-    @FXML private TableColumn<ModeloCita, String> colMotivo;
+    @FXML private Label lblFechaCita;
+    @FXML private Label lblHoraCita;
+    @FXML private Label lblMotivoCita;
     
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -146,14 +135,13 @@ public class DiagnosticoController implements Initializable {
         Platform.runLater(() -> {
             // Configuraciones que no son críticas para la visualización inicial
             configurarBusquedaEnTiempoReal();
-            configurarComboBoxPacientes();
             
             // Carga de datos en segundo plano
             executorService.submit(() -> {
                 // Cargar pacientes
                 List<ModeloPaciente> listaPacientes = servicioClinica.obtenerTodosPacientes();
                 Platform.runLater(() -> {
-                    cmbPacientes.setItems(FXCollections.observableArrayList(listaPacientes));
+                    // cmbPacientes.setItems(FXCollections.observableArrayList(listaPacientes));
                 });
                 
                 // Cargar diagnósticos limitados (solo 50 para que sea más rápido)
@@ -175,12 +163,14 @@ public class DiagnosticoController implements Initializable {
         DateTimeFormatter formatoFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         DateTimeFormatter formatoHora = DateTimeFormatter.ofPattern("HH:mm");
 
-        colFecha.setCellValueFactory(data -> 
-            new SimpleStringProperty(data.getValue().getFechaHora().format(formatoFecha)));
-        colHora.setCellValueFactory(data -> 
-            new SimpleStringProperty(data.getValue().getFechaHora().format(formatoHora)));
-        colMotivo.setCellValueFactory(data -> 
-            new SimpleStringProperty(data.getValue().getMotivo()));
+        colDescripcion.setCellValueFactory(cellData -> cellData.getValue().strProperty());
+        colCodigo.setCellValueFactory(cellData -> cellData.getValue().cuiProperty());
+        colFuente.setCellValueFactory(cellData -> cellData.getValue().sabProperty());
+        
+        // Ajustar anchos de columnas
+        colDescripcion.prefWidthProperty().bind(tblDiagnosticos.widthProperty().multiply(0.6));
+        colCodigo.prefWidthProperty().bind(tblDiagnosticos.widthProperty().multiply(0.2));
+        colFuente.prefWidthProperty().bind(tblDiagnosticos.widthProperty().multiply(0.2));
     }
     
     /**
@@ -210,38 +200,6 @@ public class DiagnosticoController implements Initializable {
             (observable, oldValue, newValue) -> {
                 // Puedes hacer algo cuando se selecciona un diagnóstico de la lista
             });
-    }
-    
-    /**
-     * Configura el ComboBox de pacientes.
-     */
-    private void configurarComboBoxPacientes() {
-        // Personalizar la forma en que se muestran los pacientes en el ComboBox
-        cmbPacientes.setCellFactory(lv -> {
-            return new ListCell<ModeloPaciente>() {
-                @Override
-                protected void updateItem(ModeloPaciente item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty || item == null) {
-                        setText(null);
-                    } else {
-                        setText(item.getNombre() + " (" + item.getEspecie() + " - " + item.getRaza() + ")");
-                    }
-                }
-            };
-        });
-        
-        cmbPacientes.setButtonCell(new javafx.scene.control.ListCell<ModeloPaciente>() {
-            @Override
-            protected void updateItem(ModeloPaciente item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item.getNombre() + " (" + item.getEspecie() + " - " + item.getRaza() + ")");
-                }
-            }
-        });
     }
     
     /**
@@ -333,46 +291,6 @@ public class DiagnosticoController implements Initializable {
     }
     
     /**
-     * Filtra los diagnósticos por el paciente seleccionado.
-     */
-    @FXML
-    private void filtrarPorPaciente() {
-        ModeloPaciente pacienteSeleccionado = cmbPacientes.getSelectionModel().getSelectedItem();
-        if (pacienteSeleccionado != null) {
-            this.paciente = pacienteSeleccionado;
-            actualizarDatosPaciente();
-            
-            // Cargar diagnósticos del paciente seleccionado
-            executorService.submit(() -> {
-                List<ModeloDiagnostico> diagnosticosDelPaciente = 
-                    servicioClinica.buscarDiagnosticosPorPaciente(pacienteSeleccionado.getId());
-                
-                Platform.runLater(() -> {
-                    if (diagnosticosDelPaciente.isEmpty()) {
-                        mostrarInformacion("Información", 
-                            "No hay diagnósticos registrados para este paciente. Puede crear uno nuevo.");
-                    } else {
-                        // Aquí puedes mostrar los diagnósticos en alguna vista adicional o en una tabla
-                        // Por ahora, solo mostramos un mensaje informativo
-                        mostrarInformacion("Diagnósticos encontrados", 
-                            "Se encontraron " + diagnosticosDelPaciente.size() + 
-                            " diagnósticos para el paciente " + pacienteSeleccionado.getNombre());
-                    }
-                });
-            });
-        }
-    }
-    
-    /**
-     * Limpia el filtro de paciente y muestra todos los diagnósticos.
-     */
-    @FXML
-    private void limpiarFiltro() {
-        cmbPacientes.getSelectionModel().clearSelection();
-        cargarDatosDiagnosticosIniciales();
-    }
-    
-    /**
      * Actualiza la interfaz con el diagnóstico seleccionado.
      */
     private void actualizarDiagnosticoSeleccionado() {
@@ -387,9 +305,22 @@ public class DiagnosticoController implements Initializable {
      * Establece el paciente para el diagnóstico.
      * @param paciente Paciente seleccionado
      */
-    public void setPaciente(ModeloPaciente paciente) {
+    public void setPaciente(ModeloPaciente paciente, ModeloCita citaSeleccionada) {
         this.paciente = paciente;
         actualizarDatosPaciente();
+        if (citaSeleccionada != null) {
+            String fecha = citaSeleccionada.getFechaHora().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            String hora = citaSeleccionada.getFechaHora().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+            String motivo = citaSeleccionada.getMotivo();
+            // Rellenar los labels del FXML
+            lblFechaCita.setText(fecha);
+            lblHoraCita.setText(hora);
+            lblMotivoCita.setText(motivo);
+        } else {
+            lblFechaCita.setText("");
+            lblHoraCita.setText("");
+            lblMotivoCita.setText("");
+        }
     }
     
     /**

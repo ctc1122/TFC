@@ -6,23 +6,15 @@
 <?import javafx.scene.text.Font?>
 <?import java.net.URL?>
 
-<ScrollPane fitToWidth="true" fitToHeight="true" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico.DiagnosticoController">
+<ScrollPane fitToWidth="true" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico.DiagnosticoController">
     <content>
-        <VBox fx:id="contenedorPrincipal" prefHeight="900.0" prefWidth="1000.0" spacing="10.0">
+        <VBox fx:id="contenedorPrincipal" prefHeight="1200.0" prefWidth="1000.0" spacing="10.0">
             <stylesheets>
                 <URL value="@../../app.css" />
             </stylesheets>
             <padding>
                 <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
             </padding>
-            
-            <!-- Filtro de Pacientes -->
-            <HBox spacing="10.0" alignment="CENTER_LEFT">
-                <Label text="Paciente:" styleClass="label-field" />
-                <ComboBox fx:id="cmbPacientes" prefWidth="250.0" />
-                <Button fx:id="btnFiltrarPaciente" text="Filtrar" onAction="#filtrarPorPaciente" />
-                <Button fx:id="btnLimpiarFiltro" text="Limpiar" onAction="#limpiarFiltro" />
-            </HBox>
             
             <!-- Cabecera con título y botones -->
             <HBox alignment="CENTER" styleClass="header-container">
@@ -35,40 +27,56 @@
             
             <!-- Información del Paciente y tabla de consultas -->
             <HBox spacing="20.0">
-                <TitledPane animated="true" collapsible="true" expanded="true" text="Información del Paciente" styleClass="section-container">
-                    <GridPane hgap="15.0" vgap="10.0" maxWidth="500.0">
-                        <columnConstraints>
-                            <ColumnConstraints hgrow="NEVER" minWidth="10.0" prefWidth="120.0" />
-                            <ColumnConstraints hgrow="NEVER" minWidth="10.0" prefWidth="180.0" />
-                            <ColumnConstraints hgrow="NEVER" minWidth="10.0" prefWidth="120.0" />
-                            <ColumnConstraints hgrow="NEVER" minWidth="10.0" prefWidth="180.0" />
-                        </columnConstraints>
-                        <rowConstraints>
-                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                        </rowConstraints>
-                        <Label text="Nombre:" styleClass="label-field" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                        <Label fx:id="lblNombrePaciente" text="[Nombre Paciente]" styleClass="label-value" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-                        <Label text="Especie:" styleClass="label-field" GridPane.columnIndex="2" GridPane.rowIndex="0" />
-                        <Label fx:id="lblEspecie" text="[Especie]" styleClass="label-value" GridPane.columnIndex="3" GridPane.rowIndex="0" />
-                        <Label text="Raza:" styleClass="label-field" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                        <Label fx:id="lblRaza" text="[Raza]" styleClass="label-value" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                        <Label text="Edad:" styleClass="label-field" GridPane.columnIndex="2" GridPane.rowIndex="1" />
-                        <Label fx:id="lblEdad" text="[Edad]" styleClass="label-value" GridPane.columnIndex="3" GridPane.rowIndex="1" />
-                        <Label text="Sexo:" styleClass="label-field" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                        <Label fx:id="lblSexo" text="[Sexo]" styleClass="label-value" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                        <Label text="Peso:" styleClass="label-field" GridPane.columnIndex="2" GridPane.rowIndex="2" />
-                        <Label fx:id="lblPeso" text="[Peso]" styleClass="label-value" GridPane.columnIndex="3" GridPane.rowIndex="2" />
-                    </GridPane>
+                <TitledPane animated="true" collapsible="true" expanded="true" text="Información del Paciente" styleClass="section-container" HBox.hgrow="ALWAYS" prefWidth="500.0">
+                    <VBox prefHeight="180.0" prefWidth="500.0">
+                        <GridPane hgap="15.0" vgap="10.0" maxWidth="500.0">
+                            <columnConstraints>
+                                <ColumnConstraints hgrow="NEVER" minWidth="10.0" prefWidth="120.0" />
+                                <ColumnConstraints hgrow="NEVER" minWidth="10.0" prefWidth="180.0" />
+                                <ColumnConstraints hgrow="NEVER" minWidth="10.0" prefWidth="120.0" />
+                                <ColumnConstraints hgrow="NEVER" minWidth="10.0" prefWidth="180.0" />
+                            </columnConstraints>
+                            <rowConstraints>
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                            </rowConstraints>
+                            <Label text="Nombre:" styleClass="label-field" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                            <Label fx:id="lblNombrePaciente" text="[Nombre Paciente]" styleClass="label-value" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                            <Label text="Especie:" styleClass="label-field" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+                            <Label fx:id="lblEspecie" text="[Especie]" styleClass="label-value" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+                            <Label text="Raza:" styleClass="label-field" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                            <Label fx:id="lblRaza" text="[Raza]" styleClass="label-value" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                            <Label text="Edad:" styleClass="label-field" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+                            <Label fx:id="lblEdad" text="[Edad]" styleClass="label-value" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+                            <Label text="Sexo:" styleClass="label-field" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                            <Label fx:id="lblSexo" text="[Sexo]" styleClass="label-value" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                            <Label text="Peso:" styleClass="label-field" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+                            <Label fx:id="lblPeso" text="[Peso]" styleClass="label-value" GridPane.columnIndex="3" GridPane.rowIndex="2" />
+                        </GridPane>
+                    </VBox>
                 </TitledPane>
-                <TableView fx:id="tblConsultas" prefWidth="350.0">
-                    <columns>
-                        <TableColumn fx:id="colFecha" text="Fecha" prefWidth="120.0"/>
-                        <TableColumn fx:id="colHora" text="Hora" prefWidth="80.0"/>
-                        <TableColumn fx:id="colMotivo" text="Motivo de consulta" prefWidth="200.0"/>
-                    </columns>
-                </TableView>
+                <TitledPane animated="true" collapsible="true" expanded="true" text="Información de la Cita" styleClass="section-container" HBox.hgrow="ALWAYS" prefWidth="500.0">
+                    <VBox prefHeight="180.0" prefWidth="500.0">
+                        <GridPane fx:id="gridCita" hgap="15.0" vgap="10.0" maxWidth="500.0">
+                            <columnConstraints>
+                                <ColumnConstraints hgrow="NEVER" minWidth="10.0" prefWidth="120.0" />
+                                <ColumnConstraints hgrow="NEVER" minWidth="10.0" prefWidth="180.0" />
+                            </columnConstraints>
+                            <rowConstraints>
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                            </rowConstraints>
+                            <Label text="Fecha:" styleClass="label-field" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                            <Label fx:id="lblFechaCita" text="[Fecha]" styleClass="label-value" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                            <Label text="Hora:" styleClass="label-field" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                            <Label fx:id="lblHoraCita" text="[Hora]" styleClass="label-value" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                            <Label text="Motivo:" styleClass="label-field" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                            <Label fx:id="lblMotivoCita" text="[Motivo]" styleClass="label-value" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                        </GridPane>
+                    </VBox>
+                </TitledPane>
             </HBox>
             
             <!-- Anamnesis y Examen físico -->

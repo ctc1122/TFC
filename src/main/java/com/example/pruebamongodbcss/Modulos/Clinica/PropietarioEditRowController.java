@@ -94,66 +94,80 @@ public class PropietarioEditRowController implements Initializable {
     @FXML
     private void onGuardar(ActionEvent event) {
         if (validarCampos()) {
-            // Actualizar propietario con los datos del formulario
-            propietario.setNombre(txtNombre.getText().trim());
-            propietario.setApellidos(txtApellidos.getText().trim());
-            propietario.setDni(txtDni.getText().trim());
-            propietario.setDireccion(txtDireccion.getText().trim());
-            propietario.setTelefono(txtTelefono.getText().trim());
-            propietario.setEmail(txtEmail.getText().trim());
-            
-            // Guardar cambios
-            boolean guardado = false;
-            if (esNuevo) {
-                try {
-                    // Para un nuevo propietario, intentamos guardarlo y obtener su ID
-                    //Pedir al servidor agregar el propietario
+            try {
+                // Actualizar propietario con los datos del formulario
+                propietario.setNombre(txtNombre.getText() == null ? "" : txtNombre.getText().trim());
+                propietario.setApellidos(txtApellidos.getText() == null ? "" : txtApellidos.getText().trim());
+                propietario.setDni(txtDni.getText() == null ? "" : txtDni.getText().trim());
+                propietario.setDireccion(txtDireccion.getText() == null ? "" : txtDireccion.getText().trim());
+                propietario.setTelefono(txtTelefono.getText() == null ? "" : txtTelefono.getText().trim());
+                propietario.setEmail(txtEmail.getText() == null ? "" : txtEmail.getText().trim());
+                
+                boolean guardado = false;
+                
+                if (esNuevo) {
+                    // Para un nuevo propietario
                     gestorServidor.enviarPeticion(Protocolo.CREARPROPIETARIO + Protocolo.SEPARADOR_CODIGO);
                     ObjectOutputStream salida = gestorServidor.getSalida();
                     salida.writeObject(propietario);
                     salida.flush();
 
                     ObjectInputStream entrada = gestorServidor.getEntrada();
-                    if (entrada.readInt() == Protocolo.CREARPROPIETARIO_RESPONSE) {
-                        guardado = true;
+                    int respuesta = entrada.readInt();
+                    
+                    if (respuesta == Protocolo.CREARPROPIETARIO_RESPONSE) {
+                        // Leer el ID asignado por el servidor
+                        Object idObj = entrada.readObject();
+                        if (idObj != null) {
+                            try {
+                                // Convertir el String a ObjectId
+                                org.bson.types.ObjectId objectId = new org.bson.types.ObjectId(idObj.toString());
+                                propietario.setId(objectId);
+                                guardado = true;
+                            } catch (IllegalArgumentException e) {
+                                mostrarAlerta("Error", "Error al procesar el ID", 
+                                    "El ID recibido del servidor no es válido: " + e.getMessage());
+                                guardado = false;
+                            }
+                        }
                     }
-                    else {
-                        guardado = false;
-                    }
-                    guardado = propietario.getId() != null;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } else {
-                // Para un propietario existente, actualizamos sus datos
-                try {
-                    //Pedir al servidor actualizar el propietario
+                } else {
+                    // Para un propietario existente
                     gestorServidor.enviarPeticion(Protocolo.ACTUALIZARPROPIETARIO + Protocolo.SEPARADOR_CODIGO);
                     ObjectOutputStream salida = gestorServidor.getSalida();
                     salida.writeObject(propietario);
                     salida.flush();
 
                     ObjectInputStream entrada = gestorServidor.getEntrada();
-                    if (entrada.readInt() == Protocolo.ACTUALIZARPROPIETARIO_RESPONSE) {
-                        guardado = true;
+                    int respuesta = entrada.readInt();
+                    guardado = (respuesta == Protocolo.ACTUALIZARPROPIETARIO_RESPONSE);
+                }
+                
+                if (guardado) {
+                    if (onGuardarCallback != null) {
+                        onGuardarCallback.accept(propietario);
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    Stage stage = (Stage) btnGuardar.getScene().getWindow();
+                    if (stage != null) {
+                        stage.close();
+                    }
+                } else {
+                    mostrarAlerta("Error", "Error al guardar", 
+                        "No se pudo guardar el propietario. Por favor, inténtelo de nuevo.");
                 }
-            }
-            
-            if (guardado) {
-                if (onGuardarCallback != null) {
-                    onGuardarCallback.accept(propietario);
-                }
-                // Cerrar ventana si no se maneja externamente
-                Stage stage = (Stage) btnGuardar.getScene().getWindow();
-                if (stage != null) {
-                    stage.close();
-                }
-            } else {
-                mostrarAlerta("Error", "Error al guardar", 
-                    "Ha ocurrido un error al intentar guardar el propietario.");
+                
+            } catch (IOException e) {
+                e.printStackTrace();
+                mostrarAlerta("Error de conexión", "Error al comunicarse con el servidor", 
+                    "No se pudo establecer comunicación con el servidor: " + e.getMessage());
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+                mostrarAlerta("Error", "Error al procesar la respuesta", 
+                    "Error al procesar la respuesta del servidor: " + e.getMessage());
+            } catch (Exception e) {
+                e.printStackTrace();
+                mostrarAlerta("Error", "Error inesperado", 
+                    "Ha ocurrido un error inesperado: " + e.getMessage());
             }
         }
     }
@@ -178,25 +192,25 @@ public class PropietarioEditRowController implements Initializable {
      * Valida que todos los campos obligatorios estén completos
      */
     private boolean validarCampos() {
-        if (txtNombre.getText().trim().isEmpty()) {
+        if (txtNombre.getText() == null || txtNombre.getText().trim().isEmpty()) {
             mostrarAlerta("Validación", "Campo obligatorio", "El nombre es obligatorio.");
             txtNombre.requestFocus();
             return false;
         }
         
-        if (txtApellidos.getText().trim().isEmpty()) {
+        if (txtApellidos.getText() == null || txtApellidos.getText().trim().isEmpty()) {
             mostrarAlerta("Validación", "Campo obligatorio", "Los apellidos son obligatorios.");
             txtApellidos.requestFocus();
             return false;
         }
         
-        if (txtDni.getText().trim().isEmpty()) {
+        if (txtDni.getText() == null || txtDni.getText().trim().isEmpty()) {
             mostrarAlerta("Validación", "Campo obligatorio", "El DNI es obligatorio.");
             txtDni.requestFocus();
             return false;
         }
         
-        if (txtTelefono.getText().trim().isEmpty()) {
+        if (txtTelefono.getText() == null || txtTelefono.getText().trim().isEmpty()) {
             mostrarAlerta("Validación", "Campo obligatorio", "El teléfono es obligatorio.");
             txtTelefono.requestFocus();
             return false;

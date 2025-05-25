@@ -780,7 +780,8 @@ public class CalendarFXComponent extends BorderPane {
                 com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico.DiagnosticoController controller = loader.getController();
                 com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
                 com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente paciente = servicioClinica.obtenerPacientePorId(new org.bson.types.ObjectId(event.getPacienteId()));
-                controller.setPaciente(paciente);
+                ModeloCita cita = servicioClinica.obtenerCitaPorId(new org.bson.types.ObjectId(event.getId()));
+                controller.setPaciente(paciente, cita);
                 controller.setOnGuardarCallback(() -> {
                     refreshCalendarFromDatabase();
                 });
@@ -789,7 +790,8 @@ public class CalendarFXComponent extends BorderPane {
                 Platform.runLater(() -> {
                     Stage stage = new Stage();
                     stage.setTitle("Diagnóstico Médico");
-                    stage.setScene(new Scene(root));
+                    Scene scene = new Scene(root, 950, 760); // 5% menos que 1000x800
+                    stage.setScene(scene);
                     stage.initModality(Modality.NONE);
                     stage.show();
 
@@ -857,17 +859,18 @@ public class CalendarFXComponent extends BorderPane {
             try {
                 // Convertir el ID a ObjectId
                 String idStr = event.getId();
-                if (idStr.startsWith("_")) {
-                    idStr = idStr.substring(1);
-                }
-                org.bson.types.ObjectId citaId = new org.bson.types.ObjectId(idStr);
-                
-                // Buscar la cita en la base de datos
-                com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
-                com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = servicioClinica.obtenerCitaPorId(citaId);
-                
-                if (cita != null && cita.getPacienteId() != null) {
-                    event.setPacienteId(cita.getPacienteId().toString());
+                // Limpiar el id para que solo contenga caracteres hexadecimales
+                idStr = idStr.replaceAll("[^a-fA-F0-9]", "");
+                if (idStr.length() == 24) {
+                    org.bson.types.ObjectId citaId = new org.bson.types.ObjectId(idStr);
+                    // Buscar la cita en la base de datos
+                    com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
+                    com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = servicioClinica.obtenerCitaPorId(citaId);
+                    if (cita != null && cita.getPacienteId() != null) {
+                        event.setPacienteId(cita.getPacienteId().toString());
+                    }
+                } else {
+                    System.err.println("ID de cita no válido para ObjectId: " + event.getId());
                 }
             } catch (Exception e) {
                 System.err.println("Error al obtener el ID del paciente: " + e.getMessage());
