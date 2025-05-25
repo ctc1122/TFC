@@ -1,9 +1,15 @@
 package com.example.pruebamongodbcss.Modulos.Clinica;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 
 import io.github.palexdev.materialfx.controls.MFXButton;
 import io.github.palexdev.materialfx.controls.MFXTextField;
@@ -30,15 +36,14 @@ public class PropietarioEditRowController implements Initializable {
     @FXML private MFXButton btnCancelar;
     
     private ModeloPropietario propietario;
-    private ServicioClinica servicio;
     private Consumer<ModeloPropietario> onGuardarCallback;
     private Runnable onCancelarCallback;
     private boolean esNuevo;
+    private GestorSocket gestorServidor;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // Inicializar servicio
-        servicio = new ServicioClinica();
+        gestorServidor = GestorSocket.getInstance();
         
         // Configurar botones
         btnGuardar.setOnAction(this::onGuardar);
@@ -52,9 +57,9 @@ public class PropietarioEditRowController implements Initializable {
      * @param esNuevo Indica si es un nuevo propietario
      * @param callback Callback para notificar el resultado
      */
-    public void configurar(ServicioClinica servicio, ModeloPropietario propietario, boolean esNuevo, 
+    public void configurar( ModeloPropietario propietario, boolean esNuevo, 
                           BiConsumer<ModeloPropietario, Boolean> callback) {
-        this.servicio = servicio;
+
         this.propietario = propietario;
         this.esNuevo = esNuevo;
         
@@ -102,14 +107,39 @@ public class PropietarioEditRowController implements Initializable {
             if (esNuevo) {
                 try {
                     // Para un nuevo propietario, intentamos guardarlo y obtener su ID
-                    propietario.setId(servicio.guardarPropietario(propietario));
+                    //Pedir al servidor agregar el propietario
+                    gestorServidor.enviarPeticion(Protocolo.CREARPROPIETARIO + Protocolo.SEPARADOR_CODIGO);
+                    ObjectOutputStream salida = gestorServidor.getSalida();
+                    salida.writeObject(propietario);
+                    salida.flush();
+
+                    ObjectInputStream entrada = gestorServidor.getEntrada();
+                    if (entrada.readInt() == Protocolo.CREARPROPIETARIO_RESPONSE) {
+                        guardado = true;
+                    }
+                    else {
+                        guardado = false;
+                    }
                     guardado = propietario.getId() != null;
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             } else {
                 // Para un propietario existente, actualizamos sus datos
-                guardado = servicio.actualizarPropietario(propietario);
+                try {
+                    //Pedir al servidor actualizar el propietario
+                    gestorServidor.enviarPeticion(Protocolo.ACTUALIZARPROPIETARIO + Protocolo.SEPARADOR_CODIGO);
+                    ObjectOutputStream salida = gestorServidor.getSalida();
+                    salida.writeObject(propietario);
+                    salida.flush();
+
+                    ObjectInputStream entrada = gestorServidor.getEntrada();
+                    if (entrada.readInt() == Protocolo.ACTUALIZARPROPIETARIO_RESPONSE) {
+                        guardado = true;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
             
             if (guardado) {

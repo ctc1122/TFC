@@ -15,8 +15,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.ArrayList;
 
 import org.bson.types.ObjectId;
@@ -33,7 +31,6 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -53,7 +50,6 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -66,7 +62,6 @@ import javafx.geometry.Pos;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.util.Callback;
 import javafx.scene.input.KeyCode;
 import javafx.scene.control.ListView;
 import javafx.scene.text.TextAlignment;
@@ -2176,9 +2171,25 @@ public class ClinicaController implements Initializable {
     }
     
     private void buscarPropietariosPorNombre(String nombre) {
-        propietariosObservable.clear();
-        List<ModeloPropietario> propietarios = servicioClinica.buscarPropietariosPorNombre(nombre);
-        propietariosObservable.addAll(propietarios);
+        try {
+            propietariosObservable.clear();
+            
+            //Hacemos una peticion al servidor para obtener los propietarios por nombre
+            gestorPeticiones.enviarPeticion(Protocolo.BUSCAR_PROPIETARIOS_POR_NOMBRE + Protocolo.SEPARADOR_CODIGO + nombre);
+     
+            //Recibimos la respuesta del servidor
+            ObjectInputStream entrada = gestorPeticiones.getEntrada();
+            if (entrada.readInt() == Protocolo.BUSCAR_PROPIETARIOS_POR_NOMBRE_RESPONSE) {
+                List<ModeloPropietario> propietarios = (List<ModeloPropietario>) entrada.readObject();
+                propietariosObservable.addAll(propietarios);
+            } else {
+                mostrarAlerta("Error", "Error al obtener los propietarios",
+                        "No se pudo obtener los propietarios. Inténtelo de nuevo.");
+            }            
+
+        } catch (IOException ex) {
+        } catch (ClassNotFoundException ex) {
+        }
     }
     
     // ********** ACCIONES DE PACIENTES **********
@@ -2223,14 +2234,22 @@ public class ClinicaController implements Initializable {
                     "Esta acción eliminará el paciente y todos sus diagnósticos asociados.");
             
             if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
-                boolean eliminado = servicioClinica.eliminarPaciente(paciente.getId());
-                if (eliminado) {
-                    cargarPacientes();
-                    mostrarMensaje("Paciente eliminado", "El paciente ha sido eliminado", 
-                            "El paciente y sus diagnósticos asociados han sido eliminados exitosamente.");
-                } else {
-                    mostrarAlerta("Error", "No se pudo eliminar el paciente", 
-                            "Ha ocurrido un error al intentar eliminar el paciente.");
+                try {
+                    //Hacemos una peticion al servidor para eliminar el paciente
+                    gestorPeticiones.enviarPeticion(Protocolo.ELIMINARPACIENTE + Protocolo.SEPARADOR_CODIGO + paciente.getId());
+                    
+                    ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                    if (entrada.readInt() == Protocolo.ELIMINARPACIENTE_RESPONSE) {
+                        boolean eliminado = true;
+                        cargarPacientes();
+                        mostrarMensaje("Paciente eliminado", "El paciente ha sido eliminado",
+                                "El paciente y sus diagnósticos asociados han sido eliminados exitosamente.");
+                    } else {
+                        mostrarAlerta("Error", "No se pudo eliminar el paciente",
+                                "Ha ocurrido un error al intentar eliminar el paciente.");
+                    }
+                    
+                } catch (IOException ex) {
                 }
             }
         } else {
@@ -2245,19 +2264,36 @@ public class ClinicaController implements Initializable {
         if (paciente != null) {
             // Navegar a la pestaña de diagnósticos y filtrar por este paciente
             tabPane.getSelectionModel().select(tabDiagnosticos);
-            
+
             // Buscar los diagnósticos del paciente
             diagnosticosObservable.clear();
-            List<ModeloDiagnostico> diagnosticos = servicioClinica.buscarDiagnosticosPorPaciente(paciente.getId());
-            diagnosticosObservable.addAll(diagnosticos);
-            
-            // Si no hay diagnósticos, mostrar mensaje
-            if (diagnosticos.isEmpty()) {
-                mostrarMensaje("Sin diagnósticos", "No hay diagnósticos para este paciente", 
-                        "El paciente " + paciente.getNombre() + " no tiene diagnósticos registrados.");
+            //Hacemos una peticion al servidor para obtener los diagnosticos por paciente
+            try {
+                gestorPeticiones.enviarPeticion(Protocolo.BUSCAR_DIAGNOSTICOS_POR_PACIENTE + Protocolo.SEPARADOR_CODIGO + paciente.getId());
+
+                ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                if (entrada.readInt() == Protocolo.BUSCAR_DIAGNOSTICOS_POR_PACIENTE_RESPONSE) {
+                    List<ModeloDiagnostico> diagnosticos = (List<ModeloDiagnostico>) entrada.readObject();
+                    // Si no hay diagnósticos, mostrar mensaje
+                    if (diagnosticos.isEmpty()) {
+                        mostrarMensaje("Sin diagnósticos", "No hay diagnósticos para este paciente",
+                                "El paciente " + paciente.getNombre() + " no tiene diagnósticos registrados.");
+                    }
+                    diagnosticosObservable.addAll(diagnosticos);
+                } else {
+                    mostrarAlerta("Error", "Error al obtener los diagnosticos",
+                            "No se pudo obtener los diagnosticos. Inténtelo de nuevo.");
+                }
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
             }
+
         } else {
-            mostrarAlerta("Selección requerida", "No hay paciente seleccionado", 
+            mostrarAlerta("Selección requerida", "No hay paciente seleccionado",
                     "Por favor, seleccione un paciente para ver su historial.");
         }
     }
@@ -2300,23 +2336,38 @@ public class ClinicaController implements Initializable {
     private void onEliminarPropietario(ActionEvent event) {
         ModeloPropietario propietario = tablaPropietarios.getSelectionModel().getSelectedItem();
         if (propietario != null) {
-            Optional<ButtonType> resultado = mostrarConfirmacion("Confirmar eliminación", 
-                    "¿Está seguro que desea eliminar este propietario?", 
+            Optional<ButtonType> resultado = mostrarConfirmacion("Confirmar eliminación",
+                    "¿Está seguro que desea eliminar este propietario?",
                     "Esta acción eliminará el propietario. No se podrá eliminar si tiene mascotas asociadas.");
-            
+
             if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
-                boolean eliminado = servicioClinica.eliminarPropietario(propietario.getId());
-                if (eliminado) {
-                    cargarPropietarios();
-                    mostrarMensaje("Propietario eliminado", "El propietario ha sido eliminado", 
-                            "El propietario ha sido eliminado exitosamente.");
-                } else {
-                    mostrarAlerta("Error", "No se pudo eliminar el propietario", 
-                            "No se puede eliminar el propietario porque tiene mascotas asociadas.");
+                //Hacemos una peticion al servidor para eliminar el propietario
+                try {
+                    gestorPeticiones.enviarPeticion(Protocolo.ELIMINARPROPIETARIO + Protocolo.SEPARADOR_CODIGO + propietario.getId());
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
                 }
+
+                ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                try {
+                    if (entrada.readInt() == Protocolo.ELIMINARPROPIETARIO_RESPONSE) {
+                        boolean eliminado = true;
+                        cargarPropietarios();
+                        mostrarMensaje("Propietario eliminado", "El propietario ha sido eliminado",
+                                "El propietario ha sido eliminado exitosamente.");
+                    } else {
+                        mostrarAlerta("Error", "No se pudo eliminar el propietario",
+                                "No se puede eliminar el propietario porque tiene mascotas asociadas.");
+                    }
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+
             }
         } else {
-            mostrarAlerta("Selección requerida", "No hay propietario seleccionado", 
+            mostrarAlerta("Selección requerida", "No hay propietario seleccionado",
                     "Por favor, seleccione un propietario para eliminar.");
         }
     }
@@ -2325,19 +2376,35 @@ public class ClinicaController implements Initializable {
     private void onVerMascotas(ActionEvent event) {
         ModeloPropietario propietario = tablaPropietarios.getSelectionModel().getSelectedItem();
         if (propietario != null) {
-            // Navegar a la pestaña de pacientes
-            tabPane.getSelectionModel().select(tabPacientes);
-            
-            // Buscar los pacientes de este propietario
-            pacientesObservable.clear();
-            List<ModeloPaciente> mascotas = servicioClinica.buscarPacientesPorPropietario(propietario.getId());
-            pacientesObservable.addAll(mascotas);
-            
-            // Si no hay mascotas, mostrar mensaje
-            if (mascotas.isEmpty()) {
-                mostrarMensaje("Sin mascotas", "No hay mascotas para este propietario", 
-                        "El propietario " + propietario.getNombreCompleto() + " no tiene mascotas registradas.");
+            try {
+                // Navegar a la pestaña de pacientes
+                tabPane.getSelectionModel().select(tabPacientes);
+                
+                // Buscar los pacientes de este propietario
+                pacientesObservable.clear();
+                //Hacemos una peticion al servidor para obtener los pacientes por propietario
+                gestorPeticiones.enviarPeticion(Protocolo.BUSCAR_PACIENTES_POR_PROPIETARIO + Protocolo.SEPARADOR_CODIGO + propietario.getId());
+                
+                ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                if (entrada.readInt() == Protocolo.BUSCAR_PACIENTES_POR_PROPIETARIO_RESPONSE) {
+                    List<ModeloPaciente> mascotas = (List<ModeloPaciente>) entrada.readObject();
+                    // Si no hay mascotas, mostrar mensaje
+                    if (mascotas.isEmpty()) {
+                        mostrarMensaje("Sin mascotas", "No hay mascotas para este propietario",
+                                "El propietario " + propietario.getNombreCompleto() + " no tiene mascotas registradas.");
+                    }
+                    pacientesObservable.addAll(mascotas);
+                } else {
+                    mostrarAlerta("Error", "Error al obtener los pacientes",
+                            "No se pudo obtener los pacientes. Inténtelo de nuevo.");
+                }
+            } catch (IOException ex) {
+            } catch (ClassNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
             }
+
+
         }
     }
     
@@ -2490,23 +2557,32 @@ public class ClinicaController implements Initializable {
     private void onEliminarDiagnostico(ActionEvent event) {
         ModeloDiagnostico diagnostico = tablaDiagnosticos.getSelectionModel().getSelectedItem();
         if (diagnostico != null) {
-            Optional<ButtonType> resultado = mostrarConfirmacion("Confirmar eliminación", 
-                    "¿Está seguro que desea eliminar este diagnóstico?", 
+            Optional<ButtonType> resultado = mostrarConfirmacion("Confirmar eliminación",
+                    "¿Está seguro que desea eliminar este diagnóstico?",
                     "Esta acción eliminará el diagnóstico. Esta operación no se puede deshacer.");
-            
+
             if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
-                boolean eliminado = servicioClinica.eliminarDiagnostico(diagnostico.getId());
-                if (eliminado) {
-                    buscarDiagnosticos();
-                    mostrarMensaje("Diagnóstico eliminado", "El diagnóstico ha sido eliminado", 
-                            "El diagnóstico ha sido eliminado exitosamente.");
-                } else {
-                    mostrarAlerta("Error", "No se pudo eliminar el diagnóstico", 
-                            "Ha ocurrido un error al intentar eliminar el diagnóstico.");
+                //Hacemos una peticion al servidor para eliminar el diagnostico
+                try {
+                    gestorPeticiones.enviarPeticion(Protocolo.ELIMINARDIAGNOSTICO + Protocolo.SEPARADOR_CODIGO + diagnostico.getId());
+
+                    ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                    if (entrada.readInt() == Protocolo.ELIMINARDIAGNOSTICO_RESPONSE) {
+                        boolean eliminado = true;
+                        buscarDiagnosticos();
+                        mostrarMensaje("Diagnóstico eliminado", "El diagnóstico ha sido eliminado", 
+                                "El diagnóstico ha sido eliminado exitosamente.");
+                    } else {
+                        mostrarAlerta("Error", "No se pudo eliminar el diagnóstico",
+                                "Ha ocurrido un error al intentar eliminar el diagnóstico.");
+                    }
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
                 }
             }
         } else {
-            mostrarAlerta("Selección requerida", "No hay diagnóstico seleccionado", 
+            mostrarAlerta("Selección requerida", "No hay diagnóstico seleccionado",
                     "Por favor, seleccione un diagnóstico para eliminar.");
         }
     }
@@ -2570,7 +2646,7 @@ public class ClinicaController implements Initializable {
             Parent contenido = loader.load();
             
             PacienteEditRowController controlador = loader.getController();
-            controlador.configurar(servicioClinica, paciente, esNuevo, (pacienteEditado, confirmado) -> {
+            controlador.configurar( paciente, esNuevo, (pacienteEditado, confirmado) -> {
                 if (confirmado) {
                     // Si se confirmó la edición, guardar el paciente
                     try {
@@ -2624,7 +2700,7 @@ public class ClinicaController implements Initializable {
             Parent contenido = loader.load();
             
             PropietarioEditRowController controlador = loader.getController();
-            controlador.configurar(servicioClinica, propietario, esNuevo, (propietarioEditado, confirmado) -> {
+            controlador.configurar( propietario, esNuevo, (propietarioEditado, confirmado) -> {
                 if (confirmado) {
                     // Si se confirmó la edición, guardar el propietario
                     try {
@@ -2786,7 +2862,6 @@ public class ClinicaController implements Initializable {
             Parent root = loader.load();
             
             PropietarioSelectorController controller = loader.getController();
-            controller.setServicio(servicioClinica);
             
             controller.setPropietarioSeleccionadoCallback(propietario -> {
                 // Asignar el propietario al paciente

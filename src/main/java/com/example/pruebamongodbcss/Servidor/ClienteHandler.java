@@ -335,9 +335,130 @@ public class ClienteHandler implements Runnable {
                                 }
                             }
                             break;
+                        case Protocolo.BUSCAR_PROPIETARIOS_POR_NOMBRE:
+                            System.out.println("Procesando solicitud de obtener propietarios por nombre...");
+                            String nombrePropietario = parametros[0];
+                            List<ModeloPropietario> propietarios2 = servicioClinica.buscarPropietariosPorNombre(nombrePropietario);
+                            if (propietarios2 != null) {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.BUSCAR_PROPIETARIOS_POR_NOMBRE_RESPONSE);
+                                    salida.writeObject(propietarios2);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: No se encontraron propietarios con el nombre: " + nombrePropietario);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERRORBUSCAR_PROPIETARIOS_POR_NOMBRE);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.ELIMINARPACIENTE:
+                            System.out.println("Procesando solicitud de eliminar paciente...");
+                            String idPaciente = parametros[0];
+                            boolean eliminado = servicioClinica.eliminarPaciente(new ObjectId(idPaciente));
+                            if (eliminado) {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ELIMINARPACIENTE_RESPONSE);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: No se pudo eliminar el paciente");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERRORELIMINARPACIENTE);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.BUSCAR_DIAGNOSTICOS_POR_PACIENTE:
+                            System.out.println("Procesando solicitud de obtener diagnosticos por paciente...");
+                            String idPaciente2 = parametros[0];
+                            List<ModeloDiagnostico> diagnosticos2 = servicioClinica.buscarDiagnosticosPorPaciente(new ObjectId(idPaciente2));
+                            if (diagnosticos2 != null) {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.BUSCAR_DIAGNOSTICOS_POR_PACIENTE_RESPONSE);
+                                    salida.writeObject(diagnosticos2);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: No se encontraron diagnosticos para el paciente: " + idPaciente2);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERRORBUSCAR_DIAGNOSTICOS_POR_PACIENTE);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.ELIMINARPROPIETARIO:
+                            System.out.println("Procesando solicitud de eliminar propietario...");
+                            String idPropietario = parametros[0];
+                            boolean eliminadoPropietario = servicioClinica.eliminarPropietario(new ObjectId(idPropietario));
+                            if (eliminadoPropietario) {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ELIMINARPROPIETARIO_RESPONSE);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: No se pudo eliminar el propietario");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROPROPIETARIO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.BUSCAR_PACIENTES_POR_PROPIETARIO:
+                            System.out.println("Procesando solicitud de obtener pacientes por propietario...");
+                            String idPropietario2 = parametros[0];
+                            List<ModeloPaciente> pacientes3 = servicioClinica.buscarPacientesPorPropietario(new ObjectId(idPropietario2));
+                            if (pacientes3 != null) {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.BUSCAR_PACIENTES_POR_PROPIETARIO_RESPONSE);
+                                    salida.writeObject(pacientes3);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: No se encontraron pacientes para el propietario: " + idPropietario2);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERRORBUSCAR_PACIENTES_POR_PROPIETARIO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.ELIMINARDIAGNOSTICO:
+                            System.out.println("Procesando solicitud de eliminar diagnostico...");
+                            String idDiagnostico = parametros[0];
+                            boolean eliminadoDiagnostico = servicioClinica.eliminarDiagnostico(new ObjectId(idDiagnostico));
+                            if (eliminadoDiagnostico) {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ELIMINARDIAGNOSTICO_RESPONSE);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: No se pudo eliminar el diagnostico");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERRODIAGNOSTICO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.CREARPACIENTE_DEVUELVEPACIENTE:
+                            System.out.println("Procesando solicitud de crear paciente y devolver paciente...");
+                            ModeloPaciente pacienteDevuelto = (ModeloPaciente) entrada.readObject();
+                            if (pacienteDevuelto != null) {
+                                boolean guardado = procesarGuardarPaciente(pacienteDevuelto);
+                                if (guardado) {
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.CREARPACIENTE_DEVUELVEPACIENTE_RESPONSE);
+                                        salida.writeObject(pacienteDevuelto);
+                                        salida.flush();
+                                    }
+                                }
+                                else {
+                                    salida.writeInt(Protocolo.ERRORCREARPACIENTE_DEVUELVEPACIENTE);
+                                    salida.flush();
+                                }
+                            }
                             
-
-
+                            
                         default:
                             System.out.println("Mensaje no reconocido: " + codigo);
                     }
@@ -458,5 +579,9 @@ public class ClienteHandler implements Runnable {
     private ObjectId procesarGuardarPropietario(ModeloPropietario propietario) {
         return servicioClinica.guardarPropietario(propietario);
     }   
+
+    private boolean  procesarGuardarPaciente(ModeloPaciente pacienteDevuelto) {
+        return servicioClinica.agregarPaciente(pacienteDevuelto);
+    }
 } 
 

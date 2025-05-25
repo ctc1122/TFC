@@ -1,11 +1,16 @@
 package com.example.pruebamongodbcss.Modulos.Clinica;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 
 import io.github.palexdev.materialfx.controls.MFXButton;
 import io.github.palexdev.materialfx.controls.MFXComboBox;
@@ -47,15 +52,14 @@ public class PacienteEditRowController implements Initializable {
     
     private ModeloPaciente paciente;
     private ModeloPropietario propietario;
-    private ServicioClinica servicio;
     private Consumer<ModeloPaciente> onGuardarCallback;
     private Runnable onCancelarCallback;
     private boolean esNuevo;
+    private GestorSocket gestorServidor;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // Inicializar servicio
-        servicio = new ServicioClinica();
+        gestorServidor = GestorSocket.getInstance();
         
         // Configurar combos
         cmbSexo.setItems(FXCollections.observableArrayList("Macho", "Hembra"));
@@ -84,9 +88,8 @@ public class PacienteEditRowController implements Initializable {
      * @param esNuevo Indica si es un nuevo paciente
      * @param callback Callback para notificar el resultado
      */
-    public void configurar(ServicioClinica servicio, ModeloPaciente paciente, boolean esNuevo, 
+    public void configurar( ModeloPaciente paciente, boolean esNuevo, 
                           BiConsumer<ModeloPaciente, Boolean> callback) {
-        this.servicio = servicio;
         this.paciente = paciente;
         this.esNuevo = esNuevo;
         
@@ -143,8 +146,20 @@ public class PacienteEditRowController implements Initializable {
         
         // Cargar propietario si existe
         if (paciente.getPropietarioId() != null) {
-            propietario = servicio.obtenerPropietarioPorId(paciente.getPropietarioId());
-            actualizarLabelPropietario();
+            try {
+                //Pedir al servidor el propietario
+                gestorServidor.enviarPeticion(Protocolo.OBTENERPROPIETARIO_POR_ID + Protocolo.SEPARADOR_CODIGO + paciente.getPropietarioId());
+                ObjectInputStream entrada = gestorServidor.getEntrada();
+                if (entrada.readInt() == Protocolo.OBTENERPROPIETARIO_POR_ID_RESPONSE) {
+                    propietario = (ModeloPropietario) entrada.readObject();
+                    actualizarLabelPropietario();
+                }
+                else {
+                    mostrarAlerta("Error", "Error al obtener el propietario",
+                            "Ha ocurrido un error al intentar obtener el propietario.");
+                }
+            } catch (IOException | ClassNotFoundException ex) {
+            }
         }
     }
     
@@ -182,7 +197,6 @@ public class PacienteEditRowController implements Initializable {
             Parent root = loader.load();
             
             PropietarioSelectorController controller = loader.getController();
-            controller.setServicio(servicio);
             
             // Configurar callback para recibir el propietario seleccionado
             controller.setPropietarioSeleccionadoCallback(propietario -> {
@@ -215,45 +229,76 @@ public class PacienteEditRowController implements Initializable {
             paciente.setRaza(txtRaza.getText().trim());
             paciente.setColor(txtColor.getText().trim());
             paciente.setSexo(cmbSexo.getValue());
-            
+
             if (dpFechaNacimiento.getValue() != null) {
                 // Convertir LocalDate a Date
                 java.util.Date fecha = java.util.Date.from(dpFechaNacimiento.getValue().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
                 paciente.setFechaNacimiento(fecha);
             }
-            
+
             // Asumiendo que hay un método setEstadoPaciente
             paciente.setEstadoPaciente(cmbEstado.getValue());
-            
+
             try {
                 double peso = Double.parseDouble(txtPeso.getText().replace(",", "."));
                 paciente.setPeso(peso);
             } catch (NumberFormatException e) {
                 paciente.setPeso(0);
             }
-            
+
             // Asignar propietario
             if (propietario != null) {
                 paciente.setPropietarioId(propietario.getId());
                 paciente.setNombrePropietario(propietario.getNombre() + " " + propietario.getApellidos());
             }
-            
+
             // Guardar cambios
             boolean guardado;
             if (esNuevo) {
-                guardado = servicio.agregarPaciente(paciente);
-            } else {
-                guardado = servicio.actualizarPaciente(paciente);
-            }
-            
-            if (guardado) {
-                if (onGuardarCallback != null) {
-                    onGuardarCallback.accept(paciente);
+                try {
+                    //Pedir al servidor agregar el paciente
+                    gestorServidor.enviarPeticion(Protocolo.CREARPACIENTE_DEVUELVEPACIENTE + Protocolo.SEPARADOR_CODIGO);
+                    ObjectOutputStream salida = gestorServidor.getSalida();
+                    salida.writeObject(paciente);
+                    salida.flush();
+
+                    ObjectInputStream entrada = gestorServidor.getEntrada();
+                    if (entrada.readInt() == Protocolo.CREARPACIENTE_DEVUELVEPACIENTE_RESPONSE) {
+                        paciente = (ModeloPaciente) entrada.readObject();
+                        guardado = true;
+                    } else {
+                        guardado = false;
+                    }
+                } catch (IOException | ClassNotFoundException ex) {
                 }
             } else {
-                mostrarAlerta("Error", "Error al guardar", 
-                    "Ha ocurrido un error al intentar guardar el paciente.");
+                try {
+                    //Pedir al servidor actualizar el paciente
+                    gestorServidor.enviarPeticion(Protocolo.ACTUALIZARPACIENTE + Protocolo.SEPARADOR_CODIGO);
+                    ObjectOutputStream salida = gestorServidor.getSalida();
+                    salida.writeObject(paciente);
+                    salida.flush();
+                    
+                    ObjectInputStream entrada = gestorServidor.getEntrada();
+                    if (entrada.readInt() == Protocolo.ACTUALIZARPACIENTE_RESPONSE) {
+                        guardado = true;
+                    }
+                    else {
+                        guardado = false;
+                    }
+                    
+                    if (guardado) {
+                        if (onGuardarCallback != null) {
+                            onGuardarCallback.accept(paciente);
+                        }
+                    } else {
+                        mostrarAlerta("Error", "Error al guardar",
+                                "Ha ocurrido un error al intentar guardar el paciente.");
+                    }
+                } catch (IOException ex) {
+                }
             }
+
         }
     }
     
