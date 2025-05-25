@@ -174,4 +174,9 @@ public interface Protocolo {
     static final int OBTENER_EVENTOS_POR_USUARIO_RESPONSE=1111;
     static final int ERROR_OBTENER_EVENTOS_POR_USUARIO=1112;
 
+    // Nuevas constantes para obtener resumen de eventos
+    static final int OBTENER_RESUMEN_EVENTOS_USUARIO=1113;
+    static final int OBTENER_RESUMEN_EVENTOS_USUARIO_RESPONSE=1114;
+    static final int ERROR_OBTENER_RESUMEN_EVENTOS_USUARIO=1115;
+
 } 

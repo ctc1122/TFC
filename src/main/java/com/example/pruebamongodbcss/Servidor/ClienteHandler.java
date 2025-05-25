@@ -758,6 +758,43 @@ public class ClienteHandler implements Runnable {
                                 }
                             }
                             break;
+                        case Protocolo.OBTENER_RESUMEN_EVENTOS_USUARIO:
+                            System.out.println("Procesando solicitud de obtener resumen de eventos por usuario...");
+                            if (parametros.length >= 1) {
+                                String nombreUsuarioResumen = parametros[0];
+                                try {
+                                    // Obtener el resumen del servicio
+                                    com.example.pruebamongodbcss.calendar.CalendarService.EventSummary summaryInterno = 
+                                        calendarService.getEventSummaryForUser(nombreUsuarioResumen);
+                                    
+                                    // Convertir a la clase serializable
+                                    com.example.pruebamongodbcss.calendar.EventSummary summarySerializable = 
+                                        new com.example.pruebamongodbcss.calendar.EventSummary(
+                                            summaryInterno.getMeetings(),
+                                            summaryInterno.getReminders(),
+                                            summaryInterno.getAppointments()
+                                        );
+                                    
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.OBTENER_RESUMEN_EVENTOS_USUARIO_RESPONSE);
+                                        salida.writeObject(summarySerializable);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al obtener resumen de eventos: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_OBTENER_RESUMEN_EVENTOS_USUARIO);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud OBTENER_RESUMEN_EVENTOS_USUARIO");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_RESUMEN_EVENTOS_USUARIO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
                         default:
                             System.out.println("Mensaje no reconocido: " + codigo);
                     }
