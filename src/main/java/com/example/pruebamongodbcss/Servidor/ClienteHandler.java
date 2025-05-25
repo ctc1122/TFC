@@ -14,6 +14,7 @@ import com.calendarfx.model.CalendarEvent;
 import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Data.Usuario.Rol;
+import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloDiagnostico;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario;
@@ -791,6 +792,60 @@ public class ClienteHandler implements Runnable {
                                 System.err.println("Error: Faltan parámetros en la solicitud OBTENER_RESUMEN_EVENTOS_USUARIO");
                                 synchronized (salida) {
                                     salida.writeInt(Protocolo.ERROR_OBTENER_RESUMEN_EVENTOS_USUARIO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.BUSCAR_CITAS_POR_PACIENTE:
+                            System.out.println("Procesando solicitud de buscar citas por paciente...");
+                            if (parametros.length >= 1) {
+                                String idPacienteCitas = parametros[0];
+                                List<ModeloCita> citasPaciente = servicioClinica.buscarCitasPorPaciente(new ObjectId(idPacienteCitas));
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.BUSCAR_CITAS_POR_PACIENTE_RESPONSE);
+                                    salida.writeObject(citasPaciente);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud BUSCAR_CITAS_POR_PACIENTE");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_BUSCAR_CITAS_POR_PACIENTE);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.OBTENER_CITA_POR_ID:
+                            System.out.println("Procesando solicitud de obtener cita por ID...");
+                            if (parametros.length >= 1) {
+                                String idCita = parametros[0];
+                                ModeloCita cita = servicioClinica.obtenerCitaPorId(new ObjectId(idCita));
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_CITA_POR_ID_RESPONSE);
+                                    salida.writeObject(cita);
+                                    salida.flush();
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud OBTENER_CITA_POR_ID");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_CITA_POR_ID);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.GUARDAR_DIAGNOSTICO:
+                            System.out.println("Procesando solicitud de guardar diagnóstico...");
+                            try {
+                                ModeloDiagnostico diagnosticoAGuardar = (ModeloDiagnostico) entrada.readObject();
+                                ObjectId idDiagnosticoGuardado = servicioClinica.guardarDiagnostico(diagnosticoAGuardar);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.GUARDAR_DIAGNOSTICO_RESPONSE);
+                                    salida.writeObject(idDiagnosticoGuardado);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al guardar diagnóstico: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_GUARDAR_DIAGNOSTICO);
                                     salida.flush();
                                 }
                             }

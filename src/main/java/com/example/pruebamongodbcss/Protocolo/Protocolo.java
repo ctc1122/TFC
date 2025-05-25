@@ -179,4 +179,17 @@ public interface Protocolo {
     static final int OBTENER_RESUMEN_EVENTOS_USUARIO_RESPONSE=1114;
     static final int ERROR_OBTENER_RESUMEN_EVENTOS_USUARIO=1115;
 
+    // Códigos para operaciones de citas
+    static final int BUSCAR_CITAS_POR_PACIENTE=1116;
+    static final int BUSCAR_CITAS_POR_PACIENTE_RESPONSE=1117;
+    static final int ERROR_BUSCAR_CITAS_POR_PACIENTE=1118;
+
+    static final int OBTENER_CITA_POR_ID=1119;
+    static final int OBTENER_CITA_POR_ID_RESPONSE=1120;
+    static final int ERROR_OBTENER_CITA_POR_ID=1121;
+
+    static final int GUARDAR_DIAGNOSTICO=1122;
+    static final int GUARDAR_DIAGNOSTICO_RESPONSE=1123;
+    static final int ERROR_GUARDAR_DIAGNOSTICO=1124;
+
 } 

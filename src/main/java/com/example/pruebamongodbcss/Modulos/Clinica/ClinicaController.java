@@ -2016,13 +2016,27 @@ public class ClinicaController implements Initializable {
                 ModeloPaciente paciente = (ModeloPaciente) entrada.readObject();
                 if (paciente != null) {
                     // Obtener la cita más reciente del paciente
-                    List<ModeloCita> citas = servicioClinica.buscarCitasPorPaciente(paciente.getId());
-                    ModeloCita cita = citas.isEmpty() ? null : citas.get(0); // La primera cita es la más reciente porque están ordenadas
-                    controller.setPaciente(paciente, cita);
-                    controller.setDiagnostico(diagnostico);
+                    try {
+                        gestorPeticiones.enviarPeticion(Protocolo.BUSCAR_CITAS_POR_PACIENTE + Protocolo.SEPARADOR_CODIGO + paciente.getId());
+                        
+                        ObjectInputStream entradaCitas = gestorPeticiones.getEntrada();
+                        if (entradaCitas.readInt() == Protocolo.BUSCAR_CITAS_POR_PACIENTE_RESPONSE) {
+                            List<ModeloCita> citas = (List<ModeloCita>) entradaCitas.readObject();
+                            ModeloCita cita = citas.isEmpty() ? null : citas.get(0); // La primera cita es la más reciente porque están ordenadas
+                            controller.setPaciente(paciente, cita);
+                            controller.setDiagnostico(diagnostico);
 
-                    // Llamar al método de exportación a PDF
-                    exportarDiagnosticoPDF(controller);
+                            // Llamar al método de exportación a PDF
+                            exportarDiagnosticoPDF(controller);
+                        } else {
+                            mostrarAlerta("Error", "Error al obtener citas",
+                                    "No se pudieron obtener las citas del paciente.");
+                        }
+                    } catch (IOException | ClassNotFoundException ex) {
+                        ex.printStackTrace();
+                        mostrarAlerta("Error", "Error al obtener citas",
+                                "Ha ocurrido un error al obtener las citas: " + ex.getMessage());
+                    }
                 } else {
                     mostrarAlerta("Error", "Paciente no encontrado",
                             "No se pudo encontrar el paciente asociado a este diagnóstico.");
@@ -2379,32 +2393,32 @@ public class ClinicaController implements Initializable {
     private void onVerMascotas(ActionEvent event) {
         ModeloPropietario propietario = tablaPropietarios.getSelectionModel().getSelectedItem();
         if (propietario != null) {
+            // Navegar a la pestaña de pacientes
+            tabPane.getSelectionModel().select(tabPacientes);
+            
+            // Buscar los pacientes de este propietario
+            pacientesObservable.clear();
             try {
-                // Navegar a la pestaña de pacientes
-                tabPane.getSelectionModel().select(tabPacientes);
-                
-                // Buscar los pacientes de este propietario
-                pacientesObservable.clear();
-                //Hacemos una peticion al servidor para obtener los pacientes por propietario
                 gestorPeticiones.enviarPeticion(Protocolo.BUSCAR_PACIENTES_POR_PROPIETARIO + Protocolo.SEPARADOR_CODIGO + propietario.getId());
                 
                 ObjectInputStream entrada = gestorPeticiones.getEntrada();
                 if (entrada.readInt() == Protocolo.BUSCAR_PACIENTES_POR_PROPIETARIO_RESPONSE) {
                     List<ModeloPaciente> mascotas = (List<ModeloPaciente>) entrada.readObject();
+                    pacientesObservable.addAll(mascotas);
+                    
                     // Si no hay mascotas, mostrar mensaje
                     if (mascotas.isEmpty()) {
-                        mostrarMensaje("Sin mascotas", "No hay mascotas para este propietario",
+                        mostrarMensaje("Sin mascotas", "No hay mascotas para este propietario", 
                                 "El propietario " + propietario.getNombreCompleto() + " no tiene mascotas registradas.");
                     }
-                    pacientesObservable.addAll(mascotas);
                 } else {
-                    mostrarAlerta("Error", "Error al obtener los pacientes",
-                            "No se pudo obtener los pacientes. Inténtelo de nuevo.");
+                    mostrarAlerta("Error", "Error al obtener mascotas",
+                            "No se pudieron obtener las mascotas del propietario.");
                 }
-            } catch (IOException ex) {
-            } catch (ClassNotFoundException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+            } catch (IOException | ClassNotFoundException ex) {
+                ex.printStackTrace();
+                mostrarAlerta("Error", "Error al obtener mascotas",
+                        "Ha ocurrido un error al obtener las mascotas: " + ex.getMessage());
             }
 
 
@@ -2513,9 +2527,23 @@ public class ClinicaController implements Initializable {
                             // Si hay un paciente seleccionado, asignarlo
                             if (pacienteSeleccionado != null) {
                                 // Obtener la cita más reciente del paciente
-                                List<ModeloCita> citas = servicioClinica.buscarCitasPorPaciente(pacienteSeleccionado.getId());
-                                ModeloCita cita = citas.isEmpty() ? null : citas.get(0);
-                                controller.setPaciente(pacienteSeleccionado, cita);
+                                try {
+                                    gestorPeticiones.enviarPeticion(Protocolo.BUSCAR_CITAS_POR_PACIENTE + Protocolo.SEPARADOR_CODIGO + pacienteSeleccionado.getId());
+                                    
+                                    ObjectInputStream entradaCitasPaciente = gestorPeticiones.getEntrada();
+                                    if (entradaCitasPaciente.readInt() == Protocolo.BUSCAR_CITAS_POR_PACIENTE_RESPONSE) {
+                                        List<ModeloCita> citas = (List<ModeloCita>) entradaCitasPaciente.readObject();
+                                        ModeloCita cita = citas.isEmpty() ? null : citas.get(0);
+                                        controller.setPaciente(pacienteSeleccionado, cita);
+                                    } else {
+                                        // Si no se pueden obtener las citas, continuar sin cita
+                                        controller.setPaciente(pacienteSeleccionado, null);
+                                    }
+                                } catch (IOException | ClassNotFoundException ex) {
+                                    ex.printStackTrace();
+                                    // Si hay error, continuar sin cita
+                                    controller.setPaciente(pacienteSeleccionado, null);
+                                }
                             }
                             
                             // Configurar callbacks
@@ -2872,13 +2900,27 @@ public class ClinicaController implements Initializable {
             
             // Buscar los pacientes de este propietario
             pacientesObservable.clear();
-            List<ModeloPaciente> mascotas = servicioClinica.buscarPacientesPorPropietario(propietario.getId());
-            pacientesObservable.addAll(mascotas);
-            
-            // Si no hay mascotas, mostrar mensaje
-            if (mascotas.isEmpty()) {
-                mostrarMensaje("Sin mascotas", "No hay mascotas para este propietario", 
-                        "El propietario " + propietario.getNombreCompleto() + " no tiene mascotas registradas.");
+            try {
+                gestorPeticiones.enviarPeticion(Protocolo.BUSCAR_PACIENTES_POR_PROPIETARIO + Protocolo.SEPARADOR_CODIGO + propietario.getId());
+                
+                ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                if (entrada.readInt() == Protocolo.BUSCAR_PACIENTES_POR_PROPIETARIO_RESPONSE) {
+                    List<ModeloPaciente> mascotas = (List<ModeloPaciente>) entrada.readObject();
+                    pacientesObservable.addAll(mascotas);
+                    
+                    // Si no hay mascotas, mostrar mensaje
+                    if (mascotas.isEmpty()) {
+                        mostrarMensaje("Sin mascotas", "No hay mascotas para este propietario", 
+                                "El propietario " + propietario.getNombreCompleto() + " no tiene mascotas registradas.");
+                    }
+                } else {
+                    mostrarAlerta("Error", "Error al obtener mascotas",
+                            "No se pudieron obtener las mascotas del propietario.");
+                }
+            } catch (IOException | ClassNotFoundException ex) {
+                ex.printStackTrace();
+                mostrarAlerta("Error", "Error al obtener mascotas",
+                        "Ha ocurrido un error al obtener las mascotas: " + ex.getMessage());
             }
         }
     }
@@ -2891,7 +2933,8 @@ public class ClinicaController implements Initializable {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/propietario-selector.fxml"));
             Parent root = loader.load();
             PropietarioSelectorController controller = loader.getController();
-            controller.setServicio(servicioClinica); // <--- AÑADE ESTA LÍNEA
+            // TODO: Implementar setServicio con gestorPeticiones en lugar de servicioClinica
+            // controller.setServicio(servicioClinica);
 
             controller.setPropietarioSeleccionadoCallback(propietario -> {
                 // Asignar el propietario al paciente
