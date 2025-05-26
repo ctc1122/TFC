@@ -18,9 +18,6 @@ import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.PanelInicioController;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.Utilidades.GestorSocket;
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXTextField;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -28,11 +25,14 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
@@ -50,11 +50,11 @@ public class FichajeController implements Initializable {
     @FXML private Label lblConexionEstado;
     
     // Controles de fichaje
-    @FXML private JFXComboBox<ModeloFichaje.TipoFichaje> cmbTipoFichaje;
-    @FXML private JFXTextField txtMotivoIncidencia;
-    @FXML private JFXButton btnFicharEntrada;
-    @FXML private JFXButton btnFicharSalida;
-    @FXML private JFXButton btnRefrescar;
+    @FXML private ComboBox<ModeloFichaje.TipoFichaje> cmbTipoFichaje;
+    @FXML private TextField txtMotivoIncidencia;
+    @FXML private Button btnFicharEntrada;
+    @FXML private Button btnFicharSalida;
+    @FXML private Button btnRefrescar;
     
     // Panel de fichaje actual
     @FXML private VBox panelFichajeActual;
@@ -72,17 +72,17 @@ public class FichajeController implements Initializable {
     
     @FXML private DatePicker dpFechaInicio;
     @FXML private DatePicker dpFechaFin;
-    @FXML private JFXButton btnFiltrar;
-    @FXML private JFXButton btnLimpiarFiltros;
-    @FXML private JFXButton btnExportarHistorial;
-    @FXML private JFXButton btnGenerarInforme;
+    @FXML private Button btnFiltrar;
+    @FXML private Button btnLimpiarFiltros;
+    @FXML private Button btnExportarHistorial;
+    @FXML private Button btnGenerarInforme;
     
     // Panel de administración
     @FXML private VBox panelAdministracion;
-    @FXML private JFXComboBox<String> cmbEmpleados;
-    @FXML private JFXButton btnVerTodosFichajes;
-    @FXML private JFXButton btnEstadisticas;
-    @FXML private JFXButton btnGestionarIncidencias;
+    @FXML private ComboBox<String> cmbEmpleados;
+    @FXML private Button btnVerTodosFichajes;
+    @FXML private Button btnEstadisticas;
+    @FXML private Button btnGestionarIncidencias;
     @FXML private GridPane gridEstadisticas;
     @FXML private Label lblTotalEmpleados;
     @FXML private Label lblFichajesHoy;
@@ -157,8 +157,8 @@ public class FichajeController implements Initializable {
         // Configurar columna de acciones con botones
         colAcciones.setCellFactory(column -> {
             return new javafx.scene.control.TableCell<ModeloFichaje, String>() {
-                private final JFXButton btnEditar = new JFXButton("✏️");
-                private final JFXButton btnEliminar = new JFXButton("🗑️");
+                private final Button btnEditar = new Button("✏️");
+                private final Button btnEliminar = new Button("🗑️");
                 
                 {
                     btnEditar.getStyleClass().add("edit-button");

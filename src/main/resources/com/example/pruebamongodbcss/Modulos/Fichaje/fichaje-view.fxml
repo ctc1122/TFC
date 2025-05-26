@@ -4,7 +4,6 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
-<?import com.jfoenix.controls.*?>
 
 <BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Fichaje.FichajeController">
    <top>
@@ -24,7 +23,7 @@
             <Label styleClass="status-label" text="Estado:" />
             <Label fx:id="lblEstadoFichaje" styleClass="status-value" text="Sin fichar" />
             <Region HBox.hgrow="ALWAYS" />
-            <JFXButton fx:id="btnRefrescar" styleClass="refresh-button" text="🔄 Actualizar" />
+            <Button fx:id="btnRefrescar" styleClass="refresh-button" text="🔄 Actualizar" />
          </HBox>
          
          <padding>
@@ -51,19 +50,19 @@
                   <!-- Tipo de Fichaje -->
                   <VBox GridPane.columnIndex="0" GridPane.rowIndex="0">
                      <Label styleClass="field-label" text="Tipo de Fichaje:" />
-                     <JFXComboBox fx:id="cmbTipoFichaje" styleClass="combo-field" />
+                     <ComboBox fx:id="cmbTipoFichaje" styleClass="combo-field" />
                   </VBox>
                   
                   <!-- Motivo (solo para incidencias) -->
                   <VBox GridPane.columnIndex="1" GridPane.rowIndex="0">
                      <Label styleClass="field-label" text="Motivo (Incidencias):" />
-                     <JFXTextField fx:id="txtMotivoIncidencia" styleClass="text-field" promptText="Especificar motivo..." />
+                     <TextField fx:id="txtMotivoIncidencia" styleClass="text-field" promptText="Especificar motivo..." />
                   </VBox>
                   
                   <!-- Botones de Acción -->
                   <VBox alignment="CENTER" spacing="10.0" GridPane.columnIndex="2" GridPane.rowIndex="0">
-                     <JFXButton fx:id="btnFicharEntrada" styleClass="primary-button, entrada-button" text="🟢 FICHAR ENTRADA" />
-                     <JFXButton fx:id="btnFicharSalida" styleClass="secondary-button, salida-button" text="🔴 FICHAR SALIDA" />
+                     <Button fx:id="btnFicharEntrada" styleClass="primary-button, entrada-button" text="🟢 FICHAR ENTRADA" />
+                     <Button fx:id="btnFicharSalida" styleClass="secondary-button, salida-button" text="🔴 FICHAR SALIDA" />
                   </VBox>
                </GridPane>
                
@@ -100,8 +99,8 @@
                <HBox alignment="CENTER_LEFT" spacing="15.0">
                   <Label styleClass="card-title" text="Historial de Fichajes" />
                   <Region HBox.hgrow="ALWAYS" />
-                  <JFXButton fx:id="btnExportarHistorial" styleClass="export-button" text="📊 Exportar" />
-                  <JFXButton fx:id="btnGenerarInforme" styleClass="report-button" text="📋 Informe" />
+                  <Button fx:id="btnExportarHistorial" styleClass="export-button" text="📊 Exportar" />
+                  <Button fx:id="btnGenerarInforme" styleClass="report-button" text="📋 Informe" />
                </HBox>
                
                <!-- Filtros -->
@@ -110,8 +109,8 @@
                   <DatePicker fx:id="dpFechaInicio" promptText="Fecha inicio" styleClass="date-picker" />
                   <Label text="hasta" />
                   <DatePicker fx:id="dpFechaFin" promptText="Fecha fin" styleClass="date-picker" />
-                  <JFXButton fx:id="btnFiltrar" styleClass="filter-button" text="🔍 Filtrar" />
-                  <JFXButton fx:id="btnLimpiarFiltros" styleClass="clear-button" text="🗑️ Limpiar" />
+                  <Button fx:id="btnFiltrar" styleClass="filter-button" text="🔍 Filtrar" />
+                  <Button fx:id="btnLimpiarFiltros" styleClass="clear-button" text="🗑️ Limpiar" />
                </HBox>
                
                <!-- Tabla de Historial -->
@@ -135,10 +134,10 @@
                
                <HBox alignment="CENTER_LEFT" spacing="15.0" styleClass="admin-controls">
                   <Label styleClass="filter-label" text="Empleado:" />
-                  <JFXComboBox fx:id="cmbEmpleados" prefWidth="200.0" promptText="Seleccionar empleado" styleClass="combo-field" />
-                  <JFXButton fx:id="btnVerTodosFichajes" styleClass="admin-button" text="👥 Ver Todos" />
-                  <JFXButton fx:id="btnEstadisticas" styleClass="stats-button" text="📈 Estadísticas" />
-                  <JFXButton fx:id="btnGestionarIncidencias" styleClass="incident-button" text="⚠️ Incidencias" />
+                  <ComboBox fx:id="cmbEmpleados" prefWidth="200.0" promptText="Seleccionar empleado" styleClass="combo-field" />
+                  <Button fx:id="btnVerTodosFichajes" styleClass="admin-button" text="👥 Ver Todos" />
+                  <Button fx:id="btnEstadisticas" styleClass="stats-button" text="📈 Estadísticas" />
+                  <Button fx:id="btnGestionarIncidencias" styleClass="incident-button" text="⚠️ Incidencias" />
                </HBox>
                
                <!-- Resumen Estadístico -->
