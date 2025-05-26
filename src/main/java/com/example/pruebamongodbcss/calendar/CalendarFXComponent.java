@@ -1138,6 +1138,188 @@ public class CalendarFXComponent extends BorderPane {
     }
     
     /**
+     * Muestra el diálogo para cambiar el estado de una cita
+     */
+    private void showChangeStatusDialog(Entry<?> entry) {
+        try {
+            // Crear el diálogo
+            Alert dialog = new Alert(AlertType.CONFIRMATION);
+            dialog.setTitle("Cambiar Estado de Cita");
+            dialog.setHeaderText("Seleccione el nuevo estado para la cita:");
+            dialog.setContentText(entry.getTitle());
+            
+            // Crear el contenido personalizado con radio buttons
+            GridPane grid = new GridPane();
+            grid.setHgap(10);
+            grid.setVgap(10);
+            grid.setPadding(new Insets(20, 150, 10, 10));
+            
+            // Crear grupo de radio buttons
+            javafx.scene.control.ToggleGroup toggleGroup = new javafx.scene.control.ToggleGroup();
+            
+            javafx.scene.control.RadioButton pendienteRadio = new javafx.scene.control.RadioButton("Pendiente");
+            javafx.scene.control.RadioButton enCursoRadio = new javafx.scene.control.RadioButton("En Curso");
+            javafx.scene.control.RadioButton completadaRadio = new javafx.scene.control.RadioButton("Completada");
+            javafx.scene.control.RadioButton canceladaRadio = new javafx.scene.control.RadioButton("Cancelada");
+            
+            pendienteRadio.setToggleGroup(toggleGroup);
+            enCursoRadio.setToggleGroup(toggleGroup);
+            completadaRadio.setToggleGroup(toggleGroup);
+            canceladaRadio.setToggleGroup(toggleGroup);
+            
+            // Establecer el estado actual como seleccionado
+            String currentStatus = getCurrentStatusFromCalendar(entry.getCalendar());
+            switch (currentStatus) {
+                case "PENDIENTE":
+                    pendienteRadio.setSelected(true);
+                    break;
+                case "EN_CURSO":
+                    enCursoRadio.setSelected(true);
+                    break;
+                case "COMPLETADA":
+                    completadaRadio.setSelected(true);
+                    break;
+                case "CANCELADA":
+                    canceladaRadio.setSelected(true);
+                    break;
+                default:
+                    pendienteRadio.setSelected(true);
+                    break;
+            }
+            
+            // Añadir radio buttons al grid
+            grid.add(new Label("Estados disponibles:"), 0, 0);
+            grid.add(pendienteRadio, 0, 1);
+            grid.add(enCursoRadio, 0, 2);
+            grid.add(completadaRadio, 0, 3);
+            grid.add(canceladaRadio, 0, 4);
+            
+            // Establecer el contenido expandible del diálogo
+            dialog.getDialogPane().setExpandableContent(grid);
+            dialog.getDialogPane().setExpanded(true);
+            
+            // Configurar botones
+            dialog.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
+            
+            // Mostrar el diálogo y procesar la respuesta
+            Optional<ButtonType> result = dialog.showAndWait();
+            
+            if (result.isPresent() && result.get() == ButtonType.OK) {
+                // Obtener el estado seleccionado
+                javafx.scene.control.RadioButton selectedRadio = (javafx.scene.control.RadioButton) toggleGroup.getSelectedToggle();
+                if (selectedRadio != null) {
+                    String newStatus = getStatusFromRadioText(selectedRadio.getText());
+                    
+                    // Cambiar el estado en la base de datos
+                    changeAppointmentStatus(entry, newStatus);
+                }
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            showErrorMessage("Error", "No se pudo mostrar el diálogo de cambio de estado: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Obtiene el estado actual basado en el calendario de la entrada
+     */
+    private String getCurrentStatusFromCalendar(Calendar calendar) {
+        if (calendar == calendars.get(0)) return "PENDIENTE";
+        if (calendar == calendars.get(1)) return "EN_CURSO";
+        if (calendar == calendars.get(2)) return "COMPLETADA";
+        if (calendar == calendars.get(3)) return "CANCELADA";
+        return "PENDIENTE";
+    }
+    
+    /**
+     * Convierte el texto del radio button al estado correspondiente
+     */
+    private String getStatusFromRadioText(String radioText) {
+        switch (radioText) {
+            case "Pendiente":
+                return "PENDIENTE";
+            case "En Curso":
+                return "EN_CURSO";
+            case "Completada":
+                return "COMPLETADA";
+            case "Cancelada":
+                return "CANCELADA";
+            default:
+                return "PENDIENTE";
+        }
+    }
+    
+    /**
+     * Cambia el estado de una cita en la base de datos
+     */
+    private void changeAppointmentStatus(Entry<?> entry, String newStatus) {
+        try {
+            String entryId = entry.getId();
+            if (entryId == null || entryId.isEmpty()) {
+                showErrorMessage("Error", "No se puede cambiar el estado: ID de cita no válido.");
+                return;
+            }
+            
+            // Remover prefijo si existe
+            if (entryId.startsWith("_")) {
+                entryId = entryId.substring(1);
+            }
+            
+            System.out.println("Cambiando estado de cita " + entryId + " a " + newStatus);
+            
+            // Enviar petición al servidor para cambiar el estado
+            gestorSocket.enviarPeticion(Protocolo.CAMBIAR_ESTADO_CITA + Protocolo.SEPARADOR_CODIGO + entryId + Protocolo.SEPARADOR_CODIGO + newStatus);
+            ObjectInputStream ois = gestorSocket.getEntrada();
+            int codigo = ois.readInt();
+            
+            if (codigo == Protocolo.CAMBIAR_ESTADO_CITA_RESPONSE) {
+                boolean success = ois.readBoolean();
+                if (success) {
+                    // Éxito: refrescar el calendario
+                    refreshCalendarFromDatabase();
+                    
+                    // Mostrar mensaje de éxito
+                    Alert successAlert = new Alert(AlertType.INFORMATION);
+                    successAlert.setTitle("Éxito");
+                    successAlert.setHeaderText(null);
+                    successAlert.setContentText("El estado de la cita ha sido cambiado correctamente a: " + getStatusDisplayName(newStatus));
+                    successAlert.showAndWait();
+                } else {
+                    showErrorMessage("Error", "No se pudo cambiar el estado de la cita. Verifique que la cita existe.");
+                }
+            } else if (codigo == Protocolo.ERROR_CAMBIAR_ESTADO_CITA) {
+                String errorMsg = ois.readUTF();
+                showErrorMessage("Error del Servidor", "Error al cambiar estado: " + errorMsg);
+            } else {
+                showErrorMessage("Error", "Respuesta inesperada del servidor (código: " + codigo + ")");
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            showErrorMessage("Error de Comunicación", "No se pudo comunicar con el servidor: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Obtiene el nombre de visualización para un estado
+     */
+    private String getStatusDisplayName(String status) {
+        switch (status) {
+            case "PENDIENTE":
+                return "Pendiente";
+            case "EN_CURSO":
+                return "En Curso";
+            case "COMPLETADA":
+                return "Completada";
+            case "CANCELADA":
+                return "Cancelada";
+            default:
+                return status;
+        }
+    }
+    
+    /**
      * Crea una nueva entrada para el calendario
      */
     private Entry<?> createNewEntry(DateControl.CreateEntryParameter param) {
@@ -1179,6 +1361,7 @@ public class CalendarFXComponent extends BorderPane {
             
             MenuItem editItem = new MenuItem("Editar cita");
             MenuItem deleteItem = new MenuItem("Eliminar cita");
+            MenuItem changeStatusItem = new MenuItem("Cambiar estado");
             
             // Configurar acción de edición
             editItem.setOnAction(e -> {
@@ -1237,8 +1420,22 @@ public class CalendarFXComponent extends BorderPane {
                 }
             });
             
+            // Configurar acción de cambio de estado
+            changeStatusItem.setOnAction(e -> {
+                showChangeStatusDialog(entry);
+            });
+            
+            // Solo mostrar "Cambiar estado" para citas médicas (no para reuniones o recordatorios)
+            boolean isMedicalAppointment = entry.getCalendar() == calendars.get(0) || // Pendientes
+                                         entry.getCalendar() == calendars.get(1) || // En curso
+                                         entry.getCalendar() == calendars.get(2) || // Completadas
+                                         entry.getCalendar() == calendars.get(3);   // Canceladas
+            
             // Agregar opciones al menú
             contextMenu.getItems().addAll(editItem, deleteItem);
+            if (isMedicalAppointment) {
+                contextMenu.getItems().add(changeStatusItem);
+            }
             
             return contextMenu;
         });

@@ -10,7 +10,6 @@ import java.util.List;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
-import com.calendarfx.model.CalendarEvent;
 import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Data.Usuario.Rol;
@@ -1086,6 +1085,79 @@ public class ClienteHandler implements Runnable {
                                 System.err.println("Error: Faltan parámetros en la solicitud CAMBIAR_ESTADO_CITA_PENDIENTE_FACTURAR");
                                 synchronized (salida) {
                                     salida.writeInt(Protocolo.ERROR_CAMBIAR_ESTADO_CITA_PENDIENTE_FACTURAR);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.CAMBIAR_ESTADO_CITA:
+                            System.out.println("Procesando solicitud de cambiar estado de cita...");
+                            if (parametros.length >= 2) {
+                                try {
+                                    String idCita = parametros[0];
+                                    String nuevoEstado = parametros[1];
+                                    System.out.println("Cambiando estado de cita " + idCita + " a " + nuevoEstado);
+                                    
+                                    // 1. Cambiar estado en la colección de citas
+                                    boolean cambiado = servicioClinica.cambiarEstadoCita(idCita, nuevoEstado);
+                                    
+                                    // 2. Actualizar el evento correspondiente en el calendario si existe
+                                    if (cambiado) {
+                                        try {
+                                            // Buscar el evento del calendario correspondiente
+                                            com.example.pruebamongodbcss.calendar.CalendarEvent evento = calendarService.getEventById(idCita);
+                                            if (evento != null) {
+                                                // Actualizar el estado en el título del evento
+                                                String tituloActual = evento.getTitle();
+                                                if (tituloActual != null) {
+                                                    // Extraer el motivo (parte antes del " - ")
+                                                    String motivo = tituloActual.contains(" - ") ? 
+                                                        tituloActual.substring(0, tituloActual.indexOf(" - ")) : 
+                                                        tituloActual;
+                                                    
+                                                    // Crear nuevo título con el estado actualizado
+                                                    String nuevoTitulo = motivo + " - " + nuevoEstado;
+                                                    evento.setTitle(nuevoTitulo);
+                                                    
+                                                    // Actualizar el estado en el evento
+                                                    evento.setEstado(nuevoEstado);
+                                                    
+                                                    // Guardar el evento actualizado
+                                                    boolean eventoActualizado = calendarService.updateAppointment(evento);
+                                                    if (eventoActualizado) {
+                                                        System.out.println("Evento del calendario actualizado correctamente");
+                                                    } else {
+                                                        System.out.println("Advertencia: No se pudo actualizar el evento del calendario");
+                                                    }
+                                                }
+                                            } else {
+                                                System.out.println("No se encontró evento del calendario correspondiente para la cita: " + idCita);
+                                            }
+                                        } catch (Exception eventoException) {
+                                            System.err.println("Error al actualizar evento del calendario: " + eventoException.getMessage());
+                                            // No fallar la operación completa por esto
+                                        }
+                                    }
+                                    
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.CAMBIAR_ESTADO_CITA_RESPONSE);
+                                        salida.writeBoolean(cambiado);
+                                        salida.flush();
+                                    }
+                                    System.out.println("Estado de cita cambiado: " + cambiado);
+                                } catch (Exception e) {
+                                    System.err.println("Error al cambiar estado de cita: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_CAMBIAR_ESTADO_CITA);
+                                        salida.writeUTF("Error al cambiar estado: " + e.getMessage());
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud CAMBIAR_ESTADO_CITA");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_CAMBIAR_ESTADO_CITA);
+                                    salida.writeUTF("Faltan parámetros: se requiere ID de cita y nuevo estado");
                                     salida.flush();
                                 }
                             }

@@ -233,6 +233,11 @@ public interface Protocolo {
     static final int CAMBIAR_ESTADO_CITA_PENDIENTE_FACTURAR_RESPONSE=1153;
     static final int ERROR_CAMBIAR_ESTADO_CITA_PENDIENTE_FACTURAR=1154;
 
+    // Códigos para cambiar estado de cita
+    static final int CAMBIAR_ESTADO_CITA=1155;
+    static final int CAMBIAR_ESTADO_CITA_RESPONSE=1156;
+    static final int ERROR_CAMBIAR_ESTADO_CITA=1157;
+
 
     
 } 

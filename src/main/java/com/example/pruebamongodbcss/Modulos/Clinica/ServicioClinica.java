@@ -855,6 +855,49 @@ public class ServicioClinica {
     }
     
     /**
+     * Cambiar el estado de una cita usando String para el ID y estado.
+     * @param citaIdString ID de la cita como String
+     * @param nuevoEstadoString Nuevo estado para la cita como String
+     * @return true si se actualizó correctamente, false en caso contrario
+     */
+    public boolean cambiarEstadoCita(String citaIdString, String nuevoEstadoString) {
+        try {
+            // Convertir el String ID a ObjectId
+            ObjectId citaId = new ObjectId(citaIdString);
+            
+            // Convertir el String estado a EstadoCita
+            EstadoCita nuevoEstado;
+            switch (nuevoEstadoString.toUpperCase()) {
+                case "PENDIENTE":
+                    nuevoEstado = EstadoCita.PENDIENTE;
+                    break;
+                case "EN_CURSO":
+                    nuevoEstado = EstadoCita.EN_CURSO;
+                    break;
+                case "COMPLETADA":
+                    nuevoEstado = EstadoCita.COMPLETADA;
+                    break;
+                case "CANCELADA":
+                    nuevoEstado = EstadoCita.CANCELADA;
+                    break;
+                default:
+                    System.err.println("Estado no válido: " + nuevoEstadoString);
+                    return false;
+            }
+            
+            // Llamar al método original
+            return cambiarEstadoCita(citaId, nuevoEstado);
+            
+        } catch (IllegalArgumentException e) {
+            System.err.println("Error al convertir ID de cita: " + citaIdString + " - " + e.getMessage());
+            return false;
+        } catch (Exception e) {
+            System.err.println("Error al cambiar estado de cita: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
      * Agregar observaciones a una cita.
      * @param citaId ID de la cita
      * @param observaciones Observaciones a agregar
