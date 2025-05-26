@@ -196,11 +196,15 @@ public class FacturaFormController implements Initializable {
                 }
                 
                 String peticion = String.valueOf(Protocolo.GETALLVETERINARIOS);
-                System.out.println("Enviando petición: " + peticion);
+                System.out.println("Enviando petición de veterinarios: " + peticion);
                 
                 // Usar sincronización para evitar conflictos
                 synchronized (gestorSocket) {
                     gestorSocket.enviarPeticion(peticion);
+                    
+                    // El servidor espera recibir un objeto Rol después del código
+                    gestorSocket.getSalida().writeObject(Usuario.Rol.VETERINARIO);
+                    gestorSocket.getSalida().flush();
                     
                     ObjectInputStream entrada = gestorSocket.getEntrada();
                     if (entrada == null) {
@@ -211,7 +215,6 @@ public class FacturaFormController implements Initializable {
                     
                     System.out.println("Esperando respuesta del servidor...");
                     
-                    // Usar timeout más corto y manejar mejor los errores
                     try {
                         int codigoRespuesta = entrada.readInt();
                         System.out.println("Código de respuesta recibido: " + codigoRespuesta);
@@ -250,6 +253,9 @@ public class FacturaFormController implements Initializable {
                     } catch (java.net.SocketTimeoutException e) {
                         System.err.println("Timeout al esperar respuesta del servidor");
                         Platform.runLater(() -> mostrarError("Error de timeout", "El servidor tardó demasiado en responder. Intente más tarde."));
+                    } catch (java.io.EOFException e) {
+                        System.err.println("Error de EOF - conexión cerrada inesperadamente");
+                        Platform.runLater(() -> mostrarError("Error de conexión", "La conexión se cerró inesperadamente. Verifique el servidor."));
                     }
                 }
                 
@@ -259,6 +265,7 @@ public class FacturaFormController implements Initializable {
                 Platform.runLater(() -> {
                     // Si hay error, al menos permitir continuar sin veterinarios
                     System.out.println("Continuando sin cargar veterinarios debido a error de conexión");
+                    mostrarError("Error de comunicación", "No se pudieron cargar los veterinarios. Puede continuar sin seleccionar veterinario.");
                 });
             }
         }).start();
