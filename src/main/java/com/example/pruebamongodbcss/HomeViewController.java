@@ -12,6 +12,7 @@ import com.calendarfx.model.Calendar;
 import com.calendarfx.model.Entry;
 import com.example.pruebamongodbcss.calendar.CalendarFXComponent;
 import com.example.pruebamongodbcss.calendar.CalendarPreview;
+import com.example.pruebamongodbcss.calendar.CalendarScreen;
 import com.example.pruebamongodbcss.theme.ThemeManager;
 import com.jfoenix.controls.JFXButton;
 
@@ -314,7 +315,49 @@ public class HomeViewController implements Initializable {
         btnLearnMore.setOnAction(e -> navigateToPage2());
         
         // Añadir acción al botón VER CALENDARIO
-        btnViewCalendar.setOnAction(e -> navigateToPage2());
+        btnViewCalendar.setOnAction(e -> {
+            try {
+                // Verificar que el usuario esté logueado
+                com.example.pruebamongodbcss.Data.Usuario usuarioActual = PanelInicioController.getUsuarioSesion();
+                if (usuarioActual == null) {
+                    System.err.println("Error: No hay usuario logueado");
+                    return;
+                }
+                
+                // Crear una instancia del componente de calendario personalizado CON EL USUARIO ACTUAL
+                CalendarScreen calendarScreen = new CalendarScreen(usuarioActual);
+        
+                // Asegurar que el tema se aplique correctamente
+                if (ThemeManager.getInstance().isDarkTheme()) {
+                    calendarScreen.getStyleClass().add("dark-theme");
+                }
+                
+                // Buscar el BorderPane principal del PanelInicioController
+                // Necesitamos acceder al root del PanelInicioController
+                javafx.scene.Scene currentScene = homeContainer.getScene();
+                if (currentScene != null && currentScene.getRoot() instanceof BorderPane) {
+                    BorderPane mainRoot = (BorderPane) currentScene.getRoot();
+                    
+                    // Reemplazar el contenido central con el componente de calendario
+                    BorderPane centerPane = (BorderPane) mainRoot.getCenter();
+                    if (centerPane != null) {
+                        centerPane.setCenter(calendarScreen);
+                    } else {
+                        mainRoot.setCenter(calendarScreen);
+                    }
+                    
+                    // Buscar y actualizar el título si existe
+                    javafx.scene.control.Label lblClinica = (javafx.scene.control.Label) mainRoot.lookup("#lblClinica");
+                    if (lblClinica != null) {
+                        lblClinica.setText("Calendario de Citas: " + usuarioActual.getUsuario());
+                    }
+                }
+                
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                System.err.println("Error al cargar el módulo de calendario: " + ex.getMessage());
+            }
+        });
         
         // Add hover effects to all buttons
         homeContainer.lookupAll(".btn-card, .btn-footer, .btn-back").forEach(node -> {
