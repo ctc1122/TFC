@@ -287,6 +287,30 @@ public interface Protocolo {
     static final int ACTUALIZAR_FICHAJE_RESPONSE=1192;
     static final int ERROR_ACTUALIZAR_FICHAJE=1193;
 
+    // Códigos para operaciones CRUD de citas
+    static final int GUARDAR_CITA=1194;
+    static final int GUARDAR_CITA_RESPONSE=1195;
+    static final int ERROR_GUARDAR_CITA=1196;
+
+    static final int ACTUALIZAR_CITA=1197;
+    static final int ACTUALIZAR_CITA_RESPONSE=1198;
+    static final int ERROR_ACTUALIZAR_CITA=1199;
+
+    static final int ELIMINAR_CITA=1200;
+    static final int ELIMINAR_CITA_RESPONSE=1201;
+    static final int ERROR_ELIMINAR_CITA=1202;
+
+    static final int BUSCAR_CITAS_POR_RANGO_FECHAS=1203;
+    static final int BUSCAR_CITAS_POR_RANGO_FECHAS_RESPONSE=1204;
+    static final int ERROR_BUSCAR_CITAS_POR_RANGO_FECHAS=1205;
+
+    static final int HAY_CONFLICTO_HORARIO=1206;
+    static final int HAY_CONFLICTO_HORARIO_RESPONSE=1207;
+    static final int ERROR_HAY_CONFLICTO_HORARIO=1208;
+
+    static final int BUSCAR_RAZAS_POR_TIPO_ANIMAL=1209;
+    static final int BUSCAR_RAZAS_POR_TIPO_ANIMAL_RESPONSE=1210;
+    static final int ERROR_BUSCAR_RAZAS_POR_TIPO_ANIMAL=1211;
 
     
 } 

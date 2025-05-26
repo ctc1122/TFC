@@ -13,8 +13,9 @@ import com.example.pruebamongodbcss.Data.EstadoCita;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario;
-import com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica;
 import com.example.pruebamongodbcss.Modulos.Facturacion.FacturacionController;
+import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 import com.example.pruebamongodbcss.calendar.google.GoogleCalendarWebView;
 
 import io.github.palexdev.materialfx.controls.MFXDatePicker;
@@ -78,7 +79,7 @@ public class CitasController implements Initializable {
     @FXML private Button btnMesSiguiente;
     
     // Servicio de clínica
-    private ServicioClinica servicio;
+    private GestorSocket gestorSocket;
     
     // Lista observable para la tabla de citas
     private ObservableList<ModeloCita> citasObservable;
@@ -92,8 +93,8 @@ public class CitasController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         try {
-            // Inicializar el servicio
-            servicio = new ServicioClinica();
+            // Inicializar el gestor de socket
+            gestorSocket = GestorSocket.getInstance();
             
             // Configurar listas observables
             citasObservable = FXCollections.observableArrayList();
@@ -221,7 +222,7 @@ public class CitasController implements Initializable {
         citasObservable.clear();
         
         if (dpFechaInicio.getValue() != null && dpFechaFin.getValue() != null) {
-            List<ModeloCita> citas = servicio.buscarCitasPorRangoFechas(
+            List<ModeloCita> citas = buscarCitasPorRangoFechas(
                     dpFechaInicio.getValue(), 
                     dpFechaFin.getValue());
             
@@ -242,6 +243,113 @@ public class CitasController implements Initializable {
             
             citasObservable.addAll(citas);
         }
+    }
+    
+    /**
+     * Métodos privados para comunicación con el servidor
+     */
+    private List<ModeloCita> buscarCitasPorRangoFechas(LocalDate fechaInicio, LocalDate fechaFin) {
+        try {
+            gestorSocket.enviarPeticion(Protocolo.BUSCAR_CITAS_POR_RANGO_FECHAS + Protocolo.SEPARADOR_CODIGO);
+            gestorSocket.getSalida().writeObject(fechaInicio);
+            gestorSocket.getSalida().writeObject(fechaFin);
+            gestorSocket.getSalida().flush();
+            
+            int codigo = gestorSocket.getEntrada().readInt();
+            if (codigo == Protocolo.BUSCAR_CITAS_POR_RANGO_FECHAS_RESPONSE) {
+                @SuppressWarnings("unchecked")
+                List<ModeloCita> citas = (List<ModeloCita>) gestorSocket.getEntrada().readObject();
+                return citas;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al buscar citas", 
+                "No se pudieron cargar las citas: " + e.getMessage());
+        }
+        return new java.util.ArrayList<>();
+    }
+    
+    private boolean eliminarCita(org.bson.types.ObjectId citaId) {
+        try {
+            gestorSocket.enviarPeticion(Protocolo.ELIMINAR_CITA + Protocolo.SEPARADOR_CODIGO + citaId.toString());
+            
+            int codigo = gestorSocket.getEntrada().readInt();
+            if (codigo == Protocolo.ELIMINAR_CITA_RESPONSE) {
+                return gestorSocket.getEntrada().readBoolean();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al eliminar cita", 
+                "No se pudo eliminar la cita: " + e.getMessage());
+        }
+        return false;
+    }
+    
+    private ModeloPaciente obtenerPacientePorId(org.bson.types.ObjectId pacienteId) {
+        try {
+            gestorSocket.enviarPeticion(Protocolo.OBTENERPACIENTE_POR_ID + Protocolo.SEPARADOR_CODIGO + pacienteId.toString());
+            
+            int codigo = gestorSocket.getEntrada().readInt();
+            if (codigo == Protocolo.OBTENERPACIENTE_POR_ID_RESPONSE) {
+                return (ModeloPaciente) gestorSocket.getEntrada().readObject();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al obtener paciente", 
+                "No se pudo obtener el paciente: " + e.getMessage());
+        }
+        return null;
+    }
+    
+    private ModeloPropietario obtenerPropietarioPorId(org.bson.types.ObjectId propietarioId) {
+        try {
+            gestorSocket.enviarPeticion(Protocolo.OBTENERPROPIETARIO_POR_ID + Protocolo.SEPARADOR_CODIGO + propietarioId.toString());
+            
+            int codigo = gestorSocket.getEntrada().readInt();
+            if (codigo == Protocolo.OBTENERPROPIETARIO_POR_ID_RESPONSE) {
+                return (ModeloPropietario) gestorSocket.getEntrada().readObject();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al obtener propietario", 
+                "No se pudo obtener el propietario: " + e.getMessage());
+        }
+        return null;
+    }
+    
+    private boolean cambiarEstadoCita(org.bson.types.ObjectId citaId, EstadoCita nuevoEstado) {
+        try {
+            gestorSocket.enviarPeticion(Protocolo.CAMBIAR_ESTADO_CITA + Protocolo.SEPARADOR_CODIGO + 
+                citaId.toString() + Protocolo.SEPARADOR_PARAMETROS + nuevoEstado.name());
+            
+            int codigo = gestorSocket.getEntrada().readInt();
+            if (codigo == Protocolo.CAMBIAR_ESTADO_CITA_RESPONSE) {
+                return gestorSocket.getEntrada().readBoolean();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al cambiar estado", 
+                "No se pudo cambiar el estado de la cita: " + e.getMessage());
+        }
+        return false;
+    }
+    
+    private List<ModeloCita> buscarCitasPorPaciente(org.bson.types.ObjectId pacienteId) {
+        try {
+            gestorSocket.enviarPeticion(Protocolo.BUSCAR_CITAS_POR_PACIENTE + Protocolo.SEPARADOR_CODIGO + pacienteId.toString());
+            
+            int codigo = gestorSocket.getEntrada().readInt();
+            if (codigo == Protocolo.BUSCAR_CITAS_POR_PACIENTE_RESPONSE) {
+                @SuppressWarnings("unchecked")
+                List<ModeloCita> citas = (List<ModeloCita>) gestorSocket.getEntrada().readObject();
+                return citas;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al buscar citas del paciente", 
+                "No se pudieron cargar las citas del paciente: " + e.getMessage());
+        }
+        return new java.util.ArrayList<>();
     }
     
     /**
@@ -294,7 +402,7 @@ public class CitasController implements Initializable {
                 "Esta acción no se puede deshacer.");
             
             if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
-                boolean eliminado = servicio.eliminarCita(citaSeleccionada.getId());
+                boolean eliminado = eliminarCita(citaSeleccionada.getId());
                 if (eliminado) {
                     cargarCitas();
                     mostrarMensaje("Cita eliminada", "La cita ha sido eliminada", 
@@ -319,14 +427,14 @@ public class CitasController implements Initializable {
         if (citaSeleccionada != null) {
             try {
                 // Obtener datos del paciente y propietario
-                ModeloPaciente paciente = servicio.obtenerPacientePorId(citaSeleccionada.getPacienteId());
+                ModeloPaciente paciente = obtenerPacientePorId(citaSeleccionada.getPacienteId());
                 if (paciente == null) {
                     mostrarAlerta("Error", "Paciente no encontrado", 
                         "No se pudo encontrar el paciente asociado a esta cita.");
                     return;
                 }
                 
-                ModeloPropietario propietario = servicio.obtenerPropietarioPorId(paciente.getPropietarioId());
+                ModeloPropietario propietario = obtenerPropietarioPorId(paciente.getPropietarioId());
                 if (propietario == null) {
                     mostrarAlerta("Error", "Propietario no encontrado", 
                         "No se pudo encontrar el propietario del paciente.");
@@ -400,7 +508,7 @@ public class CitasController implements Initializable {
             if (resultado.isPresent()) {
                 EstadoCita nuevoEstado = resultado.get();
                 if (nuevoEstado != citaSeleccionada.getEstado()) {
-                    boolean actualizado = servicio.cambiarEstadoCita(citaSeleccionada.getId(), nuevoEstado);
+                    boolean actualizado = cambiarEstadoCita(citaSeleccionada.getId(), nuevoEstado);
                     if (actualizado) {
                         cargarCitas();
                         mostrarMensaje("Estado actualizado", "Estado de la cita actualizado", 
@@ -454,7 +562,7 @@ public class CitasController implements Initializable {
             tabPane.getSelectionModel().select(tabListaCitas);
             
             // Buscar las citas del paciente
-            List<ModeloCita> citasPaciente = servicio.buscarCitasPorPaciente(pacienteId);
+            List<ModeloCita> citasPaciente = buscarCitasPorPaciente(pacienteId);
             
             // Actualizar la tabla
             citasObservable.clear();
@@ -513,7 +621,7 @@ public class CitasController implements Initializable {
             Parent root = loader.load();
             
             CitaFormularioController controller = loader.getController();
-            controller.setServicio(servicio);
+            controller.setGestorSocket(gestorSocket);
             
             if (cita != null) {
                 controller.setCita(cita);

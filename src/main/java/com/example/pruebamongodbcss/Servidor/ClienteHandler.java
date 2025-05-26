@@ -1415,6 +1415,141 @@ public class ClienteHandler implements Runnable {
                             }
                             break;
                             
+                        // Casos para operaciones CRUD de citas
+                        case Protocolo.GUARDAR_CITA:
+                            System.out.println("Procesando solicitud de guardar cita...");
+                            try {
+                                ModeloCita citaAGuardar = (ModeloCita) entrada.readObject();
+                                ObjectId idCitaGuardada = servicioClinica.guardarCita(citaAGuardar);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.GUARDAR_CITA_RESPONSE);
+                                    salida.writeObject(idCitaGuardada);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al guardar cita: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_GUARDAR_CITA);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.ACTUALIZAR_CITA:
+                            System.out.println("Procesando solicitud de actualizar cita...");
+                            try {
+                                ModeloCita citaAActualizar = (ModeloCita) entrada.readObject();
+                                ObjectId idActualizado = servicioClinica.guardarCita(citaAActualizar);
+                                boolean actualizada = (idActualizado != null);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ACTUALIZAR_CITA_RESPONSE);
+                                    salida.writeBoolean(actualizada);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al actualizar cita: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_ACTUALIZAR_CITA);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.ELIMINAR_CITA:
+                            System.out.println("Procesando solicitud de eliminar cita...");
+                            if (parametros.length >= 1) {
+                                try {
+                                    String idCita = parametros[0];
+                                    boolean eliminada = servicioClinica.eliminarCita(new ObjectId(idCita));
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ELIMINAR_CITA_RESPONSE);
+                                        salida.writeBoolean(eliminada);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al eliminar cita: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_ELIMINAR_CITA);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud ELIMINAR_CITA");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_ELIMINAR_CITA);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.BUSCAR_CITAS_POR_RANGO_FECHAS:
+                            System.out.println("Procesando solicitud de buscar citas por rango de fechas...");
+                            try {
+                                java.time.LocalDate fechaInicioCitas = (java.time.LocalDate) entrada.readObject();
+                                java.time.LocalDate fechaFinCitas = (java.time.LocalDate) entrada.readObject();
+                                List<ModeloCita> citasRango = servicioClinica.buscarCitasPorRangoFechas(fechaInicioCitas, fechaFinCitas);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.BUSCAR_CITAS_POR_RANGO_FECHAS_RESPONSE);
+                                    salida.writeObject(citasRango);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al buscar citas por rango de fechas: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_BUSCAR_CITAS_POR_RANGO_FECHAS);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.HAY_CONFLICTO_HORARIO:
+                            System.out.println("Procesando solicitud de verificar conflicto horario...");
+                            try {
+                                java.time.LocalDateTime fechaHora = (java.time.LocalDateTime) entrada.readObject();
+                                int duracionMinutos = entrada.readInt();
+                                ObjectId citaId = (ObjectId) entrada.readObject(); // Puede ser null
+                                boolean hayConflicto = servicioClinica.hayConflictoHorario(fechaHora, duracionMinutos, citaId);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.HAY_CONFLICTO_HORARIO_RESPONSE);
+                                    salida.writeBoolean(hayConflicto);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al verificar conflicto horario: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_HAY_CONFLICTO_HORARIO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.BUSCAR_RAZAS_POR_TIPO_ANIMAL:
+                            System.out.println("Procesando solicitud de buscar razas por tipo de animal...");
+                            if (parametros.length >= 1) {
+                                try {
+                                    String tipoAnimal = parametros[0];
+                                    String[] razas = servicioClinica.buscarRazasPorTipoAnimal(tipoAnimal);
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.BUSCAR_RAZAS_POR_TIPO_ANIMAL_RESPONSE);
+                                        salida.writeObject(razas);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al buscar razas por tipo de animal: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_BUSCAR_RAZAS_POR_TIPO_ANIMAL);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud BUSCAR_RAZAS_POR_TIPO_ANIMAL");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_BUSCAR_RAZAS_POR_TIPO_ANIMAL);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
                         default:
                             System.out.println("Mensaje no reconocido: " + codigo);
                     }
