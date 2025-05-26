@@ -1017,24 +1017,54 @@ public class CalendarFXComponent extends BorderPane {
             // Obtener el controlador
             com.example.pruebamongodbcss.Modulos.Clinica.Citas.CitaFormularioController controller = loader.getController();
             
-            // Configurar el controlador
-            controller.setServicio(null);
+            // Configurar el controlador con el servicio de clínica
+            com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
+            controller.setServicio(servicioClinica);
             
             // Si es una cita existente, cargar sus datos
             if (event.getId() != null && !event.getId().isEmpty()) {
-                // Convertir el ID a ObjectId
-                String idStr = event.getId();
-                if (idStr.startsWith("_")) {
-                    idStr = idStr.substring(1);
+                try {
+                    // Convertir el ID a ObjectId
+                    String idStr = event.getId();
+                    if (idStr.startsWith("_")) {
+                        idStr = idStr.substring(1);
+                    }
+                    
+                    // Verificar que el ID sea válido para MongoDB ObjectId
+                    if (idStr.length() == 24 && idStr.matches("[0-9a-fA-F]+")) {
+                        org.bson.types.ObjectId citaId = new org.bson.types.ObjectId(idStr);
+                        
+                        // Buscar la cita en la base de datos usando el protocolo
+                        try {
+                            gestorSocket.enviarPeticion(Protocolo.OBTENER_CITA_POR_ID + Protocolo.SEPARADOR_CODIGO + citaId.toString());
+                            ObjectInputStream ois = gestorSocket.getEntrada();
+                            int codigo = ois.readInt();
+                            
+                            if (codigo == Protocolo.OBTENER_CITA_POR_ID_RESPONSE) {
+                                com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = (com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita) ois.readObject();
+                                if (cita != null) {
+                                    System.out.println("Cita encontrada para edición: " + cita.getId());
+                                    controller.setCita(cita);
+                                } else {
+                                    System.out.println("No se encontró la cita con ID: " + citaId);
+                                }
+                            } else if (codigo == Protocolo.ERROR_OBTENER_CITA_POR_ID) {
+                                String errorMsg = ois.readUTF();
+                                System.err.println("Error del servidor al obtener cita: " + errorMsg);
+                            } else {
+                                System.err.println("Código de respuesta inesperado al obtener cita: " + codigo);
+                            }
+                        } catch (Exception dbException) {
+                            System.err.println("Error al comunicarse con la base de datos para obtener la cita: " + dbException.getMessage());
+                            dbException.printStackTrace();
+                        }
+                    } else {
+                        System.out.println("ID de cita no válido para MongoDB: " + idStr + " (longitud: " + idStr.length() + ")");
+                    }
+                } catch (Exception idException) {
+                    System.err.println("Error al procesar el ID de la cita: " + idException.getMessage());
+                    idException.printStackTrace();
                 }
-                org.bson.types.ObjectId citaId = new org.bson.types.ObjectId(idStr);
-                
-                // Buscar la cita en la base de datos
-                // Por ahora comentamos esta funcionalidad hasta implementar el protocolo completo
-                // com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = servicioClinica.obtenerCitaPorId(citaId);
-                // if (cita != null) {
-                //     controller.setCita(cita);
-                // }
             }
             
             // Configurar callback para refrescar el calendario
