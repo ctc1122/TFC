@@ -7,7 +7,7 @@ import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 import com.example.pruebamongodbcss.theme.ThemeManager;
-import com.jfoenix.controls.*;
+import io.github.palexdev.materialfx.controls.MFXDatePicker;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -22,6 +22,10 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
+import javafx.scene.chart.PieChart;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -46,41 +50,65 @@ import java.util.ResourceBundle;
 public class FacturacionController implements Initializable {
 
     // Componentes principales
-    @FXML private BorderPane rootPane;
+    @FXML private BorderPane mainPane;
     @FXML private TabPane tabPane;
     
     // Tab de listado de facturas
     @FXML private Tab tabListado;
-    @FXML private VBox vboxListado;
-    @FXML private HBox hboxFiltros;
-    @FXML private JFXTextField txtFiltroNumero;
-    @FXML private JFXComboBox<String> cmbFiltroEstado;
-    @FXML private JFXDatePicker dpFechaInicio;
-    @FXML private JFXDatePicker dpFechaFin;
-    @FXML private JFXButton btnBuscar;
-    @FXML private JFXButton btnLimpiarFiltros;
-    @FXML private JFXButton btnNuevaFactura;
-    @FXML private TableView<ModeloFactura> tableFacturas;
+    @FXML private ComboBox<String> cmbClientes;
+    @FXML private ComboBox<String> cmbEstados;
+    @FXML private MFXDatePicker dpFechaInicio;
+    @FXML private MFXDatePicker dpFechaFin;
+    @FXML private Button btnBuscar;
+    @FXML private Button btnLimpiarFiltros;
+    @FXML private TextField txtBuscar;
+    @FXML private Button btnNuevaFactura;
+    @FXML private Button btnVerFactura;
+    @FXML private Button btnEditarFactura;
+    @FXML private Button btnEliminarFactura;
+    @FXML private Button btnExportarPDF;
+    @FXML private TableView<ModeloFactura> tablaFacturas;
     @FXML private TableColumn<ModeloFactura, String> colNumero;
     @FXML private TableColumn<ModeloFactura, String> colFecha;
     @FXML private TableColumn<ModeloFactura, String> colCliente;
     @FXML private TableColumn<ModeloFactura, String> colPaciente;
+    @FXML private TableColumn<ModeloFactura, String> colVeterinario;
     @FXML private TableColumn<ModeloFactura, String> colEstado;
+    @FXML private TableColumn<ModeloFactura, String> colSubtotal;
+    @FXML private TableColumn<ModeloFactura, String> colIVA;
     @FXML private TableColumn<ModeloFactura, String> colTotal;
     @FXML private TableColumn<ModeloFactura, Void> colAcciones;
     
     // Tab de estadísticas
     @FXML private Tab tabEstadisticas;
-    @FXML private VBox vboxEstadisticas;
-    @FXML private JFXComboBox<Integer> cmbAño;
-    @FXML private Label lblTotalFacturado;
-    @FXML private Label lblNumeroFacturas;
+    @FXML private ComboBox<String> cmbPeriodo;
+    @FXML private MFXDatePicker dpEstadisticasInicio;
+    @FXML private MFXDatePicker dpEstadisticasFin;
+    @FXML private Button btnActualizarEstadisticas;
+    @FXML private Button btnExportarEstadisticas;
+    @FXML private Label lblTotalFacturas;
+    @FXML private Label lblIngresosTotales;
+    @FXML private Label lblFacturasPendientes;
     @FXML private Label lblPromedioFactura;
+    @FXML private PieChart chartEstados;
+    @FXML private LineChart<String, Number> chartIngresos;
+    @FXML private CategoryAxis xAxisMeses;
+    @FXML private NumberAxis yAxisIngresos;
     
     // Tab de borradores
     @FXML private Tab tabBorradores;
-    @FXML private VBox vboxBorradores;
-    @FXML private TableView<ModeloFactura> tableBorradores;
+    @FXML private TextField txtBuscarBorrador;
+    @FXML private Button btnNuevoBorrador;
+    @FXML private Button btnEditarBorrador;
+    @FXML private Button btnFinalizarBorrador;
+    @FXML private Button btnEliminarBorrador;
+    @FXML private TableView<ModeloFactura> tablaBorradores;
+    @FXML private TableColumn<ModeloFactura, String> colBorradorFecha;
+    @FXML private TableColumn<ModeloFactura, String> colBorradorCliente;
+    @FXML private TableColumn<ModeloFactura, String> colBorradorPaciente;
+    @FXML private TableColumn<ModeloFactura, String> colBorradorVeterinario;
+    @FXML private TableColumn<ModeloFactura, String> colBorradorTotal;
+    @FXML private TableColumn<ModeloFactura, Void> colBorradorAcciones;
     
     // Servicios y datos
     private GestorSocket gestorSocket;
@@ -141,9 +169,18 @@ public class FacturacionController implements Initializable {
         });
         colCliente.setCellValueFactory(new PropertyValueFactory<>("nombreCliente"));
         colPaciente.setCellValueFactory(new PropertyValueFactory<>("nombrePaciente"));
+        colVeterinario.setCellValueFactory(new PropertyValueFactory<>("veterinarioNombre"));
         colEstado.setCellValueFactory(cellData -> {
             ModeloFactura.EstadoFactura estado = cellData.getValue().getEstado();
             return new SimpleStringProperty(estado != null ? estado.getDescripcion() : "");
+        });
+        colSubtotal.setCellValueFactory(cellData -> {
+            double subtotal = cellData.getValue().getSubtotal();
+            return new SimpleStringProperty(formatoMoneda.format(subtotal));
+        });
+        colIVA.setCellValueFactory(cellData -> {
+            double ivaTotal = cellData.getValue().getIvaGeneral() + cellData.getValue().getIvaMedicamentos();
+            return new SimpleStringProperty(formatoMoneda.format(ivaTotal));
         });
         colTotal.setCellValueFactory(cellData -> {
             double total = cellData.getValue().getTotal();
@@ -154,10 +191,10 @@ public class FacturacionController implements Initializable {
         configurarColumnaAcciones();
         
         // Asignar datos
-        tableFacturas.setItems(listaFacturas);
+        tablaFacturas.setItems(listaFacturas);
         
         // Configurar selección
-        tableFacturas.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+        tablaFacturas.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
                 // Habilitar botones según el estado de la factura
                 actualizarEstadoBotones(newSelection);
@@ -165,46 +202,35 @@ public class FacturacionController implements Initializable {
         });
         
         // Hacer la tabla responsive
-        tableFacturas.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tablaFacturas.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
     
     private void configurarTablaBorradores() {
-        // Clonar configuración de la tabla principal
-        TableColumn<ModeloFactura, String> colNumeroBorrador = new TableColumn<>("Número");
-        TableColumn<ModeloFactura, String> colFechaBorrador = new TableColumn<>("Fecha");
-        TableColumn<ModeloFactura, String> colClienteBorrador = new TableColumn<>("Cliente");
-        TableColumn<ModeloFactura, String> colPacienteBorrador = new TableColumn<>("Paciente");
-        TableColumn<ModeloFactura, String> colTotalBorrador = new TableColumn<>("Total");
-        TableColumn<ModeloFactura, Void> colAccionesBorrador = new TableColumn<>("Acciones");
-        
-        // Configurar cell value factories
-        colNumeroBorrador.setCellValueFactory(cellData -> {
-            String numero = cellData.getValue().getNumeroFactura();
-            return new SimpleStringProperty(numero != null ? numero : "BORRADOR");
-        });
-        colFechaBorrador.setCellValueFactory(cellData -> {
+        // Configurar columnas existentes del FXML
+        colBorradorFecha.setCellValueFactory(cellData -> {
             Date fecha = cellData.getValue().getFechaCreacion();
             return new SimpleStringProperty(fecha != null ? formatoFecha.format(fecha) : "");
         });
-        colClienteBorrador.setCellValueFactory(new PropertyValueFactory<>("nombreCliente"));
-        colPacienteBorrador.setCellValueFactory(new PropertyValueFactory<>("nombrePaciente"));
-        colTotalBorrador.setCellValueFactory(cellData -> {
+        colBorradorCliente.setCellValueFactory(new PropertyValueFactory<>("nombreCliente"));
+        colBorradorPaciente.setCellValueFactory(new PropertyValueFactory<>("nombrePaciente"));
+        colBorradorVeterinario.setCellValueFactory(new PropertyValueFactory<>("veterinarioNombre"));
+        colBorradorTotal.setCellValueFactory(cellData -> {
             double total = cellData.getValue().getTotal();
             return new SimpleStringProperty(formatoMoneda.format(total));
         });
         
         // Configurar acciones para borradores
-        colAccionesBorrador.setCellFactory(new Callback<TableColumn<ModeloFactura, Void>, TableCell<ModeloFactura, Void>>() {
+        colBorradorAcciones.setCellFactory(new Callback<TableColumn<ModeloFactura, Void>, TableCell<ModeloFactura, Void>>() {
             @Override
             public TableCell<ModeloFactura, Void> call(TableColumn<ModeloFactura, Void> param) {
                 return new TableCell<ModeloFactura, Void>() {
-                    private final JFXButton btnEditar = new JFXButton("Editar");
-                    private final JFXButton btnEliminar = new JFXButton("Eliminar");
+                    private final Button btnEditar = new Button("Editar");
+                    private final Button btnEliminar = new Button("Eliminar");
                     private final HBox hbox = new HBox(5, btnEditar, btnEliminar);
                     
                     {
-                        btnEditar.getStyleClass().addAll("btn-primary", "btn-sm");
-                        btnEliminar.getStyleClass().addAll("btn-danger", "btn-sm");
+                        btnEditar.getStyleClass().add("btn-primary");
+                        btnEliminar.getStyleClass().add("btn-danger");
                         hbox.setAlignment(Pos.CENTER);
                         
                         btnEditar.setOnAction(e -> {
@@ -227,14 +253,9 @@ public class FacturacionController implements Initializable {
             }
         });
         
-        // Agregar columnas a la tabla
-        tableBorradores.getColumns().addAll(colNumeroBorrador, colFechaBorrador, 
-                                          colClienteBorrador, colPacienteBorrador, 
-                                          colTotalBorrador, colAccionesBorrador);
-        
         // Asignar datos
-        tableBorradores.setItems(listaBorradores);
-        tableBorradores.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tablaBorradores.setItems(listaBorradores);
+        tablaBorradores.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
     
     private void configurarColumnaAcciones() {
@@ -242,15 +263,15 @@ public class FacturacionController implements Initializable {
             @Override
             public TableCell<ModeloFactura, Void> call(TableColumn<ModeloFactura, Void> param) {
                 return new TableCell<ModeloFactura, Void>() {
-                    private final JFXButton btnVer = new JFXButton("Ver");
-                    private final JFXButton btnPDF = new JFXButton("PDF");
-                    private final JFXButton btnEditar = new JFXButton("Editar");
+                    private final Button btnVer = new Button("Ver");
+                    private final Button btnPDF = new Button("PDF");
+                    private final Button btnEditar = new Button("Editar");
                     private final HBox hbox = new HBox(5, btnVer, btnPDF, btnEditar);
                     
                     {
-                        btnVer.getStyleClass().addAll("btn-info", "btn-sm");
-                        btnPDF.getStyleClass().addAll("btn-success", "btn-sm");
-                        btnEditar.getStyleClass().addAll("btn-primary", "btn-sm");
+                        btnVer.getStyleClass().add("btn-info");
+                        btnPDF.getStyleClass().add("btn-success");
+                        btnEditar.getStyleClass().add("btn-primary");
                         hbox.setAlignment(Pos.CENTER);
                         
                         btnVer.setOnAction(e -> {
@@ -291,7 +312,7 @@ public class FacturacionController implements Initializable {
      */
     private void configurarFiltros() {
         // Configurar combo de estados
-        cmbFiltroEstado.getItems().addAll(
+        cmbEstados.getItems().addAll(
             "Todos",
             "Borrador",
             "Emitida", 
@@ -299,7 +320,7 @@ public class FacturacionController implements Initializable {
             "Vencida",
             "Anulada"
         );
-        cmbFiltroEstado.setValue("Todos");
+        cmbEstados.setValue("Todos");
         
         // Configurar fechas por defecto (último mes)
         LocalDate hoy = LocalDate.now();
@@ -311,12 +332,9 @@ public class FacturacionController implements Initializable {
      * Configura la sección de estadísticas
      */
     private void configurarEstadisticas() {
-        // Configurar combo de años
-        int añoActual = LocalDate.now().getYear();
-        for (int i = añoActual; i >= añoActual - 5; i--) {
-            cmbAño.getItems().add(i);
-        }
-        cmbAño.setValue(añoActual);
+        // Configurar combo de periodos
+        cmbPeriodo.getItems().addAll("2024", "2023", "2022", "2021", "2020");
+        cmbPeriodo.setValue("2024");
         
         // Cargar estadísticas iniciales
         cargarEstadisticas();
@@ -328,8 +346,18 @@ public class FacturacionController implements Initializable {
     private void configurarEventos() {
         btnBuscar.setOnAction(e -> buscarFacturas());
         btnLimpiarFiltros.setOnAction(e -> limpiarFiltros());
-        btnNuevaFactura.setOnAction(e -> crearNuevaFactura());
-        cmbAño.setOnAction(e -> cargarEstadisticas());
+        btnNuevaFactura.setOnAction(e -> onNuevaFactura());
+        btnVerFactura.setOnAction(e -> onVerFactura());
+        btnEditarFactura.setOnAction(e -> onEditarFactura());
+        btnEliminarFactura.setOnAction(e -> onEliminarFactura());
+        btnExportarPDF.setOnAction(e -> onExportarPDF());
+        btnNuevoBorrador.setOnAction(e -> onNuevoBorrador());
+        btnEditarBorrador.setOnAction(e -> onEditarBorrador());
+        btnFinalizarBorrador.setOnAction(e -> onFinalizarBorrador());
+        btnEliminarBorrador.setOnAction(e -> onEliminarBorrador());
+        btnActualizarEstadisticas.setOnAction(e -> actualizarEstadisticas());
+        btnExportarEstadisticas.setOnAction(e -> exportarEstadisticas());
+        cmbPeriodo.setOnAction(e -> cargarEstadisticas());
     }
     
     /**
@@ -337,9 +365,9 @@ public class FacturacionController implements Initializable {
      */
     private void aplicarTema() {
         if (ThemeManager.getInstance().isDarkTheme()) {
-            rootPane.getStyleClass().add("dark-theme");
+            mainPane.getStyleClass().add("dark-theme");
         } else {
-            rootPane.getStyleClass().remove("dark-theme");
+            mainPane.getStyleClass().remove("dark-theme");
         }
     }
     
@@ -406,12 +434,13 @@ public class FacturacionController implements Initializable {
     /**
      * Busca facturas con filtros
      */
+    @FXML
     private void buscarFacturas() {
         new Thread(() -> {
             try {
                 // Preparar parámetros de búsqueda
-                String numeroFactura = txtFiltroNumero.getText().trim();
-                String estado = cmbFiltroEstado.getValue();
+                String numeroFactura = txtBuscar.getText().trim();
+                String estado = cmbEstados.getValue();
                 LocalDate fechaInicio = dpFechaInicio.getValue();
                 LocalDate fechaFin = dpFechaFin.getValue();
                 
@@ -488,9 +517,10 @@ public class FacturacionController implements Initializable {
     /**
      * Limpia todos los filtros
      */
+    @FXML
     private void limpiarFiltros() {
-        txtFiltroNumero.clear();
-        cmbFiltroEstado.setValue("Todos");
+        txtBuscar.clear();
+        cmbEstados.setValue("Todos");
         LocalDate hoy = LocalDate.now();
         dpFechaInicio.setValue(hoy.minusMonths(1));
         dpFechaFin.setValue(hoy);
@@ -498,11 +528,11 @@ public class FacturacionController implements Initializable {
     }
     
     /**
-     * Carga las estadísticas del año seleccionado
+     * Carga las estadísticas del periodo seleccionado
      */
     private void cargarEstadisticas() {
-        Integer año = cmbAño.getValue();
-        if (año == null) return;
+        String periodo = cmbPeriodo.getValue();
+        if (periodo == null) return;
         
         // Calcular estadísticas de las facturas cargadas
         double totalFacturado = listaFacturas.stream()
@@ -510,7 +540,7 @@ public class FacturacionController implements Initializable {
             .filter(f -> {
                 if (f.getFechaEmision() != null) {
                     LocalDate fecha = f.getFechaEmision().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                    return fecha.getYear() == año;
+                    return fecha.getYear() == Integer.parseInt(periodo);
                 }
                 return false;
             })
@@ -522,7 +552,7 @@ public class FacturacionController implements Initializable {
             .filter(f -> {
                 if (f.getFechaEmision() != null) {
                     LocalDate fecha = f.getFechaEmision().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                    return fecha.getYear() == año;
+                    return fecha.getYear() == Integer.parseInt(periodo);
                 }
                 return false;
             })
@@ -531,8 +561,9 @@ public class FacturacionController implements Initializable {
         double promedioFactura = numeroFacturas > 0 ? totalFacturado / numeroFacturas : 0;
         
         // Actualizar labels
-        lblTotalFacturado.setText(formatoMoneda.format(totalFacturado));
-        lblNumeroFacturas.setText(String.valueOf(numeroFacturas));
+        lblTotalFacturas.setText(String.valueOf(numeroFacturas));
+        lblIngresosTotales.setText(formatoMoneda.format(totalFacturado));
+        lblFacturasPendientes.setText(String.valueOf(numeroFacturas - listaFacturas.stream().filter(f -> f.isEsBorrador()).count()));
         lblPromedioFactura.setText(formatoMoneda.format(promedioFactura));
     }
     
@@ -657,7 +688,7 @@ public class FacturacionController implements Initializable {
             new FileChooser.ExtensionFilter("Archivos PDF", "*.pdf")
         );
         
-        Stage stage = (Stage) rootPane.getScene().getWindow();
+        Stage stage = (Stage) mainPane.getScene().getWindow();
         File file = fileChooser.showSaveDialog(stage);
         
         if (file != null) {
@@ -742,5 +773,100 @@ public class FacturacionController implements Initializable {
         alert.setHeaderText(titulo);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+
+    /**
+     * Métodos de eventos para los botones del FXML
+     */
+    @FXML
+    private void onNuevaFactura() {
+        crearNuevaFactura();
+    }
+
+    @FXML
+    private void onVerFactura() {
+        ModeloFactura facturaSeleccionada = tablaFacturas.getSelectionModel().getSelectedItem();
+        if (facturaSeleccionada != null) {
+            verFactura(facturaSeleccionada);
+        } else {
+            mostrarError("Error", "Debe seleccionar una factura");
+        }
+    }
+
+    @FXML
+    private void onEditarFactura() {
+        ModeloFactura facturaSeleccionada = tablaFacturas.getSelectionModel().getSelectedItem();
+        if (facturaSeleccionada != null) {
+            editarFactura(facturaSeleccionada);
+        } else {
+            mostrarError("Error", "Debe seleccionar una factura");
+        }
+    }
+
+    @FXML
+    private void onEliminarFactura() {
+        ModeloFactura facturaSeleccionada = tablaFacturas.getSelectionModel().getSelectedItem();
+        if (facturaSeleccionada != null) {
+            eliminarBorrador(facturaSeleccionada);
+        } else {
+            mostrarError("Error", "Debe seleccionar una factura");
+        }
+    }
+
+    @FXML
+    private void onExportarPDF() {
+        ModeloFactura facturaSeleccionada = tablaFacturas.getSelectionModel().getSelectedItem();
+        if (facturaSeleccionada != null) {
+            exportarPDF(facturaSeleccionada);
+        } else {
+            mostrarError("Error", "Debe seleccionar una factura");
+        }
+    }
+
+    @FXML
+    private void onNuevoBorrador() {
+        crearNuevaFactura();
+    }
+
+    @FXML
+    private void onEditarBorrador() {
+        ModeloFactura borradorSeleccionado = tablaBorradores.getSelectionModel().getSelectedItem();
+        if (borradorSeleccionado != null) {
+            editarFactura(borradorSeleccionado);
+        } else {
+            mostrarError("Error", "Debe seleccionar un borrador");
+        }
+    }
+
+    @FXML
+    private void onFinalizarBorrador() {
+        ModeloFactura borradorSeleccionado = tablaBorradores.getSelectionModel().getSelectedItem();
+        if (borradorSeleccionado != null) {
+            // Implementar lógica para finalizar borrador
+            mostrarInfo("Información", "Funcionalidad en desarrollo");
+        } else {
+            mostrarError("Error", "Debe seleccionar un borrador");
+        }
+    }
+
+    @FXML
+    private void onEliminarBorrador() {
+        ModeloFactura borradorSeleccionado = tablaBorradores.getSelectionModel().getSelectedItem();
+        if (borradorSeleccionado != null) {
+            eliminarBorrador(borradorSeleccionado);
+        } else {
+            mostrarError("Error", "Debe seleccionar un borrador");
+        }
+    }
+
+    @FXML
+    private void actualizarEstadisticas() {
+        cargarEstadisticas();
+    }
+
+    @FXML
+    private void exportarEstadisticas() {
+        // Implementar exportación de estadísticas
+        mostrarInfo("Información", "Funcionalidad en desarrollo");
     }
 } 
