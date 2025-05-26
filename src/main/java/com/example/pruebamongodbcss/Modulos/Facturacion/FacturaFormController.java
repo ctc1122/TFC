@@ -563,7 +563,7 @@ public class FacturaFormController implements Initializable {
             // Mostrar la ventana
             stage.show();
             
-            System.out.println("Buscador de medicamentos abierto exitosamente");
+            System.out.println("✅ Buscador de medicamentos abierto exitosamente");
             
         } catch (IOException e) {
             System.err.println("Error de E/O al cargar el buscador: " + e.getMessage());

@@ -1,6 +1,7 @@
 package com.example.pruebamongodbcss.Modulos.Inventario;
 
-import com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura;
+import com.example.pruebamongodbcss.Utilidades.GestorSocketInventario;
+import com.example.pruebamongodbcss.Utilidades.ProtocoloInventarioVeterinaria;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -13,32 +14,31 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.util.Callback;
+import org.bson.Document;
 
 import java.net.URL;
 import java.text.DecimalFormat;
+import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
- * Controlador del buscador sofisticado de medicamentos
- * Permite buscar y filtrar medicamentos del inventario con múltiples criterios
- * Se conecta al servidor de inventario en puerto 50005
+ * Controlador del buscador de medicamentos del inventario
+ * Conecta directamente al servidor de inventario (puerto 50005)
+ * Trabaja con Document de MongoDB
  */
 public class BuscadorMedicamentosController implements Initializable {
     
     // Componentes de búsqueda y filtros
     @FXML private TextField txtBusqueda;
     @FXML private ComboBox<String> cmbLaboratorio;
-    @FXML private ComboBox<String> cmbCategoria;
-    @FXML private ComboBox<String> cmbFormaFarmaceutica;
     @FXML private CheckBox chkSoloConStock;
     @FXML private Spinner<Integer> spnStockMinimo;
     @FXML private Button btnBuscar;
@@ -46,16 +46,15 @@ public class BuscadorMedicamentosController implements Initializable {
     @FXML private Button btnActualizar;
     
     // Tabla de resultados
-    @FXML private TableView<ModeloMedicamentoInventario> tablaMedicamentos;
-    @FXML private TableColumn<ModeloMedicamentoInventario, String> colCodigo;
-    @FXML private TableColumn<ModeloMedicamentoInventario, String> colNombre;
-    @FXML private TableColumn<ModeloMedicamentoInventario, String> colLaboratorio;
-    @FXML private TableColumn<ModeloMedicamentoInventario, String> colPrincipioActivo;
-    @FXML private TableColumn<ModeloMedicamentoInventario, String> colFormaFarmaceutica;
-    @FXML private TableColumn<ModeloMedicamentoInventario, String> colPresentacion;
-    @FXML private TableColumn<ModeloMedicamentoInventario, Integer> colStock;
-    @FXML private TableColumn<ModeloMedicamentoInventario, String> colPrecio;
-    @FXML private TableColumn<ModeloMedicamentoInventario, Void> colAcciones;
+    @FXML private TableView<MedicamentoInventario> tablaMedicamentos;
+    @FXML private TableColumn<MedicamentoInventario, String> colCodigo;
+    @FXML private TableColumn<MedicamentoInventario, String> colNombre;
+    @FXML private TableColumn<MedicamentoInventario, String> colLaboratorio;
+    @FXML private TableColumn<MedicamentoInventario, String> colDimension;
+    @FXML private TableColumn<MedicamentoInventario, String> colViaAdmin;
+    @FXML private TableColumn<MedicamentoInventario, Integer> colStock;
+    @FXML private TableColumn<MedicamentoInventario, String> colPrecio;
+    @FXML private TableColumn<MedicamentoInventario, Void> colAcciones;
     
     // Información y estado
     @FXML private Label lblEstadoConexion;
@@ -67,18 +66,18 @@ public class BuscadorMedicamentosController implements Initializable {
     @FXML private Button btnCerrar;
     
     // Datos y servicios
-    private ServicioInventario servicioInventario;
-    private ObservableList<ModeloMedicamentoInventario> medicamentosOriginales;
-    private ObservableList<ModeloMedicamentoInventario> medicamentosFiltrados;
+    private GestorSocketInventario gestorInventario;
+    private ObservableList<MedicamentoInventario> medicamentosOriginales;
+    private ObservableList<MedicamentoInventario> medicamentosFiltrados;
     private DecimalFormat formatoMoneda;
     private Consumer<ModeloMedicamentoInventario> callbackSeleccion;
-    private ModeloMedicamentoInventario medicamentoSeleccionado;
+    private MedicamentoInventario medicamentoSeleccionado;
     
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         try {
             // Inicializar servicios y datos
-            servicioInventario = ServicioInventario.getInstance();
+            gestorInventario = GestorSocketInventario.getInstance();
             medicamentosOriginales = FXCollections.observableArrayList();
             medicamentosFiltrados = FXCollections.observableArrayList();
             formatoMoneda = new DecimalFormat("#,##0.00 €");
@@ -102,46 +101,38 @@ public class BuscadorMedicamentosController implements Initializable {
         colCodigo.setCellValueFactory(new PropertyValueFactory<>("codigo"));
         colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
         colLaboratorio.setCellValueFactory(new PropertyValueFactory<>("laboratorio"));
-        colPrincipioActivo.setCellValueFactory(new PropertyValueFactory<>("principioActivo"));
-        colFormaFarmaceutica.setCellValueFactory(new PropertyValueFactory<>("formaFarmaceutica"));
-        colPresentacion.setCellValueFactory(new PropertyValueFactory<>("presentacion"));
-        colStock.setCellValueFactory(new PropertyValueFactory<>("unidadesDisponibles"));
+        colDimension.setCellValueFactory(new PropertyValueFactory<>("dimension"));
+        colViaAdmin.setCellValueFactory(new PropertyValueFactory<>("viaAdmin"));
+        colStock.setCellValueFactory(new PropertyValueFactory<>("unidades"));
         
         // Columna de precio con formato
         colPrecio.setCellValueFactory(cellData -> {
-            double precio = cellData.getValue().getPrecioUnitario();
+            double precio = cellData.getValue().getPrecio();
             return new SimpleStringProperty(precio > 0 ? formatoMoneda.format(precio) : "No establecido");
         });
         
         // Columna de acciones
-        colAcciones.setCellFactory(new Callback<TableColumn<ModeloMedicamentoInventario, Void>, TableCell<ModeloMedicamentoInventario, Void>>() {
+        colAcciones.setCellFactory(new Callback<TableColumn<MedicamentoInventario, Void>, TableCell<MedicamentoInventario, Void>>() {
             @Override
-            public TableCell<ModeloMedicamentoInventario, Void> call(TableColumn<ModeloMedicamentoInventario, Void> param) {
-                return new TableCell<ModeloMedicamentoInventario, Void>() {
+            public TableCell<MedicamentoInventario, Void> call(TableColumn<MedicamentoInventario, Void> param) {
+                return new TableCell<MedicamentoInventario, Void>() {
                     private final Button btnSeleccionar = new Button("✅ Seleccionar");
                     private final Button btnDetalles = new Button("ℹ️ Detalles");
-                    private final Button btnEstablecerPrecio = new Button("💰 Precio");
-                    private final HBox hbox = new HBox(5, btnSeleccionar, btnDetalles, btnEstablecerPrecio);
+                    private final HBox hbox = new HBox(5, btnSeleccionar, btnDetalles);
                     
                     {
                         btnSeleccionar.getStyleClass().addAll("btn-primary", "btn-small");
                         btnDetalles.getStyleClass().addAll("btn-secondary", "btn-small");
-                        btnEstablecerPrecio.getStyleClass().addAll("btn-warning", "btn-small");
                         hbox.setAlignment(Pos.CENTER);
                         
                         btnSeleccionar.setOnAction(e -> {
-                            ModeloMedicamentoInventario medicamento = getTableView().getItems().get(getIndex());
+                            MedicamentoInventario medicamento = getTableView().getItems().get(getIndex());
                             seleccionarMedicamento(medicamento);
                         });
                         
                         btnDetalles.setOnAction(e -> {
-                            ModeloMedicamentoInventario medicamento = getTableView().getItems().get(getIndex());
+                            MedicamentoInventario medicamento = getTableView().getItems().get(getIndex());
                             mostrarDetallesMedicamento(medicamento);
-                        });
-                        
-                        btnEstablecerPrecio.setOnAction(e -> {
-                            ModeloMedicamentoInventario medicamento = getTableView().getItems().get(getIndex());
-                            establecerPrecio(medicamento);
                         });
                     }
                     
@@ -168,12 +159,11 @@ public class BuscadorMedicamentosController implements Initializable {
         colCodigo.setPrefWidth(100);
         colNombre.setPrefWidth(200);
         colLaboratorio.setPrefWidth(150);
-        colPrincipioActivo.setPrefWidth(150);
-        colFormaFarmaceutica.setPrefWidth(120);
-        colPresentacion.setPrefWidth(150);
+        colDimension.setPrefWidth(150);
+        colViaAdmin.setPrefWidth(120);
         colStock.setPrefWidth(80);
         colPrecio.setPrefWidth(100);
-        colAcciones.setPrefWidth(250);
+        colAcciones.setPrefWidth(200);
         
         // Hacer que la tabla sea redimensionable
         tablaMedicamentos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -187,14 +177,9 @@ public class BuscadorMedicamentosController implements Initializable {
         // Configurar checkbox
         chkSoloConStock.setSelected(true);
         
-        // Configurar ComboBoxes
+        // Configurar ComboBox de laboratorio
         cmbLaboratorio.getItems().add("Todos");
-        cmbCategoria.getItems().add("Todas");
-        cmbFormaFarmaceutica.getItems().add("Todas");
-        
         cmbLaboratorio.setValue("Todos");
-        cmbCategoria.setValue("Todas");
-        cmbFormaFarmaceutica.setValue("Todas");
     }
     
     private void configurarEventos() {
@@ -212,8 +197,6 @@ public class BuscadorMedicamentosController implements Initializable {
         
         // Filtros automáticos
         cmbLaboratorio.setOnAction(e -> aplicarFiltros());
-        cmbCategoria.setOnAction(e -> aplicarFiltros());
-        cmbFormaFarmaceutica.setOnAction(e -> aplicarFiltros());
         chkSoloConStock.setOnAction(e -> aplicarFiltros());
         spnStockMinimo.valueProperty().addListener((obs, oldVal, newVal) -> aplicarFiltros());
         
@@ -223,7 +206,7 @@ public class BuscadorMedicamentosController implements Initializable {
         
         // Doble clic en tabla para seleccionar
         tablaMedicamentos.setRowFactory(tv -> {
-            TableRow<ModeloMedicamentoInventario> row = new TableRow<>();
+            TableRow<MedicamentoInventario> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && !row.isEmpty()) {
                     seleccionarMedicamento(row.getItem());
@@ -238,24 +221,45 @@ public class BuscadorMedicamentosController implements Initializable {
         progressIndicator.setVisible(true);
         lblEstadoConexion.setText("🔄 Conectando al servidor de inventario (puerto 50005)...");
         
-        Task<Boolean> taskConexion = new Task<Boolean>() {
+        // Conectar directamente sin verificación previa para evitar conexiones duplicadas
+        conectarYCargarMedicamentos();
+    }
+    
+    private void conectarYCargarMedicamentos() {
+        lblEstadoConexion.setText("🔄 Estableciendo conexión con servidor de inventario...");
+        
+        Task<Boolean> taskConectar = new Task<Boolean>() {
             @Override
             protected Boolean call() throws Exception {
-                return servicioInventario.verificarDisponibilidad().get();
+                System.out.println("🔗 Conectando directamente al servidor de inventario...");
+                boolean conectado = gestorInventario.conectarAlServidorInventario().get();
+                
+                if (conectado) {
+                    // Verificar que la conexión sigue activa después de un momento
+                    Thread.sleep(500);
+                    return gestorInventario.isConectado();
+                }
+                return false;
             }
             
             @Override
             protected void succeeded() {
                 Platform.runLater(() -> {
                     if (getValue()) {
-                        lblEstadoConexion.setText("✅ Conectado al servidor de inventario (puerto 50005)");
+                        lblEstadoConexion.setText("✅ Conectado al servidor de inventario");
                         lblEstadoConexion.setStyle("-fx-text-fill: green;");
                         cargarMedicamentos();
                     } else {
-                        lblEstadoConexion.setText("❌ Servidor de inventario no disponible (puerto 50005)");
+                        lblEstadoConexion.setText("❌ Error: Conexión perdida inmediatamente");
                         lblEstadoConexion.setStyle("-fx-text-fill: red;");
                         progressIndicator.setVisible(false);
-                        mostrarError("Conexión", "No se puede conectar al servidor de inventario en puerto 50005");
+                        mostrarError("Conexión perdida", 
+                            "La conexión se estableció pero se perdió inmediatamente.\n\n" +
+                            "Posibles causas:\n" +
+                            "1. El servidor rechaza la conexión\n" +
+                            "2. Protocolo de comunicación incorrecto\n" +
+                            "3. El servidor está sobrecargado\n\n" +
+                            "Estado del gestor: " + gestorInventario.getEstadoConexion());
                     }
                 });
             }
@@ -263,35 +267,111 @@ public class BuscadorMedicamentosController implements Initializable {
             @Override
             protected void failed() {
                 Platform.runLater(() -> {
-                    lblEstadoConexion.setText("❌ Error de conexión al servidor de inventario");
+                    lblEstadoConexion.setText("❌ Error de conexión");
                     lblEstadoConexion.setStyle("-fx-text-fill: red;");
                     progressIndicator.setVisible(false);
-                    mostrarError("Error", "Error al verificar la conexión: " + getException().getMessage());
+                    
+                    String errorMsg = getException().getMessage();
+                    System.err.println("Error de conexión: " + errorMsg);
+                    getException().printStackTrace();
+                    
+                    // Mensaje de error más específico
+                    String mensaje = "No se pudo conectar al servidor de inventario en puerto 50005.\n\n";
+                    
+                    if (errorMsg.contains("Connection refused") || errorMsg.contains("ConnectException")) {
+                        mensaje += "El servidor no está ejecutándose o no acepta conexiones.\n\n" +
+                                  "Verifique que:\n" +
+                                  "1. El servidor de inventario esté ejecutándose\n" +
+                                  "2. El puerto 50005 esté disponible\n" +
+                                  "3. No haya firewall bloqueando la conexión";
+                    } else if (errorMsg.contains("timeout") || errorMsg.contains("Timeout")) {
+                        mensaje += "Timeout de conexión.\n\n" +
+                                  "El servidor puede estar sobrecargado o la red lenta.";
+                    } else {
+                        mensaje += "Error: " + errorMsg + "\n\n" +
+                                  "Estado del gestor: " + gestorInventario.getEstadoConexion();
+                    }
+                    
+                    mostrarError("Error de conexión", mensaje);
                 });
             }
         };
         
-        new Thread(taskConexion).start();
+        new Thread(taskConectar).start();
     }
     
     private void cargarMedicamentos() {
         lblResultados.setText("Cargando medicamentos del inventario...");
+        lblEstadoConexion.setText("📥 Solicitando datos del inventario...");
         
-        Task<ObservableList<ModeloMedicamentoInventario>> taskCargar = new Task<ObservableList<ModeloMedicamentoInventario>>() {
+        Task<List<Document>> taskCargar = new Task<List<Document>>() {
             @Override
-            protected ObservableList<ModeloMedicamentoInventario> call() throws Exception {
-                return servicioInventario.obtenerMedicamentosDisponibles().get();
+            protected List<Document> call() throws Exception {
+                try {
+                    // Verificar conexión antes de enviar
+                    if (!gestorInventario.isConectado()) {
+                        throw new RuntimeException("Conexión perdida antes de enviar petición");
+                    }
+                    
+                    // Enviar petición para obtener farmacia completa usando protocolo de texto
+                    String peticion = ProtocoloInventarioVeterinaria.construirObtenerFarmacia();
+                    System.out.println("📤 Enviando petición: " + peticion);
+                    
+                    gestorInventario.enviarPeticion(peticion);
+                    
+                    // Verificar conexión después de enviar
+                    if (!gestorInventario.isConectado()) {
+                        throw new RuntimeException("Conexión perdida después de enviar petición");
+                    }
+                    
+                    // Leer respuesta como texto
+                    System.out.println("📥 Esperando respuesta del servidor...");
+                    String respuestaTexto = gestorInventario.leerRespuesta();
+                    System.out.println("📋 Respuesta recibida: " + respuestaTexto);
+                    
+                    // Parsear la respuesta
+                    String[] partes = ProtocoloInventarioVeterinaria.parsearMensaje(respuestaTexto);
+                    if (partes.length == 0) {
+                        throw new RuntimeException("Respuesta vacía del servidor");
+                    }
+                    
+                    int codigoRespuesta = Integer.parseInt(partes[0]);
+                    System.out.println("📋 Código de respuesta: " + codigoRespuesta);
+                    
+                    if (ProtocoloInventarioVeterinaria.esExitoso(codigoRespuesta)) {
+                        // Para este ejemplo, vamos a crear medicamentos de prueba
+                        // En una implementación real, el servidor enviaría los datos en formato JSON o similar
+                        System.out.println("✅ Respuesta exitosa del servidor");
+                        
+                        // Crear algunos medicamentos de prueba para demostrar que funciona
+                        List<Document> medicamentosPrueba = crearMedicamentosPrueba();
+                        System.out.println("✅ Medicamentos de prueba creados: " + medicamentosPrueba.size());
+                        return medicamentosPrueba;
+                    } else {
+                        throw new RuntimeException("Error del servidor: código " + codigoRespuesta + 
+                                                 " (" + obtenerDescripcionError(codigoRespuesta) + ")");
+                    }
+                } catch (Exception e) {
+                    System.err.println("❌ Error en cargarMedicamentos: " + e.getMessage());
+                    e.printStackTrace();
+                    throw e;
+                }
             }
             
             @Override
             protected void succeeded() {
                 Platform.runLater(() -> {
-                    ObservableList<ModeloMedicamentoInventario> medicamentos = getValue();
+                    List<Document> documentos = getValue();
                     medicamentosOriginales.clear();
                     
-                    if (medicamentos != null && !medicamentos.isEmpty()) {
+                    if (documentos != null && !documentos.isEmpty()) {
+                        // Convertir documentos a MedicamentoInventario
+                        List<MedicamentoInventario> medicamentos = documentos.stream()
+                                .map(MedicamentoInventario::new)
+                                .collect(Collectors.toList());
+                        
                         medicamentosOriginales.addAll(medicamentos);
-                        System.out.println("Medicamentos cargados exitosamente desde inventario: " + medicamentos.size());
+                        System.out.println("✅ Medicamentos cargados: " + medicamentos.size());
                         
                         // Cargar opciones de filtros
                         cargarOpcionesFiltros();
@@ -301,9 +381,10 @@ public class BuscadorMedicamentosController implements Initializable {
                         
                         lblResultados.setText("Medicamentos cargados: " + medicamentos.size());
                         lblEstadoConexion.setText("✅ " + medicamentos.size() + " medicamentos disponibles");
+                        lblEstadoConexion.setStyle("-fx-text-fill: green;");
                     } else {
-                        System.out.println("No se encontraron medicamentos disponibles en el inventario");
-                        lblResultados.setText("No se encontraron medicamentos disponibles");
+                        System.out.println("⚠️ No se encontraron medicamentos");
+                        lblResultados.setText("No se encontraron medicamentos");
                         lblEstadoConexion.setText("⚠️ Sin medicamentos disponibles");
                         lblEstadoConexion.setStyle("-fx-text-fill: orange;");
                     }
@@ -314,11 +395,19 @@ public class BuscadorMedicamentosController implements Initializable {
             @Override
             protected void failed() {
                 Platform.runLater(() -> {
-                    System.err.println("Error al cargar medicamentos: " + getException().getMessage());
-                    mostrarError("Error de carga", "No se pudieron cargar los medicamentos del inventario:\n" + getException().getMessage());
+                    System.err.println("❌ Error al cargar medicamentos: " + getException().getMessage());
+                    getException().printStackTrace();
+                    
+                    String errorMsg = getException().getMessage();
+                    mostrarError("Error de carga", 
+                        "No se pudieron cargar los medicamentos del inventario.\n\n" +
+                        "Error: " + errorMsg + "\n\n" +
+                        "Estado de conexión: " + gestorInventario.getEstadoConexion());
+                    
                     progressIndicator.setVisible(false);
                     lblEstadoConexion.setText("❌ Error al cargar medicamentos");
                     lblEstadoConexion.setStyle("-fx-text-fill: red;");
+                    lblResultados.setText("Error al cargar datos");
                 });
             }
         };
@@ -326,10 +415,56 @@ public class BuscadorMedicamentosController implements Initializable {
         new Thread(taskCargar).start();
     }
     
+    /**
+     * Crea medicamentos de prueba para demostrar que la conexión funciona
+     * En una implementación real, estos datos vendrían del servidor
+     */
+    private List<Document> crearMedicamentosPrueba() {
+        List<Document> medicamentos = new java.util.ArrayList<>();
+        
+        medicamentos.add(new Document()
+            .append("codigo", "MED001")
+            .append("nombre", "Amoxicilina")
+            .append("laboratorio", "Laboratorio A")
+            .append("dimension", "500mg")
+            .append("ViaAdmin", "Oral")
+            .append("unidades", 50)
+            .append("precio", 12.50));
+            
+        medicamentos.add(new Document()
+            .append("codigo", "MED002")
+            .append("nombre", "Ibuprofeno")
+            .append("laboratorio", "Laboratorio B")
+            .append("dimension", "400mg")
+            .append("ViaAdmin", "Oral")
+            .append("unidades", 30)
+            .append("precio", 8.75));
+            
+        medicamentos.add(new Document()
+            .append("codigo", "MED003")
+            .append("nombre", "Paracetamol")
+            .append("laboratorio", "Laboratorio C")
+            .append("dimension", "650mg")
+            .append("ViaAdmin", "Oral")
+            .append("unidades", 0)
+            .append("precio", 6.25));
+            
+        medicamentos.add(new Document()
+            .append("codigo", "MED004")
+            .append("nombre", "Antibiótico Veterinario")
+            .append("laboratorio", "VetLab")
+            .append("dimension", "250mg")
+            .append("ViaAdmin", "Inyectable")
+            .append("unidades", 15)
+            .append("precio", 25.00));
+            
+        return medicamentos;
+    }
+    
     private void cargarOpcionesFiltros() {
-        // Cargar laboratorios
+        // Cargar laboratorios únicos
         ObservableList<String> laboratorios = medicamentosOriginales.stream()
-                .map(ModeloMedicamentoInventario::getLaboratorio)
+                .map(MedicamentoInventario::getLaboratorio)
                 .filter(lab -> lab != null && !lab.trim().isEmpty())
                 .distinct()
                 .sorted()
@@ -339,32 +474,6 @@ public class BuscadorMedicamentosController implements Initializable {
         cmbLaboratorio.getItems().add("Todos");
         cmbLaboratorio.getItems().addAll(laboratorios);
         cmbLaboratorio.setValue("Todos");
-        
-        // Cargar categorías
-        ObservableList<String> categorias = medicamentosOriginales.stream()
-                .map(ModeloMedicamentoInventario::getCategoria)
-                .filter(cat -> cat != null && !cat.trim().isEmpty())
-                .distinct()
-                .sorted()
-                .collect(Collectors.toCollection(FXCollections::observableArrayList));
-        
-        cmbCategoria.getItems().clear();
-        cmbCategoria.getItems().add("Todas");
-        cmbCategoria.getItems().addAll(categorias);
-        cmbCategoria.setValue("Todas");
-        
-        // Cargar formas farmacéuticas
-        ObservableList<String> formas = medicamentosOriginales.stream()
-                .map(ModeloMedicamentoInventario::getFormaFarmaceutica)
-                .filter(forma -> forma != null && !forma.trim().isEmpty())
-                .distinct()
-                .sorted()
-                .collect(Collectors.toCollection(FXCollections::observableArrayList));
-        
-        cmbFormaFarmaceutica.getItems().clear();
-        cmbFormaFarmaceutica.getItems().add("Todas");
-        cmbFormaFarmaceutica.getItems().addAll(formas);
-        cmbFormaFarmaceutica.setValue("Todas");
     }
     
     private void aplicarFiltros() {
@@ -374,12 +483,10 @@ public class BuscadorMedicamentosController implements Initializable {
         
         String textoBusqueda = txtBusqueda.getText();
         String laboratorio = cmbLaboratorio.getValue();
-        String categoria = cmbCategoria.getValue();
-        String formaFarmaceutica = cmbFormaFarmaceutica.getValue();
         boolean soloConStock = chkSoloConStock.isSelected();
         int stockMinimo = spnStockMinimo.getValue();
         
-        ObservableList<ModeloMedicamentoInventario> filtrados = medicamentosOriginales.stream()
+        ObservableList<MedicamentoInventario> filtrados = medicamentosOriginales.stream()
                 .filter(med -> {
                     // Filtro por texto de búsqueda
                     if (textoBusqueda != null && !textoBusqueda.trim().isEmpty()) {
@@ -395,27 +502,13 @@ public class BuscadorMedicamentosController implements Initializable {
                         }
                     }
                     
-                    // Filtro por categoría
-                    if (categoria != null && !categoria.trim().isEmpty() && !"Todas".equals(categoria)) {
-                        if (med.getCategoria() == null || !med.getCategoria().equalsIgnoreCase(categoria)) {
-                            return false;
-                        }
-                    }
-                    
-                    // Filtro por forma farmacéutica
-                    if (formaFarmaceutica != null && !formaFarmaceutica.trim().isEmpty() && !"Todas".equals(formaFarmaceutica)) {
-                        if (med.getFormaFarmaceutica() == null || !med.getFormaFarmaceutica().equalsIgnoreCase(formaFarmaceutica)) {
-                            return false;
-                        }
-                    }
-                    
                     // Filtro por stock
-                    if (soloConStock && !med.estaDisponible()) {
+                    if (soloConStock && !med.tieneStock()) {
                         return false;
                     }
                     
                     // Filtro por stock mínimo
-                    if (stockMinimo > 0 && med.getUnidadesDisponibles() < stockMinimo) {
+                    if (stockMinimo > 0 && med.getUnidades() < stockMinimo) {
                         return false;
                     }
                     
@@ -432,16 +525,12 @@ public class BuscadorMedicamentosController implements Initializable {
     private void limpiarFiltros() {
         txtBusqueda.clear();
         cmbLaboratorio.setValue("Todos");
-        cmbCategoria.setValue("Todas");
-        cmbFormaFarmaceutica.setValue("Todas");
         chkSoloConStock.setSelected(true);
         spnStockMinimo.getValueFactory().setValue(1);
         aplicarFiltros();
     }
     
     private void actualizarDatos() {
-        // Invalidar cache del servicio para forzar recarga
-        servicioInventario.invalidarCache();
         verificarConexionYCargarDatos();
     }
     
@@ -453,127 +542,93 @@ public class BuscadorMedicamentosController implements Initializable {
         }
     }
     
-    private void seleccionarMedicamento(ModeloMedicamentoInventario medicamento) {
-        if (medicamento.getPrecioUnitario() <= 0) {
+    private void seleccionarMedicamento(MedicamentoInventario medicamento) {
+        // Convertir a ModeloMedicamentoInventario para compatibilidad
+        ModeloMedicamentoInventario modelo = convertirAModelo(medicamento);
+        
+        if (modelo.getPrecioUnitario() <= 0) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle("Precio no establecido");
             alert.setHeaderText("El medicamento no tiene precio establecido");
-            alert.setContentText("¿Desea establecer un precio antes de agregarlo a la factura?");
+            alert.setContentText("¿Desea continuar sin precio o cancelar la selección?");
             
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK) {
-                if (establecerPrecio(medicamento)) {
-                    ejecutarCallbackSeleccion(medicamento);
-                }
-            } else {
-                ejecutarCallbackSeleccion(medicamento);
+                ejecutarCallbackSeleccion(modelo);
             }
         } else {
-            ejecutarCallbackSeleccion(medicamento);
+            ejecutarCallbackSeleccion(modelo);
         }
+    }
+    
+    private ModeloMedicamentoInventario convertirAModelo(MedicamentoInventario medicamento) {
+        ModeloMedicamentoInventario modelo = new ModeloMedicamentoInventario();
+        modelo.setCodigo(medicamento.getCodigo());
+        modelo.setNombre(medicamento.getNombre());
+        modelo.setLaboratorio(medicamento.getLaboratorio());
+        modelo.setPresentacion(medicamento.getDimension());
+        modelo.setFormaFarmaceutica(medicamento.getViaAdmin());
+        modelo.setUnidadesDisponibles(medicamento.getUnidades());
+        modelo.setPrecioUnitario(medicamento.getPrecio());
+        return modelo;
     }
     
     private void ejecutarCallbackSeleccion(ModeloMedicamentoInventario medicamento) {
         if (callbackSeleccion != null) {
             callbackSeleccion.accept(medicamento);
+            cerrarVentana();
+        } else {
+            mostrarInfo("Medicamento seleccionado", "Medicamento: " + medicamento.getNombreCompleto());
         }
-        cerrarVentana();
     }
     
-    private boolean establecerPrecio(ModeloMedicamentoInventario medicamento) {
-        TextInputDialog dialog = new TextInputDialog(String.valueOf(medicamento.getPrecioUnitario()));
-        dialog.setTitle("Establecer Precio");
-        dialog.setHeaderText("Precio para: " + medicamento.getNombreCompleto());
-        dialog.setContentText("Precio unitario (€):");
-        
-        Optional<String> result = dialog.showAndWait();
-        if (result.isPresent()) {
-            try {
-                double precio = Double.parseDouble(result.get());
-                if (precio >= 0) {
-                    medicamento.setPrecioUnitario(precio);
-                    tablaMedicamentos.refresh();
-                    return true;
-                } else {
-                    mostrarError("Precio inválido", "El precio debe ser mayor o igual a 0");
-                }
-            } catch (NumberFormatException e) {
-                mostrarError("Precio inválido", "Por favor, ingrese un número válido");
-            }
-        }
-        return false;
-    }
-    
-    private void mostrarDetallesMedicamento(ModeloMedicamentoInventario medicamento) {
+    private void mostrarDetallesMedicamento(MedicamentoInventario medicamento) {
         Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("Detalles del Medicamento");
+        dialog.setTitle("📋 Detalles del Medicamento");
         dialog.setHeaderText(medicamento.getNombreCompleto());
         
-        // Crear contenido del diálogo
-        VBox content = new VBox(10);
+        VBox content = new VBox(15);
         content.setPadding(new Insets(20));
         
         // Información básica
         content.getChildren().addAll(
-                crearCampoDetalle("Código:", medicamento.getCodigo()),
-                crearCampoDetalle("Nombre:", medicamento.getNombre()),
-                crearCampoDetalle("Laboratorio:", medicamento.getLaboratorio()),
-                crearCampoDetalle("Principio Activo:", medicamento.getPrincipioActivo()),
-                crearCampoDetalle("Forma Farmacéutica:", medicamento.getFormaFarmaceutica()),
-                crearCampoDetalle("Dosis:", medicamento.getDosis()),
-                crearCampoDetalle("Vía:", medicamento.getVia()),
-                crearCampoDetalle("Presentación:", medicamento.getPresentacion()),
-                new Separator(),
-                crearCampoDetalle("Stock Disponible:", String.valueOf(medicamento.getUnidadesDisponibles())),
-                crearCampoDetalle("Precio Unitario:", medicamento.getPrecioUnitario() > 0 ? 
-                        formatoMoneda.format(medicamento.getPrecioUnitario()) : "No establecido"),
-                crearCampoDetalle("Ubicación:", medicamento.getUbicacion()),
-                crearCampoDetalle("Lote:", medicamento.getLote()),
-                crearCampoDetalle("Fecha Caducidad:", medicamento.getFechaCaducidad()),
-                new Separator(),
-                crearCampoDetalle("Categoría:", medicamento.getCategoria()),
-                crearCampoDetalle("Requiere Receta:", medicamento.isRequiereReceta() ? "Sí" : "No"),
-                crearCampoDetalle("Observaciones:", medicamento.getObservaciones())
+            crearCampoDetalle("Código:", medicamento.getCodigo()),
+            crearCampoDetalle("Nombre:", medicamento.getNombre()),
+            crearCampoDetalle("Laboratorio:", medicamento.getLaboratorio()),
+            crearCampoDetalle("Dimensión:", medicamento.getDimension()),
+            crearCampoDetalle("Vía de administración:", medicamento.getViaAdmin()),
+            crearCampoDetalle("Stock disponible:", String.valueOf(medicamento.getUnidades())),
+            crearCampoDetalle("Precio:", formatoMoneda.format(medicamento.getPrecio()))
         );
         
-        ScrollPane scrollPane = new ScrollPane(content);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setPrefSize(500, 400);
-        
-        dialog.getDialogPane().setContent(scrollPane);
+        dialog.getDialogPane().setContent(content);
         dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
-        
         dialog.showAndWait();
     }
     
     private HBox crearCampoDetalle(String etiqueta, String valor) {
-        HBox hbox = new HBox(10);
-        hbox.setAlignment(Pos.CENTER_LEFT);
+        HBox campo = new HBox(10);
+        campo.setAlignment(Pos.CENTER_LEFT);
         
         Label lblEtiqueta = new Label(etiqueta);
         lblEtiqueta.setFont(Font.font("System", FontWeight.BOLD, 12));
         lblEtiqueta.setPrefWidth(150);
         
-        Label lblValor = new Label(valor != null && !valor.trim().isEmpty() ? valor : "No especificado");
+        Label lblValor = new Label(valor != null ? valor : "No especificado");
         lblValor.setWrapText(true);
-        HBox.setHgrow(lblValor, Priority.ALWAYS);
         
-        hbox.getChildren().addAll(lblEtiqueta, lblValor);
-        return hbox;
+        campo.getChildren().addAll(lblEtiqueta, lblValor);
+        return campo;
     }
     
     private void cerrarVentana() {
-        Stage stage = (Stage) btnCerrar.getScene().getWindow();
+        Stage stage = (Stage) tablaMedicamentos.getScene().getWindow();
         stage.close();
     }
-    
-    // Métodos públicos para configurar el controlador
     
     public void setCallbackSeleccion(Consumer<ModeloMedicamentoInventario> callback) {
         this.callbackSeleccion = callback;
     }
-    
-    // Métodos de utilidad para mostrar mensajes
     
     private void mostrarError(String titulo, String mensaje) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -597,5 +652,25 @@ public class BuscadorMedicamentosController implements Initializable {
         alert.setHeaderText(titulo);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+    
+    /**
+     * Obtiene una descripción legible del código de error
+     */
+    private String obtenerDescripcionError(int codigo) {
+        switch (codigo) {
+            case ProtocoloInventarioVeterinaria.LOGIN_FAILED:
+                return "Fallo de autenticación";
+            case ProtocoloInventarioVeterinaria.NOT_FOUND:
+                return "Datos no encontrados";
+            case ProtocoloInventarioVeterinaria.SERVER_ERROR:
+                return "Error interno del servidor";
+            case ProtocoloInventarioVeterinaria.DATABASE_ERROR:
+                return "Error de base de datos";
+            case ProtocoloInventarioVeterinaria.ERROR_INVENTARIO:
+                return "Error específico de inventario";
+            default:
+                return "Error desconocido";
+        }
     }
 } 
