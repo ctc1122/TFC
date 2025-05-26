@@ -16,7 +16,7 @@ public class importarUMLSsql {
     
     // Configuración de conexión a MariaDB
     private static final String DB_URL = "jdbc:mariadb://localhost:3306/";
-    private static final String DB_NAME = "umls_database";
+    private static final String DB_NAME = "umls";
     private static final String USERNAME = "root";
     private static final String PASSWORD = "miclave";
     
