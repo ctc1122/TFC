@@ -49,6 +49,14 @@ public class FichajeController implements Initializable {
     @FXML private Label lblEstadoActual;
     @FXML private Label lblConexionEstado;
     
+    // Paneles de navegación
+    @FXML private VBox panelSeleccionModulos;
+    @FXML private VBox cardFichaje;
+    @FXML private VBox cardAdministrador;
+    @FXML private VBox panelFichajePrincipal;
+    @FXML private Button btnVolverSeleccion;
+    @FXML private Button btnVolverSeleccionAdmin;
+    
     // Controles de fichaje
     @FXML private ComboBox<ModeloFichaje.TipoFichaje> cmbTipoFichaje;
     @FXML private TextField txtMotivoIncidencia;
@@ -89,6 +97,22 @@ public class FichajeController implements Initializable {
     @FXML private Label lblIncidenciasHoy;
     @FXML private Label lblPromedioHoras;
     
+    // Controles administrativos adicionales
+    @FXML private DatePicker dpFechaInicioAdmin;
+    @FXML private DatePicker dpFechaFinAdmin;
+    @FXML private Button btnFiltrarAdmin;
+    @FXML private Button btnLimpiarFiltrosAdmin;
+    @FXML private TableView<ModeloFichaje> tablaTodosFichajes;
+    @FXML private TableColumn<ModeloFichaje, String> colEmpleado;
+    @FXML private TableColumn<ModeloFichaje, String> colFechaAdmin;
+    @FXML private TableColumn<ModeloFichaje, String> colHoraEntradaAdmin;
+    @FXML private TableColumn<ModeloFichaje, String> colHoraSalidaAdmin;
+    @FXML private TableColumn<ModeloFichaje, String> colTiempoTotalAdmin;
+    @FXML private TableColumn<ModeloFichaje, String> colTipoEntradaAdmin;
+    @FXML private TableColumn<ModeloFichaje, String> colTipoSalidaAdmin;
+    @FXML private TableColumn<ModeloFichaje, String> colEstadoAdmin;
+    @FXML private TableColumn<ModeloFichaje, String> colAccionesAdmin;
+    
     // Variables de control
     private Usuario usuarioActual;
     private GestorSocket gestorSocket;
@@ -96,6 +120,7 @@ public class FichajeController implements Initializable {
     private Timer actualizacionTimer;
     private ModeloFichaje fichajeActual;
     private ObservableList<ModeloFichaje> listaFichajes;
+    private ObservableList<ModeloFichaje> listaTodosFichajes;
     
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -103,8 +128,39 @@ public class FichajeController implements Initializable {
             // Inicializar gestor de socket
             gestorSocket = GestorSocket.getInstance();
             
+            // Aplicar tema oscuro si está activo - mejorado
+            Platform.runLater(() -> {
+                try {
+                    // Buscar el nodo raíz más apropiado
+                    javafx.scene.Node rootNode = null;
+                    if (panelSeleccionModulos != null && panelSeleccionModulos.getScene() != null) {
+                        rootNode = panelSeleccionModulos.getScene().getRoot();
+                    } else if (panelSeleccionModulos != null && panelSeleccionModulos.getParent() != null) {
+                        // Buscar hacia arriba hasta encontrar el nodo raíz
+                        javafx.scene.Parent parent = panelSeleccionModulos.getParent();
+                        while (parent.getParent() != null) {
+                            parent = parent.getParent();
+                        }
+                        rootNode = parent;
+                    }
+                    
+                    // Aplicar tema oscuro si está activo
+                    if (rootNode != null && com.example.pruebamongodbcss.theme.ThemeManager.getInstance().isDarkTheme()) {
+                        if (!rootNode.getStyleClass().contains("dark-theme")) {
+                            rootNode.getStyleClass().add("dark-theme");
+                        }
+                        System.out.println("Tema oscuro aplicado al módulo de fichaje");
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error al aplicar tema: " + e.getMessage());
+                }
+            });
+            
             // Configurar tabla de historial
             configurarTablaHistorial();
+            
+            // Configurar tabla administrativa
+            configurarTablaTodosFichajes();
             
             // Configurar combo de tipos de fichaje
             configurarComboTipoFichaje();
@@ -120,12 +176,18 @@ public class FichajeController implements Initializable {
             if (usuarioActual != null) {
                 lblUsuarioActual.setText(usuarioActual.getNombre());
                 configurarInterfazSegunRol();
+                configurarInterfazInicial();
                 cargarDatosIniciales();
             }
             
-            // Inicializar lista de fichajes
+            // Inicializar listas de fichajes
             listaFichajes = FXCollections.observableArrayList();
             tablaHistorial.setItems(listaFichajes);
+            
+            listaTodosFichajes = FXCollections.observableArrayList();
+            if (tablaTodosFichajes != null) {
+                tablaTodosFichajes.setItems(listaTodosFichajes);
+            }
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -134,6 +196,10 @@ public class FichajeController implements Initializable {
     }
     
     private void configurarTablaHistorial() {
+        // Configurar política de redimensionamiento
+        tablaHistorial.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        
+        // Configurar cell value factories
         colFecha.setCellValueFactory(new PropertyValueFactory<>("fechaFormateada"));
         colHoraEntrada.setCellValueFactory(new PropertyValueFactory<>("horaEntradaFormateada"));
         colHoraSalida.setCellValueFactory(new PropertyValueFactory<>("horaSalidaFormateada"));
@@ -154,6 +220,9 @@ public class FichajeController implements Initializable {
             return new javafx.beans.property.SimpleStringProperty(estado);
         });
         
+        // Configurar anchos de columnas responsive
+        configurarAnchoColumnasResponsive();
+        
         // Configurar columna de acciones con botones
         colAcciones.setCellFactory(column -> {
             return new javafx.scene.control.TableCell<ModeloFichaje, String>() {
@@ -161,8 +230,14 @@ public class FichajeController implements Initializable {
                 private final Button btnEliminar = new Button("🗑️");
                 
                 {
-                    btnEditar.getStyleClass().add("edit-button");
-                    btnEliminar.getStyleClass().add("delete-button");
+                    btnEditar.getStyleClass().addAll("secondary-button");
+                    btnEliminar.getStyleClass().addAll("secondary-button");
+                    btnEditar.setTooltip(new javafx.scene.control.Tooltip("Editar fichaje"));
+                    btnEliminar.setTooltip(new javafx.scene.control.Tooltip("Eliminar fichaje"));
+                    
+                    // Hacer botones más pequeños para móviles
+                    btnEditar.setPrefSize(30, 25);
+                    btnEliminar.setPrefSize(30, 25);
                     
                     btnEditar.setOnAction(event -> {
                         ModeloFichaje fichaje = getTableView().getItems().get(getIndex());
@@ -181,13 +256,77 @@ public class FichajeController implements Initializable {
                     if (empty) {
                         setGraphic(null);
                     } else {
-                        javafx.scene.layout.HBox hbox = new javafx.scene.layout.HBox(5);
+                        javafx.scene.layout.HBox hbox = new javafx.scene.layout.HBox(3);
+                        hbox.setAlignment(javafx.geometry.Pos.CENTER);
                         hbox.getChildren().addAll(btnEditar, btnEliminar);
                         setGraphic(hbox);
                     }
                 }
             };
         });
+        
+        // Configurar comportamiento responsive de la tabla
+        configurarComportamientoResponsiveTabla(tablaHistorial);
+    }
+    
+    private void configurarAnchoColumnasResponsive() {
+        // Configurar anchos de columnas que se adapten al tamaño de la ventana
+        colFecha.prefWidthProperty().bind(tablaHistorial.widthProperty().multiply(0.12));
+        colHoraEntrada.prefWidthProperty().bind(tablaHistorial.widthProperty().multiply(0.10));
+        colHoraSalida.prefWidthProperty().bind(tablaHistorial.widthProperty().multiply(0.10));
+        colTiempoTotal.prefWidthProperty().bind(tablaHistorial.widthProperty().multiply(0.10));
+        colTipoEntrada.prefWidthProperty().bind(tablaHistorial.widthProperty().multiply(0.15));
+        colTipoSalida.prefWidthProperty().bind(tablaHistorial.widthProperty().multiply(0.15));
+        colEstado.prefWidthProperty().bind(tablaHistorial.widthProperty().multiply(0.12));
+        colAcciones.prefWidthProperty().bind(tablaHistorial.widthProperty().multiply(0.16));
+    }
+    
+    private void configurarComportamientoResponsiveTabla(TableView<?> tabla) {
+        // Agregar listener para cambios de tamaño de ventana
+        tabla.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                newScene.windowProperty().addListener((obsWindow, oldWindow, newWindow) -> {
+                    if (newWindow != null) {
+                        newWindow.widthProperty().addListener((obsWidth, oldWidth, newWidth) -> {
+                            ajustarColumnasSegunTamano(tabla, newWidth.doubleValue());
+                        });
+                    }
+                });
+            }
+        });
+    }
+    
+    private void ajustarColumnasSegunTamano(TableView<?> tabla, double anchoVentana) {
+        // Ocultar/mostrar columnas según el tamaño de la ventana
+        if (tabla == tablaHistorial) {
+            if (anchoVentana < 800) {
+                // Pantallas pequeñas: ocultar columnas menos importantes
+                colTipoEntrada.setVisible(false);
+                colTipoSalida.setVisible(false);
+            } else if (anchoVentana < 1000) {
+                // Pantallas medianas: mostrar columnas importantes
+                colTipoEntrada.setVisible(true);
+                colTipoSalida.setVisible(false);
+            } else {
+                // Pantallas grandes: mostrar todas las columnas
+                colTipoEntrada.setVisible(true);
+                colTipoSalida.setVisible(true);
+            }
+        } else if (tabla == tablaTodosFichajes) {
+            if (anchoVentana < 900) {
+                // Pantallas pequeñas: ocultar columnas menos importantes
+                colTipoEntradaAdmin.setVisible(false);
+                colTipoSalidaAdmin.setVisible(false);
+            } else if (anchoVentana < 1100) {
+                // Pantallas medianas: mostrar columnas importantes
+                colTipoEntradaAdmin.setVisible(true);
+                colTipoSalidaAdmin.setVisible(false);
+            } else {
+                // Pantallas grandes: mostrar todas las columnas
+                colTipoEntradaAdmin.setVisible(true);
+                colTipoSalidaAdmin.setVisible(true);
+            }
+        }
     }
     
     private void configurarComboTipoFichaje() {
@@ -221,6 +360,22 @@ public class FichajeController implements Initializable {
         btnVerTodosFichajes.setOnAction(event -> verTodosFichajes());
         btnEstadisticas.setOnAction(event -> mostrarEstadisticas());
         btnGestionarIncidencias.setOnAction(event -> gestionarIncidencias());
+        
+        // Botones de navegación entre tarjetas
+        if (btnVolverSeleccion != null) {
+            btnVolverSeleccion.setOnAction(event -> volverASeleccion());
+        }
+        if (btnVolverSeleccionAdmin != null) {
+            btnVolverSeleccionAdmin.setOnAction(event -> volverASeleccionAdmin());
+        }
+        
+        // Botones administrativos adicionales
+        if (btnFiltrarAdmin != null) {
+            btnFiltrarAdmin.setOnAction(event -> aplicarFiltrosAdmin());
+        }
+        if (btnLimpiarFiltrosAdmin != null) {
+            btnLimpiarFiltrosAdmin.setOnAction(event -> limpiarFiltrosAdmin());
+        }
     }
     
     private void iniciarRelojTiempoReal() {
@@ -389,10 +544,11 @@ public class FichajeController implements Initializable {
     }
     
     private void actualizarInterfazFichajeActual() {
+        // El panel de fichaje actual siempre debe estar visible
+        panelFichajeActual.setVisible(true);
+        panelFichajeActual.setManaged(true);
+        
         if (fichajeActual != null && fichajeActual.getEstado() == ModeloFichaje.EstadoFichaje.ABIERTO) {
-            panelFichajeActual.setVisible(true);
-            panelFichajeActual.setManaged(true);
-            
             lblHoraEntrada.setText(fichajeActual.getHoraEntradaFormateada());
             lblEstadoActual.setText(fichajeActual.getEstado().getDescripcion());
             lblEstadoFichaje.setText("Fichado - Trabajando");
@@ -402,9 +558,8 @@ public class FichajeController implements Initializable {
             
             actualizarTiempoTrabajado();
         } else {
-            panelFichajeActual.setVisible(false);
-            panelFichajeActual.setManaged(false);
-            
+            lblHoraEntrada.setText("--:--");
+            lblEstadoActual.setText("Sin fichar");
             lblEstadoFichaje.setText("Sin fichar");
             lblTiempoTrabajado.setText("00:00");
             
@@ -606,7 +761,7 @@ public class FichajeController implements Initializable {
     
     private void gestionarIncidencias() {
         // TODO: Implementar gestión de incidencias
-        mostrarInfo("Incidencias", "Gestión de incidencias en desarrollo.");
+        mostrarInfo("Gestión de Incidencias", "Funcionalidad en desarrollo");
     }
     
     private void editarFichaje(ModeloFichaje fichaje) {
@@ -683,16 +838,282 @@ public class FichajeController implements Initializable {
     }
     
     private void mostrarInfo(String titulo, String mensaje) {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Información");
-            alert.setHeaderText(titulo);
-            alert.setContentText(mensaje);
-            alert.showAndWait();
-        });
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Información");
+        alert.setHeaderText(titulo);
+        alert.setContentText(mensaje);
+        alert.showAndWait();
     }
     
-    // Método para limpiar recursos al cerrar
+    /**
+     * Abre el módulo de fichaje desde la tarjeta
+     */
+    @FXML
+    private void abrirModuloFichaje() {
+        try {
+            // Ocultar panel de selección y mostrar panel de fichaje
+            panelSeleccionModulos.setVisible(false);
+            panelSeleccionModulos.setManaged(false);
+            
+            panelFichajePrincipal.setVisible(true);
+            panelFichajePrincipal.setManaged(true);
+            
+            panelAdministracion.setVisible(false);
+            panelAdministracion.setManaged(false);
+            
+            // Aplicar tema después de mostrar el panel
+            aplicarTemaActual();
+            
+            // Cargar datos del usuario actual
+            verificarFichajeActual();
+            cargarHistorialFichajes();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error", "No se pudo abrir el módulo de fichaje: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Abre el módulo de administración desde la tarjeta
+     */
+    @FXML
+    private void abrirModuloAdministrador() {
+        try {
+            // Verificar permisos de administrador
+            if (usuarioActual == null || !usuarioActual.esAdmin()) {
+                mostrarError("Acceso Denegado", "Solo los administradores pueden acceder a este módulo.");
+                return;
+            }
+            
+            // Ocultar panel de selección y mostrar panel de administración
+            panelSeleccionModulos.setVisible(false);
+            panelSeleccionModulos.setManaged(false);
+            
+            panelFichajePrincipal.setVisible(false);
+            panelFichajePrincipal.setManaged(false);
+            
+            panelAdministracion.setVisible(true);
+            panelAdministracion.setManaged(true);
+            
+            // Aplicar tema después de mostrar el panel
+            aplicarTemaActual();
+            
+            // Cargar datos administrativos
+            cargarEmpleados();
+            cargarEstadisticasGenerales();
+            cargarTodosFichajes();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error", "No se pudo abrir el módulo de administración: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Vuelve al panel de selección desde el módulo de fichaje
+     */
+    @FXML
+    private void volverASeleccion() {
+        try {
+            // Mostrar panel de selección y ocultar panel de fichaje
+            panelSeleccionModulos.setVisible(true);
+            panelSeleccionModulos.setManaged(true);
+            
+            panelFichajePrincipal.setVisible(false);
+            panelFichajePrincipal.setManaged(false);
+            
+            panelAdministracion.setVisible(false);
+            panelAdministracion.setManaged(false);
+            
+            // Aplicar tema después de mostrar el panel
+            aplicarTemaActual();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error", "No se pudo volver a la selección: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Vuelve al panel de selección desde el módulo de administración
+     */
+    @FXML
+    private void volverASeleccionAdmin() {
+        try {
+            // Mostrar panel de selección y ocultar panel de administración
+            panelSeleccionModulos.setVisible(true);
+            panelSeleccionModulos.setManaged(true);
+            
+            panelFichajePrincipal.setVisible(false);
+            panelFichajePrincipal.setManaged(false);
+            
+            panelAdministracion.setVisible(false);
+            panelAdministracion.setManaged(false);
+            
+            // Aplicar tema después de mostrar el panel
+            aplicarTemaActual();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error", "No se pudo volver a la selección: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Configura la interfaz inicial según el rol del usuario
+     */
+    private void configurarInterfazInicial() {
+        // Siempre mostrar el panel de selección de módulos al inicio
+        panelSeleccionModulos.setVisible(true);
+        panelSeleccionModulos.setManaged(true);
+        
+        // Ocultar todos los paneles de contenido inicialmente
+        panelFichajePrincipal.setVisible(false);
+        panelFichajePrincipal.setManaged(false);
+        panelAdministracion.setVisible(false);
+        panelAdministracion.setManaged(false);
+        
+        if (usuarioActual != null && usuarioActual.esAdmin()) {
+            // Mostrar tarjeta de administrador para admins
+            cardAdministrador.setVisible(true);
+            cardAdministrador.setManaged(true);
+        } else {
+            // Ocultar tarjeta de administrador para usuarios normales
+            cardAdministrador.setVisible(false);
+            cardAdministrador.setManaged(false);
+            
+            // Para usuarios normales, también mostrar las tarjetas inicialmente
+            // pero solo la de fichaje estará disponible
+        }
+    }
+    
+    /**
+     * Carga todos los fichajes para el panel administrativo
+     */
+    private void cargarTodosFichajes() {
+        try {
+            String peticion = Protocolo.OBTENER_TODOS_FICHAJES + Protocolo.SEPARADOR_CODIGO + "100";
+            gestorSocket.enviarPeticion(peticion);
+            
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.OBTENER_TODOS_FICHAJES_RESPONSE) {
+                @SuppressWarnings("unchecked")
+                List<ModeloFichaje> fichajes = (List<ModeloFichaje>) entrada.readObject();
+                
+                Platform.runLater(() -> {
+                    if (listaTodosFichajes == null) {
+                        listaTodosFichajes = FXCollections.observableArrayList();
+                        tablaTodosFichajes.setItems(listaTodosFichajes);
+                    }
+                    listaTodosFichajes.clear();
+                    listaTodosFichajes.addAll(fichajes);
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Platform.runLater(() -> mostrarError("Error", "No se pudieron cargar todos los fichajes: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Configura la tabla de todos los fichajes para administradores
+     */
+    private void configurarTablaTodosFichajes() {
+        if (tablaTodosFichajes != null) {
+            // Configurar política de redimensionamiento
+            tablaTodosFichajes.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+            
+            // Configurar cell value factories
+            colEmpleado.setCellValueFactory(new PropertyValueFactory<>("nombreEmpleado"));
+            colFechaAdmin.setCellValueFactory(new PropertyValueFactory<>("fechaFormateada"));
+            colHoraEntradaAdmin.setCellValueFactory(new PropertyValueFactory<>("horaEntradaFormateada"));
+            colHoraSalidaAdmin.setCellValueFactory(new PropertyValueFactory<>("horaSalidaFormateada"));
+            colTiempoTotalAdmin.setCellValueFactory(new PropertyValueFactory<>("horasTrabajadasFormateadas"));
+            colTipoEntradaAdmin.setCellValueFactory(cellData -> {
+                ModeloFichaje fichaje = cellData.getValue();
+                String tipo = fichaje.getTipoEntrada() != null ? fichaje.getTipoEntrada().getDescripcion() : "N/A";
+                return new javafx.beans.property.SimpleStringProperty(tipo);
+            });
+            colTipoSalidaAdmin.setCellValueFactory(cellData -> {
+                ModeloFichaje fichaje = cellData.getValue();
+                String tipo = fichaje.getTipoSalida() != null ? fichaje.getTipoSalida().getDescripcion() : "N/A";
+                return new javafx.beans.property.SimpleStringProperty(tipo);
+            });
+            colEstadoAdmin.setCellValueFactory(cellData -> {
+                ModeloFichaje fichaje = cellData.getValue();
+                String estado = fichaje.getEstado() != null ? fichaje.getEstado().getDescripcion() : "N/A";
+                return new javafx.beans.property.SimpleStringProperty(estado);
+            });
+            
+            // Configurar anchos de columnas responsive para tabla admin
+            configurarAnchoColumnasResponsiveAdmin();
+            
+            // Configurar columna de acciones administrativas
+            colAccionesAdmin.setCellFactory(column -> {
+                return new javafx.scene.control.TableCell<ModeloFichaje, String>() {
+                    private final Button btnEditarAdmin = new Button("✏️");
+                    private final Button btnEliminarAdmin = new Button("🗑️");
+                    
+                    {
+                        btnEditarAdmin.getStyleClass().addAll("secondary-button");
+                        btnEliminarAdmin.getStyleClass().addAll("secondary-button");
+                        btnEditarAdmin.setTooltip(new javafx.scene.control.Tooltip("Editar fichaje"));
+                        btnEliminarAdmin.setTooltip(new javafx.scene.control.Tooltip("Eliminar fichaje"));
+                        
+                        // Hacer botones más pequeños para móviles
+                        btnEditarAdmin.setPrefSize(30, 25);
+                        btnEliminarAdmin.setPrefSize(30, 25);
+                        
+                        btnEditarAdmin.setOnAction(event -> {
+                            ModeloFichaje fichaje = getTableView().getItems().get(getIndex());
+                            editarFichaje(fichaje);
+                        });
+                        
+                        btnEliminarAdmin.setOnAction(event -> {
+                            ModeloFichaje fichaje = getTableView().getItems().get(getIndex());
+                            eliminarFichaje(fichaje);
+                        });
+                    }
+                    
+                    @Override
+                    protected void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty) {
+                            setGraphic(null);
+                        } else {
+                            javafx.scene.layout.HBox hbox = new javafx.scene.layout.HBox(3);
+                            hbox.setAlignment(javafx.geometry.Pos.CENTER);
+                            hbox.getChildren().addAll(btnEditarAdmin, btnEliminarAdmin);
+                            setGraphic(hbox);
+                        }
+                    }
+                };
+            });
+            
+            // Configurar comportamiento responsive de la tabla admin
+            configurarComportamientoResponsiveTabla(tablaTodosFichajes);
+        }
+    }
+    
+    private void configurarAnchoColumnasResponsiveAdmin() {
+        // Configurar anchos de columnas que se adapten al tamaño de la ventana para tabla admin
+        colEmpleado.prefWidthProperty().bind(tablaTodosFichajes.widthProperty().multiply(0.15));
+        colFechaAdmin.prefWidthProperty().bind(tablaTodosFichajes.widthProperty().multiply(0.10));
+        colHoraEntradaAdmin.prefWidthProperty().bind(tablaTodosFichajes.widthProperty().multiply(0.10));
+        colHoraSalidaAdmin.prefWidthProperty().bind(tablaTodosFichajes.widthProperty().multiply(0.10));
+        colTiempoTotalAdmin.prefWidthProperty().bind(tablaTodosFichajes.widthProperty().multiply(0.10));
+        colTipoEntradaAdmin.prefWidthProperty().bind(tablaTodosFichajes.widthProperty().multiply(0.12));
+        colTipoSalidaAdmin.prefWidthProperty().bind(tablaTodosFichajes.widthProperty().multiply(0.12));
+        colEstadoAdmin.prefWidthProperty().bind(tablaTodosFichajes.widthProperty().multiply(0.10));
+        colAccionesAdmin.prefWidthProperty().bind(tablaTodosFichajes.widthProperty().multiply(0.11));
+    }
+
+    /**
+     * Cierra todos los recursos utilizados por el controlador
+     */
     public void cerrarRecursos() {
         if (relojTimer != null) {
             relojTimer.cancel();
@@ -700,5 +1121,114 @@ public class FichajeController implements Initializable {
         if (actualizacionTimer != null) {
             actualizacionTimer.cancel();
         }
+    }
+
+    /**
+     * Aplica filtros en el panel administrativo
+     */
+    private void aplicarFiltrosAdmin() {
+        try {
+            LocalDate fechaInicio = dpFechaInicioAdmin.getValue();
+            LocalDate fechaFin = dpFechaFinAdmin.getValue();
+            String empleadoSeleccionado = cmbEmpleados.getValue();
+            
+            if (fechaInicio != null && fechaFin != null && fechaInicio.isAfter(fechaFin)) {
+                mostrarError("Error en Fechas", "La fecha de inicio no puede ser posterior a la fecha de fin.");
+                return;
+            }
+            
+            // Construir petición con filtros
+            StringBuilder peticion = new StringBuilder();
+            peticion.append(Protocolo.OBTENER_TODOS_FICHAJES).append(Protocolo.SEPARADOR_CODIGO).append("100");
+            
+            if (fechaInicio != null) {
+                peticion.append(Protocolo.SEPARADOR_PARAMETROS).append("fechaInicio:").append(fechaInicio.toString());
+            }
+            if (fechaFin != null) {
+                peticion.append(Protocolo.SEPARADOR_PARAMETROS).append("fechaFin:").append(fechaFin.toString());
+            }
+            if (empleadoSeleccionado != null && !empleadoSeleccionado.isEmpty()) {
+                peticion.append(Protocolo.SEPARADOR_PARAMETROS).append("empleado:").append(empleadoSeleccionado);
+            }
+            
+            gestorSocket.enviarPeticion(peticion.toString());
+            
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.OBTENER_TODOS_FICHAJES_RESPONSE) {
+                @SuppressWarnings("unchecked")
+                List<ModeloFichaje> fichajes = (List<ModeloFichaje>) entrada.readObject();
+                
+                Platform.runLater(() -> {
+                    listaTodosFichajes.clear();
+                    listaTodosFichajes.addAll(fichajes);
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error", "No se pudieron aplicar los filtros: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Limpia los filtros del panel administrativo
+     */
+    private void limpiarFiltrosAdmin() {
+        dpFechaInicioAdmin.setValue(null);
+        dpFechaFinAdmin.setValue(null);
+        cmbEmpleados.setValue(null);
+        cargarTodosFichajes();
+    }
+
+    /**
+     * Aplica el tema actual (claro u oscuro) a todos los elementos del módulo
+     */
+    private void aplicarTemaActual() {
+        Platform.runLater(() -> {
+            try {
+                // Buscar el nodo raíz
+                javafx.scene.Node rootNode = null;
+                
+                // Intentar obtener el nodo raíz desde diferentes elementos
+                if (panelSeleccionModulos != null && panelSeleccionModulos.getScene() != null) {
+                    rootNode = panelSeleccionModulos.getScene().getRoot();
+                } else if (panelFichajePrincipal != null && panelFichajePrincipal.getScene() != null) {
+                    rootNode = panelFichajePrincipal.getScene().getRoot();
+                } else if (panelAdministracion != null && panelAdministracion.getScene() != null) {
+                    rootNode = panelAdministracion.getScene().getRoot();
+                }
+                
+                // Si no se encontró por scene, buscar por parent
+                if (rootNode == null) {
+                    javafx.scene.Node currentNode = panelSeleccionModulos;
+                    if (currentNode != null && currentNode.getParent() != null) {
+                        javafx.scene.Parent parent = currentNode.getParent();
+                        while (parent.getParent() != null) {
+                            parent = parent.getParent();
+                        }
+                        rootNode = parent;
+                    }
+                }
+                
+                // Aplicar o quitar tema oscuro según corresponda
+                if (rootNode != null) {
+                    boolean isDarkTheme = com.example.pruebamongodbcss.theme.ThemeManager.getInstance().isDarkTheme();
+                    
+                    if (isDarkTheme) {
+                        if (!rootNode.getStyleClass().contains("dark-theme")) {
+                            rootNode.getStyleClass().add("dark-theme");
+                        }
+                    } else {
+                        rootNode.getStyleClass().remove("dark-theme");
+                    }
+                    
+                    System.out.println("Tema " + (isDarkTheme ? "oscuro" : "claro") + " aplicado al módulo de fichaje");
+                }
+                
+            } catch (Exception e) {
+                System.err.println("Error al aplicar tema: " + e.getMessage());
+            }
+        });
     }
 } 
