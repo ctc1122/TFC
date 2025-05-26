@@ -1,0 +1,704 @@
+package com.example.pruebamongodbcss.Modulos.Fichaje;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.net.URL;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.ResourceBundle;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import org.bson.Document;
+import org.bson.types.ObjectId;
+
+import com.example.pruebamongodbcss.Data.Usuario;
+import com.example.pruebamongodbcss.PanelInicioController;
+import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.example.pruebamongodbcss.Utilidades.GestorSocket;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
+import com.jfoenix.controls.JFXTextField;
+
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
+
+public class FichajeController implements Initializable {
+
+    // Elementos de la interfaz
+    @FXML private Label lblRelojTiempoReal;
+    @FXML private Label lblFechaActual;
+    @FXML private Label lblUsuarioActual;
+    @FXML private Label lblEstadoFichaje;
+    @FXML private Label lblHoraEntrada;
+    @FXML private Label lblTiempoTrabajado;
+    @FXML private Label lblEstadoActual;
+    @FXML private Label lblConexionEstado;
+    
+    // Controles de fichaje
+    @FXML private JFXComboBox<ModeloFichaje.TipoFichaje> cmbTipoFichaje;
+    @FXML private JFXTextField txtMotivoIncidencia;
+    @FXML private JFXButton btnFicharEntrada;
+    @FXML private JFXButton btnFicharSalida;
+    @FXML private JFXButton btnRefrescar;
+    
+    // Panel de fichaje actual
+    @FXML private VBox panelFichajeActual;
+    
+    // Controles de historial
+    @FXML private TableView<ModeloFichaje> tablaHistorial;
+    @FXML private TableColumn<ModeloFichaje, String> colFecha;
+    @FXML private TableColumn<ModeloFichaje, String> colHoraEntrada;
+    @FXML private TableColumn<ModeloFichaje, String> colHoraSalida;
+    @FXML private TableColumn<ModeloFichaje, String> colTiempoTotal;
+    @FXML private TableColumn<ModeloFichaje, String> colTipoEntrada;
+    @FXML private TableColumn<ModeloFichaje, String> colTipoSalida;
+    @FXML private TableColumn<ModeloFichaje, String> colEstado;
+    @FXML private TableColumn<ModeloFichaje, String> colAcciones;
+    
+    @FXML private DatePicker dpFechaInicio;
+    @FXML private DatePicker dpFechaFin;
+    @FXML private JFXButton btnFiltrar;
+    @FXML private JFXButton btnLimpiarFiltros;
+    @FXML private JFXButton btnExportarHistorial;
+    @FXML private JFXButton btnGenerarInforme;
+    
+    // Panel de administración
+    @FXML private VBox panelAdministracion;
+    @FXML private JFXComboBox<String> cmbEmpleados;
+    @FXML private JFXButton btnVerTodosFichajes;
+    @FXML private JFXButton btnEstadisticas;
+    @FXML private JFXButton btnGestionarIncidencias;
+    @FXML private GridPane gridEstadisticas;
+    @FXML private Label lblTotalEmpleados;
+    @FXML private Label lblFichajesHoy;
+    @FXML private Label lblIncidenciasHoy;
+    @FXML private Label lblPromedioHoras;
+    
+    // Variables de control
+    private Usuario usuarioActual;
+    private GestorSocket gestorSocket;
+    private Timer relojTimer;
+    private Timer actualizacionTimer;
+    private ModeloFichaje fichajeActual;
+    private ObservableList<ModeloFichaje> listaFichajes;
+    
+    @Override
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        try {
+            // Inicializar gestor de socket
+            gestorSocket = GestorSocket.getInstance();
+            
+            // Configurar tabla de historial
+            configurarTablaHistorial();
+            
+            // Configurar combo de tipos de fichaje
+            configurarComboTipoFichaje();
+            
+            // Configurar eventos de botones
+            configurarEventosBotones();
+            
+            // Inicializar reloj en tiempo real
+            iniciarRelojTiempoReal();
+            
+            // Obtener usuario actual
+            usuarioActual = PanelInicioController.getUsuarioSesion();
+            if (usuarioActual != null) {
+                lblUsuarioActual.setText(usuarioActual.getNombre());
+                configurarInterfazSegunRol();
+                cargarDatosIniciales();
+            }
+            
+            // Inicializar lista de fichajes
+            listaFichajes = FXCollections.observableArrayList();
+            tablaHistorial.setItems(listaFichajes);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error de Inicialización", "No se pudo inicializar el módulo de fichaje: " + e.getMessage());
+        }
+    }
+    
+    private void configurarTablaHistorial() {
+        colFecha.setCellValueFactory(new PropertyValueFactory<>("fechaFormateada"));
+        colHoraEntrada.setCellValueFactory(new PropertyValueFactory<>("horaEntradaFormateada"));
+        colHoraSalida.setCellValueFactory(new PropertyValueFactory<>("horaSalidaFormateada"));
+        colTiempoTotal.setCellValueFactory(new PropertyValueFactory<>("horasTrabajadasFormateadas"));
+        colTipoEntrada.setCellValueFactory(cellData -> {
+            ModeloFichaje fichaje = cellData.getValue();
+            String tipo = fichaje.getTipoEntrada() != null ? fichaje.getTipoEntrada().getDescripcion() : "N/A";
+            return new javafx.beans.property.SimpleStringProperty(tipo);
+        });
+        colTipoSalida.setCellValueFactory(cellData -> {
+            ModeloFichaje fichaje = cellData.getValue();
+            String tipo = fichaje.getTipoSalida() != null ? fichaje.getTipoSalida().getDescripcion() : "N/A";
+            return new javafx.beans.property.SimpleStringProperty(tipo);
+        });
+        colEstado.setCellValueFactory(cellData -> {
+            ModeloFichaje fichaje = cellData.getValue();
+            String estado = fichaje.getEstado() != null ? fichaje.getEstado().getDescripcion() : "N/A";
+            return new javafx.beans.property.SimpleStringProperty(estado);
+        });
+        
+        // Configurar columna de acciones con botones
+        colAcciones.setCellFactory(column -> {
+            return new javafx.scene.control.TableCell<ModeloFichaje, String>() {
+                private final JFXButton btnEditar = new JFXButton("✏️");
+                private final JFXButton btnEliminar = new JFXButton("🗑️");
+                
+                {
+                    btnEditar.getStyleClass().add("edit-button");
+                    btnEliminar.getStyleClass().add("delete-button");
+                    
+                    btnEditar.setOnAction(event -> {
+                        ModeloFichaje fichaje = getTableView().getItems().get(getIndex());
+                        editarFichaje(fichaje);
+                    });
+                    
+                    btnEliminar.setOnAction(event -> {
+                        ModeloFichaje fichaje = getTableView().getItems().get(getIndex());
+                        eliminarFichaje(fichaje);
+                    });
+                }
+                
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setGraphic(null);
+                    } else {
+                        javafx.scene.layout.HBox hbox = new javafx.scene.layout.HBox(5);
+                        hbox.getChildren().addAll(btnEditar, btnEliminar);
+                        setGraphic(hbox);
+                    }
+                }
+            };
+        });
+    }
+    
+    private void configurarComboTipoFichaje() {
+        cmbTipoFichaje.setItems(FXCollections.observableArrayList(ModeloFichaje.TipoFichaje.values()));
+        cmbTipoFichaje.setValue(ModeloFichaje.TipoFichaje.NORMAL);
+        
+        // Mostrar/ocultar campo de motivo según el tipo seleccionado
+        cmbTipoFichaje.setOnAction(event -> {
+            ModeloFichaje.TipoFichaje tipoSeleccionado = cmbTipoFichaje.getValue();
+            boolean esIncidencia = tipoSeleccionado != ModeloFichaje.TipoFichaje.NORMAL;
+            txtMotivoIncidencia.setVisible(esIncidencia);
+            txtMotivoIncidencia.setManaged(esIncidencia);
+            
+            if (!esIncidencia) {
+                txtMotivoIncidencia.clear();
+            }
+        });
+    }
+    
+    private void configurarEventosBotones() {
+        btnFicharEntrada.setOnAction(event -> ficharEntrada());
+        btnFicharSalida.setOnAction(event -> ficharSalida());
+        btnRefrescar.setOnAction(event -> actualizarDatos());
+        
+        btnFiltrar.setOnAction(event -> aplicarFiltros());
+        btnLimpiarFiltros.setOnAction(event -> limpiarFiltros());
+        btnExportarHistorial.setOnAction(event -> exportarHistorial());
+        btnGenerarInforme.setOnAction(event -> generarInforme());
+        
+        // Botones de administración
+        btnVerTodosFichajes.setOnAction(event -> verTodosFichajes());
+        btnEstadisticas.setOnAction(event -> mostrarEstadisticas());
+        btnGestionarIncidencias.setOnAction(event -> gestionarIncidencias());
+    }
+    
+    private void iniciarRelojTiempoReal() {
+        relojTimer = new Timer(true);
+        relojTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                Platform.runLater(() -> {
+                    LocalDateTime ahora = LocalDateTime.now();
+                    lblRelojTiempoReal.setText(ahora.format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+                    lblFechaActual.setText(ahora.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                    
+                    // Actualizar tiempo trabajado si hay fichaje activo
+                    if (fichajeActual != null && fichajeActual.getEstado() == ModeloFichaje.EstadoFichaje.ABIERTO) {
+                        actualizarTiempoTrabajado();
+                    }
+                });
+            }
+        }, 0, 1000); // Actualizar cada segundo
+        
+        // Timer para actualización periódica de datos
+        actualizacionTimer = new Timer(true);
+        actualizacionTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                Platform.runLater(() -> verificarFichajeActual());
+            }
+        }, 0, 30000); // Actualizar cada 30 segundos
+    }
+    
+    private void configurarInterfazSegunRol() {
+        if (usuarioActual != null && usuarioActual.esAdmin()) {
+            panelAdministracion.setVisible(true);
+            panelAdministracion.setManaged(true);
+            cargarEmpleados();
+        }
+    }
+    
+    private void cargarDatosIniciales() {
+        verificarFichajeActual();
+        cargarHistorialFichajes();
+        if (usuarioActual.esAdmin()) {
+            cargarEstadisticasGenerales();
+        }
+    }
+    
+    private void ficharEntrada() {
+        try {
+            if (fichajeActual != null && fichajeActual.getEstado() == ModeloFichaje.EstadoFichaje.ABIERTO) {
+                mostrarError("Error", "Ya tienes un fichaje abierto. Debes fichar la salida primero.");
+                return;
+            }
+            
+            ModeloFichaje.TipoFichaje tipo = cmbTipoFichaje.getValue();
+            String motivo = txtMotivoIncidencia.getText().trim();
+            
+            if (tipo != ModeloFichaje.TipoFichaje.NORMAL && motivo.isEmpty()) {
+                mostrarError("Error", "Debes especificar un motivo para las incidencias.");
+                return;
+            }
+            
+            // Enviar petición al servidor
+            String peticion = Protocolo.FICHAR_ENTRADA + Protocolo.SEPARADOR_CODIGO + 
+                            usuarioActual.getId().toString() + Protocolo.SEPARADOR_PARAMETROS +
+                            usuarioActual.getNombre() + Protocolo.SEPARADOR_PARAMETROS +
+                            usuarioActual.getUsuario() + Protocolo.SEPARADOR_PARAMETROS +
+                            tipo.name() + 
+                            (motivo.isEmpty() ? "" : Protocolo.SEPARADOR_PARAMETROS + motivo);
+            
+            gestorSocket.enviarPeticion(peticion);
+            
+            // Leer respuesta
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.FICHAR_ENTRADA_RESPONSE) {
+                fichajeActual = (ModeloFichaje) entrada.readObject();
+                mostrarExito("Fichaje de Entrada", "Entrada registrada correctamente a las " + 
+                           fichajeActual.getHoraEntradaFormateada());
+                actualizarInterfazFichajeActual();
+                cargarHistorialFichajes();
+            } else if (codigoRespuesta == Protocolo.ERROR_FICHAR_ENTRADA) {
+                String error = entrada.readUTF();
+                mostrarError("Error al Fichar Entrada", error);
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error de Comunicación", "No se pudo conectar con el servidor: " + e.getMessage());
+        }
+    }
+    
+    private void ficharSalida() {
+        try {
+            if (fichajeActual == null || fichajeActual.getEstado() != ModeloFichaje.EstadoFichaje.ABIERTO) {
+                mostrarError("Error", "No tienes un fichaje de entrada abierto.");
+                return;
+            }
+            
+            ModeloFichaje.TipoFichaje tipo = cmbTipoFichaje.getValue();
+            String motivo = txtMotivoIncidencia.getText().trim();
+            
+            if (tipo != ModeloFichaje.TipoFichaje.NORMAL && motivo.isEmpty()) {
+                mostrarError("Error", "Debes especificar un motivo para las incidencias.");
+                return;
+            }
+            
+            // Enviar petición al servidor
+            String peticion = Protocolo.FICHAR_SALIDA + Protocolo.SEPARADOR_CODIGO + 
+                            usuarioActual.getId().toString() + Protocolo.SEPARADOR_PARAMETROS +
+                            tipo.name() + 
+                            (motivo.isEmpty() ? "" : Protocolo.SEPARADOR_PARAMETROS + motivo);
+            
+            gestorSocket.enviarPeticion(peticion);
+            
+            // Leer respuesta
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.FICHAR_SALIDA_RESPONSE) {
+                boolean exito = entrada.readBoolean();
+                if (exito) {
+                    mostrarExito("Fichaje de Salida", "Salida registrada correctamente.");
+                    fichajeActual = null;
+                    actualizarInterfazFichajeActual();
+                    cargarHistorialFichajes();
+                } else {
+                    mostrarError("Error", "No se pudo registrar la salida.");
+                }
+            } else if (codigoRespuesta == Protocolo.ERROR_FICHAR_SALIDA) {
+                String error = entrada.readUTF();
+                mostrarError("Error al Fichar Salida", error);
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error de Comunicación", "No se pudo conectar con el servidor: " + e.getMessage());
+        }
+    }
+    
+    private void verificarFichajeActual() {
+        try {
+            if (usuarioActual == null) return;
+            
+            // Enviar petición al servidor
+            String peticion = Protocolo.OBTENER_FICHAJE_ABIERTO_HOY + Protocolo.SEPARADOR_CODIGO + 
+                            usuarioActual.getId().toString();
+            
+            gestorSocket.enviarPeticion(peticion);
+            
+            // Leer respuesta
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.OBTENER_FICHAJE_ABIERTO_HOY_RESPONSE) {
+                fichajeActual = (ModeloFichaje) entrada.readObject();
+                actualizarInterfazFichajeActual();
+            } else {
+                fichajeActual = null;
+                actualizarInterfazFichajeActual();
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error al verificar fichaje actual: " + e.getMessage());
+        }
+    }
+    
+    private void actualizarInterfazFichajeActual() {
+        if (fichajeActual != null && fichajeActual.getEstado() == ModeloFichaje.EstadoFichaje.ABIERTO) {
+            panelFichajeActual.setVisible(true);
+            panelFichajeActual.setManaged(true);
+            
+            lblHoraEntrada.setText(fichajeActual.getHoraEntradaFormateada());
+            lblEstadoActual.setText(fichajeActual.getEstado().getDescripcion());
+            lblEstadoFichaje.setText("Fichado - Trabajando");
+            
+            btnFicharEntrada.setDisable(true);
+            btnFicharSalida.setDisable(false);
+            
+            actualizarTiempoTrabajado();
+        } else {
+            panelFichajeActual.setVisible(false);
+            panelFichajeActual.setManaged(false);
+            
+            lblEstadoFichaje.setText("Sin fichar");
+            lblTiempoTrabajado.setText("00:00");
+            
+            btnFicharEntrada.setDisable(false);
+            btnFicharSalida.setDisable(true);
+        }
+    }
+    
+    private void actualizarTiempoTrabajado() {
+        if (fichajeActual != null && fichajeActual.getFechaHoraEntrada() != null) {
+            LocalDateTime ahora = LocalDateTime.now();
+            LocalDateTime entrada = fichajeActual.getFechaHoraEntrada();
+            
+            long minutos = java.time.Duration.between(entrada, ahora).toMinutes();
+            long horas = minutos / 60;
+            long minutosRestantes = minutos % 60;
+            
+            lblTiempoTrabajado.setText(String.format("%02d:%02d", horas, minutosRestantes));
+        }
+    }
+    
+    private void cargarHistorialFichajes() {
+        try {
+            if (usuarioActual == null) return;
+            
+            // Enviar petición al servidor
+            String peticion = Protocolo.OBTENER_HISTORIAL_FICHAJES + Protocolo.SEPARADOR_CODIGO + 
+                            usuarioActual.getId().toString() + Protocolo.SEPARADOR_PARAMETROS + "50";
+            
+            gestorSocket.enviarPeticion(peticion);
+            
+            // Leer respuesta
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.OBTENER_HISTORIAL_FICHAJES_RESPONSE) {
+                @SuppressWarnings("unchecked")
+                List<ModeloFichaje> fichajes = (List<ModeloFichaje>) entrada.readObject();
+                
+                Platform.runLater(() -> {
+                    listaFichajes.clear();
+                    listaFichajes.addAll(fichajes);
+                });
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error al cargar historial: " + e.getMessage());
+        }
+    }
+    
+    private void cargarEmpleados() {
+        // TODO: Implementar carga de empleados para administradores
+        // Por ahora, agregar algunos empleados de ejemplo
+        Platform.runLater(() -> {
+            cmbEmpleados.setItems(FXCollections.observableArrayList(
+                "Todos los empleados",
+                usuarioActual.getNombre()
+            ));
+            cmbEmpleados.setValue("Todos los empleados");
+        });
+    }
+    
+    private void cargarEstadisticasGenerales() {
+        try {
+            LocalDate hoy = LocalDate.now();
+            
+            // Enviar petición al servidor
+            String peticion = Protocolo.OBTENER_ESTADISTICAS_FICHAJES + Protocolo.SEPARADOR_CODIGO;
+            gestorSocket.enviarPeticion(peticion);
+            gestorSocket.getSalida().writeObject(hoy);
+            gestorSocket.getSalida().writeObject(hoy);
+            gestorSocket.getSalida().flush();
+            
+            // Leer respuesta
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.OBTENER_ESTADISTICAS_FICHAJES_RESPONSE) {
+                Document estadisticas = (Document) entrada.readObject();
+                
+                Platform.runLater(() -> {
+                    lblTotalEmpleados.setText(String.valueOf(estadisticas.getInteger("totalEmpleados", 0)));
+                    lblFichajesHoy.setText(String.valueOf(estadisticas.getInteger("fichajesHoy", 0)));
+                    lblIncidenciasHoy.setText(String.valueOf(estadisticas.getInteger("incidenciasHoy", 0)));
+                    Double promedioHoras = estadisticas.getDouble("promedioHoras");
+                    lblPromedioHoras.setText(String.format("%.1fh", promedioHoras != null ? promedioHoras : 0.0));
+                });
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error al cargar estadísticas: " + e.getMessage());
+        }
+    }
+    
+    private void actualizarDatos() {
+        verificarFichajeActual();
+        cargarHistorialFichajes();
+        if (usuarioActual != null && usuarioActual.esAdmin()) {
+            cargarEstadisticasGenerales();
+        }
+    }
+    
+    private void aplicarFiltros() {
+        LocalDate fechaInicio = dpFechaInicio.getValue();
+        LocalDate fechaFin = dpFechaFin.getValue();
+        
+        if (fechaInicio == null || fechaFin == null) {
+            mostrarError("Error", "Debes seleccionar ambas fechas para filtrar.");
+            return;
+        }
+        
+        if (fechaInicio.isAfter(fechaFin)) {
+            mostrarError("Error", "La fecha de inicio no puede ser posterior a la fecha de fin.");
+            return;
+        }
+        
+        try {
+            // Enviar petición al servidor
+            String peticion = Protocolo.OBTENER_FICHAJES_EMPLEADO_POR_FECHA + Protocolo.SEPARADOR_CODIGO + 
+                            usuarioActual.getId().toString();
+            
+            gestorSocket.enviarPeticion(peticion);
+            gestorSocket.getSalida().writeObject(fechaInicio);
+            gestorSocket.getSalida().writeObject(fechaFin);
+            gestorSocket.getSalida().flush();
+            
+            // Leer respuesta
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.OBTENER_FICHAJES_EMPLEADO_POR_FECHA_RESPONSE) {
+                @SuppressWarnings("unchecked")
+                List<ModeloFichaje> fichajes = (List<ModeloFichaje>) entrada.readObject();
+                
+                Platform.runLater(() -> {
+                    listaFichajes.clear();
+                    listaFichajes.addAll(fichajes);
+                });
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error", "No se pudieron aplicar los filtros: " + e.getMessage());
+        }
+    }
+    
+    private void limpiarFiltros() {
+        dpFechaInicio.setValue(null);
+        dpFechaFin.setValue(null);
+        cargarHistorialFichajes();
+    }
+    
+    private void exportarHistorial() {
+        // TODO: Implementar exportación a Excel/PDF
+        mostrarInfo("Exportar", "Funcionalidad de exportación en desarrollo.");
+    }
+    
+    private void generarInforme() {
+        // TODO: Implementar generación de informes
+        mostrarInfo("Informe", "Funcionalidad de informes en desarrollo.");
+    }
+    
+    private void verTodosFichajes() {
+        if (!usuarioActual.esAdmin()) {
+            mostrarError("Acceso Denegado", "Solo los administradores pueden ver todos los fichajes.");
+            return;
+        }
+        
+        try {
+            // Enviar petición al servidor
+            String peticion = Protocolo.OBTENER_TODOS_FICHAJES + Protocolo.SEPARADOR_CODIGO + "100";
+            
+            gestorSocket.enviarPeticion(peticion);
+            
+            // Leer respuesta
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.OBTENER_TODOS_FICHAJES_RESPONSE) {
+                @SuppressWarnings("unchecked")
+                List<ModeloFichaje> fichajes = (List<ModeloFichaje>) entrada.readObject();
+                
+                Platform.runLater(() -> {
+                    listaFichajes.clear();
+                    listaFichajes.addAll(fichajes);
+                });
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error", "No se pudieron cargar todos los fichajes: " + e.getMessage());
+        }
+    }
+    
+    private void mostrarEstadisticas() {
+        // TODO: Implementar ventana de estadísticas detalladas
+        mostrarInfo("Estadísticas", "Ventana de estadísticas detalladas en desarrollo.");
+    }
+    
+    private void gestionarIncidencias() {
+        // TODO: Implementar gestión de incidencias
+        mostrarInfo("Incidencias", "Gestión de incidencias en desarrollo.");
+    }
+    
+    private void editarFichaje(ModeloFichaje fichaje) {
+        if (!usuarioActual.esAdmin()) {
+            mostrarError("Acceso Denegado", "Solo los administradores pueden editar fichajes.");
+            return;
+        }
+        
+        // TODO: Implementar edición de fichajes
+        mostrarInfo("Editar", "Funcionalidad de edición en desarrollo.");
+    }
+    
+    private void eliminarFichaje(ModeloFichaje fichaje) {
+        if (!usuarioActual.esAdmin()) {
+            mostrarError("Acceso Denegado", "Solo los administradores pueden eliminar fichajes.");
+            return;
+        }
+        
+        Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmacion.setTitle("Confirmar Eliminación");
+        confirmacion.setHeaderText("¿Eliminar fichaje?");
+        confirmacion.setContentText("¿Estás seguro de que quieres eliminar este fichaje? Esta acción no se puede deshacer.");
+        
+        confirmacion.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {
+                    // Enviar petición al servidor
+                    String peticion = Protocolo.ELIMINAR_FICHAJE + Protocolo.SEPARADOR_CODIGO + 
+                                    fichaje.getId().toString();
+                    
+                    gestorSocket.enviarPeticion(peticion);
+                    
+                    // Leer respuesta
+                    ObjectInputStream entrada = gestorSocket.getEntrada();
+                    int codigoRespuesta = entrada.readInt();
+                    
+                    if (codigoRespuesta == Protocolo.ELIMINAR_FICHAJE_RESPONSE) {
+                        boolean eliminado = entrada.readBoolean();
+                        if (eliminado) {
+                            mostrarExito("Eliminación", "Fichaje eliminado correctamente.");
+                            cargarHistorialFichajes();
+                        } else {
+                            mostrarError("Error", "No se pudo eliminar el fichaje.");
+                        }
+                    }
+                    
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    mostrarError("Error", "No se pudo eliminar el fichaje: " + e.getMessage());
+                }
+            }
+        });
+    }
+    
+    // Métodos de utilidad para mostrar mensajes
+    private void mostrarError(String titulo, String mensaje) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText(titulo);
+            alert.setContentText(mensaje);
+            alert.showAndWait();
+        });
+    }
+    
+    private void mostrarExito(String titulo, String mensaje) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Éxito");
+            alert.setHeaderText(titulo);
+            alert.setContentText(mensaje);
+            alert.showAndWait();
+        });
+    }
+    
+    private void mostrarInfo(String titulo, String mensaje) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Información");
+            alert.setHeaderText(titulo);
+            alert.setContentText(mensaje);
+            alert.showAndWait();
+        });
+    }
+    
+    // Método para limpiar recursos al cerrar
+    public void cerrarRecursos() {
+        if (relojTimer != null) {
+            relojTimer.cancel();
+        }
+        if (actualizacionTimer != null) {
+            actualizacionTimer.cancel();
+        }
+    }
+} 

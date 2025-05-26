@@ -18,6 +18,9 @@ import com.example.pruebamongodbcss.Modulos.Clinica.ModeloDiagnostico;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario;
 import com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica;
+import com.example.pruebamongodbcss.Modulos.Fichaje.ModeloFichaje;
+import com.example.pruebamongodbcss.Modulos.Fichaje.ResumenFichaje;
+import com.example.pruebamongodbcss.Modulos.Fichaje.ServicioFichaje;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.calendar.CalendarService;
 import com.mongodb.client.MongoCollection;
@@ -36,6 +39,7 @@ public class ClienteHandler implements Runnable {
     private ServicioClinica servicioClinica;
     private CalendarService calendarService;
     private com.example.pruebamongodbcss.Modulos.Facturacion.ServicioFacturacion servicioFacturacion;
+    private ServicioFichaje servicioFichaje;
     
     //Declaro el constructor
     public ClienteHandler(Socket socket) {
@@ -44,6 +48,7 @@ public class ClienteHandler implements Runnable {
         this.servicioClinica = new ServicioClinica();
         this.calendarService = new CalendarService();
         this.servicioFacturacion = new com.example.pruebamongodbcss.Modulos.Facturacion.ServicioFacturacion();
+        this.servicioFichaje = new ServicioFichaje();
     }
 
     @Override
@@ -1158,6 +1163,252 @@ public class ClienteHandler implements Runnable {
                                 synchronized (salida) {
                                     salida.writeInt(Protocolo.ERROR_CAMBIAR_ESTADO_CITA);
                                     salida.writeUTF("Faltan parámetros: se requiere ID de cita y nuevo estado");
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        // Casos de fichaje
+                        case Protocolo.FICHAR_ENTRADA:
+                            System.out.println("Procesando solicitud de fichar entrada...");
+                            try {
+                                ObjectId empleadoId = new ObjectId(parametros[0]);
+                                String nombreEmpleado = parametros[1];
+                                String usuarioEmpleado = parametros[2];
+                                ModeloFichaje.TipoFichaje tipo = ModeloFichaje.TipoFichaje.valueOf(parametros[3]);
+                                String motivoIncidencia = parametros.length > 4 ? parametros[4] : null;
+                                
+                                ModeloFichaje fichaje = servicioFichaje.ficharEntrada(empleadoId, nombreEmpleado, usuarioEmpleado, tipo, motivoIncidencia);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.FICHAR_ENTRADA_RESPONSE);
+                                    salida.writeObject(fichaje);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al fichar entrada: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_FICHAR_ENTRADA);
+                                    salida.writeUTF(e.getMessage());
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.FICHAR_SALIDA:
+                            System.out.println("Procesando solicitud de fichar salida...");
+                            try {
+                                ObjectId empleadoId = new ObjectId(parametros[0]);
+                                ModeloFichaje.TipoFichaje tipo = ModeloFichaje.TipoFichaje.valueOf(parametros[1]);
+                                String motivoIncidencia = parametros.length > 2 ? parametros[2] : null;
+                                
+                                boolean exito = servicioFichaje.ficharSalida(empleadoId, tipo, motivoIncidencia);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.FICHAR_SALIDA_RESPONSE);
+                                    salida.writeBoolean(exito);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al fichar salida: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_FICHAR_SALIDA);
+                                    salida.writeUTF(e.getMessage());
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_FICHAJE_ABIERTO_HOY:
+                            System.out.println("Procesando solicitud de obtener fichaje abierto hoy...");
+                            try {
+                                ObjectId empleadoId = new ObjectId(parametros[0]);
+                                ModeloFichaje fichaje = servicioFichaje.obtenerFichajeAbiertoHoy(empleadoId);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_FICHAJE_ABIERTO_HOY_RESPONSE);
+                                    salida.writeObject(fichaje);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener fichaje abierto: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_FICHAJE_ABIERTO_HOY);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_HISTORIAL_FICHAJES:
+                            System.out.println("Procesando solicitud de obtener historial de fichajes...");
+                            try {
+                                ObjectId empleadoId = new ObjectId(parametros[0]);
+                                int limite = Integer.parseInt(parametros[1]);
+                                List<ModeloFichaje> historial = servicioFichaje.obtenerHistorialEmpleado(empleadoId, limite);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_HISTORIAL_FICHAJES_RESPONSE);
+                                    salida.writeObject(historial);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener historial de fichajes: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_HISTORIAL_FICHAJES);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_TODOS_FICHAJES:
+                            System.out.println("Procesando solicitud de obtener todos los fichajes...");
+                            try {
+                                int limite = Integer.parseInt(parametros[0]);
+                                List<ModeloFichaje> fichajes = servicioFichaje.obtenerTodosFichajes(limite);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_TODOS_FICHAJES_RESPONSE);
+                                    salida.writeObject(fichajes);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener todos los fichajes: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_TODOS_FICHAJES);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_FICHAJES_POR_FECHA:
+                            System.out.println("Procesando solicitud de obtener fichajes por fecha...");
+                            try {
+                                java.time.LocalDate fechaInicioFichajes = (java.time.LocalDate) entrada.readObject();
+                                java.time.LocalDate fechaFinFichajes = (java.time.LocalDate) entrada.readObject();
+                                List<ModeloFichaje> fichajes = servicioFichaje.obtenerFichajesPorFecha(fechaInicioFichajes, fechaFinFichajes);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_FICHAJES_POR_FECHA_RESPONSE);
+                                    salida.writeObject(fichajes);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener fichajes por fecha: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_FICHAJES_POR_FECHA);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_FICHAJES_EMPLEADO_POR_FECHA:
+                            System.out.println("Procesando solicitud de obtener fichajes de empleado por fecha...");
+                            try {
+                                ObjectId empleadoId = new ObjectId(parametros[0]);
+                                java.time.LocalDate fechaInicioEmpleado = (java.time.LocalDate) entrada.readObject();
+                                java.time.LocalDate fechaFinEmpleado = (java.time.LocalDate) entrada.readObject();
+                                List<ModeloFichaje> fichajes = servicioFichaje.obtenerFichajesEmpleadoPorFecha(empleadoId, fechaInicioEmpleado, fechaFinEmpleado);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_FICHAJES_EMPLEADO_POR_FECHA_RESPONSE);
+                                    salida.writeObject(fichajes);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener fichajes de empleado por fecha: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_FICHAJES_EMPLEADO_POR_FECHA);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.GENERAR_RESUMEN_FICHAJES:
+                            System.out.println("Procesando solicitud de generar resumen de fichajes...");
+                            try {
+                                String usuarioEmpleado = parametros[0];
+                                java.time.LocalDate fechaInicioResumen = (java.time.LocalDate) entrada.readObject();
+                                java.time.LocalDate fechaFinResumen = (java.time.LocalDate) entrada.readObject();
+                                ResumenFichaje resumen = servicioFichaje.generarResumenEmpleado(usuarioEmpleado, fechaInicioResumen, fechaFinResumen);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.GENERAR_RESUMEN_FICHAJES_RESPONSE);
+                                    salida.writeObject(resumen);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al generar resumen de fichajes: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_GENERAR_RESUMEN_FICHAJES);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_FICHAJES_POR_DIA:
+                            System.out.println("Procesando solicitud de obtener fichajes por día...");
+                            try {
+                                java.time.LocalDate fechaDia = (java.time.LocalDate) entrada.readObject();
+                                List<ModeloFichaje> fichajes = servicioFichaje.obtenerFichajesPorDia(fechaDia);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_FICHAJES_POR_DIA_RESPONSE);
+                                    salida.writeObject(fichajes);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener fichajes por día: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_FICHAJES_POR_DIA);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_ESTADISTICAS_FICHAJES:
+                            System.out.println("Procesando solicitud de obtener estadísticas de fichajes...");
+                            try {
+                                java.time.LocalDate fechaInicioEstadisticas = (java.time.LocalDate) entrada.readObject();
+                                java.time.LocalDate fechaFinEstadisticas = (java.time.LocalDate) entrada.readObject();
+                                Document estadisticas = servicioFichaje.obtenerEstadisticasGenerales(fechaInicioEstadisticas, fechaFinEstadisticas);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_ESTADISTICAS_FICHAJES_RESPONSE);
+                                    salida.writeObject(estadisticas);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener estadísticas de fichajes: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_ESTADISTICAS_FICHAJES);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.ELIMINAR_FICHAJE:
+                            System.out.println("Procesando solicitud de eliminar fichaje...");
+                            try {
+                                ObjectId fichajeId = new ObjectId(parametros[0]);
+                                boolean eliminadoFichaje = servicioFichaje.eliminarFichaje(fichajeId);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ELIMINAR_FICHAJE_RESPONSE);
+                                    salida.writeBoolean(eliminadoFichaje);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al eliminar fichaje: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_ELIMINAR_FICHAJE);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.ACTUALIZAR_FICHAJE:
+                            System.out.println("Procesando solicitud de actualizar fichaje...");
+                            try {
+                                ModeloFichaje fichaje = (ModeloFichaje) entrada.readObject();
+                                boolean actualizado = servicioFichaje.actualizarFichaje(fichaje);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ACTUALIZAR_FICHAJE_RESPONSE);
+                                    salida.writeBoolean(actualizado);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al actualizar fichaje: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_ACTUALIZAR_FICHAJE);
                                     salida.flush();
                                 }
                             }

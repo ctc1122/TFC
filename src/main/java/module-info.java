@@ -57,6 +57,7 @@ module com.example.pruebamongodbcss {
     exports com.example.pruebamongodbcss.Modulos.Inventario;
     exports com.example.pruebamongodbcss.calendar;
     exports com.example.pruebamongodbcss.calendar.google;
+    exports com.example.pruebamongodbcss.Modulos.Fichaje;
 
     // Apertura de submódulos para FXML
     opens com.example.pruebamongodbcss.Modulos.AppChat to javafx.fxml;
@@ -74,7 +75,7 @@ module com.example.pruebamongodbcss {
     opens com.example.pruebamongodbcss.Modulos.Inventario to javafx.fxml;
     opens com.example.pruebamongodbcss.calendar to javafx.fxml, javafx.graphics, com.google.api.client, com.google.api.services.calendar, com.google.gson;
     opens com.example.pruebamongodbcss.calendar.google to javafx.fxml, javafx.graphics, com.google.api.client, com.google.api.services.calendar, com.google.gson;
-    
+    opens com.example.pruebamongodbcss.Modulos.Fichaje to javafx.fxml;
 
     
     // IMPORTANTE: Cada vez que crees un nuevo paquete dentro de Modulos,

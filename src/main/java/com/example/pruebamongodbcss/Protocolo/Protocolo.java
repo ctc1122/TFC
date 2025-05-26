@@ -238,6 +238,55 @@ public interface Protocolo {
     static final int CAMBIAR_ESTADO_CITA_RESPONSE=1156;
     static final int ERROR_CAMBIAR_ESTADO_CITA=1157;
 
+    // Códigos para operaciones de fichaje
+    static final int FICHAR_ENTRADA=1158;
+    static final int FICHAR_ENTRADA_RESPONSE=1159;
+    static final int ERROR_FICHAR_ENTRADA=1160;
+
+    static final int FICHAR_SALIDA=1161;
+    static final int FICHAR_SALIDA_RESPONSE=1162;
+    static final int ERROR_FICHAR_SALIDA=1163;
+
+    static final int OBTENER_FICHAJE_ABIERTO_HOY=1164;
+    static final int OBTENER_FICHAJE_ABIERTO_HOY_RESPONSE=1165;
+    static final int ERROR_OBTENER_FICHAJE_ABIERTO_HOY=1166;
+
+    static final int OBTENER_HISTORIAL_FICHAJES=1167;
+    static final int OBTENER_HISTORIAL_FICHAJES_RESPONSE=1168;
+    static final int ERROR_OBTENER_HISTORIAL_FICHAJES=1169;
+
+    static final int OBTENER_TODOS_FICHAJES=1170;
+    static final int OBTENER_TODOS_FICHAJES_RESPONSE=1171;
+    static final int ERROR_OBTENER_TODOS_FICHAJES=1172;
+
+    static final int OBTENER_FICHAJES_POR_FECHA=1173;
+    static final int OBTENER_FICHAJES_POR_FECHA_RESPONSE=1174;
+    static final int ERROR_OBTENER_FICHAJES_POR_FECHA=1175;
+
+    static final int OBTENER_FICHAJES_EMPLEADO_POR_FECHA=1176;
+    static final int OBTENER_FICHAJES_EMPLEADO_POR_FECHA_RESPONSE=1177;
+    static final int ERROR_OBTENER_FICHAJES_EMPLEADO_POR_FECHA=1178;
+
+    static final int GENERAR_RESUMEN_FICHAJES=1179;
+    static final int GENERAR_RESUMEN_FICHAJES_RESPONSE=1180;
+    static final int ERROR_GENERAR_RESUMEN_FICHAJES=1181;
+
+    static final int OBTENER_FICHAJES_POR_DIA=1182;
+    static final int OBTENER_FICHAJES_POR_DIA_RESPONSE=1183;
+    static final int ERROR_OBTENER_FICHAJES_POR_DIA=1184;
+
+    static final int OBTENER_ESTADISTICAS_FICHAJES=1185;
+    static final int OBTENER_ESTADISTICAS_FICHAJES_RESPONSE=1186;
+    static final int ERROR_OBTENER_ESTADISTICAS_FICHAJES=1187;
+
+    static final int ELIMINAR_FICHAJE=1188;
+    static final int ELIMINAR_FICHAJE_RESPONSE=1189;
+    static final int ERROR_ELIMINAR_FICHAJE=1190;
+
+    static final int ACTUALIZAR_FICHAJE=1191;
+    static final int ACTUALIZAR_FICHAJE_RESPONSE=1192;
+    static final int ERROR_ACTUALIZAR_FICHAJE=1193;
+
 
     
 } 

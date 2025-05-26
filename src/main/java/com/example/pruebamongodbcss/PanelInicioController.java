@@ -804,14 +804,35 @@ public class PanelInicioController implements Initializable {
 
     // Método placeholder para Fichaje
     private void abrirModuloFichaje() {
-        // Desmarcar otros botones y marcar el seleccionado
-        desmarcaTodosLosBotones();
-        btnFichaje.getStyleClass().add("menu-button-selected");
-        
-        System.out.println("Abrir módulo de fichaje (implementa la lógica aquí)");
-        
-        // Mantener visible el carrusel
-        mantenerCarruselVisible();
+        try {
+            // Desmarcar otros botones y marcar el seleccionado
+            desmarcaTodosLosBotones();
+            btnFichaje.getStyleClass().add("menu-button-selected");
+            
+            // Cargar la vista de fichaje
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Fichaje/fichaje-view.fxml"));
+            Parent contenido = ThemeUtil.loadWithTheme(loader);
+            
+            // Aplicar estilos CSS específicos del módulo de fichaje
+            contenido.getStylesheets().add(getClass().getResource("/Estilos/fichaje-styles.css").toExternalForm());
+            
+            // Obtener el BorderPane central y reemplazar su contenido
+            BorderPane centerPane = (BorderPane) root.getCenter();
+            centerPane.setCenter(contenido);
+            
+            // Asegurarse de que todas las ventanas tengan el tema aplicado
+            javafx.application.Platform.runLater(ThemeUtil::applyThemeToAllOpenWindows);
+            
+            // Actualizar el título
+            lblClinica.setText("Sistema de Fichaje");
+            
+            // Mantener visible el carrusel
+            mantenerCarruselVisible();
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostrarError("Error", "Error al cargar el módulo de fichaje: " + e.getMessage());
+        }
     }
 
     /**
