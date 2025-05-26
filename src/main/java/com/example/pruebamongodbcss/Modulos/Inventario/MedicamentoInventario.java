@@ -122,4 +122,32 @@ public class MedicamentoInventario {
         String codigo = getCodigo();
         return codigo != null ? codigo.hashCode() : 0;
     }
+    
+    // Setters para permitir edición
+    public void setLaboratorio(String laboratorio) {
+        documento.put("laboratorio", laboratorio);
+    }
+    
+    public void setPrecio(double precio) {
+        documento.put("precio", precio);
+    }
+    
+    public void setDimension(String dimension) {
+        documento.put("dimension", dimension);
+    }
+    
+    public void setViaAdmin(String viaAdmin) {
+        documento.put("ViaAdmin", viaAdmin);
+    }
+    
+    public void setUnidades(int unidades) {
+        documento.put("unidades", unidades);
+    }
+    
+    // Método para actualizar el documento completo
+    public void actualizarDocumento(Document nuevoDocumento) {
+        if (nuevoDocumento != null) {
+            this.documento = nuevoDocumento;
+        }
+    }
 } 

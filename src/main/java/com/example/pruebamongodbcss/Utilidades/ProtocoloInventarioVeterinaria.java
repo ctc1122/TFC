@@ -10,19 +10,21 @@ public class ProtocoloInventarioVeterinaria {
     public static final String SEPARADOR_CODIGO = "|";
     public static final String SEPARADOR_PARAMETROS = ":";
     
-    // Códigos de petición al servidor de inventario
+    // Códigos de petición al servidor de inventario (deben coincidir con el servidor)
     public static final int LOGIN_REQUEST = 1;
     public static final int BUSCAR_FARMACIA_REQUEST = 2;
     public static final int OBTENER_FARMACIA_REQUEST = 3;
     public static final int ACTUALIZAR_UNIDADES_REQUEST = 4;
     public static final int ELIMINAR_PRODUCTO_REQUEST = 5;
+    public static final int BUSCAR_MEDICAMENTOS_INVENTARIO = 9003; // Código real del servidor
     
-    // Códigos de respuesta del servidor
+    // Códigos de respuesta del servidor (deben coincidir con el servidor)
     public static final int LOGIN_RESPONSE = 100;
     public static final int BUSCAR_FARMACIA_RESPONSE = 101;
     public static final int OBTENER_FARMACIA_RESPONSE = 102;
     public static final int ACTUALIZAR_UNIDADES_RESPONSE = 103;
     public static final int ELIMINAR_PRODUCTO_RESPONSE = 104;
+    public static final int BUSCAR_MEDICAMENTOS_INVENTARIO_RESPONSE = 9004; // Respuesta real del servidor
     
     // Códigos de estado
     public static final int SUCCESS = 200;
@@ -36,8 +38,6 @@ public class ProtocoloInventarioVeterinaria {
     // Códigos adicionales para medicamentos con stock
     public static final int OBTENER_MEDICAMENTOS_INVENTARIO = 9001;
     public static final int OBTENER_MEDICAMENTOS_INVENTARIO_RESPONSE = 9002;
-    public static final int BUSCAR_MEDICAMENTOS_INVENTARIO = 9003;
-    public static final int BUSCAR_MEDICAMENTOS_INVENTARIO_RESPONSE = 9004;
     public static final int ERROR_INVENTARIO = 9999;
     
     /**
@@ -125,7 +125,15 @@ public class ProtocoloInventarioVeterinaria {
      * Construye mensaje para buscar medicamentos por término
      */
     public static String construirBuscarMedicamentos(String termino) {
-        return construirMensaje(BUSCAR_MEDICAMENTOS_INVENTARIO, termino);
+        String idMensaje = generarIdMensaje();
+        return construirMensaje(BUSCAR_MEDICAMENTOS_INVENTARIO, termino, idMensaje);
+    }
+    
+    /**
+     * Genera un ID único para el mensaje
+     */
+    private static String generarIdMensaje() {
+        return "MSG_" + System.currentTimeMillis();
     }
     
     /**

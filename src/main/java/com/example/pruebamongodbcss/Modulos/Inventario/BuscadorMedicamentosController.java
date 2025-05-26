@@ -13,16 +13,20 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.GridPane;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import org.bson.Document;
 
+import java.io.IOException;
 import java.net.URL;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -97,18 +101,48 @@ public class BuscadorMedicamentosController implements Initializable {
     }
     
     private void configurarTabla() {
-        // Configurar columnas
+        // Hacer la tabla editable
+        tablaMedicamentos.setEditable(true);
+        
+        // Configurar columnas básicas
         colCodigo.setCellValueFactory(new PropertyValueFactory<>("codigo"));
         colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
-        colLaboratorio.setCellValueFactory(new PropertyValueFactory<>("laboratorio"));
         colDimension.setCellValueFactory(new PropertyValueFactory<>("dimension"));
         colViaAdmin.setCellValueFactory(new PropertyValueFactory<>("viaAdmin"));
         colStock.setCellValueFactory(new PropertyValueFactory<>("unidades"));
         
-        // Columna de precio con formato
+        // Columna de laboratorio EDITABLE
+        colLaboratorio.setCellValueFactory(new PropertyValueFactory<>("laboratorio"));
+        colLaboratorio.setCellFactory(TextFieldTableCell.forTableColumn());
+        colLaboratorio.setOnEditCommit(event -> {
+            MedicamentoInventario medicamento = event.getRowValue();
+            String nuevoLaboratorio = event.getNewValue();
+            medicamento.setLaboratorio(nuevoLaboratorio);
+            System.out.println("✏️ Laboratorio actualizado: " + medicamento.getNombre() + " -> " + nuevoLaboratorio);
+            mostrarNotificacion("Laboratorio actualizado", "Nuevo laboratorio: " + nuevoLaboratorio);
+        });
+        
+        // Columna de precio EDITABLE con formato
         colPrecio.setCellValueFactory(cellData -> {
             double precio = cellData.getValue().getPrecio();
-            return new SimpleStringProperty(precio > 0 ? formatoMoneda.format(precio) : "No establecido");
+            return new SimpleStringProperty(precio > 0 ? String.valueOf(precio) : "0.0");
+        });
+        colPrecio.setCellFactory(TextFieldTableCell.forTableColumn());
+        colPrecio.setOnEditCommit(event -> {
+            MedicamentoInventario medicamento = event.getRowValue();
+            String nuevoPrecioStr = event.getNewValue();
+            try {
+                double nuevoPrecio = Double.parseDouble(nuevoPrecioStr);
+                medicamento.setPrecio(nuevoPrecio);
+                System.out.println("💰 Precio actualizado: " + medicamento.getNombre() + " -> " + formatoMoneda.format(nuevoPrecio));
+                mostrarNotificacion("Precio actualizado", "Nuevo precio: " + formatoMoneda.format(nuevoPrecio));
+                // Refrescar la tabla para mostrar el formato correcto
+                tablaMedicamentos.refresh();
+            } catch (NumberFormatException e) {
+                mostrarError("Error", "Precio inválido: " + nuevoPrecioStr + "\nUse formato: 12.50");
+                // Revertir el cambio
+                tablaMedicamentos.refresh();
+            }
         });
         
         // Columna de acciones
@@ -167,6 +201,17 @@ public class BuscadorMedicamentosController implements Initializable {
         
         // Hacer que la tabla sea redimensionable
         tablaMedicamentos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        
+        // Agregar tooltip para indicar que las celdas son editables
+        colLaboratorio.setText("Laboratorio 📝");
+        colPrecio.setText("Precio (€) 📝");
+        
+        // Tooltip explicativo
+        Tooltip tooltipLab = new Tooltip("Doble clic para editar el laboratorio");
+        Tooltip.install(colLaboratorio.getGraphic(), tooltipLab);
+        
+        Tooltip tooltipPrecio = new Tooltip("Doble clic para editar el precio");
+        Tooltip.install(colPrecio.getGraphic(), tooltipPrecio);
     }
     
     private void configurarFiltros() {
@@ -313,9 +358,10 @@ public class BuscadorMedicamentosController implements Initializable {
                         throw new RuntimeException("Conexión perdida antes de enviar petición");
                     }
                     
-                    // Enviar petición para obtener farmacia completa usando protocolo de texto
-                    String peticion = ProtocoloInventarioVeterinaria.construirObtenerFarmacia();
+                    // Usar el protocolo correcto: BUSCAR_MEDICAMENTOS_INVENTARIO con término vacío para obtener todos
+                    String peticion = ProtocoloInventarioVeterinaria.construirBuscarMedicamentos("");
                     System.out.println("📤 Enviando petición: " + peticion);
+                    System.out.println("📤 Código usado: " + ProtocoloInventarioVeterinaria.BUSCAR_MEDICAMENTOS_INVENTARIO);
                     
                     gestorInventario.enviarPeticion(peticion);
                     
@@ -327,29 +373,49 @@ public class BuscadorMedicamentosController implements Initializable {
                     // Leer respuesta como texto
                     System.out.println("📥 Esperando respuesta del servidor...");
                     String respuestaTexto = gestorInventario.leerRespuesta();
-                    System.out.println("📋 Respuesta recibida: " + respuestaTexto);
+                    System.out.println("📋 Respuesta completa recibida: '" + respuestaTexto + "'");
                     
-                    // Parsear la respuesta
+                    // Parsear la respuesta según el protocolo del servidor
                     String[] partes = ProtocoloInventarioVeterinaria.parsearMensaje(respuestaTexto);
-                    if (partes.length == 0) {
-                        throw new RuntimeException("Respuesta vacía del servidor");
+                    System.out.println("📋 Partes parseadas: " + java.util.Arrays.toString(partes));
+                    
+                    if (partes.length < 3) {
+                        throw new RuntimeException("Respuesta incompleta del servidor: " + respuestaTexto + 
+                                                 " (partes: " + partes.length + ")");
                     }
                     
                     int codigoRespuesta = Integer.parseInt(partes[0]);
-                    System.out.println("📋 Código de respuesta: " + codigoRespuesta);
+                    String idMensaje = partes[1];
+                    String codigoEstado = partes[2];
                     
-                    if (ProtocoloInventarioVeterinaria.esExitoso(codigoRespuesta)) {
-                        // Para este ejemplo, vamos a crear medicamentos de prueba
-                        // En una implementación real, el servidor enviaría los datos en formato JSON o similar
-                        System.out.println("✅ Respuesta exitosa del servidor");
-                        
-                        // Crear algunos medicamentos de prueba para demostrar que funciona
-                        List<Document> medicamentosPrueba = crearMedicamentosPrueba();
-                        System.out.println("✅ Medicamentos de prueba creados: " + medicamentosPrueba.size());
-                        return medicamentosPrueba;
+                    System.out.println("📋 Código de respuesta: " + codigoRespuesta + " (esperado: " + ProtocoloInventarioVeterinaria.BUSCAR_MEDICAMENTOS_INVENTARIO_RESPONSE + ")");
+                    System.out.println("📋 ID mensaje: " + idMensaje);
+                    System.out.println("📋 Código estado: " + codigoEstado + " (esperado: " + ProtocoloInventarioVeterinaria.SUCCESS + ")");
+                    
+                    if (codigoRespuesta == ProtocoloInventarioVeterinaria.BUSCAR_MEDICAMENTOS_INVENTARIO_RESPONSE) {
+                        if (Integer.parseInt(codigoEstado) == ProtocoloInventarioVeterinaria.SUCCESS) {
+                            System.out.println("✅ Respuesta exitosa del servidor");
+                            
+                            // Los datos están en Base64 en la parte 4
+                            if (partes.length >= 4) {
+                                String datosBase64 = partes[3];
+                                System.out.println("📦 Datos Base64 recibidos (longitud: " + datosBase64.length() + ")");
+                                
+                                // Decodificar Base64 y parsear JSON
+                                List<Document> medicamentosReales = decodificarMedicamentosBase64(datosBase64);
+                                System.out.println("✅ Medicamentos reales recibidos: " + medicamentosReales.size());
+                                return medicamentosReales;
+                            } else {
+                                throw new RuntimeException("No se recibieron datos de medicamentos (partes: " + partes.length + ")");
+                            }
+                        } else {
+                            // Error del servidor - mostrar mensaje de error si está disponible
+                            String mensajeError = partes.length >= 4 ? partes[3] : "Error desconocido";
+                            throw new RuntimeException("Error del servidor: estado " + codigoEstado + " - " + mensajeError);
+                        }
                     } else {
-                        throw new RuntimeException("Error del servidor: código " + codigoRespuesta + 
-                                                 " (" + obtenerDescripcionError(codigoRespuesta) + ")");
+                        throw new RuntimeException("Código de respuesta inesperado: " + codigoRespuesta + 
+                                                 " (esperado: " + ProtocoloInventarioVeterinaria.BUSCAR_MEDICAMENTOS_INVENTARIO_RESPONSE + ")");
                     }
                 } catch (Exception e) {
                     System.err.println("❌ Error en cargarMedicamentos: " + e.getMessage());
@@ -416,49 +482,198 @@ public class BuscadorMedicamentosController implements Initializable {
     }
     
     /**
-     * Crea medicamentos de prueba para demostrar que la conexión funciona
-     * En una implementación real, estos datos vendrían del servidor
+     * Decodifica los medicamentos que vienen en Base64 desde el servidor
      */
-    private List<Document> crearMedicamentosPrueba() {
-        List<Document> medicamentos = new java.util.ArrayList<>();
+    private List<Document> decodificarMedicamentosBase64(String datosBase64) {
+        List<Document> medicamentos = new ArrayList<>();
         
-        medicamentos.add(new Document()
-            .append("codigo", "MED001")
-            .append("nombre", "Amoxicilina")
-            .append("laboratorio", "Laboratorio A")
-            .append("dimension", "500mg")
-            .append("ViaAdmin", "Oral")
-            .append("unidades", 50)
-            .append("precio", 12.50));
+        try {
+            // Decodificar Base64
+            byte[] datosDecodificados = java.util.Base64.getDecoder().decode(datosBase64);
+            String jsonData = new String(datosDecodificados, "UTF-8");
             
-        medicamentos.add(new Document()
-            .append("codigo", "MED002")
-            .append("nombre", "Ibuprofeno")
-            .append("laboratorio", "Laboratorio B")
-            .append("dimension", "400mg")
-            .append("ViaAdmin", "Oral")
-            .append("unidades", 30)
-            .append("precio", 8.75));
+            System.out.println("📋 JSON decodificado (primeros 200 chars): " + 
+                             (jsonData.length() > 200 ? jsonData.substring(0, 200) + "..." : jsonData));
             
-        medicamentos.add(new Document()
-            .append("codigo", "MED003")
-            .append("nombre", "Paracetamol")
-            .append("laboratorio", "Laboratorio C")
-            .append("dimension", "650mg")
-            .append("ViaAdmin", "Oral")
-            .append("unidades", 0)
-            .append("precio", 6.25));
+            // Parsear JSON manualmente (sin dependencias externas)
+            medicamentos = parsearJsonMedicamentos(jsonData);
             
-        medicamentos.add(new Document()
-            .append("codigo", "MED004")
-            .append("nombre", "Antibiótico Veterinario")
-            .append("laboratorio", "VetLab")
-            .append("dimension", "250mg")
-            .append("ViaAdmin", "Inyectable")
-            .append("unidades", 15)
-            .append("precio", 25.00));
+            System.out.println("✅ Medicamentos parseados del JSON: " + medicamentos.size());
             
+        } catch (Exception e) {
+            System.err.println("❌ Error al decodificar medicamentos Base64: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
         return medicamentos;
+    }
+    
+    /**
+     * Parsea el JSON de medicamentos de forma simple (sin librerías externas)
+     */
+    private List<Document> parsearJsonMedicamentos(String jsonData) {
+        List<Document> medicamentos = new ArrayList<>();
+        
+        try {
+            // El JSON debería ser un array de objetos
+            if (jsonData.trim().startsWith("[") && jsonData.trim().endsWith("]")) {
+                // Remover corchetes externos
+                String contenido = jsonData.trim().substring(1, jsonData.trim().length() - 1);
+                
+                // Dividir por objetos (buscar patrones de {})
+                String[] objetos = dividirObjetosJson(contenido);
+                
+                for (String objetoJson : objetos) {
+                    if (!objetoJson.trim().isEmpty()) {
+                        Document medicamento = parsearObjetoJsonMedicamento(objetoJson.trim());
+                        if (medicamento != null) {
+                            medicamentos.add(medicamento);
+                        }
+                    }
+                }
+            }
+            
+        } catch (Exception e) {
+            System.err.println("❌ Error al parsear JSON: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return medicamentos;
+    }
+    
+    /**
+     * Divide el contenido JSON en objetos individuales
+     */
+    private String[] dividirObjetosJson(String contenido) {
+        List<String> objetos = new ArrayList<>();
+        StringBuilder objetoActual = new StringBuilder();
+        int nivelLlaves = 0;
+        boolean enCadena = false;
+        char caracterAnterior = ' ';
+        
+        for (char c : contenido.toCharArray()) {
+            if (c == '"' && caracterAnterior != '\\') {
+                enCadena = !enCadena;
+            }
+            
+            if (!enCadena) {
+                if (c == '{') {
+                    nivelLlaves++;
+                } else if (c == '}') {
+                    nivelLlaves--;
+                }
+            }
+            
+            objetoActual.append(c);
+            
+            if (nivelLlaves == 0 && c == '}') {
+                objetos.add(objetoActual.toString());
+                objetoActual = new StringBuilder();
+            }
+            
+            caracterAnterior = c;
+        }
+        
+        return objetos.toArray(new String[0]);
+    }
+    
+    /**
+     * Parsea un objeto JSON individual de medicamento
+     */
+    private Document parsearObjetoJsonMedicamento(String objetoJson) {
+        try {
+            Document medicamento = new Document();
+            
+            // Remover llaves externas
+            if (objetoJson.startsWith("{") && objetoJson.endsWith("}")) {
+                objetoJson = objetoJson.substring(1, objetoJson.length() - 1);
+            }
+            
+            // Dividir por campos (cuidado con las comas dentro de strings)
+            String[] campos = dividirCamposJson(objetoJson);
+            
+            for (String campo : campos) {
+                String[] partes = campo.split(":", 2);
+                if (partes.length == 2) {
+                    String clave = limpiarCadenaJson(partes[0]);
+                    String valor = limpiarCadenaJson(partes[1]);
+                    
+                    // Convertir tipos apropiados
+                    if (clave.equals("unidades")) {
+                        try {
+                            medicamento.append(clave, Integer.parseInt(valor));
+                        } catch (NumberFormatException e) {
+                            medicamento.append(clave, 0);
+                        }
+                    } else if (clave.equals("precio")) {
+                        try {
+                            medicamento.append(clave, Double.parseDouble(valor));
+                        } catch (NumberFormatException e) {
+                            medicamento.append(clave, 0.0);
+                        }
+                    } else {
+                        medicamento.append(clave, valor);
+                    }
+                }
+            }
+            
+            return medicamento;
+            
+        } catch (Exception e) {
+            System.err.println("❌ Error al parsear objeto medicamento: " + objetoJson + " - " + e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Divide los campos JSON respetando las comas dentro de strings
+     */
+    private String[] dividirCamposJson(String contenido) {
+        List<String> campos = new ArrayList<>();
+        StringBuilder campoActual = new StringBuilder();
+        boolean enCadena = false;
+        char caracterAnterior = ' ';
+        
+        for (char c : contenido.toCharArray()) {
+            if (c == '"' && caracterAnterior != '\\') {
+                enCadena = !enCadena;
+            }
+            
+            if (c == ',' && !enCadena) {
+                campos.add(campoActual.toString().trim());
+                campoActual = new StringBuilder();
+            } else {
+                campoActual.append(c);
+            }
+            
+            caracterAnterior = c;
+        }
+        
+        if (campoActual.length() > 0) {
+            campos.add(campoActual.toString().trim());
+        }
+        
+        return campos.toArray(new String[0]);
+    }
+    
+    /**
+     * Limpia una cadena JSON removiendo comillas y espacios
+     */
+    private String limpiarCadenaJson(String cadena) {
+        if (cadena == null) return "";
+        
+        cadena = cadena.trim();
+        
+        // Remover comillas si las tiene
+        if (cadena.startsWith("\"") && cadena.endsWith("\"")) {
+            cadena = cadena.substring(1, cadena.length() - 1);
+        }
+        
+        // Decodificar caracteres escapados básicos
+        cadena = cadena.replace("\\\"", "\"");
+        cadena = cadena.replace("\\\\", "\\");
+        
+        return cadena;
     }
     
     private void cargarOpcionesFiltros() {
@@ -583,27 +798,97 @@ public class BuscadorMedicamentosController implements Initializable {
     }
     
     private void mostrarDetallesMedicamento(MedicamentoInventario medicamento) {
-        Dialog<Void> dialog = new Dialog<>();
+        Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("📋 Detalles del Medicamento");
         dialog.setHeaderText(medicamento.getNombreCompleto());
         
         VBox content = new VBox(15);
         content.setPadding(new Insets(20));
         
-        // Información básica
-        content.getChildren().addAll(
+        // Información básica (solo lectura)
+        VBox infoBasica = new VBox(10);
+        infoBasica.setStyle("-fx-background-color: #f8fafc; -fx-border-color: #e2e8f0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 15px;");
+        
+        Label lblTituloBasico = new Label("📋 Información Básica (del servidor)");
+        lblTituloBasico.setFont(Font.font("System", FontWeight.BOLD, 14));
+        
+        infoBasica.getChildren().addAll(
+            lblTituloBasico,
             crearCampoDetalle("Código:", medicamento.getCodigo()),
             crearCampoDetalle("Nombre:", medicamento.getNombre()),
-            crearCampoDetalle("Laboratorio:", medicamento.getLaboratorio()),
-            crearCampoDetalle("Dimensión:", medicamento.getDimension()),
-            crearCampoDetalle("Vía de administración:", medicamento.getViaAdmin()),
-            crearCampoDetalle("Stock disponible:", String.valueOf(medicamento.getUnidades())),
-            crearCampoDetalle("Precio:", formatoMoneda.format(medicamento.getPrecio()))
+            crearCampoDetalle("Stock disponible:", String.valueOf(medicamento.getUnidades()))
         );
         
+        // Información editable
+        VBox infoEditable = new VBox(10);
+        infoEditable.setStyle("-fx-background-color: #f0f9ff; -fx-border-color: #0ea5e9; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 15px;");
+        
+        Label lblTituloEditable = new Label("✏️ Información Editable");
+        lblTituloEditable.setFont(Font.font("System", FontWeight.BOLD, 14));
+        
+        // Campos editables
+        TextField txtLaboratorio = new TextField(medicamento.getLaboratorio());
+        txtLaboratorio.setPromptText("Ej: Laboratorios Veterinarios S.A.");
+        
+        TextField txtPrecio = new TextField(String.valueOf(medicamento.getPrecio()));
+        txtPrecio.setPromptText("Precio en euros");
+        
+        TextField txtDimension = new TextField(medicamento.getDimension());
+        txtDimension.setPromptText("Ej: 250mg, 10ml, etc.");
+        
+        ComboBox<String> cmbViaAdmin = new ComboBox<>();
+        cmbViaAdmin.getItems().addAll("Oral", "Inyectable", "Tópica", "Oftálmica", "Pulverización", "Sublingual", "Rectal");
+        cmbViaAdmin.setValue(medicamento.getViaAdmin());
+        
+        GridPane gridEditable = new GridPane();
+        gridEditable.setHgap(10);
+        gridEditable.setVgap(10);
+        
+        gridEditable.add(new Label("Laboratorio:"), 0, 0);
+        gridEditable.add(txtLaboratorio, 1, 0);
+        gridEditable.add(new Label("Precio (€):"), 0, 1);
+        gridEditable.add(txtPrecio, 1, 1);
+        gridEditable.add(new Label("Dimensión:"), 0, 2);
+        gridEditable.add(txtDimension, 1, 2);
+        gridEditable.add(new Label("Vía Admin.:"), 0, 3);
+        gridEditable.add(cmbViaAdmin, 1, 3);
+        
+        infoEditable.getChildren().addAll(lblTituloEditable, gridEditable);
+        
+        content.getChildren().addAll(infoBasica, infoEditable);
+        
         dialog.getDialogPane().setContent(content);
-        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
-        dialog.showAndWait();
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        
+        // Configurar botones
+        Button btnOk = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        Button btnCancel = (Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL);
+        
+        btnOk.setText("💾 Guardar Cambios");
+        btnCancel.setText("❌ Cancelar");
+        
+        // Manejar resultado
+        Optional<ButtonType> result = dialog.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            try {
+                // Actualizar el medicamento con los nuevos datos
+                medicamento.setLaboratorio(txtLaboratorio.getText().trim());
+                medicamento.setPrecio(Double.parseDouble(txtPrecio.getText()));
+                medicamento.setDimension(txtDimension.getText().trim());
+                medicamento.setViaAdmin(cmbViaAdmin.getValue());
+                
+                // Refrescar la tabla
+                tablaMedicamentos.refresh();
+                
+                mostrarInfo("Cambios guardados", 
+                    "Los cambios se han guardado correctamente para " + medicamento.getNombre() + 
+                    "\n\nNota: Estos cambios son locales. Para persistirlos en el servidor, " +
+                    "necesitarías implementar una función de actualización.");
+                
+            } catch (NumberFormatException e) {
+                mostrarError("Error", "El precio debe ser un número válido");
+            }
+        }
     }
     
     private HBox crearCampoDetalle(String etiqueta, String valor) {
@@ -652,6 +937,30 @@ public class BuscadorMedicamentosController implements Initializable {
         alert.setHeaderText(titulo);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+    
+    private void mostrarNotificacion(String titulo, String mensaje) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Actualización");
+        alert.setHeaderText(titulo);
+        alert.setContentText(mensaje);
+        
+        // Hacer que se cierre automáticamente después de 2 segundos
+        alert.show();
+        
+        // Opcional: cerrar automáticamente
+        new Thread(() -> {
+            try {
+                Thread.sleep(2000);
+                Platform.runLater(() -> {
+                    if (alert.isShowing()) {
+                        alert.close();
+                    }
+                });
+            } catch (InterruptedException e) {
+                // Ignorar
+            }
+        }).start();
     }
     
     /**
