@@ -33,6 +33,7 @@ import javafx.util.Callback;
 import org.bson.types.ObjectId;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.URL;
 import java.text.DecimalFormat;
@@ -139,9 +140,8 @@ public class FacturacionController implements Initializable {
             // Aplicar tema
             aplicarTema();
             
-            // Cargar datos iniciales
-            cargarFacturas();
-            cargarBorradores();
+            // Cargar datos iniciales de forma secuencial para evitar interferencias
+            cargarDatosIniciales();
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -372,63 +372,123 @@ public class FacturacionController implements Initializable {
     }
     
     /**
-     * Carga todas las facturas desde el servidor
+     * Carga los datos iniciales de forma secuencial
      */
-    private void cargarFacturas() {
+    private void cargarDatosIniciales() {
         new Thread(() -> {
             try {
-                String peticion = String.valueOf(Protocolo.OBTENER_TODAS_FACTURAS);
-                gestorSocket.enviarPeticion(peticion);
+                // Primero cargar facturas
+                cargarFacturasSync();
                 
-                ObjectInputStream entrada = gestorSocket.getEntrada();
-                int codigoRespuesta = entrada.readInt();
+                // Esperar un poco antes de cargar borradores
+                Thread.sleep(500);
                 
-                if (codigoRespuesta == Protocolo.OBTENER_TODAS_FACTURAS_RESPONSE) {
-                    @SuppressWarnings("unchecked")
-                    List<ModeloFactura> facturas = (List<ModeloFactura>) entrada.readObject();
-                    
-                    Platform.runLater(() -> {
-                        listaFacturas.clear();
-                        listaFacturas.addAll(facturas);
-                    });
-                } else {
-                    Platform.runLater(() -> mostrarError("Error", "No se pudieron cargar las facturas"));
-                }
+                // Luego cargar borradores
+                cargarBorradoresSync();
+                
             } catch (Exception e) {
                 e.printStackTrace();
-                Platform.runLater(() -> mostrarError("Error", "Error de comunicación: " + e.getMessage()));
+                Platform.runLater(() -> mostrarError("Error", "Error al cargar datos iniciales: " + e.getMessage()));
             }
         }).start();
     }
     
     /**
-     * Carga los borradores desde el servidor
+     * Carga facturas de forma síncrona
      */
-    private void cargarBorradores() {
-        new Thread(() -> {
-            try {
-                String peticion = String.valueOf(Protocolo.OBTENER_FACTURAS_BORRADOR);
-                gestorSocket.enviarPeticion(peticion);
-                
-                ObjectInputStream entrada = gestorSocket.getEntrada();
-                int codigoRespuesta = entrada.readInt();
-                
-                if (codigoRespuesta == Protocolo.OBTENER_FACTURAS_BORRADOR_RESPONSE) {
-                    @SuppressWarnings("unchecked")
-                    List<ModeloFactura> borradores = (List<ModeloFactura>) entrada.readObject();
-                    
-                    Platform.runLater(() -> {
-                        listaBorradores.clear();
-                        listaBorradores.addAll(borradores);
-                    });
-                } else {
-                    Platform.runLater(() -> mostrarError("Error", "No se pudieron cargar los borradores"));
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                Platform.runLater(() -> mostrarError("Error", "Error de comunicación: " + e.getMessage()));
+    private void cargarFacturasSync() {
+        try {
+            // Verificar conexión antes de enviar petición
+            if (!gestorSocket.isConectado()) {
+                Platform.runLater(() -> mostrarError("Error de conexión", "No hay conexión con el servidor"));
+                return;
             }
-        }).start();
+            
+            String peticion = String.valueOf(Protocolo.OBTENER_TODAS_FACTURAS);
+            System.out.println("Enviando petición de facturas: " + peticion);
+            
+            gestorSocket.enviarPeticion(peticion);
+            
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            if (entrada == null) {
+                Platform.runLater(() -> mostrarError("Error", "No se pudo obtener el stream de entrada"));
+                return;
+            }
+            
+            System.out.println("Esperando respuesta del servidor para facturas...");
+            int codigoRespuesta = entrada.readInt();
+            System.out.println("Código de respuesta recibido para facturas: " + codigoRespuesta);
+            
+            if (codigoRespuesta == Protocolo.OBTENER_TODAS_FACTURAS_RESPONSE) {
+                @SuppressWarnings("unchecked")
+                List<ModeloFactura> facturas = (List<ModeloFactura>) entrada.readObject();
+                
+                Platform.runLater(() -> {
+                    listaFacturas.clear();
+                    if (facturas != null) {
+                        listaFacturas.addAll(facturas);
+                        System.out.println("Facturas cargadas: " + facturas.size());
+                    }
+                });
+            } else if (codigoRespuesta == Protocolo.ERROR_OBTENER_TODAS_FACTURAS) {
+                Platform.runLater(() -> mostrarError("Error", "Error del servidor al obtener las facturas"));
+            } else {
+                Platform.runLater(() -> mostrarError("Error", "Respuesta inesperada del servidor para facturas: " + codigoRespuesta));
+            }
+        } catch (Exception e) {
+            System.err.println("Error al cargar facturas: " + e.getMessage());
+            e.printStackTrace();
+            Platform.runLater(() -> mostrarError("Error", "Error al cargar facturas: " + (e.getMessage() != null ? e.getMessage() : "Error desconocido")));
+        }
+    }
+    
+    /**
+     * Carga borradores de forma síncrona
+     */
+    private void cargarBorradoresSync() {
+        try {
+            // Verificar conexión antes de enviar petición
+            if (!gestorSocket.isConectado()) {
+                Platform.runLater(() -> mostrarError("Error de conexión", "No hay conexión con el servidor"));
+                return;
+            }
+            
+            String peticion = String.valueOf(Protocolo.OBTENER_FACTURAS_BORRADOR);
+            System.out.println("Enviando petición de borradores: " + peticion);
+            
+            gestorSocket.enviarPeticion(peticion);
+            
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            if (entrada == null) {
+                Platform.runLater(() -> mostrarError("Error", "No se pudo obtener el stream de entrada"));
+                return;
+            }
+            
+            System.out.println("Esperando respuesta del servidor para borradores...");
+            int codigoRespuesta = entrada.readInt();
+            System.out.println("Código de respuesta recibido para borradores: " + codigoRespuesta);
+            
+            if (codigoRespuesta == Protocolo.OBTENER_FACTURAS_BORRADOR_RESPONSE) {
+                @SuppressWarnings("unchecked")
+                List<ModeloFactura> borradores = (List<ModeloFactura>) entrada.readObject();
+                
+                Platform.runLater(() -> {
+                    listaBorradores.clear();
+                    if (borradores != null) {
+                        listaBorradores.addAll(borradores);
+                        System.out.println("Borradores cargados: " + borradores.size());
+                    }
+                });
+            } else if (codigoRespuesta == Protocolo.ERROR_OBTENER_FACTURAS_BORRADOR) {
+                Platform.runLater(() -> mostrarError("Error", "Error del servidor al obtener los borradores"));
+            } else {
+                Platform.runLater(() -> mostrarError("Error", "Respuesta inesperada del servidor para borradores: " + codigoRespuesta));
+            }
+        } catch (Exception e) {
+            System.err.println("Error al cargar borradores: " + e.getMessage());
+            e.printStackTrace();
+            Platform.runLater(() -> mostrarError("Error", "Error al cargar borradores: " + (e.getMessage() != null ? e.getMessage() : "Error desconocido")));
+        }
     }
     
     /**
@@ -483,7 +543,7 @@ public class FacturacionController implements Initializable {
                 
             } catch (Exception e) {
                 e.printStackTrace();
-                Platform.runLater(() -> mostrarError("Error", "Error en la búsqueda: " + e.getMessage()));
+                Platform.runLater(() -> mostrarError("Error", "Error en la búsqueda: " + (e.getMessage() != null ? e.getMessage() : "Error desconocido")));
             }
         }).start();
     }
@@ -741,9 +801,45 @@ public class FacturacionController implements Initializable {
      * Actualiza las listas después de cambios
      */
     public void actualizarListas() {
-        cargarFacturas();
-        cargarBorradores();
-        cargarEstadisticas();
+        new Thread(() -> {
+            try {
+                cargarFacturasSync();
+                Thread.sleep(300);
+                cargarBorradoresSync();
+                Platform.runLater(() -> cargarEstadisticas());
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> mostrarError("Error", "Error al actualizar listas: " + e.getMessage()));
+            }
+        }).start();
+    }
+    
+    /**
+     * Carga facturas (método público)
+     */
+    public void cargarFacturas() {
+        new Thread(() -> {
+            try {
+                cargarFacturasSync();
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> mostrarError("Error", "Error al cargar facturas: " + e.getMessage()));
+            }
+        }).start();
+    }
+    
+    /**
+     * Carga borradores (método público)
+     */
+    public void cargarBorradores() {
+        new Thread(() -> {
+            try {
+                cargarBorradoresSync();
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> mostrarError("Error", "Error al cargar borradores: " + e.getMessage()));
+            }
+        }).start();
     }
     
     /**
