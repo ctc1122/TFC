@@ -425,7 +425,7 @@
 }
 
 /* Menu lateral - Botones */
-#btnMenuPrincipal, #btnAnimales, #but_clientes, #btnFichaje, #btnEmpresa, #btnSalir, #btnChat, #btnGoogleCalendar {
+#btnMenuPrincipal, #btnAnimales, #but_clientes, #btnFichaje, #btnEmpresa, #btnSalir, #btnChat, #btnGoogleCalendar, #btnFacturacion {
     -fx-background-color: -fx-sidebar-button-bg;
     -fx-text-fill: -fx-sidebar-button-text;
     -fx-background-radius: 5px;
@@ -433,7 +433,7 @@
     -fx-border-width: 0;
 }
 
-#btnMenuPrincipal:hover, #btnAnimales:hover, #but_clientes:hover, #btnFichaje:hover, #btnEmpresa:hover, #btnSalir:hover, #btnChat:hover, #btnGoogleCalendar:hover {
+#btnMenuPrincipal:hover, #btnAnimales:hover, #but_clientes:hover, #btnFichaje:hover, #btnEmpresa:hover, #btnSalir:hover, #btnChat:hover, #btnGoogleCalendar:hover, #btnFacturacion:hover {
     -fx-background-color: -fx-sidebar-button-hover;
     -fx-border-color: #DDA15E;
     -fx-border-width: 0 0 1 0;

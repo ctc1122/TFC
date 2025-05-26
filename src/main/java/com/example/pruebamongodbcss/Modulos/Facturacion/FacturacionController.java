@@ -377,11 +377,23 @@ public class FacturacionController implements Initializable {
     private void cargarDatosIniciales() {
         new Thread(() -> {
             try {
+                // Verificar conexión antes de empezar
+                if (!verificarConexion()) {
+                    Platform.runLater(() -> mostrarError("Error de conexión", "No se pudo conectar al servidor"));
+                    return;
+                }
+                
                 // Primero cargar facturas
                 cargarFacturasSync();
                 
                 // Esperar un poco antes de cargar borradores
-                Thread.sleep(500);
+                Thread.sleep(1000);
+                
+                // Verificar conexión nuevamente
+                if (!verificarConexion()) {
+                    Platform.runLater(() -> mostrarError("Error de conexión", "Se perdió la conexión con el servidor"));
+                    return;
+                }
                 
                 // Luego cargar borradores
                 cargarBorradoresSync();
@@ -394,12 +406,30 @@ public class FacturacionController implements Initializable {
     }
     
     /**
+     * Verifica y reestablece la conexión si es necesario
+     */
+    private boolean verificarConexion() {
+        try {
+            if (!gestorSocket.isConectado()) {
+                System.out.println("Conexión perdida, intentando reconectar...");
+                gestorSocket.cerrarConexion();
+                gestorSocket = GestorSocket.getInstance();
+                Thread.sleep(500); // Esperar un poco para la reconexión
+            }
+            return gestorSocket.isConectado();
+        } catch (Exception e) {
+            System.err.println("Error al verificar conexión: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
      * Carga facturas de forma síncrona
      */
     private void cargarFacturasSync() {
         try {
             // Verificar conexión antes de enviar petición
-            if (!gestorSocket.isConectado()) {
+            if (!verificarConexion()) {
                 Platform.runLater(() -> mostrarError("Error de conexión", "No hay conexión con el servidor"));
                 return;
             }
@@ -407,33 +437,35 @@ public class FacturacionController implements Initializable {
             String peticion = String.valueOf(Protocolo.OBTENER_TODAS_FACTURAS);
             System.out.println("Enviando petición de facturas: " + peticion);
             
-            gestorSocket.enviarPeticion(peticion);
-            
-            ObjectInputStream entrada = gestorSocket.getEntrada();
-            if (entrada == null) {
-                Platform.runLater(() -> mostrarError("Error", "No se pudo obtener el stream de entrada"));
-                return;
-            }
-            
-            System.out.println("Esperando respuesta del servidor para facturas...");
-            int codigoRespuesta = entrada.readInt();
-            System.out.println("Código de respuesta recibido para facturas: " + codigoRespuesta);
-            
-            if (codigoRespuesta == Protocolo.OBTENER_TODAS_FACTURAS_RESPONSE) {
-                @SuppressWarnings("unchecked")
-                List<ModeloFactura> facturas = (List<ModeloFactura>) entrada.readObject();
+            synchronized (gestorSocket) {
+                gestorSocket.enviarPeticion(peticion);
                 
-                Platform.runLater(() -> {
-                    listaFacturas.clear();
-                    if (facturas != null) {
-                        listaFacturas.addAll(facturas);
-                        System.out.println("Facturas cargadas: " + facturas.size());
-                    }
-                });
-            } else if (codigoRespuesta == Protocolo.ERROR_OBTENER_TODAS_FACTURAS) {
-                Platform.runLater(() -> mostrarError("Error", "Error del servidor al obtener las facturas"));
-            } else {
-                Platform.runLater(() -> mostrarError("Error", "Respuesta inesperada del servidor para facturas: " + codigoRespuesta));
+                ObjectInputStream entrada = gestorSocket.getEntrada();
+                if (entrada == null) {
+                    Platform.runLater(() -> mostrarError("Error", "No se pudo obtener el stream de entrada"));
+                    return;
+                }
+                
+                System.out.println("Esperando respuesta del servidor para facturas...");
+                int codigoRespuesta = entrada.readInt();
+                System.out.println("Código de respuesta recibido para facturas: " + codigoRespuesta);
+                
+                if (codigoRespuesta == Protocolo.OBTENER_TODAS_FACTURAS_RESPONSE) {
+                    @SuppressWarnings("unchecked")
+                    List<ModeloFactura> facturas = (List<ModeloFactura>) entrada.readObject();
+                    
+                    Platform.runLater(() -> {
+                        listaFacturas.clear();
+                        if (facturas != null) {
+                            listaFacturas.addAll(facturas);
+                            System.out.println("Facturas cargadas: " + facturas.size());
+                        }
+                    });
+                } else if (codigoRespuesta == Protocolo.ERROR_OBTENER_TODAS_FACTURAS) {
+                    Platform.runLater(() -> mostrarError("Error", "Error del servidor al obtener las facturas"));
+                } else {
+                    Platform.runLater(() -> mostrarError("Error", "Respuesta inesperada del servidor para facturas: " + codigoRespuesta));
+                }
             }
         } catch (Exception e) {
             System.err.println("Error al cargar facturas: " + e.getMessage());
@@ -448,7 +480,7 @@ public class FacturacionController implements Initializable {
     private void cargarBorradoresSync() {
         try {
             // Verificar conexión antes de enviar petición
-            if (!gestorSocket.isConectado()) {
+            if (!verificarConexion()) {
                 Platform.runLater(() -> mostrarError("Error de conexión", "No hay conexión con el servidor"));
                 return;
             }
@@ -456,33 +488,35 @@ public class FacturacionController implements Initializable {
             String peticion = String.valueOf(Protocolo.OBTENER_FACTURAS_BORRADOR);
             System.out.println("Enviando petición de borradores: " + peticion);
             
-            gestorSocket.enviarPeticion(peticion);
-            
-            ObjectInputStream entrada = gestorSocket.getEntrada();
-            if (entrada == null) {
-                Platform.runLater(() -> mostrarError("Error", "No se pudo obtener el stream de entrada"));
-                return;
-            }
-            
-            System.out.println("Esperando respuesta del servidor para borradores...");
-            int codigoRespuesta = entrada.readInt();
-            System.out.println("Código de respuesta recibido para borradores: " + codigoRespuesta);
-            
-            if (codigoRespuesta == Protocolo.OBTENER_FACTURAS_BORRADOR_RESPONSE) {
-                @SuppressWarnings("unchecked")
-                List<ModeloFactura> borradores = (List<ModeloFactura>) entrada.readObject();
+            synchronized (gestorSocket) {
+                gestorSocket.enviarPeticion(peticion);
                 
-                Platform.runLater(() -> {
-                    listaBorradores.clear();
-                    if (borradores != null) {
-                        listaBorradores.addAll(borradores);
-                        System.out.println("Borradores cargados: " + borradores.size());
-                    }
-                });
-            } else if (codigoRespuesta == Protocolo.ERROR_OBTENER_FACTURAS_BORRADOR) {
-                Platform.runLater(() -> mostrarError("Error", "Error del servidor al obtener los borradores"));
-            } else {
-                Platform.runLater(() -> mostrarError("Error", "Respuesta inesperada del servidor para borradores: " + codigoRespuesta));
+                ObjectInputStream entrada = gestorSocket.getEntrada();
+                if (entrada == null) {
+                    Platform.runLater(() -> mostrarError("Error", "No se pudo obtener el stream de entrada"));
+                    return;
+                }
+                
+                System.out.println("Esperando respuesta del servidor para borradores...");
+                int codigoRespuesta = entrada.readInt();
+                System.out.println("Código de respuesta recibido para borradores: " + codigoRespuesta);
+                
+                if (codigoRespuesta == Protocolo.OBTENER_FACTURAS_BORRADOR_RESPONSE) {
+                    @SuppressWarnings("unchecked")
+                    List<ModeloFactura> borradores = (List<ModeloFactura>) entrada.readObject();
+                    
+                    Platform.runLater(() -> {
+                        listaBorradores.clear();
+                        if (borradores != null) {
+                            listaBorradores.addAll(borradores);
+                            System.out.println("Borradores cargados: " + borradores.size());
+                        }
+                    });
+                } else if (codigoRespuesta == Protocolo.ERROR_OBTENER_FACTURAS_BORRADOR) {
+                    Platform.runLater(() -> mostrarError("Error", "Error del servidor al obtener los borradores"));
+                } else {
+                    Platform.runLater(() -> mostrarError("Error", "Respuesta inesperada del servidor para borradores: " + codigoRespuesta));
+                }
             }
         } catch (Exception e) {
             System.err.println("Error al cargar borradores: " + e.getMessage());

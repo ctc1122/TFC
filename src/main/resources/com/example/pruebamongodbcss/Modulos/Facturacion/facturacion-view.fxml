@@ -22,14 +22,11 @@
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.chart.CategoryAxis?>
 
-<BorderPane fx:id="mainPane" styleClass="panel-content" stylesheets="@facturacion-styles.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Facturacion.FacturacionController">
+<BorderPane fx:id="mainPane" style="-fx-background-color: #f8fafc;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Facturacion.FacturacionController">
    <top>
-      <HBox alignment="CENTER_LEFT" styleClass="panel-header" BorderPane.alignment="CENTER">
+      <HBox alignment="CENTER_LEFT" style="-fx-background-color: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0, 0, 1);" BorderPane.alignment="CENTER">
          <children>
-            <Label text="Gestión de Facturación">
-               <font>
-                  <Font name="System Bold" size="24.0" />
-               </font>
+            <Label text="Gestión de Facturación" style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 24px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 2, 0, 0, 1);">
                <HBox.margin>
                   <Insets left="20.0" />
                </HBox.margin>
@@ -41,94 +38,93 @@
       </HBox>
    </top>
    <center>
-      <VBox styleClass="panel-content" VBox.vgrow="ALWAYS" BorderPane.alignment="CENTER">
+      <VBox style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS" BorderPane.alignment="CENTER">
          <VBox.margin>
             <Insets top="2" left="32" right="32" bottom="2"/>
          </VBox.margin>
-         <TabPane fx:id="tabPane" BorderPane.alignment="CENTER" VBox.vgrow="ALWAYS" tabClosingPolicy="UNAVAILABLE">
+         <TabPane fx:id="tabPane" BorderPane.alignment="CENTER" VBox.vgrow="ALWAYS" tabClosingPolicy="UNAVAILABLE" style="-fx-background-color: white; -fx-background-radius: 8px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 8, 0, 0, 2);">
             <tabs>
                <!-- Tab de Listado de Facturas -->
                <Tab fx:id="tabListado" closable="false" text="Facturas">
                   <content>
-                     <VBox spacing="10.0" styleClass="panel-content" VBox.vgrow="ALWAYS">
+                     <VBox spacing="10.0" style="-fx-background-color: white;" VBox.vgrow="ALWAYS">
                         <children>
                            <!-- Filtros de búsqueda -->
-                           <HBox alignment="CENTER_LEFT" spacing="10.0" minHeight="-Infinity">
+                           <HBox alignment="CENTER_LEFT" spacing="10.0" minHeight="-Infinity" style="-fx-background-color: #f8fafc; -fx-background-radius: 6px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.03), 4, 0, 0, 1);">
                               <children>
-                                 <Label text="Cliente:">
+                                 <Label text="Cliente:" style="-fx-text-fill: #374151; -fx-font-weight: 500; -fx-font-size: 12px;">
                                     <HBox.margin>
                                        <Insets right="5.0" />
                                     </HBox.margin>
                                  </Label>
-                                 <ComboBox fx:id="cmbClientes" minWidth="150.0" promptText="Todos los clientes" HBox.hgrow="SOMETIMES">
+                                 <ComboBox fx:id="cmbClientes" minWidth="150.0" promptText="Todos los clientes" HBox.hgrow="SOMETIMES" style="-fx-background-color: white; -fx-padding: 4px 8px; -fx-font-size: 11px;">
                                     <HBox.margin>
                                        <Insets right="10.0" />
                                     </HBox.margin>
                                  </ComboBox>
-                                 <Label text="Estado:">
+                                 <Label text="Estado:" style="-fx-text-fill: #374151; -fx-font-weight: 500; -fx-font-size: 12px;">
                                     <HBox.margin>
                                        <Insets right="5.0" />
                                     </HBox.margin>
                                  </Label>
-                                 <ComboBox fx:id="cmbEstados" minWidth="120.0" promptText="Todos los estados" HBox.hgrow="SOMETIMES">
+                                 <ComboBox fx:id="cmbEstados" minWidth="120.0" promptText="Todos los estados" HBox.hgrow="SOMETIMES" style="-fx-background-color: white; -fx-padding: 4px 8px; -fx-font-size: 11px;">
                                     <HBox.margin>
                                        <Insets right="10.0" />
                                     </HBox.margin>
                                  </ComboBox>
-                                 <Label text="Desde:">
+                                 <Label text="Desde:" style="-fx-text-fill: #374151; -fx-font-weight: 500; -fx-font-size: 12px;">
                                     <HBox.margin>
                                        <Insets right="5.0" />
                                     </HBox.margin>
                                  </Label>
-                                 <MFXDatePicker fx:id="dpFechaInicio" promptText="Fecha inicio">
+                                 <MFXDatePicker fx:id="dpFechaInicio" promptText="Fecha inicio" style="-fx-background-color: white; -fx-font-size: 11px;">
                                     <HBox.margin>
                                        <Insets right="10.0" />
                                     </HBox.margin>
                                  </MFXDatePicker>
-                                 <Label text="Hasta:">
+                                 <Label text="Hasta:" style="-fx-text-fill: #374151; -fx-font-weight: 500; -fx-font-size: 12px;">
                                     <HBox.margin>
                                        <Insets right="5.0" />
                                     </HBox.margin>
                                  </Label>
-                                 <MFXDatePicker fx:id="dpFechaFin" promptText="Fecha fin">
+                                 <MFXDatePicker fx:id="dpFechaFin" promptText="Fecha fin" style="-fx-background-color: white; -fx-font-size: 11px;">
                                     <HBox.margin>
                                        <Insets right="10.0" />
                                     </HBox.margin>
                                  </MFXDatePicker>
-                                 <Button fx:id="btnBuscar" onAction="#buscarFacturas" styleClass="btn-secondary" text="Buscar" />
-                                 <Button fx:id="btnLimpiarFiltros" onAction="#limpiarFiltros" styleClass="btn-secondary" text="Limpiar" />
+                                 <Button fx:id="btnBuscar" onAction="#buscarFacturas" style="-fx-background-color: linear-gradient(135deg, #64748b 0%, #475569 100%); -fx-text-fill: white; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Buscar" />
+                                 <Button fx:id="btnLimpiarFiltros" onAction="#limpiarFiltros" style="-fx-background-color: linear-gradient(135deg, #64748b 0%, #475569 100%); -fx-text-fill: white; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Limpiar" />
                               </children>
                               <VBox.margin>
                                  <Insets left="10.0" right="10.0" top="10.0" />
                               </VBox.margin>
                               <padding>
-                                 <Insets bottom="5.0" top="5.0" />
+                                 <Insets bottom="8.0" top="8.0" left="12.0" right="12.0" />
                               </padding>
                            </HBox>
                            <!-- Búsqueda por texto -->
-                           <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-background-color: #f8fafc; -fx-background-radius: 6px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.03), 4, 0, 0, 1);">
                               <children>
-                                 <TextField fx:id="txtBuscar" promptText="Buscar por número de factura, cliente o paciente..." HBox.hgrow="ALWAYS">
-                                    <padding>
-                                       <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
-                                    </padding>
-                                 </TextField>
-                                 <Button fx:id="btnNuevaFactura" onAction="#onNuevaFactura" styleClass="btn-primary" text="Nueva Factura" />
-                                 <Button fx:id="btnVerFactura" onAction="#onVerFactura" styleClass="btn-info" text="Ver Detalles" />
-                                 <Button fx:id="btnEditarFactura" onAction="#onEditarFactura" styleClass="btn-secondary" text="Editar" />
-                                 <Button fx:id="btnEliminarFactura" onAction="#onEliminarFactura" styleClass="btn-danger" text="Eliminar" />
-                                 <Button fx:id="btnExportarPDF" onAction="#onExportarPDF" styleClass="btn-success" text="PDF" />
+                                 <TextField fx:id="txtBuscar" promptText="Buscar por número de factura, cliente o paciente..." HBox.hgrow="ALWAYS" style="-fx-background-color: white; -fx-padding: 8px 12px; -fx-font-size: 12px; -fx-text-fill: #1f2937;" />
+                                 <Button fx:id="btnNuevaFactura" onAction="#onNuevaFactura" style="-fx-background-color: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Nueva Factura" />
+                                 <Button fx:id="btnVerFactura" onAction="#onVerFactura" style="-fx-background-color: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Ver Detalles" />
+                                 <Button fx:id="btnEditarFactura" onAction="#onEditarFactura" style="-fx-background-color: linear-gradient(135deg, #64748b 0%, #475569 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Editar" />
+                                 <Button fx:id="btnEliminarFactura" onAction="#onEliminarFactura" style="-fx-background-color: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Eliminar" />
+                                 <Button fx:id="btnExportarPDF" onAction="#onExportarPDF" style="-fx-background-color: linear-gradient(135deg, #10b981 0%, #059669 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="PDF" />
                               </children>
                               <VBox.margin>
                                  <Insets left="10.0" right="10.0" top="5.0" />
                               </VBox.margin>
+                              <padding>
+                                 <Insets bottom="8.0" top="8.0" left="12.0" right="12.0" />
+                              </padding>
                            </HBox>
                            <!-- Tabla de facturas -->
-                           <StackPane VBox.vgrow="ALWAYS">
+                           <StackPane VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-background-radius: 6px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.04), 6, 0, 0, 1);">
                               <children>
-                                 <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">
+                                 <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent;">
                                     <content>
-                                       <TableView fx:id="tablaFacturas" VBox.vgrow="ALWAYS">
+                                       <TableView fx:id="tablaFacturas" VBox.vgrow="ALWAYS" style="-fx-background-color: white;">
                                           <columns>
                                              <TableColumn fx:id="colNumero" text="Número" />
                                              <TableColumn fx:id="colFecha" text="Fecha" />
@@ -160,84 +156,87 @@
                <!-- Tab de Estadísticas -->
                <Tab fx:id="tabEstadisticas" closable="false" text="Estadísticas">
                   <content>
-                     <VBox spacing="20.0" styleClass="panel-content" VBox.vgrow="ALWAYS">
+                     <VBox spacing="20.0" style="-fx-background-color: white;" VBox.vgrow="ALWAYS">
                         <children>
                            <!-- Filtros para estadísticas -->
-                           <HBox alignment="CENTER_LEFT" spacing="15.0">
+                           <HBox alignment="CENTER_LEFT" spacing="15.0" style="-fx-background-color: #f8fafc; -fx-background-radius: 6px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.03), 4, 0, 0, 1);">
                               <children>
-                                 <Label text="Período:">
+                                 <Label text="Período:" style="-fx-text-fill: #374151; -fx-font-weight: 500; -fx-font-size: 12px;">
                                     <HBox.margin>
                                        <Insets right="5.0" />
                                     </HBox.margin>
                                  </Label>
-                                 <ComboBox fx:id="cmbPeriodo" minWidth="120.0" promptText="Seleccionar período">
+                                 <ComboBox fx:id="cmbPeriodo" minWidth="120.0" promptText="Seleccionar período" style="-fx-background-color: white; -fx-padding: 4px 8px; -fx-font-size: 11px;">
                                     <HBox.margin>
                                        <Insets right="15.0" />
                                     </HBox.margin>
                                  </ComboBox>
-                                 <Label text="Desde:">
+                                 <Label text="Desde:" style="-fx-text-fill: #374151; -fx-font-weight: 500; -fx-font-size: 12px;">
                                     <HBox.margin>
                                        <Insets right="5.0" />
                                     </HBox.margin>
                                  </Label>
-                                 <MFXDatePicker fx:id="dpEstadisticasInicio" promptText="Fecha inicio">
+                                 <MFXDatePicker fx:id="dpEstadisticasInicio" promptText="Fecha inicio" style="-fx-background-color: white; -fx-font-size: 11px;">
                                     <HBox.margin>
                                        <Insets right="10.0" />
                                     </HBox.margin>
                                  </MFXDatePicker>
-                                 <Label text="Hasta:">
+                                 <Label text="Hasta:" style="-fx-text-fill: #374151; -fx-font-weight: 500; -fx-font-size: 12px;">
                                     <HBox.margin>
                                        <Insets right="5.0" />
                                     </HBox.margin>
                                  </Label>
-                                 <MFXDatePicker fx:id="dpEstadisticasFin" promptText="Fecha fin">
+                                 <MFXDatePicker fx:id="dpEstadisticasFin" promptText="Fecha fin" style="-fx-background-color: white; -fx-font-size: 11px;">
                                     <HBox.margin>
                                        <Insets right="15.0" />
                                     </HBox.margin>
                                  </MFXDatePicker>
-                                 <Button fx:id="btnActualizarEstadisticas" onAction="#actualizarEstadisticas" styleClass="btn-primary" text="Actualizar" />
+                                 <Button fx:id="btnActualizarEstadisticas" onAction="#actualizarEstadisticas" style="-fx-background-color: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); -fx-text-fill: white; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Actualizar" />
                                  <Region HBox.hgrow="ALWAYS" />
-                                 <Button fx:id="btnExportarEstadisticas" onAction="#exportarEstadisticas" styleClass="btn-success" text="Exportar Reporte" />
+                                 <Button fx:id="btnExportarEstadisticas" onAction="#exportarEstadisticas" style="-fx-background-color: linear-gradient(135deg, #10b981 0%, #059669 100%); -fx-text-fill: white; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Exportar Reporte" />
                               </children>
                               <VBox.margin>
                                  <Insets left="10.0" right="10.0" top="10.0" />
                               </VBox.margin>
+                              <padding>
+                                 <Insets bottom="8.0" top="8.0" left="12.0" right="12.0" />
+                              </padding>
                            </HBox>
                            
                            <!-- Resumen de estadísticas -->
                            <HBox spacing="20.0" alignment="CENTER" VBox.vgrow="SOMETIMES">
                               <children>
-                                 <VBox alignment="CENTER" spacing="10.0" styleClass="stats-card">
+                                 <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 8px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 8, 0, 0, 2);">
                                     <children>
-                                       <Label fx:id="lblTotalFacturas" text="0" styleClass="stats-number" />
-                                       <Label text="Total Facturas" styleClass="stats-label" />
+                                       <Label fx:id="lblTotalFacturas" text="0" style="-fx-text-fill: #3b82f6; -fx-font-weight: bold; -fx-font-size: 24px;" />
+                                       <Label text="Total Facturas" style="-fx-text-fill: #64748b; -fx-font-weight: 500; -fx-font-size: 12px;" />
                                     </children>
                                     <padding>
                                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
                                     </padding>
                                  </VBox>
-                                 <VBox alignment="CENTER" spacing="10.0" styleClass="stats-card">
+                                 <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 8px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 8, 0, 0, 2);">
                                     <children>
-                                       <Label fx:id="lblIngresosTotales" text="0,00 €" styleClass="stats-number" />
-                                       <Label text="Ingresos Totales" styleClass="stats-label" />
+                                       <Label fx:id="lblIngresosTotales" text="0,00 €" style="-fx-text-fill: #10b981; -fx-font-weight: bold; -fx-font-size: 24px;" />
+                                       <Label text="Ingresos Totales" style="-fx-text-fill: #64748b; -fx-font-weight: 500; -fx-font-size: 12px;" />
                                     </children>
                                     <padding>
                                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
                                     </padding>
                                  </VBox>
-                                 <VBox alignment="CENTER" spacing="10.0" styleClass="stats-card">
+                                 <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 8px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 8, 0, 0, 2);">
                                     <children>
-                                       <Label fx:id="lblFacturasPendientes" text="0" styleClass="stats-number" />
-                                       <Label text="Facturas Pendientes" styleClass="stats-label" />
+                                       <Label fx:id="lblFacturasPendientes" text="0" style="-fx-text-fill: #f59e0b; -fx-font-weight: bold; -fx-font-size: 24px;" />
+                                       <Label text="Facturas Pendientes" style="-fx-text-fill: #64748b; -fx-font-weight: 500; -fx-font-size: 12px;" />
                                     </children>
                                     <padding>
                                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
                                     </padding>
                                  </VBox>
-                                 <VBox alignment="CENTER" spacing="10.0" styleClass="stats-card">
+                                 <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 8px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 8, 0, 0, 2);">
                                     <children>
-                                       <Label fx:id="lblPromedioFactura" text="0,00 €" styleClass="stats-number" />
-                                       <Label text="Promedio por Factura" styleClass="stats-label" />
+                                       <Label fx:id="lblPromedioFactura" text="0,00 €" style="-fx-text-fill: #06b6d4; -fx-font-weight: bold; -fx-font-size: 24px;" />
+                                       <Label text="Promedio por Factura" style="-fx-text-fill: #64748b; -fx-font-weight: 500; -fx-font-size: 12px;" />
                                     </children>
                                     <padding>
                                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
@@ -253,9 +252,9 @@
                            <HBox spacing="20.0" VBox.vgrow="ALWAYS">
                               <children>
                                  <!-- Gráfico de estados -->
-                                 <VBox spacing="10.0" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS" styleClass="chart-container">
+                                 <VBox spacing="10.0" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-background-radius: 8px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 8, 0, 0, 2);">
                                     <children>
-                                       <Label text="Distribución por Estados" styleClass="chart-title" />
+                                       <Label text="Distribución por Estados" style="-fx-text-fill: #1e293b; -fx-font-weight: bold; -fx-font-size: 14px;" />
                                        <PieChart fx:id="chartEstados" VBox.vgrow="ALWAYS" />
                                     </children>
                                     <padding>
@@ -264,9 +263,9 @@
                                  </VBox>
                                  
                                  <!-- Gráfico de ingresos por mes -->
-                                 <VBox spacing="10.0" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS" styleClass="chart-container">
+                                 <VBox spacing="10.0" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-background-radius: 8px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 8, 0, 0, 2);">
                                     <children>
-                                       <Label text="Ingresos por Mes" styleClass="chart-title" />
+                                       <Label text="Ingresos por Mes" style="-fx-text-fill: #1e293b; -fx-font-weight: bold; -fx-font-size: 14px;" />
                                        <LineChart fx:id="chartIngresos" VBox.vgrow="ALWAYS">
                                           <xAxis>
                                              <CategoryAxis fx:id="xAxisMeses" />
@@ -293,32 +292,31 @@
                <!-- Tab de Borradores -->
                <Tab fx:id="tabBorradores" closable="false" text="Borradores">
                   <content>
-                     <VBox spacing="10.0" styleClass="panel-content" VBox.vgrow="ALWAYS">
+                     <VBox spacing="10.0" style="-fx-background-color: white;" VBox.vgrow="ALWAYS">
                         <children>
                            <!-- Controles para borradores -->
-                           <HBox alignment="CENTER_LEFT" spacing="10.0">
+                           <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-background-color: #f8fafc; -fx-background-radius: 6px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.03), 4, 0, 0, 1);">
                               <children>
-                                 <TextField fx:id="txtBuscarBorrador" promptText="Buscar borrador..." HBox.hgrow="ALWAYS">
-                                    <padding>
-                                       <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
-                                    </padding>
-                                 </TextField>
-                                 <Button fx:id="btnNuevoBorrador" onAction="#onNuevoBorrador" styleClass="btn-primary" text="Nuevo Borrador" />
-                                 <Button fx:id="btnEditarBorrador" onAction="#onEditarBorrador" styleClass="btn-secondary" text="Editar" />
-                                 <Button fx:id="btnFinalizarBorrador" onAction="#onFinalizarBorrador" styleClass="btn-success" text="Finalizar" />
-                                 <Button fx:id="btnEliminarBorrador" onAction="#onEliminarBorrador" styleClass="btn-danger" text="Eliminar" />
+                                 <TextField fx:id="txtBuscarBorrador" promptText="Buscar borrador..." HBox.hgrow="ALWAYS" style="-fx-background-color: white; -fx-padding: 8px 12px; -fx-font-size: 12px; -fx-text-fill: #1f2937;" />
+                                 <Button fx:id="btnNuevoBorrador" onAction="#onNuevoBorrador" style="-fx-background-color: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Nuevo Borrador" />
+                                 <Button fx:id="btnEditarBorrador" onAction="#onEditarBorrador" style="-fx-background-color: linear-gradient(135deg, #64748b 0%, #475569 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Editar" />
+                                 <Button fx:id="btnFinalizarBorrador" onAction="#onFinalizarBorrador" style="-fx-background-color: linear-gradient(135deg, #10b981 0%, #059669 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Finalizar" />
+                                 <Button fx:id="btnEliminarBorrador" onAction="#onEliminarBorrador" style="-fx-background-color: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Eliminar" />
                               </children>
                               <VBox.margin>
                                  <Insets left="10.0" right="10.0" top="10.0" />
                               </VBox.margin>
+                              <padding>
+                                 <Insets bottom="8.0" top="8.0" left="12.0" right="12.0" />
+                              </padding>
                            </HBox>
                            
                            <!-- Tabla de borradores -->
-                           <StackPane VBox.vgrow="ALWAYS">
+                           <StackPane VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-background-radius: 6px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.04), 6, 0, 0, 1);">
                               <children>
-                                 <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">
+                                 <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent;">
                                     <content>
-                                       <TableView fx:id="tablaBorradores" VBox.vgrow="ALWAYS">
+                                       <TableView fx:id="tablaBorradores" VBox.vgrow="ALWAYS" style="-fx-background-color: white;">
                                           <columns>
                                              <TableColumn fx:id="colBorradorFecha" text="Fecha Creación" />
                                              <TableColumn fx:id="colBorradorCliente" text="Cliente" />
