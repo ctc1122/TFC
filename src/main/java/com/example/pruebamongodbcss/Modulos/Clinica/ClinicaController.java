@@ -1916,27 +1916,6 @@ public class ClinicaController implements Initializable {
     }
     
     /**
-     * Utiliza el controlador de diagnóstico para exportar a PDF
-     */
-    private void exportarDiagnosticoPDF(com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico.DiagnosticoController controller) {
-        try {
-            // Crear un Stage temporal para tener acceso a la escena (necesario para FileChooser)
-            Stage tempStage = new Stage();
-            tempStage.initModality(Modality.APPLICATION_MODAL);
-            
-            // Llamar al método exportarPDF del controlador de diagnóstico
-            Method metodoExportar = controller.getClass().getDeclaredMethod("exportarPDF");
-            metodoExportar.setAccessible(true);
-            metodoExportar.invoke(controller);
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            mostrarAlerta("Error", "Error al exportar a PDF", 
-                    "Ha ocurrido un error al intentar exportar el diagnóstico a PDF: " + e.getMessage());
-        }
-    }
-    
-    /**
      * Exporta los diagnósticos seleccionados o visibles a un archivo CSV
      */
     @FXML
@@ -2027,7 +2006,7 @@ public class ClinicaController implements Initializable {
                             controller.setDiagnostico(diagnostico);
 
                             // Llamar al método de exportación a PDF
-                            exportarDiagnosticoPDF(controller);
+                            controller.exportarPDFDesdeLista(diagnostico, paciente, cita);
                         } else {
                             mostrarAlerta("Error", "Error al obtener citas",
                                     "No se pudieron obtener las citas del paciente.");

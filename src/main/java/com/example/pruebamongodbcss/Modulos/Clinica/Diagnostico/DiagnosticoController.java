@@ -22,12 +22,16 @@ import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario;
 import com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica;
 import com.example.pruebamongodbcss.Modulos.Facturacion.FacturacionController;
+import com.itextpdf.text.DocumentException;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
@@ -43,9 +47,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 
 /**
  * Controlador para la pantalla de diagnósticos médicos.
@@ -486,7 +487,7 @@ public class DiagnosticoController implements Initializable {
     }
     
     /**
-     * Exporta los diagnósticos a un archivo en formato texto (como alternativa a PDF).
+     * Exporta el diagnóstico a un archivo PDF profesional.
      */
     @FXML
     private void exportarPDF() {
@@ -496,11 +497,11 @@ public class DiagnosticoController implements Initializable {
         }
         
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Guardar Informe");
+        fileChooser.setTitle("Guardar Informe PDF");
         fileChooser.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter("Archivos de texto", "*.txt")
+            new FileChooser.ExtensionFilter("Archivos PDF", "*.pdf")
         );
-        fileChooser.setInitialFileName("diagnostico_" + paciente.getNombre() + ".txt");
+        fileChooser.setInitialFileName("diagnostico_" + paciente.getNombre().replaceAll("[^a-zA-Z0-9]", "_") + ".pdf");
         
         // Obtener ventana actual para mostrar el diálogo
         Stage stage = (Stage) contenedorPrincipal.getScene().getWindow();
@@ -508,71 +509,119 @@ public class DiagnosticoController implements Initializable {
         
         if (file != null) {
             executorService.submit(() -> {
-                try (FileWriter writer = new FileWriter(file)) {
-                    // Título
-                    writer.write("==========================================\n");
-                    writer.write("      INFORME DE DIAGNÓSTICO VETERINARIO\n");
-                    writer.write("==========================================\n\n");
-                    
-                    // Datos del paciente
-                    writer.write("PACIENTE: " + paciente.getNombre() + "\n");
-                    writer.write("Especie: " + paciente.getEspecie() + "\n");
-                    writer.write("Raza: " + paciente.getRaza() + "\n");
-                    writer.write("Sexo: " + paciente.getSexo() + "\n");
-                    writer.write("Peso: " + paciente.getPeso() + " kg\n\n");
-                    
-                    // Fecha
-                    // LocalDate fecha = dpFecha.getValue();
-                    // writer.write("Fecha: " + fecha + "\n\n");
-                    
-                    // Motivo
-                    // writer.write("MOTIVO DE CONSULTA:\n");
-                    // writer.write(txtMotivo.getText() + "\n\n");
-                    
-                    // Anamnesis
-                    writer.write("ANAMNESIS:\n");
-                    writer.write(txtAnamnesis.getText() + "\n\n");
-                    
-                    // Examen físico
-                    writer.write("EXAMEN FÍSICO:\n");
-                    writer.write(txtExamenFisico.getText() + "\n\n");
-                    
-                    // Diagnósticos
-                    writer.write("DIAGNÓSTICOS:\n");
-                    for (ModeloDiagnosticoUMLS diag : diagnosticosSeleccionados) {
-                        writer.write("- " + diag.getStr() + " (Código: " + diag.getCui() + 
-                                ", Fuente: " + diag.getSab() + ")\n");
+                try {
+                    // Obtener datos del propietario
+                    ModeloPropietario propietario = null;
+                    if (paciente.getPropietarioId() != null) {
+                        propietario = servicioClinica.obtenerPropietarioPorId(paciente.getPropietarioId());
                     }
-                    writer.write("\n");
                     
-                    // Tratamiento
-                    writer.write("TRATAMIENTO:\n");
-                    writer.write(txtTratamiento.getText() + "\n\n");
-                    
-                    // Observaciones
-                    writer.write("OBSERVACIONES:\n");
-                    writer.write(txtObservaciones.getText() + "\n\n");
-                    
-                    // Próxima visita
+                    // Obtener fecha de próxima visita
+                    Date proximaVisita = null;
                     if (dpProximaVisita.getValue() != null) {
-                        writer.write("Próxima visita programada: " + dpProximaVisita.getValue() + "\n\n");
+                        proximaVisita = Date.from(dpProximaVisita.getValue()
+                                .atStartOfDay(ZoneId.systemDefault()).toInstant());
                     }
                     
-                    // Firma
-                    writer.write("\n\n");
-                    writer.write("Firma: _______________________________\n");
-                    writer.write("       Dr. Veterinario\n");
+                    // Generar el PDF usando la clase utilitaria
+                    GeneradorPDFDiagnostico.generarPDFDiagnostico(
+                        file,
+                        paciente,
+                        propietario,
+                        null, // cita - se puede pasar si está disponible
+                        diagnosticoActual,
+                        diagnosticosSeleccionados,
+                        txtAnamnesis.getText(),
+                        txtExamenFisico.getText(),
+                        txtTratamiento.getText(),
+                        txtObservaciones.getText(),
+                        proximaVisita
+                    );
                     
                     Platform.runLater(() -> {
                         mostrarInformacion("Exportación exitosa", 
-                                "El diagnóstico ha sido exportado correctamente como archivo de texto");
+                                "El diagnóstico ha sido exportado correctamente como PDF");
                     });
                     
-                } catch (IOException e) {
+                } catch (DocumentException | IOException e) {
                     e.printStackTrace();
                     Platform.runLater(() -> {
                         mostrarError("Error al exportar", 
-                                "No se pudo exportar el diagnóstico. Error: " + e.getMessage());
+                                "No se pudo exportar el diagnóstico a PDF. Error: " + e.getMessage());
+                    });
+                }
+            });
+        }
+    }
+    
+    /**
+     * Método público para exportar PDF desde el listado de diagnósticos.
+     * Este método puede ser llamado desde ClinicaController.
+     */
+    public void exportarPDFDesdeLista(ModeloDiagnostico diagnostico, ModeloPaciente pacienteParam, ModeloCita cita) {
+        if (diagnostico == null || pacienteParam == null) {
+            mostrarError("Error", "Datos insuficientes para exportar el diagnóstico");
+            return;
+        }
+        
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Guardar Informe PDF");
+        fileChooser.getExtensionFilters().add(
+            new FileChooser.ExtensionFilter("Archivos PDF", "*.pdf")
+        );
+        fileChooser.setInitialFileName("diagnostico_" + pacienteParam.getNombre().replaceAll("[^a-zA-Z0-9]", "_") + ".pdf");
+        
+        // Usar la ventana principal si no hay contenedor disponible
+        Stage stage = contenedorPrincipal != null && contenedorPrincipal.getScene() != null ? 
+                     (Stage) contenedorPrincipal.getScene().getWindow() : null;
+        
+        File file = fileChooser.showSaveDialog(stage);
+        
+        if (file != null) {
+            executorService.submit(() -> {
+                try {
+                    // Obtener datos del propietario
+                    ModeloPropietario propietario = null;
+                    if (pacienteParam.getPropietarioId() != null) {
+                        propietario = servicioClinica.obtenerPropietarioPorId(pacienteParam.getPropietarioId());
+                    }
+                    
+                    // Parsear diagnósticos UMLS del texto almacenado (simplificado)
+                    java.util.List<ModeloDiagnosticoUMLS> diagnosticosUMLS = new java.util.ArrayList<>();
+                    if (diagnostico.getDiagnostico() != null && !diagnostico.getDiagnostico().isEmpty()) {
+                        // Crear un diagnóstico UMLS básico a partir del texto
+                        ModeloDiagnosticoUMLS diagUMLS = new ModeloDiagnosticoUMLS();
+                        diagUMLS.setStr(diagnostico.getDiagnostico());
+                        diagUMLS.setCui("N/A");
+                        diagUMLS.setSab("Diagnóstico clínico");
+                        diagnosticosUMLS.add(diagUMLS);
+                    }
+                    
+                    // Generar el PDF
+                    GeneradorPDFDiagnostico.generarPDFDiagnostico(
+                        file,
+                        pacienteParam,
+                        propietario,
+                        cita,
+                        diagnostico,
+                        diagnosticosUMLS,
+                        diagnostico.getAnamnesis(),
+                        diagnostico.getExamenFisico(),
+                        diagnostico.getTratamiento(),
+                        diagnostico.getObservaciones(),
+                        diagnostico.getProximaVisita()
+                    );
+                    
+                    Platform.runLater(() -> {
+                        mostrarInformacion("Exportación exitosa", 
+                                "El diagnóstico ha sido exportado correctamente como PDF");
+                    });
+                    
+                } catch (DocumentException | IOException e) {
+                    e.printStackTrace();
+                    Platform.runLater(() -> {
+                        mostrarError("Error al exportar", 
+                                "No se pudo exportar el diagnóstico a PDF. Error: " + e.getMessage());
                     });
                 }
             });
