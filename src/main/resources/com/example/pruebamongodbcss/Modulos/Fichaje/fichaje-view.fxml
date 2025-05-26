@@ -11,10 +11,12 @@
          <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="title-bar">
             <Label styleClass="module-title" text="Sistema de Fichaje" />
             <Region HBox.hgrow="ALWAYS" />
-            <Label fx:id="lblRelojTiempoReal" styleClass="clock-display" text="--:--:--" />
-            <Label fx:id="lblFechaActual" styleClass="date-display" text="--/--/----" />
+            <VBox alignment="CENTER_RIGHT" spacing="5.0" styleClass="time-container">
+               <Label fx:id="lblRelojTiempoReal" styleClass="clock-display" text="--:--:--" />
+               <Label fx:id="lblFechaActual" styleClass="date-display" text="--/--/----" />
+            </VBox>
          </HBox>
-         <HBox alignment="CENTER_LEFT" spacing="15.0" styleClass="user-status-bar">
+         <FlowPane styleClass="user-status-bar" hgap="15.0" vgap="10.0" alignment="CENTER_LEFT">
             <Label styleClass="user-info-label" text="Usuario:" />
             <Label fx:id="lblUsuarioActual" styleClass="user-name" text="--" />
             <Separator orientation="VERTICAL" />
@@ -22,7 +24,7 @@
             <Label fx:id="lblEstadoFichaje" styleClass="status-value" text="Sin fichar" />
             <Region HBox.hgrow="ALWAYS" />
             <Button fx:id="btnRefrescar" styleClass="refresh-button" text="🔄 Actualizar" />
-         </HBox>
+         </FlowPane>
       </VBox>
    </top>
    <center>
@@ -35,7 +37,7 @@
             <!-- Panel de Selección de Módulos (VISIBLE por defecto) -->
             <VBox fx:id="panelSeleccionModulos" styleClass="module-selection-container" spacing="20.0" visible="true" managed="true">
                <Label styleClass="selection-title" text="Selecciona un módulo" />
-               <HBox styleClass="cards-container" spacing="30.0" alignment="CENTER">
+               <FlowPane styleClass="cards-container" hgap="30.0" vgap="20.0" alignment="CENTER">
                   <!-- Tarjeta de Fichaje -->
                   <VBox fx:id="cardFichaje" styleClass="module-card, fichaje-card" spacing="15.0" onMouseClicked="#abrirModuloFichaje">
                      <VBox styleClass="card-header" alignment="CENTER" spacing="10.0">
@@ -65,7 +67,7 @@
                         <Label styleClass="card-action" text="Acceder →" />
                      </VBox>
                   </VBox>
-               </HBox>
+               </FlowPane>
             </VBox>
             
             <!-- Panel Principal de Fichaje (OCULTO inicialmente) -->
@@ -78,33 +80,42 @@
                <!-- Panel de Fichaje Actual -->
                <VBox fx:id="panelFichajeActual" styleClass="current-fichaje-panel" spacing="15.0">
                   <Label styleClass="section-subtitle" text="Estado Actual" />
-                  <GridPane styleClass="fichaje-grid" hgap="20.0" vgap="10.0">
+                  
+                  <!-- Grid responsive para información de fichaje -->
+                  <GridPane styleClass="fichaje-grid" hgap="20.0" vgap="15.0">
                      <columnConstraints>
-                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
-                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
-                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="150.0" percentWidth="33.33" />
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="150.0" percentWidth="33.33" />
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="150.0" percentWidth="33.33" />
                      </columnConstraints>
-                     <Label styleClass="field-label" text="Hora de Entrada:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                     <Label fx:id="lblHoraEntrada" styleClass="info-value" text="--:--" GridPane.columnIndex="0" GridPane.rowIndex="1" />
                      
-                     <Label styleClass="field-label" text="Tiempo Trabajado:" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-                     <Label fx:id="lblTiempoTrabajado" styleClass="info-value" text="00:00" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                     <VBox styleClass="info-card" spacing="5.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                        <Label styleClass="field-label" text="Hora de Entrada:" />
+                        <Label fx:id="lblHoraEntrada" styleClass="info-value" text="--:--" />
+                     </VBox>
                      
-                     <Label styleClass="field-label" text="Estado:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
-                     <Label fx:id="lblEstadoActual" styleClass="info-value" text="Sin fichar" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+                     <VBox styleClass="info-card" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                        <Label styleClass="field-label" text="Tiempo Trabajado:" />
+                        <Label fx:id="lblTiempoTrabajado" styleClass="info-value" text="00:00" />
+                     </VBox>
+                     
+                     <VBox styleClass="info-card" spacing="5.0" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                        <Label styleClass="field-label" text="Estado:" />
+                        <Label fx:id="lblEstadoActual" styleClass="info-value" text="Sin fichar" />
+                     </VBox>
                   </GridPane>
                   
                   <!-- Controles de Fichaje -->
-                  <VBox spacing="15.0">
-                     <HBox spacing="10.0" alignment="CENTER_LEFT">
+                  <VBox spacing="15.0" styleClass="controls-container">
+                     <FlowPane hgap="15.0" vgap="10.0" alignment="CENTER_LEFT">
                         <Label styleClass="field-label" text="Tipo de Fichaje:" />
-                        <ComboBox fx:id="cmbTipoFichaje" styleClass="combo-field" prefWidth="150.0" />
-                     </HBox>
+                        <ComboBox fx:id="cmbTipoFichaje" styleClass="combo-field" minWidth="150.0" />
+                     </FlowPane>
                      <TextField fx:id="txtMotivoIncidencia" styleClass="text-field" promptText="Motivo de la incidencia (opcional)" visible="false" managed="false" />
-                     <HBox spacing="15.0" alignment="CENTER">
+                     <FlowPane hgap="15.0" vgap="10.0" alignment="CENTER" styleClass="button-container">
                         <Button fx:id="btnFicharEntrada" styleClass="primary-button, entrada-button" text="🟢 Fichar Entrada" />
                         <Button fx:id="btnFicharSalida" styleClass="primary-button, salida-button" text="🔴 Fichar Salida" />
-                     </HBox>
+                     </FlowPane>
                   </VBox>
                </VBox>
                
@@ -112,30 +123,33 @@
                <VBox styleClass="historial-section" spacing="15.0">
                   <Label styleClass="section-subtitle" text="Historial de Fichajes" />
                   
-                  <!-- Barra de Filtros -->
-                  <HBox styleClass="filter-bar" spacing="15.0" alignment="CENTER_LEFT">
-                     <Label styleClass="filter-label" text="Desde:" />
-                     <DatePicker fx:id="dpFechaInicio" styleClass="date-picker" />
-                     <Label styleClass="filter-label" text="Hasta:" />
-                     <DatePicker fx:id="dpFechaFin" styleClass="date-picker" />
-                     <Button fx:id="btnFiltrar" styleClass="filter-button" text="🔍 Filtrar" />
-                     <Button fx:id="btnLimpiarFiltros" styleClass="clear-button" text="🗑️ Limpiar" />
-                     <Region HBox.hgrow="ALWAYS" />
-                     <Button fx:id="btnExportarHistorial" styleClass="export-button" text="📊 Exportar" />
-                     <Button fx:id="btnGenerarInforme" styleClass="report-button" text="📋 Informe" />
-                  </HBox>
+                  <!-- Barra de Filtros Responsive -->
+                  <VBox spacing="10.0">
+                     <FlowPane styleClass="filter-bar" hgap="15.0" vgap="10.0" alignment="CENTER_LEFT">
+                        <Label styleClass="filter-label" text="Desde:" />
+                        <DatePicker fx:id="dpFechaInicio" styleClass="date-picker" />
+                        <Label styleClass="filter-label" text="Hasta:" />
+                        <DatePicker fx:id="dpFechaFin" styleClass="date-picker" />
+                        <Button fx:id="btnFiltrar" styleClass="filter-button" text="🔍 Filtrar" />
+                        <Button fx:id="btnLimpiarFiltros" styleClass="clear-button" text="🗑️ Limpiar" />
+                     </FlowPane>
+                     <FlowPane hgap="10.0" vgap="10.0" alignment="CENTER_RIGHT">
+                        <Button fx:id="btnExportarHistorial" styleClass="export-button" text="📊 Exportar" />
+                        <Button fx:id="btnGenerarInforme" styleClass="report-button" text="📋 Informe" />
+                     </FlowPane>
+                  </VBox>
                   
-                  <!-- Tabla de Historial -->
-                  <TableView fx:id="tablaHistorial" styleClass="data-table">
+                  <!-- Tabla de Historial Responsive -->
+                  <TableView fx:id="tablaHistorial" styleClass="data-table" columnResizePolicy="CONSTRAINED_RESIZE_POLICY">
                      <columns>
-                        <TableColumn fx:id="colFecha" text="Fecha" prefWidth="100.0" />
-                        <TableColumn fx:id="colHoraEntrada" text="Entrada" prefWidth="80.0" />
-                        <TableColumn fx:id="colHoraSalida" text="Salida" prefWidth="80.0" />
-                        <TableColumn fx:id="colTiempoTotal" text="Total" prefWidth="80.0" />
-                        <TableColumn fx:id="colTipoEntrada" text="Tipo Entrada" prefWidth="100.0" />
-                        <TableColumn fx:id="colTipoSalida" text="Tipo Salida" prefWidth="100.0" />
-                        <TableColumn fx:id="colEstado" text="Estado" prefWidth="80.0" />
-                        <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="100.0" />
+                        <TableColumn fx:id="colFecha" text="Fecha" minWidth="80.0" />
+                        <TableColumn fx:id="colHoraEntrada" text="Entrada" minWidth="70.0" />
+                        <TableColumn fx:id="colHoraSalida" text="Salida" minWidth="70.0" />
+                        <TableColumn fx:id="colTiempoTotal" text="Total" minWidth="70.0" />
+                        <TableColumn fx:id="colTipoEntrada" text="T.Entrada" minWidth="80.0" />
+                        <TableColumn fx:id="colTipoSalida" text="T.Salida" minWidth="80.0" />
+                        <TableColumn fx:id="colEstado" text="Estado" minWidth="70.0" />
+                        <TableColumn fx:id="colAcciones" text="Acciones" minWidth="80.0" />
                      </columns>
                   </TableView>
                </VBox>
@@ -148,67 +162,69 @@
                   <Label styleClass="section-title" text="Panel de Administración" />
                </HBox>
                
-               <!-- Controles Administrativos -->
-               <HBox styleClass="admin-controls" spacing="15.0" alignment="CENTER_LEFT">
-                  <Label styleClass="filter-label" text="Empleado:" />
-                  <ComboBox fx:id="cmbEmpleados" styleClass="combo-field" prefWidth="200.0" />
-                  <Button fx:id="btnVerTodosFichajes" styleClass="admin-button" text="👥 Ver Todos" />
-                  <Button fx:id="btnEstadisticas" styleClass="stats-button" text="📊 Estadísticas" />
-                  <Button fx:id="btnGestionarIncidencias" styleClass="incident-button" text="⚠️ Incidencias" />
-               </HBox>
+               <!-- Controles Administrativos Responsive -->
+               <VBox spacing="15.0">
+                  <FlowPane styleClass="admin-controls" hgap="15.0" vgap="10.0" alignment="CENTER_LEFT">
+                     <Label styleClass="filter-label" text="Empleado:" />
+                     <ComboBox fx:id="cmbEmpleados" styleClass="combo-field" minWidth="200.0" />
+                     <Button fx:id="btnVerTodosFichajes" styleClass="admin-button" text="👥 Ver Todos" />
+                     <Button fx:id="btnEstadisticas" styleClass="stats-button" text="📊 Estadísticas" />
+                     <Button fx:id="btnGestionarIncidencias" styleClass="incident-button" text="⚠️ Incidencias" />
+                  </FlowPane>
+               </VBox>
                
-               <!-- Grid de Estadísticas -->
-               <GridPane fx:id="gridEstadisticas" styleClass="stats-grid" hgap="20.0" vgap="15.0">
+               <!-- Grid de Estadísticas Responsive -->
+               <GridPane fx:id="gridEstadisticas" styleClass="stats-grid" hgap="15.0" vgap="15.0">
                   <columnConstraints>
-                     <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
-                     <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
-                     <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
-                     <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+                     <ColumnConstraints hgrow="SOMETIMES" minWidth="120.0" percentWidth="25.0" />
+                     <ColumnConstraints hgrow="SOMETIMES" minWidth="120.0" percentWidth="25.0" />
+                     <ColumnConstraints hgrow="SOMETIMES" minWidth="120.0" percentWidth="25.0" />
+                     <ColumnConstraints hgrow="SOMETIMES" minWidth="120.0" percentWidth="25.0" />
                   </columnConstraints>
                   
-                  <VBox styleClass="stat-card" alignment="CENTER" spacing="5.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                  <VBox styleClass="stat-card" alignment="CENTER" spacing="8.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
                      <Label fx:id="lblTotalEmpleados" styleClass="stat-value" text="0" />
                      <Label styleClass="stat-label" text="Empleados Activos" />
                   </VBox>
                   
-                  <VBox styleClass="stat-card" alignment="CENTER" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                  <VBox styleClass="stat-card" alignment="CENTER" spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
                      <Label fx:id="lblFichajesHoy" styleClass="stat-value" text="0" />
                      <Label styleClass="stat-label" text="Fichajes Hoy" />
                   </VBox>
                   
-                  <VBox styleClass="stat-card" alignment="CENTER" spacing="5.0" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                  <VBox styleClass="stat-card" alignment="CENTER" spacing="8.0" GridPane.columnIndex="2" GridPane.rowIndex="0">
                      <Label fx:id="lblIncidenciasHoy" styleClass="stat-value" text="0" />
                      <Label styleClass="stat-label" text="Incidencias Hoy" />
                   </VBox>
                   
-                  <VBox styleClass="stat-card" alignment="CENTER" spacing="5.0" GridPane.columnIndex="3" GridPane.rowIndex="0">
+                  <VBox styleClass="stat-card" alignment="CENTER" spacing="8.0" GridPane.columnIndex="3" GridPane.rowIndex="0">
                      <Label fx:id="lblPromedioHoras" styleClass="stat-value" text="0,0h" />
                      <Label styleClass="stat-label" text="Promedio Horas" />
                   </VBox>
                </GridPane>
                
-               <!-- Filtros Administrativos -->
-               <HBox styleClass="filter-bar" spacing="15.0" alignment="CENTER_LEFT">
+               <!-- Filtros Administrativos Responsive -->
+               <FlowPane styleClass="filter-bar" hgap="15.0" vgap="10.0" alignment="CENTER_LEFT">
                   <Label styleClass="filter-label" text="Desde:" />
                   <DatePicker fx:id="dpFechaInicioAdmin" styleClass="date-picker" />
                   <Label styleClass="filter-label" text="Hasta:" />
                   <DatePicker fx:id="dpFechaFinAdmin" styleClass="date-picker" />
                   <Button fx:id="btnFiltrarAdmin" styleClass="filter-button" text="🔍 Filtrar" />
                   <Button fx:id="btnLimpiarFiltrosAdmin" styleClass="clear-button" text="🗑️ Limpiar" />
-               </HBox>
+               </FlowPane>
                
-               <!-- Tabla de Todos los Fichajes -->
-               <TableView fx:id="tablaTodosFichajes" styleClass="data-table">
+               <!-- Tabla de Todos los Fichajes Responsive -->
+               <TableView fx:id="tablaTodosFichajes" styleClass="data-table" columnResizePolicy="CONSTRAINED_RESIZE_POLICY">
                   <columns>
-                     <TableColumn fx:id="colEmpleado" text="Empleado" prefWidth="120.0" />
-                     <TableColumn fx:id="colFechaAdmin" text="Fecha" prefWidth="100.0" />
-                     <TableColumn fx:id="colHoraEntradaAdmin" text="Entrada" prefWidth="80.0" />
-                     <TableColumn fx:id="colHoraSalidaAdmin" text="Salida" prefWidth="80.0" />
-                     <TableColumn fx:id="colTiempoTotalAdmin" text="Total" prefWidth="80.0" />
-                     <TableColumn fx:id="colTipoEntradaAdmin" text="Tipo Entrada" prefWidth="100.0" />
-                     <TableColumn fx:id="colTipoSalidaAdmin" text="Tipo Salida" prefWidth="100.0" />
-                     <TableColumn fx:id="colEstadoAdmin" text="Estado" prefWidth="80.0" />
-                     <TableColumn fx:id="colAccionesAdmin" text="Acciones" prefWidth="100.0" />
+                     <TableColumn fx:id="colEmpleado" text="Empleado" minWidth="100.0" />
+                     <TableColumn fx:id="colFechaAdmin" text="Fecha" minWidth="80.0" />
+                     <TableColumn fx:id="colHoraEntradaAdmin" text="Entrada" minWidth="70.0" />
+                     <TableColumn fx:id="colHoraSalidaAdmin" text="Salida" minWidth="70.0" />
+                     <TableColumn fx:id="colTiempoTotalAdmin" text="Total" minWidth="70.0" />
+                     <TableColumn fx:id="colTipoEntradaAdmin" text="T.Entrada" minWidth="80.0" />
+                     <TableColumn fx:id="colTipoSalidaAdmin" text="T.Salida" minWidth="80.0" />
+                     <TableColumn fx:id="colEstadoAdmin" text="Estado" minWidth="70.0" />
+                     <TableColumn fx:id="colAccionesAdmin" text="Acciones" minWidth="80.0" />
                   </columns>
                </TableView>
             </VBox>
@@ -216,10 +232,10 @@
       </ScrollPane>
    </center>
    <bottom>
-      <HBox styleClass="status-bar" alignment="CENTER_LEFT" spacing="10.0">
+      <FlowPane styleClass="status-bar" hgap="10.0" vgap="5.0" alignment="CENTER_LEFT">
          <Label styleClass="status-text" text="Sistema de Fichaje v1.0" />
          <Region HBox.hgrow="ALWAYS" />
          <Label fx:id="lblConexionEstado" styleClass="connection-status" text="🟢 Conectado" />
-      </HBox>
+      </FlowPane>
    </bottom>
 </BorderPane> 
