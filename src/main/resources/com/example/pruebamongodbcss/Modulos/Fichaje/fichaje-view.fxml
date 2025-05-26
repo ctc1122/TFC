@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Fichaje.FichajeController">
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Fichaje.FichajeController" styleClass="fichaje-main-panel">
    <top>
       <VBox styleClass="header-container">
          <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="title-bar">
@@ -140,7 +140,7 @@
                   </VBox>
                   
                   <!-- Tabla de Historial Responsive -->
-                  <TableView fx:id="tablaHistorial" styleClass="data-table" columnResizePolicy="CONSTRAINED_RESIZE_POLICY">
+                  <TableView fx:id="tablaHistorial" styleClass="data-table">
                      <columns>
                         <TableColumn fx:id="colFecha" text="Fecha" minWidth="80.0" />
                         <TableColumn fx:id="colHoraEntrada" text="Entrada" minWidth="70.0" />
@@ -214,7 +214,7 @@
                </FlowPane>
                
                <!-- Tabla de Todos los Fichajes Responsive -->
-               <TableView fx:id="tablaTodosFichajes" styleClass="data-table" columnResizePolicy="CONSTRAINED_RESIZE_POLICY">
+               <TableView fx:id="tablaTodosFichajes" styleClass="data-table">
                   <columns>
                      <TableColumn fx:id="colEmpleado" text="Empleado" minWidth="100.0" />
                      <TableColumn fx:id="colFechaAdmin" text="Fecha" minWidth="80.0" />
