@@ -467,8 +467,8 @@ public class CitaFormularioController implements Initializable {
             }
             
             // Buscar el usuario del veterinario seleccionado
-            ServicioUsuarios servicioUsuarios = new ServicioUsuarios();
             try {
+                ServicioUsuarios servicioUsuarios = new ServicioUsuarios();
                 // Dividir nombre y apellido
                 String[] partes = nombreSinTitulo.split(" ", 2);
                 String nombre = partes[0].trim();
@@ -488,23 +488,11 @@ public class CitaFormularioController implements Initializable {
                 }
                 
                 if (veterinario != null) {
-                    // Si encontramos el usuario, usar su username
                     cita.setUsuarioAsignado(veterinario.getUsuario());
-                    System.out.println("Usuario asignado a la cita: " + veterinario.getUsuario());
                 } else {
-                    // Si no lo encontramos, intentamos construir un username típico (primera letra + apellido)
-                    if (!nombre.isEmpty() && !apellido.isEmpty()) {
-                        String usuarioGenerado = (nombre.substring(0, 1) + apellido).toLowerCase();
-                        cita.setUsuarioAsignado(usuarioGenerado);
-                        System.out.println("Usuario generado para la cita: " + usuarioGenerado);
-                    } else {
-                        // Fallback a sistema si no podemos generar nada
-                        cita.setUsuarioAsignado("sistema");
-                        System.out.println("Usuario por defecto para la cita: sistema");
-                    }
+                    cita.setUsuarioAsignado("sistema");
                 }
             } catch (Exception e) {
-                // Si algo falla, usar un valor por defecto
                 cita.setUsuarioAsignado("sistema");
                 System.out.println("Error al buscar usuario para veterinario: " + e.getMessage());
             }
@@ -592,30 +580,39 @@ public class CitaFormularioController implements Initializable {
     }
 
     @FXML
-    private void onNuevoPaciente() {
+    private void onNuevoPaciente(ActionEvent event) {
         try {
+            // Cargar el formulario de nuevo paciente
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/paciente-edit-row.fxml"));
             Parent root = loader.load();
+            
+            // Obtener el controlador
             PacienteEditRowController controller = loader.getController();
-
-            // PASAR EL SERVICIO
-            controller.setServicio(this.servicio);
-
+            controller.setServicio(servicio);
+            
             // Crear un nuevo paciente vacío
             ModeloPaciente nuevoPaciente = new ModeloPaciente();
             controller.configurar(nuevoPaciente, true, (pacienteCreado, confirmado) -> {
                 if (confirmado && pacienteCreado != null) {
                     pacientesObservable.add(pacienteCreado);
                     cmbPaciente.getSelectionModel().select(pacienteCreado);
+                    
+                    // Ejecutar callback si existe para actualizar el calendario
+                    if (citaGuardadaCallback != null) {
+                        citaGuardadaCallback.run();
+                    }
                 }
             });
-
+            
+            // Mostrar el formulario en una ventana modal
             Stage stage = new Stage();
             stage.setTitle("Nuevo Paciente");
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setScene(new Scene(root));
             stage.showAndWait();
+            
         } catch (Exception e) {
+            e.printStackTrace();
             mostrarError("No se pudo abrir el formulario de nuevo paciente: " + e.getMessage());
         }
     }

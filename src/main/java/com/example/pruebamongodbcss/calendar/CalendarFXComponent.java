@@ -312,6 +312,16 @@ public class CalendarFXComponent extends BorderPane {
             com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
             controller.setServicio(servicioClinica);
             
+            // Obtener la fecha y hora seleccionada del calendario
+            LocalDate fechaSeleccionada = calendarView.getToday();
+            LocalTime horaSeleccionada = calendarView.getTime();
+            LocalDateTime fechaHoraSeleccionada = fechaSeleccionada.atTime(horaSeleccionada);
+            
+            // Crear una nueva cita con la fecha y hora seleccionada
+            ModeloCita nuevaCita = new ModeloCita();
+            nuevaCita.setFechaHora(fechaHoraSeleccionada);
+            controller.setCita(nuevaCita);
+            
             // Configurar callback para refrescar el calendario
             controller.setCitaGuardadaCallback(() -> {
                 refreshCalendarFromDatabase();
@@ -1044,6 +1054,8 @@ public class CalendarFXComponent extends BorderPane {
                                 com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = (com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita) ois.readObject();
                                 if (cita != null) {
                                     System.out.println("Cita encontrada para edición: " + cita.getId());
+                                    // Sobrescribir la fecha/hora con la del Entry visual
+                                    cita.setFechaHora(LocalDateTime.of(entry.getStartDate(), entry.getStartTime()));
                                     controller.setCita(cita);
                                 } else {
                                     System.out.println("No se encontró la cita con ID: " + citaId);
@@ -1327,7 +1339,12 @@ public class CalendarFXComponent extends BorderPane {
         String estadoStr = "PENDIENTE";
         String titulo = motivo + " - " + estadoStr;
         Entry<String> entry = new Entry<>(titulo);
-        entry.setInterval(param.getZonedDateTime(), param.getZonedDateTime().plusHours(1));
+        
+        // Usar la fecha y hora del parámetro
+        ZonedDateTime startTime = param.getZonedDateTime();
+        ZonedDateTime endTime = startTime.plusMinutes(30); // Duración estándar de 30 minutos
+        
+        entry.setInterval(startTime, endTime);
         entry.setCalendar(calendars.get(0));
         entry.setId("");
         return entry;
