@@ -1269,7 +1269,7 @@ public class CalendarFXComponent extends BorderPane {
             System.out.println("Cambiando estado de cita " + entryId + " a " + newStatus);
             
             // Enviar petición al servidor para cambiar el estado
-            gestorSocket.enviarPeticion(Protocolo.CAMBIAR_ESTADO_CITA + Protocolo.SEPARADOR_CODIGO + entryId + Protocolo.SEPARADOR_CODIGO + newStatus);
+            gestorSocket.enviarPeticion(Protocolo.CAMBIAR_ESTADO_CITA + Protocolo.SEPARADOR_CODIGO + entryId + Protocolo.SEPARADOR_PARAMETROS + newStatus);
             ObjectInputStream ois = gestorSocket.getEntrada();
             int codigo = ois.readInt();
             

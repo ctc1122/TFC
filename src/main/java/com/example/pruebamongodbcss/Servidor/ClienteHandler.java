@@ -81,7 +81,7 @@ public class ClienteHandler implements Runnable {
                     // Separar los parámetros si existen
                     String[] parametros = new String[0];
                     if (partes.length > 1) {
-                        parametros = partes[1].split(":");  // Separar usuario y contraseña
+                        parametros = partes[1].split(":");  // Usar SEPARADOR_PARAMETROS (:) para separar parámetros
                         System.out.println("Parámetros recibidos: " + String.join(", ", parametros));
                     } else {
                         System.err.println("Mensaje recibido sin parámetros: " + mensajeCompleto);
