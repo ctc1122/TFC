@@ -36,6 +36,7 @@ public class ClienteHandler implements Runnable {
     private ServicioUsuarios servicioUsuarios;
     private ServicioClinica servicioClinica;
     private CalendarService calendarService;
+    private com.example.pruebamongodbcss.Modulos.Facturacion.ServicioFacturacion servicioFacturacion;
     
     //Declaro el constructor
     public ClienteHandler(Socket socket) {
@@ -43,6 +44,7 @@ public class ClienteHandler implements Runnable {
         this.servicioUsuarios = new ServicioUsuarios();
         this.servicioClinica = new ServicioClinica();
         this.calendarService = new CalendarService();
+        this.servicioFacturacion = new com.example.pruebamongodbcss.Modulos.Facturacion.ServicioFacturacion();
     }
 
     @Override
@@ -850,6 +852,245 @@ public class ClienteHandler implements Runnable {
                                 }
                             }
                             break;
+                        
+                        // Casos de facturación
+                        case Protocolo.CREAR_FACTURA:
+                            System.out.println("Procesando solicitud de crear factura...");
+                            try {
+                                com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura facturaACrear = 
+                                    (com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura) entrada.readObject();
+                                ObjectId idFacturaCreada = servicioFacturacion.guardarFactura(facturaACrear);
+                                facturaACrear.setId(idFacturaCreada);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.CREAR_FACTURA_RESPONSE);
+                                    salida.writeObject(facturaACrear);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al crear factura: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_CREAR_FACTURA);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_TODAS_FACTURAS:
+                            System.out.println("Procesando solicitud de obtener todas las facturas...");
+                            try {
+                                List<com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura> facturas = 
+                                    servicioFacturacion.obtenerTodasFacturas();
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_TODAS_FACTURAS_RESPONSE);
+                                    salida.writeObject(facturas);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener facturas: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_TODAS_FACTURAS);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_FACTURA_POR_ID:
+                            System.out.println("Procesando solicitud de obtener factura por ID...");
+                            if (parametros.length >= 1) {
+                                try {
+                                    String idFactura = parametros[0];
+                                    com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura factura = 
+                                        servicioFacturacion.obtenerFacturaPorId(new ObjectId(idFactura));
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.OBTENER_FACTURA_POR_ID_RESPONSE);
+                                        salida.writeObject(factura);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al obtener factura por ID: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_OBTENER_FACTURA_POR_ID);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud OBTENER_FACTURA_POR_ID");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_FACTURA_POR_ID);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.ACTUALIZAR_FACTURA:
+                            System.out.println("Procesando solicitud de actualizar factura...");
+                            try {
+                                com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura facturaAActualizar = 
+                                    (com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura) entrada.readObject();
+                                boolean actualizada = servicioFacturacion.actualizarFactura(facturaAActualizar);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ACTUALIZAR_FACTURA_RESPONSE);
+                                    salida.writeBoolean(actualizada);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al actualizar factura: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_ACTUALIZAR_FACTURA);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.ELIMINAR_FACTURA:
+                            System.out.println("Procesando solicitud de eliminar factura...");
+                            if (parametros.length >= 1) {
+                                try {
+                                    String idFactura = parametros[0];
+                                    boolean eliminada = servicioFacturacion.eliminarFactura(new ObjectId(idFactura));
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ELIMINAR_FACTURA_RESPONSE);
+                                        salida.writeBoolean(eliminada);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al eliminar factura: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_ELIMINAR_FACTURA);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud ELIMINAR_FACTURA");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_ELIMINAR_FACTURA);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.BUSCAR_FACTURAS_POR_CLIENTE:
+                            System.out.println("Procesando solicitud de buscar facturas por cliente...");
+                            if (parametros.length >= 1) {
+                                try {
+                                    String idCliente = parametros[0];
+                                    List<com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura> facturas = 
+                                        servicioFacturacion.buscarFacturasPorCliente(new ObjectId(idCliente));
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.BUSCAR_FACTURAS_POR_CLIENTE_RESPONSE);
+                                        salida.writeObject(facturas);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al buscar facturas por cliente: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_BUSCAR_FACTURAS_POR_CLIENTE);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud BUSCAR_FACTURAS_POR_CLIENTE");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_BUSCAR_FACTURAS_POR_CLIENTE);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.BUSCAR_FACTURAS_POR_FECHA:
+                            System.out.println("Procesando solicitud de buscar facturas por fecha...");
+                            try {
+                                Date fechaInicioFacturas = (Date) entrada.readObject();
+                                Date fechaFinFacturas = (Date) entrada.readObject();
+                                List<com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura> facturas = 
+                                    servicioFacturacion.buscarFacturasPorFecha(fechaInicioFacturas, fechaFinFacturas);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.BUSCAR_FACTURAS_POR_FECHA_RESPONSE);
+                                    salida.writeObject(facturas);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al buscar facturas por fecha: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_BUSCAR_FACTURAS_POR_FECHA);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.FINALIZAR_FACTURA:
+                            System.out.println("Procesando solicitud de finalizar factura...");
+                            if (parametros.length >= 1) {
+                                try {
+                                    String idFactura = parametros[0];
+                                    boolean finalizada = servicioFacturacion.finalizarFactura(new ObjectId(idFactura));
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.FINALIZAR_FACTURA_RESPONSE);
+                                        salida.writeBoolean(finalizada);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al finalizar factura: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_FINALIZAR_FACTURA);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud FINALIZAR_FACTURA");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_FINALIZAR_FACTURA);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_FACTURAS_BORRADOR:
+                            System.out.println("Procesando solicitud de obtener facturas borrador...");
+                            try {
+                                List<com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura> borradores = 
+                                    servicioFacturacion.obtenerFacturasBorrador();
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_FACTURAS_BORRADOR_RESPONSE);
+                                    salida.writeObject(borradores);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener facturas borrador: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_FACTURAS_BORRADOR);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.CAMBIAR_ESTADO_CITA_PENDIENTE_FACTURAR:
+                            System.out.println("Procesando solicitud de cambiar estado de cita a pendiente facturar...");
+                            if (parametros.length >= 1) {
+                                try {
+                                    String idCita = parametros[0];
+                                    boolean cambiado = servicioFacturacion.cambiarEstadoCitaPendienteFacturar(new ObjectId(idCita));
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.CAMBIAR_ESTADO_CITA_PENDIENTE_FACTURAR_RESPONSE);
+                                        salida.writeBoolean(cambiado);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al cambiar estado de cita: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_CAMBIAR_ESTADO_CITA_PENDIENTE_FACTURAR);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud CAMBIAR_ESTADO_CITA_PENDIENTE_FACTURAR");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_CAMBIAR_ESTADO_CITA_PENDIENTE_FACTURAR);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
                         default:
                             System.out.println("Mensaje no reconocido: " + codigo);
                     }

@@ -192,4 +192,45 @@ public interface Protocolo {
     static final int GUARDAR_DIAGNOSTICO_RESPONSE=1123;
     static final int ERROR_GUARDAR_DIAGNOSTICO=1124;
 
+    // Códigos para operaciones de facturación
+    static final int CREAR_FACTURA=1125;
+    static final int CREAR_FACTURA_RESPONSE=1126;
+    static final int ERROR_CREAR_FACTURA=1127;
+
+    static final int OBTENER_TODAS_FACTURAS=1128;
+    static final int OBTENER_TODAS_FACTURAS_RESPONSE=1129;
+    static final int ERROR_OBTENER_TODAS_FACTURAS=1130;
+
+    static final int OBTENER_FACTURA_POR_ID=1131;
+    static final int OBTENER_FACTURA_POR_ID_RESPONSE=1132;
+    static final int ERROR_OBTENER_FACTURA_POR_ID=1133;
+
+    static final int ACTUALIZAR_FACTURA=1134;
+    static final int ACTUALIZAR_FACTURA_RESPONSE=1135;
+    static final int ERROR_ACTUALIZAR_FACTURA=1136;
+
+    static final int ELIMINAR_FACTURA=1137;
+    static final int ELIMINAR_FACTURA_RESPONSE=1138;
+    static final int ERROR_ELIMINAR_FACTURA=1139;
+
+    static final int BUSCAR_FACTURAS_POR_CLIENTE=1140;
+    static final int BUSCAR_FACTURAS_POR_CLIENTE_RESPONSE=1141;
+    static final int ERROR_BUSCAR_FACTURAS_POR_CLIENTE=1142;
+
+    static final int BUSCAR_FACTURAS_POR_FECHA=1143;
+    static final int BUSCAR_FACTURAS_POR_FECHA_RESPONSE=1144;
+    static final int ERROR_BUSCAR_FACTURAS_POR_FECHA=1145;
+
+    static final int FINALIZAR_FACTURA=1146;
+    static final int FINALIZAR_FACTURA_RESPONSE=1147;
+    static final int ERROR_FINALIZAR_FACTURA=1148;
+
+    static final int OBTENER_FACTURAS_BORRADOR=1149;
+    static final int OBTENER_FACTURAS_BORRADOR_RESPONSE=1150;
+    static final int ERROR_OBTENER_FACTURAS_BORRADOR=1151;
+
+    static final int CAMBIAR_ESTADO_CITA_PENDIENTE_FACTURAR=1152;
+    static final int CAMBIAR_ESTADO_CITA_PENDIENTE_FACTURAR_RESPONSE=1153;
+    static final int ERROR_CAMBIAR_ESTADO_CITA_PENDIENTE_FACTURAR=1154;
+
 } 

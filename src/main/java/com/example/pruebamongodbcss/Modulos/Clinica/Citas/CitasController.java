@@ -11,7 +11,10 @@ import java.util.ResourceBundle;
 
 import com.example.pruebamongodbcss.Data.EstadoCita;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
+import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
+import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario;
 import com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica;
+import com.example.pruebamongodbcss.Modulos.Facturacion.FacturacionController;
 import com.example.pruebamongodbcss.calendar.google.GoogleCalendarWebView;
 
 import io.github.palexdev.materialfx.controls.MFXDatePicker;
@@ -65,6 +68,7 @@ public class CitasController implements Initializable {
     @FXML private MFXDatePicker dpFechaInicio;
     @FXML private MFXDatePicker dpFechaFin;
     @FXML private ComboBox<String> cmbEstadoFiltro;
+    @FXML private Button btnFacturarCita;
     
     // Tab de Calendario
     @FXML private Tab tabCalendario;
@@ -303,6 +307,59 @@ public class CitasController implements Initializable {
         } else {
             mostrarAlerta("Selección requerida", "No hay cita seleccionada", 
                 "Por favor, seleccione una cita para eliminar.");
+        }
+    }
+    
+    /**
+     * Maneja el clic en el botón Facturar Cita
+     */
+    @FXML
+    private void onFacturarCita(ActionEvent event) {
+        ModeloCita citaSeleccionada = tablaCitas.getSelectionModel().getSelectedItem();
+        if (citaSeleccionada != null) {
+            try {
+                // Obtener datos del paciente y propietario
+                ModeloPaciente paciente = servicio.obtenerPacientePorId(citaSeleccionada.getPacienteId());
+                if (paciente == null) {
+                    mostrarAlerta("Error", "Paciente no encontrado", 
+                        "No se pudo encontrar el paciente asociado a esta cita.");
+                    return;
+                }
+                
+                ModeloPropietario propietario = servicio.obtenerPropietarioPorId(paciente.getPropietarioId());
+                if (propietario == null) {
+                    mostrarAlerta("Error", "Propietario no encontrado", 
+                        "No se pudo encontrar el propietario del paciente.");
+                    return;
+                }
+                
+                // Cargar el módulo de facturación
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Facturacion/facturacion-view.fxml"));
+                Parent root = loader.load();
+                
+                FacturacionController facturacionController = loader.getController();
+                
+                // Crear nueva factura desde la cita
+                facturacionController.crearFacturaDesdeCita(citaSeleccionada, paciente, propietario);
+                
+                Stage stage = new Stage();
+                stage.setTitle("Facturación - Cita: " + citaSeleccionada.getNombrePaciente());
+                stage.initModality(Modality.APPLICATION_MODAL);
+                stage.setScene(new Scene(root));
+                stage.setResizable(true);
+                stage.showAndWait();
+                
+                // Actualizar la lista de citas después de facturar
+                cargarCitas();
+                
+            } catch (Exception e) {
+                e.printStackTrace();
+                mostrarAlerta("Error", "Error al abrir facturación", 
+                    "No se pudo abrir el módulo de facturación: " + e.getMessage());
+            }
+        } else {
+            mostrarAlerta("Selección requerida", "No hay cita seleccionada", 
+                "Por favor, seleccione una cita para facturar.");
         }
     }
     

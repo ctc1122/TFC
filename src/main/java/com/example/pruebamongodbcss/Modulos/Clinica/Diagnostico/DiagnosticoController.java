@@ -19,7 +19,9 @@ import org.bson.types.ObjectId;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloDiagnostico;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
+import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario;
 import com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica;
+import com.example.pruebamongodbcss.Modulos.Facturacion.FacturacionController;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -39,7 +41,11 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 
 /**
  * Controlador para la pantalla de diagnósticos médicos.
@@ -75,6 +81,7 @@ public class DiagnosticoController implements Initializable {
     // Exportación
     @FXML private Button btnExportarPDF;
     @FXML private Button btnExportarCSV;
+    @FXML private Button btnFacturar;
     
     @FXML private TextArea txtTratamiento;
     @FXML private TextArea txtObservaciones;
@@ -703,6 +710,47 @@ public class DiagnosticoController implements Initializable {
     public void cancelar() {
         if (onCancelarCallback != null) {
             onCancelarCallback.run();
+        }
+    }
+    
+    /**
+     * Abre el módulo de facturación con los datos del diagnóstico
+     */
+    @FXML
+    public void facturarDiagnostico() {
+        if (paciente == null) {
+            mostrarError("Error", "No hay paciente seleccionado para facturar");
+            return;
+        }
+        
+        try {
+            // Obtener datos del propietario
+            ModeloPropietario propietario = servicioClinica.obtenerPropietarioPorId(paciente.getPropietarioId());
+            if (propietario == null) {
+                mostrarError("Error", "No se pudo encontrar el propietario del paciente");
+                return;
+            }
+            
+            // Cargar el módulo de facturación
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Facturacion/facturacion-view.fxml"));
+            Parent root = loader.load();
+            
+            FacturacionController facturacionController = loader.getController();
+            
+            // Crear nueva factura desde el diagnóstico
+            // Nota: Si hay una cita asociada, se puede pasar, sino null
+            facturacionController.crearFacturaDesdeCita(null, paciente, propietario);
+            
+            Stage stage = new Stage();
+            stage.setTitle("Facturación - Diagnóstico: " + paciente.getNombre());
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(root));
+            stage.setResizable(true);
+            stage.showAndWait();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error", "No se pudo abrir el módulo de facturación: " + e.getMessage());
         }
     }
 } 

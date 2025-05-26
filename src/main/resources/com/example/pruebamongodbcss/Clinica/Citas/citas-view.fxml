@@ -80,6 +80,7 @@
                               <Button fx:id="btnEditarCita" onAction="#onEditarCita" styleClass="btn-secondary" text="Editar" />
                               <Button fx:id="btnEliminarCita" onAction="#onEliminarCita" styleClass="btn-danger" text="Eliminar" />
                               <Button fx:id="btnEstadoCita" onAction="#onCambiarEstadoCita" styleClass="btn-info" text="Cambiar Estado" />
+                              <Button fx:id="btnFacturarCita" onAction="#onFacturarCita" styleClass="btn-success" text="Facturar" />
                               <ComboBox fx:id="cmbEstadoFiltro" prefWidth="150.0" promptText="Estado..." />
                               <Button fx:id="btnFiltrarEstado" onAction="#onFiltrarPorEstado" styleClass="btn-secondary" text="Filtrar" />
                            </children>

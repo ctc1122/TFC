@@ -15,6 +15,7 @@ module com.example.pruebamongodbcss {
     requires MaterialFX;
     requires java.sql;
     requires org.apache.pdfbox;
+
     requires jdk.jsobject;
 
     
@@ -33,6 +34,7 @@ module com.example.pruebamongodbcss {
     // Fixed Gson dependency
     requires com.google.gson;
     requires transitive java.logging;
+    requires itextpdf;
     
     // Configuración básica del módulo principal
     exports com.example.pruebamongodbcss;
@@ -51,6 +53,7 @@ module com.example.pruebamongodbcss {
     exports com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico;
     exports com.example.pruebamongodbcss.theme;
     exports com.example.pruebamongodbcss.Modulos.Clinica.Citas;
+    exports com.example.pruebamongodbcss.Modulos.Facturacion;
     exports com.example.pruebamongodbcss.calendar;
     exports com.example.pruebamongodbcss.calendar.google;
 
@@ -66,6 +69,7 @@ module com.example.pruebamongodbcss {
     opens com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico to javafx.fxml;
     opens com.example.pruebamongodbcss.theme to javafx.fxml;
     opens com.example.pruebamongodbcss.Modulos.Clinica.Citas to javafx.fxml;
+    opens com.example.pruebamongodbcss.Modulos.Facturacion to javafx.fxml;
     opens com.example.pruebamongodbcss.calendar to javafx.fxml, javafx.graphics, com.google.api.client, com.google.api.services.calendar, com.google.gson;
     opens com.example.pruebamongodbcss.calendar.google to javafx.fxml, javafx.graphics, com.google.api.client, com.google.api.services.calendar, com.google.gson;
     

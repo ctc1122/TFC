@@ -1,0 +1,534 @@
+/* Estilos generales para el módulo de facturación */
+.root {
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-background-color: #f5f5f5;
+}
+
+/* Colores principales */
+* {
+    -fx-primary: #283618;
+    -fx-primary-light: #606C38;
+    -fx-primary-dark: #131A0B;
+    -fx-secondary: #606C38;
+    -fx-secondary-light: #7c8b4d;
+    -fx-secondary-dark: #404a26;
+    -fx-danger: #BC6C25;
+    -fx-warning: #DDA15E;
+    -fx-info: #FEFAE0;
+    -fx-info-light: #ffffff;
+    -fx-info-dark: #dcd8b7;
+    -fx-success: #4CAF50;
+    -fx-success-light: #66BB6A;
+    -fx-success-dark: #388E3C;
+}
+
+/* Estilo para la cabecera del panel */
+.panel-header {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+}
+
+.panel-content {
+    -fx-background-color: #f5f5f5;
+}
+
+/* Estilos de botones */
+.btn-primary {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+    -fx-background-radius: 4px;
+    -fx-padding: 8px 16px;
+    -fx-font-weight: bold;
+}
+
+.btn-primary:hover {
+    -fx-background-color: #45a049;
+}
+
+.btn-secondary {
+    -fx-background-color: #607D8B;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+    -fx-background-radius: 4px;
+    -fx-padding: 8px 16px;
+}
+
+.btn-secondary:hover {
+    -fx-background-color: #546E7A;
+}
+
+.btn-danger {
+    -fx-background-color: #F44336;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+    -fx-background-radius: 4px;
+    -fx-padding: 8px 16px;
+}
+
+.btn-danger:hover {
+    -fx-background-color: #E53935;
+}
+
+.btn-info {
+    -fx-background-color: #2196F3;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+    -fx-background-radius: 4px;
+    -fx-padding: 8px 16px;
+}
+
+.btn-info:hover {
+    -fx-background-color: #1E88E5;
+}
+
+.btn-success {
+    -fx-background-color: #8BC34A;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+    -fx-background-radius: 4px;
+    -fx-padding: 8px 16px;
+}
+
+.btn-success:hover {
+    -fx-background-color: #7CB342;
+}
+
+/* Estilos de tablas */
+.table-view {
+    -fx-background-color: white;
+    -fx-border-color: #ddd;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+}
+
+.table-view .column-header {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #f9f9f9;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #d3f0d4;
+}
+
+.table-row-cell:hover {
+    -fx-background-color: #e8f5e8;
+}
+
+/* Estilos específicos para tablas de factura */
+.invoice-table {
+    -fx-background-color: white;
+    -fx-border-color: #ccc;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+}
+
+.invoice-table .column-header {
+    -fx-background-color: #f8f9fa;
+    -fx-text-fill: #333;
+    -fx-border-color: #dee2e6;
+}
+
+.invoice-table .column-header .label {
+    -fx-text-fill: #333;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+/* Estilos de campos de texto */
+.text-field {
+    -fx-background-color: white;
+    -fx-border-color: #ddd;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-padding: 8px;
+}
+
+.text-field:focused {
+    -fx-border-color: #4CAF50;
+    -fx-background-color: #f8f8f8;
+}
+
+.form-field-readonly {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #e9ecef;
+    -fx-text-fill: #6c757d;
+}
+
+/* Estilos para date picker */
+.mfx-date-picker {
+    -fx-background-color: white;
+    -fx-border-color: #ddd;
+    -fx-border-radius: 4px;
+    -fx-padding: 2px;
+}
+
+.mfx-date-picker:focused {
+    -fx-border-color: #4CAF50;
+}
+
+/* Estilos para ComboBox */
+.combo-box {
+    -fx-background-color: white;
+    -fx-border-color: #ddd;
+    -fx-border-radius: 4px;
+}
+
+.combo-box:focused {
+    -fx-border-color: #4CAF50;
+}
+
+/* Estilos para TextArea */
+.text-area {
+    -fx-background-color: white;
+    -fx-border-color: #ddd;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+}
+
+.text-area:focused {
+    -fx-border-color: #4CAF50;
+}
+
+.readonly-textarea {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #e9ecef;
+    -fx-text-fill: #6c757d;
+}
+
+/* Estilos de secciones del formulario */
+.form-section {
+    -fx-background-color: white;
+    -fx-border-color: #e9ecef;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 5, 0, 0, 2);
+}
+
+.section-title {
+    -fx-text-fill: #333;
+    -fx-font-weight: bold;
+}
+
+.form-label {
+    -fx-text-fill: #555;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+/* Estilos para totales */
+.totals-section {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #4CAF50;
+    -fx-border-width: 2px;
+}
+
+.total-label {
+    -fx-text-fill: #333;
+    -fx-font-weight: bold;
+    -fx-text-alignment: right;
+}
+
+.total-value {
+    -fx-text-fill: #333;
+    -fx-font-weight: bold;
+    -fx-text-alignment: right;
+}
+
+.total-final-label {
+    -fx-text-fill: #2E7D32;
+    -fx-font-weight: bold;
+}
+
+.total-final-value {
+    -fx-text-fill: #2E7D32;
+    -fx-font-weight: bold;
+}
+
+/* Estilos para botones de formulario */
+.form-buttons {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #dee2e6;
+    -fx-border-width: 1px 0 0 0;
+}
+
+/* Estilos para estadísticas */
+.stats-card {
+    -fx-background-color: white;
+    -fx-border-color: #e9ecef;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 5, 0, 0, 2);
+    -fx-min-width: 150px;
+}
+
+.stats-number {
+    -fx-text-fill: #2E7D32;
+    -fx-font-weight: bold;
+    -fx-font-size: 24px;
+}
+
+.stats-label {
+    -fx-text-fill: #666;
+    -fx-font-size: 12px;
+    -fx-text-alignment: center;
+}
+
+/* Estilos para gráficos */
+.chart-container {
+    -fx-background-color: white;
+    -fx-border-color: #e9ecef;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 5, 0, 0, 2);
+}
+
+.chart-title {
+    -fx-text-fill: #333;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-text-alignment: center;
+}
+
+/* Estilos específicos para la vista de detalle de factura */
+.invoice-header {
+    -fx-background-color: white;
+    -fx-border-color: #4CAF50;
+    -fx-border-width: 0 0 3px 0;
+    -fx-border-radius: 8px 8px 0 0;
+}
+
+.company-name {
+    -fx-text-fill: #2E7D32;
+    -fx-font-weight: bold;
+}
+
+.company-info {
+    -fx-text-fill: #666;
+    -fx-font-size: 12px;
+}
+
+.invoice-info-section {
+    -fx-background-color: white;
+    -fx-border-color: #e9ecef;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 3, 0, 0, 1);
+}
+
+.invoice-items-section {
+    -fx-background-color: white;
+    -fx-border-color: #e9ecef;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 3, 0, 0, 1);
+}
+
+.invoice-totals-section {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #4CAF50;
+    -fx-border-width: 2px;
+    -fx-border-radius: 8px;
+}
+
+.invoice-footer {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #e9ecef;
+    -fx-border-width: 1px 0 0 0;
+}
+
+.detail-label {
+    -fx-text-fill: #666;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+}
+
+.detail-value {
+    -fx-text-fill: #333;
+    -fx-font-size: 12px;
+}
+
+.client-name {
+    -fx-text-fill: #2E7D32;
+    -fx-font-weight: bold;
+}
+
+.legal-info {
+    -fx-text-fill: #666;
+    -fx-font-size: 10px;
+    -fx-font-style: italic;
+}
+
+/* Estilos para estados de factura */
+.invoice-status {
+    -fx-background-radius: 12px;
+    -fx-padding: 4px 12px;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.invoice-status.borrador {
+    -fx-background-color: #FFF3CD;
+    -fx-text-fill: #856404;
+    -fx-border-color: #FFEAA7;
+    -fx-border-width: 1px;
+}
+
+.invoice-status.emitida {
+    -fx-background-color: #D4EDDA;
+    -fx-text-fill: #155724;
+    -fx-border-color: #C3E6CB;
+    -fx-border-width: 1px;
+}
+
+.invoice-status.pagada {
+    -fx-background-color: #D1ECF1;
+    -fx-text-fill: #0C5460;
+    -fx-border-color: #BEE5EB;
+    -fx-border-width: 1px;
+}
+
+.invoice-status.vencida {
+    -fx-background-color: #F8D7DA;
+    -fx-text-fill: #721C24;
+    -fx-border-color: #F5C6CB;
+    -fx-border-width: 1px;
+}
+
+.invoice-status.cancelada {
+    -fx-background-color: #E2E3E5;
+    -fx-text-fill: #383D41;
+    -fx-border-color: #D6D8DB;
+    -fx-border-width: 1px;
+}
+
+/* Estilos para scroll pane */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar:horizontal, .scroll-bar:vertical {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar:horizontal .thumb, .scroll-bar:vertical .thumb {
+    -fx-background-color: #bdbdbd;
+    -fx-background-radius: 5em;
+}
+
+.scroll-bar:horizontal .thumb:hover, .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #9e9e9e;
+}
+
+/* Estilos para separadores */
+.separator {
+    -fx-background-color: #e0e0e0;
+}
+
+/* Efectos de sombra */
+.shadow-pane {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 10, 0, 0, 1);
+}
+
+/* Estilos responsivos para diferentes tamaños */
+@media screen and (max-width: 1200px) {
+    .stats-card {
+        -fx-min-width: 120px;
+    }
+    
+    .stats-number {
+        -fx-font-size: 20px;
+    }
+}
+
+@media screen and (max-width: 800px) {
+    .form-section {
+        -fx-padding: 10px;
+    }
+    
+    .stats-card {
+        -fx-min-width: 100px;
+    }
+    
+    .stats-number {
+        -fx-font-size: 18px;
+    }
+}
+
+/* Estilos para tema oscuro */
+.dark-theme .panel-content {
+    -fx-background-color: #2b2b2b;
+}
+
+.dark-theme .form-section {
+    -fx-background-color: #3c3c3c;
+    -fx-border-color: #555;
+}
+
+.dark-theme .text-field {
+    -fx-background-color: #3c3c3c;
+    -fx-border-color: #555;
+    -fx-text-fill: #e0e0e0;
+}
+
+.dark-theme .text-field:focused {
+    -fx-border-color: #66BB6A;
+}
+
+.dark-theme .table-view {
+    -fx-background-color: #3c3c3c;
+    -fx-border-color: #555;
+}
+
+.dark-theme .table-view .column-header {
+    -fx-background-color: #4a4a4a;
+    -fx-text-fill: #e0e0e0;
+}
+
+.dark-theme .table-row-cell:odd {
+    -fx-background-color: #404040;
+}
+
+.dark-theme .table-row-cell:selected {
+    -fx-background-color: #2E7D32;
+}
+
+.dark-theme .section-title {
+    -fx-text-fill: #e0e0e0;
+}
+
+.dark-theme .form-label {
+    -fx-text-fill: #b0b0b0;
+}
+
+.dark-theme .detail-label {
+    -fx-text-fill: #b0b0b0;
+}
+
+.dark-theme .detail-value {
+    -fx-text-fill: #e0e0e0;
+}
+
+.dark-theme .stats-card {
+    -fx-background-color: #3c3c3c;
+    -fx-border-color: #555;
+}
+
+.dark-theme .chart-container {
+    -fx-background-color: #3c3c3c;
+    -fx-border-color: #555;
+} 

@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import io.github.palexdev.materialfx.controls.MFXDatePicker?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.control.Separator?>
+
+<BorderPane fx:id="mainPane" styleClass="panel-content" stylesheets="@facturacion-styles.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Facturacion.FacturaFormController">
+   <top>
+      <HBox alignment="CENTER_LEFT" styleClass="panel-header" BorderPane.alignment="CENTER">
+         <children>
+            <Label fx:id="lblTitulo" text="Nueva Factura">
+               <font>
+                  <Font name="System Bold" size="24.0" />
+               </font>
+               <HBox.margin>
+                  <Insets left="20.0" />
+               </HBox.margin>
+            </Label>
+         </children>
+         <padding>
+            <Insets bottom="10.0" top="10.0" />
+         </padding>
+      </HBox>
+   </top>
+   <center>
+      <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">
+         <content>
+            <VBox spacing="20.0" styleClass="panel-content" VBox.vgrow="ALWAYS">
+               <VBox.margin>
+                  <Insets top="20" left="32" right="32" bottom="20"/>
+               </VBox.margin>
+               
+               <!-- Información básica de la factura -->
+               <VBox spacing="15.0" styleClass="form-section">
+                  <children>
+                     <Label text="Información de la Factura" styleClass="section-title">
+                        <font>
+                           <Font name="System Bold" size="16.0" />
+                        </font>
+                     </Label>
+                     
+                     <GridPane hgap="15.0" vgap="10.0">
+                        <columnConstraints>
+                           <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                           <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                           <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                        </columnConstraints>
+                        <rowConstraints>
+                           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                        </rowConstraints>
+                        <children>
+                           <VBox spacing="5.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                              <children>
+                                 <Label text="Número de Factura:" styleClass="form-label" />
+                                 <TextField fx:id="txtNumeroFactura" editable="false" styleClass="form-field-readonly" />
+                              </children>
+                           </VBox>
+                           <VBox spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                              <children>
+                                 <Label text="Fecha de Emisión:" styleClass="form-label" />
+                                 <MFXDatePicker fx:id="dpFechaEmision" />
+                              </children>
+                           </VBox>
+                           <VBox spacing="5.0" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                              <children>
+                                 <Label text="Estado:" styleClass="form-label" />
+                                 <ComboBox fx:id="cmbEstado" minWidth="150.0" />
+                              </children>
+                           </VBox>
+                        </children>
+                     </GridPane>
+                  </children>
+                  <padding>
+                     <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
+                  </padding>
+               </VBox>
+               
+               <!-- Información del cliente y paciente -->
+               <VBox spacing="15.0" styleClass="form-section">
+                  <children>
+                     <Label text="Cliente y Paciente" styleClass="section-title">
+                        <font>
+                           <Font name="System Bold" size="16.0" />
+                        </font>
+                     </Label>
+                     
+                     <GridPane hgap="15.0" vgap="10.0">
+                        <columnConstraints>
+                           <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                           <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                        </columnConstraints>
+                        <rowConstraints>
+                           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                        </rowConstraints>
+                        <children>
+                           <VBox spacing="5.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                              <children>
+                                 <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                    <children>
+                                       <Label text="Cliente:" styleClass="form-label" />
+                                       <Button fx:id="btnSeleccionarCliente" onAction="#onSeleccionarCliente" styleClass="btn-secondary" text="Seleccionar" />
+                                    </children>
+                                 </HBox>
+                                 <TextField fx:id="txtCliente" editable="false" promptText="Seleccione un cliente..." styleClass="form-field-readonly" />
+                              </children>
+                           </VBox>
+                           <VBox spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                              <children>
+                                 <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                    <children>
+                                       <Label text="Paciente:" styleClass="form-label" />
+                                       <Button fx:id="btnSeleccionarPaciente" onAction="#onSeleccionarPaciente" styleClass="btn-secondary" text="Seleccionar" />
+                                    </children>
+                                 </HBox>
+                                 <TextField fx:id="txtPaciente" editable="false" promptText="Seleccione un paciente..." styleClass="form-field-readonly" />
+                              </children>
+                           </VBox>
+                           <VBox spacing="5.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                              <children>
+                                 <Label text="DNI/CIF:" styleClass="form-label" />
+                                 <TextField fx:id="txtDNI" editable="false" styleClass="form-field-readonly" />
+                              </children>
+                           </VBox>
+                           <VBox spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                              <children>
+                                 <Label text="Teléfono:" styleClass="form-label" />
+                                 <TextField fx:id="txtTelefono" editable="false" styleClass="form-field-readonly" />
+                              </children>
+                           </VBox>
+                           <VBox spacing="5.0" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2">
+                              <children>
+                                 <Label text="Dirección:" styleClass="form-label" />
+                                 <TextField fx:id="txtDireccion" editable="false" styleClass="form-field-readonly" />
+                              </children>
+                           </VBox>
+                        </children>
+                     </GridPane>
+                  </children>
+                  <padding>
+                     <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
+                  </padding>
+               </VBox>
+               
+               <!-- Información del veterinario -->
+               <VBox spacing="15.0" styleClass="form-section">
+                  <children>
+                     <Label text="Veterinario" styleClass="section-title">
+                        <font>
+                           <Font name="System Bold" size="16.0" />
+                        </font>
+                     </Label>
+                     
+                     <HBox spacing="15.0">
+                        <children>
+                           <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                              <children>
+                                 <Label text="Veterinario:" styleClass="form-label" />
+                                 <ComboBox fx:id="cmbVeterinario" minWidth="200.0" HBox.hgrow="ALWAYS" />
+                              </children>
+                           </VBox>
+                           <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                              <children>
+                                 <Label text="Número de Colegiado:" styleClass="form-label" />
+                                 <TextField fx:id="txtNumeroColegiado" editable="false" styleClass="form-field-readonly" />
+                              </children>
+                           </VBox>
+                        </children>
+                     </HBox>
+                  </children>
+                  <padding>
+                     <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
+                  </padding>
+               </VBox>
+               
+               <!-- Servicios -->
+               <VBox spacing="15.0" styleClass="form-section" VBox.vgrow="ALWAYS">
+                  <children>
+                     <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <children>
+                           <Label text="Servicios" styleClass="section-title">
+                              <font>
+                                 <Font name="System Bold" size="16.0" />
+                              </font>
+                           </Label>
+                           <Button fx:id="btnAgregarServicio" onAction="#onAgregarServicio" styleClass="btn-primary" text="Agregar Servicio" />
+                        </children>
+                     </HBox>
+                     
+                     <StackPane VBox.vgrow="ALWAYS" minHeight="150.0">
+                        <children>
+                           <ScrollPane fitToHeight="true" fitToWidth="true">
+                              <content>
+                                 <TableView fx:id="tablaServicios" VBox.vgrow="ALWAYS">
+                                    <columns>
+                                       <TableColumn fx:id="colServicioDescripcion" text="Descripción" />
+                                       <TableColumn fx:id="colServicioCantidad" text="Cantidad" />
+                                       <TableColumn fx:id="colServicioPrecio" text="Precio Unitario" />
+                                       <TableColumn fx:id="colServicioIVA" text="IVA %" />
+                                       <TableColumn fx:id="colServicioSubtotal" text="Subtotal" />
+                                       <TableColumn fx:id="colServicioAcciones" text="Acciones" />
+                                    </columns>
+                                    <columnResizePolicy>
+                                       <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                    </columnResizePolicy>
+                                 </TableView>
+                              </content>
+                           </ScrollPane>
+                        </children>
+                     </StackPane>
+                  </children>
+                  <padding>
+                     <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
+                  </padding>
+               </VBox>
+               
+               <!-- Medicamentos -->
+               <VBox spacing="15.0" styleClass="form-section" VBox.vgrow="ALWAYS">
+                  <children>
+                     <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <children>
+                           <Label text="Medicamentos" styleClass="section-title">
+                              <font>
+                                 <Font name="System Bold" size="16.0" />
+                              </font>
+                           </Label>
+                           <Button fx:id="btnAgregarMedicamento" onAction="#onAgregarMedicamento" styleClass="btn-primary" text="Agregar Medicamento" />
+                        </children>
+                     </HBox>
+                     
+                     <StackPane VBox.vgrow="ALWAYS" minHeight="150.0">
+                        <children>
+                           <ScrollPane fitToHeight="true" fitToWidth="true">
+                              <content>
+                                 <TableView fx:id="tablaMedicamentos" VBox.vgrow="ALWAYS">
+                                    <columns>
+                                       <TableColumn fx:id="colMedicamentoNombre" text="Medicamento" />
+                                       <TableColumn fx:id="colMedicamentoCantidad" text="Cantidad" />
+                                       <TableColumn fx:id="colMedicamentoPrecio" text="Precio Unitario" />
+                                       <TableColumn fx:id="colMedicamentoIVA" text="IVA %" />
+                                       <TableColumn fx:id="colMedicamentoSubtotal" text="Subtotal" />
+                                       <TableColumn fx:id="colMedicamentoAcciones" text="Acciones" />
+                                    </columns>
+                                    <columnResizePolicy>
+                                       <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                    </columnResizePolicy>
+                                 </TableView>
+                              </content>
+                           </ScrollPane>
+                        </children>
+                     </StackPane>
+                  </children>
+                  <padding>
+                     <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
+                  </padding>
+               </VBox>
+               
+               <!-- Observaciones -->
+               <VBox spacing="15.0" styleClass="form-section">
+                  <children>
+                     <Label text="Observaciones" styleClass="section-title">
+                        <font>
+                           <Font name="System Bold" size="16.0" />
+                        </font>
+                     </Label>
+                     <TextArea fx:id="txtObservaciones" prefRowCount="3" promptText="Observaciones adicionales..." />
+                  </children>
+                  <padding>
+                     <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
+                  </padding>
+               </VBox>
+               
+               <!-- Totales -->
+               <VBox spacing="15.0" styleClass="form-section, totals-section">
+                  <children>
+                     <Label text="Totales" styleClass="section-title">
+                        <font>
+                           <Font name="System Bold" size="16.0" />
+                        </font>
+                     </Label>
+                     
+                     <GridPane hgap="15.0" vgap="10.0" alignment="CENTER_RIGHT">
+                        <columnConstraints>
+                           <ColumnConstraints hgrow="NEVER" minWidth="150.0" />
+                           <ColumnConstraints hgrow="NEVER" minWidth="100.0" />
+                        </columnConstraints>
+                        <rowConstraints>
+                           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                        </rowConstraints>
+                        <children>
+                           <Label text="Subtotal Servicios:" styleClass="total-label" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                           <Label fx:id="lblSubtotalServicios" text="0,00 €" styleClass="total-value" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                           
+                           <Label text="Subtotal Medicamentos:" styleClass="total-label" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                           <Label fx:id="lblSubtotalMedicamentos" text="0,00 €" styleClass="total-value" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                           
+                           <Label text="IVA Servicios (21%):" styleClass="total-label" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                           <Label fx:id="lblIVAServicios" text="0,00 €" styleClass="total-value" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                           
+                           <Label text="IVA Medicamentos (10%):" styleClass="total-label" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                           <Label fx:id="lblIVAMedicamentos" text="0,00 €" styleClass="total-value" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                           
+                           <Separator GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.columnSpan="2" />
+                        </children>
+                     </GridPane>
+                     
+                     <HBox alignment="CENTER_RIGHT" spacing="15.0">
+                        <children>
+                           <Label text="TOTAL:" styleClass="total-final-label">
+                              <font>
+                                 <Font name="System Bold" size="18.0" />
+                              </font>
+                           </Label>
+                           <Label fx:id="lblTotal" text="0,00 €" styleClass="total-final-value">
+                              <font>
+                                 <Font name="System Bold" size="18.0" />
+                              </font>
+                           </Label>
+                        </children>
+                     </HBox>
+                  </children>
+                  <padding>
+                     <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                  </padding>
+               </VBox>
+            </VBox>
+         </content>
+      </ScrollPane>
+   </center>
+   
+   <!-- Botones de acción -->
+   <bottom>
+      <HBox alignment="CENTER_RIGHT" spacing="15.0" styleClass="form-buttons">
+         <children>
+            <Button fx:id="btnCancelar" onAction="#onCancelar" styleClass="btn-secondary" text="Cancelar" />
+            <Button fx:id="btnGuardarBorrador" onAction="#onGuardarBorrador" styleClass="btn-info" text="Guardar como Borrador" />
+            <Button fx:id="btnGuardar" onAction="#onGuardar" styleClass="btn-primary" text="Guardar Factura" />
+            <Button fx:id="btnFinalizar" onAction="#onFinalizar" styleClass="btn-success" text="Finalizar y Emitir" />
+         </children>
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+      </HBox>
+   </bottom>
+</BorderPane> 
