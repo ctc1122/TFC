@@ -1,7 +1,6 @@
 package com.example.pruebamongodbcss.Modulos.Inventario;
 
 import com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura;
-import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -21,10 +20,8 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
-import java.io.ObjectInputStream;
 import java.net.URL;
 import java.text.DecimalFormat;
-import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
@@ -33,6 +30,7 @@ import java.util.stream.Collectors;
 /**
  * Controlador del buscador sofisticado de medicamentos
  * Permite buscar y filtrar medicamentos del inventario con múltiples criterios
+ * Se conecta al servidor de inventario en puerto 50005
  */
 public class BuscadorMedicamentosController implements Initializable {
     
@@ -69,25 +67,18 @@ public class BuscadorMedicamentosController implements Initializable {
     @FXML private Button btnCerrar;
     
     // Datos y servicios
-    private GestorSocket gestorSocket;
+    private ServicioInventario servicioInventario;
     private ObservableList<ModeloMedicamentoInventario> medicamentosOriginales;
     private ObservableList<ModeloMedicamentoInventario> medicamentosFiltrados;
     private DecimalFormat formatoMoneda;
     private Consumer<ModeloMedicamentoInventario> callbackSeleccion;
     private ModeloMedicamentoInventario medicamentoSeleccionado;
     
-    // Códigos de protocolo para el servidor de inventario
-    private static final int OBTENER_MEDICAMENTOS_INVENTARIO = 9001;
-    private static final int OBTENER_MEDICAMENTOS_INVENTARIO_RESPONSE = 9002;
-    private static final int BUSCAR_MEDICAMENTOS_INVENTARIO = 9003;
-    private static final int BUSCAR_MEDICAMENTOS_INVENTARIO_RESPONSE = 9004;
-    private static final int ERROR_INVENTARIO = 9999;
-    
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         try {
             // Inicializar servicios y datos
-            gestorSocket = GestorSocket.getInstance();
+            servicioInventario = ServicioInventario.getInstance();
             medicamentosOriginales = FXCollections.observableArrayList();
             medicamentosFiltrados = FXCollections.observableArrayList();
             formatoMoneda = new DecimalFormat("#,##0.00 €");
@@ -245,26 +236,26 @@ public class BuscadorMedicamentosController implements Initializable {
     private void verificarConexionYCargarDatos() {
         // Mostrar indicador de carga
         progressIndicator.setVisible(true);
-        lblEstadoConexion.setText("Verificando conexión...");
+        lblEstadoConexion.setText("🔄 Conectando al servidor de inventario (puerto 50005)...");
         
         Task<Boolean> taskConexion = new Task<Boolean>() {
             @Override
             protected Boolean call() throws Exception {
-                return gestorSocket.isConectado();
+                return servicioInventario.verificarDisponibilidad().get();
             }
             
             @Override
             protected void succeeded() {
                 Platform.runLater(() -> {
                     if (getValue()) {
-                        lblEstadoConexion.setText("✅ Conectado al servidor principal");
+                        lblEstadoConexion.setText("✅ Conectado al servidor de inventario (puerto 50005)");
                         lblEstadoConexion.setStyle("-fx-text-fill: green;");
                         cargarMedicamentos();
                     } else {
-                        lblEstadoConexion.setText("❌ Servidor principal no disponible");
+                        lblEstadoConexion.setText("❌ Servidor de inventario no disponible (puerto 50005)");
                         lblEstadoConexion.setStyle("-fx-text-fill: red;");
                         progressIndicator.setVisible(false);
-                        mostrarError("Conexión", "No se puede conectar al servidor principal");
+                        mostrarError("Conexión", "No se puede conectar al servidor de inventario en puerto 50005");
                     }
                 });
             }
@@ -272,7 +263,7 @@ public class BuscadorMedicamentosController implements Initializable {
             @Override
             protected void failed() {
                 Platform.runLater(() -> {
-                    lblEstadoConexion.setText("❌ Error de conexión");
+                    lblEstadoConexion.setText("❌ Error de conexión al servidor de inventario");
                     lblEstadoConexion.setStyle("-fx-text-fill: red;");
                     progressIndicator.setVisible(false);
                     mostrarError("Error", "Error al verificar la conexión: " + getException().getMessage());
@@ -284,103 +275,55 @@ public class BuscadorMedicamentosController implements Initializable {
     }
     
     private void cargarMedicamentos() {
-        lblResultados.setText("Cargando medicamentos...");
+        lblResultados.setText("Cargando medicamentos del inventario...");
         
-        new Thread(() -> {
-            try {
-                // Verificar conexión antes de enviar petición
-                if (!gestorSocket.isConectado()) {
-                    Platform.runLater(() -> {
-                        mostrarError("Error de conexión", "No hay conexión con el servidor");
-                        progressIndicator.setVisible(false);
-                    });
-                    return;
-                }
-                
-                String peticion = String.valueOf(OBTENER_MEDICAMENTOS_INVENTARIO);
-                System.out.println("Enviando petición de medicamentos inventario: " + peticion);
-                
-                // Usar sincronización para evitar conflictos
-                synchronized (gestorSocket) {
-                    gestorSocket.enviarPeticion(peticion);
-                    gestorSocket.getSalida().flush();
-                    
-                    ObjectInputStream entrada = gestorSocket.getEntrada();
-                    if (entrada == null) {
-                        System.err.println("No se pudo obtener el stream de entrada");
-                        Platform.runLater(() -> {
-                            mostrarError("Error", "No se pudo obtener el stream de entrada");
-                            progressIndicator.setVisible(false);
-                        });
-                        return;
-                    }
-                    
-                    System.out.println("Esperando respuesta del servidor...");
-                    
-                    try {
-                        int codigoRespuesta = entrada.readInt();
-                        System.out.println("Código de respuesta recibido: " + codigoRespuesta);
-                        
-                        if (codigoRespuesta == OBTENER_MEDICAMENTOS_INVENTARIO_RESPONSE) {
-                            @SuppressWarnings("unchecked")
-                            List<ModeloMedicamentoInventario> medicamentos = (List<ModeloMedicamentoInventario>) entrada.readObject();
-                            
-                            Platform.runLater(() -> {
-                                medicamentosOriginales.clear();
-                                if (medicamentos != null && !medicamentos.isEmpty()) {
-                                    medicamentosOriginales.addAll(medicamentos);
-                                    System.out.println("Medicamentos cargados exitosamente: " + medicamentos.size());
-                                    
-                                    // Cargar opciones de filtros
-                                    cargarOpcionesFiltros();
-                                    
-                                    // Aplicar filtros iniciales
-                                    aplicarFiltros();
-                                    
-                                    lblResultados.setText("Medicamentos cargados: " + medicamentos.size());
-                                } else {
-                                    System.out.println("No se encontraron medicamentos en la respuesta");
-                                    lblResultados.setText("No se encontraron medicamentos");
-                                }
-                                progressIndicator.setVisible(false);
-                            });
-                        } else if (codigoRespuesta == ERROR_INVENTARIO) {
-                            System.err.println("Error del servidor al obtener medicamentos");
-                            Platform.runLater(() -> {
-                                mostrarError("Error", "Error del servidor al obtener los medicamentos");
-                                progressIndicator.setVisible(false);
-                            });
-                        } else {
-                            System.err.println("Respuesta inesperada del servidor: " + codigoRespuesta);
-                            Platform.runLater(() -> {
-                                mostrarError("Error", "Respuesta inesperada del servidor: " + codigoRespuesta);
-                                progressIndicator.setVisible(false);
-                            });
-                        }
-                    } catch (java.net.SocketTimeoutException e) {
-                        System.err.println("Timeout al esperar respuesta del servidor");
-                        Platform.runLater(() -> {
-                            mostrarError("Error de timeout", "El servidor tardó demasiado en responder. Intente más tarde.");
-                            progressIndicator.setVisible(false);
-                        });
-                    } catch (java.io.EOFException e) {
-                        System.err.println("Error de EOF - conexión cerrada inesperadamente");
-                        Platform.runLater(() -> {
-                            mostrarError("Error de conexión", "La conexión se cerró inesperadamente. Verifique el servidor.");
-                            progressIndicator.setVisible(false);
-                        });
-                    }
-                }
-                
-            } catch (Exception e) {
-                System.err.println("Error al cargar medicamentos: " + e.getMessage());
-                e.printStackTrace();
+        Task<ObservableList<ModeloMedicamentoInventario>> taskCargar = new Task<ObservableList<ModeloMedicamentoInventario>>() {
+            @Override
+            protected ObservableList<ModeloMedicamentoInventario> call() throws Exception {
+                return servicioInventario.obtenerMedicamentosDisponibles().get();
+            }
+            
+            @Override
+            protected void succeeded() {
                 Platform.runLater(() -> {
-                    mostrarError("Error de comunicación", "No se pudieron cargar los medicamentos: " + e.getMessage());
+                    ObservableList<ModeloMedicamentoInventario> medicamentos = getValue();
+                    medicamentosOriginales.clear();
+                    
+                    if (medicamentos != null && !medicamentos.isEmpty()) {
+                        medicamentosOriginales.addAll(medicamentos);
+                        System.out.println("Medicamentos cargados exitosamente desde inventario: " + medicamentos.size());
+                        
+                        // Cargar opciones de filtros
+                        cargarOpcionesFiltros();
+                        
+                        // Aplicar filtros iniciales
+                        aplicarFiltros();
+                        
+                        lblResultados.setText("Medicamentos cargados: " + medicamentos.size());
+                        lblEstadoConexion.setText("✅ " + medicamentos.size() + " medicamentos disponibles");
+                    } else {
+                        System.out.println("No se encontraron medicamentos disponibles en el inventario");
+                        lblResultados.setText("No se encontraron medicamentos disponibles");
+                        lblEstadoConexion.setText("⚠️ Sin medicamentos disponibles");
+                        lblEstadoConexion.setStyle("-fx-text-fill: orange;");
+                    }
                     progressIndicator.setVisible(false);
                 });
             }
-        }).start();
+            
+            @Override
+            protected void failed() {
+                Platform.runLater(() -> {
+                    System.err.println("Error al cargar medicamentos: " + getException().getMessage());
+                    mostrarError("Error de carga", "No se pudieron cargar los medicamentos del inventario:\n" + getException().getMessage());
+                    progressIndicator.setVisible(false);
+                    lblEstadoConexion.setText("❌ Error al cargar medicamentos");
+                    lblEstadoConexion.setStyle("-fx-text-fill: red;");
+                });
+            }
+        };
+        
+        new Thread(taskCargar).start();
     }
     
     private void cargarOpcionesFiltros() {
@@ -497,6 +440,8 @@ public class BuscadorMedicamentosController implements Initializable {
     }
     
     private void actualizarDatos() {
+        // Invalidar cache del servicio para forzar recarga
+        servicioInventario.invalidarCache();
         verificarConexionYCargarDatos();
     }
     
