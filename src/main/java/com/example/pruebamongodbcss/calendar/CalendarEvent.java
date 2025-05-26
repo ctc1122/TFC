@@ -1,11 +1,14 @@
 package com.example.pruebamongodbcss.calendar;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * Clase que representa un evento en el calendario
  */
-public class CalendarEvent {
+public class CalendarEvent implements Serializable {
+    
+    private static final long serialVersionUID = 1L;
     
     /**
      * Enumerado para los tipos de eventos

@@ -191,40 +191,35 @@
           <execution>
             <id>default-cli</id>
             <configuration>
-              <mainClass>com.example.pruebamongodbcss/com.example.pruebamongodbcss.PanelInicioMain</mainClass>
               <options>
                 <option>--add-opens</option>
-                <option>java.base/java.lang.reflect=com.jfoenix</option>
+                <option>javafx.controls/javafx.scene.control=ALL-UNNAMED</option>
                 <option>--add-opens</option>
-                <option>java.base/java.lang=com.jfoenix</option>
-                <option>--add-exports</option>
-                <option>javafx.controls/com.sun.javafx.scene.control.behavior=com.jfoenix</option>
-                <option>--add-exports</option>
-                <option>javafx.controls/com.sun.javafx.scene.control=com.jfoenix</option>
-                <option>--add-exports</option>
-                <option>javafx.base/com.sun.javafx.binding=com.jfoenix</option>
+                <option>javafx.controls/javafx.scene.control.skin=ALL-UNNAMED</option>
                 <option>--add-opens</option>
-                <option>javafx.graphics/javafx.scene=org.controlsfx.controls</option>
+                <option>javafx.controls/javafx.scene.control.cell=ALL-UNNAMED</option>
                 <option>--add-opens</option>
-                <option>javafx.controls/com.sun.javafx.scene.control=io.github.palexdev.materialfx</option>
-                <option>--add-exports</option>
-                <option>javafx.controls/com.sun.javafx.scene.control.behavior=com.jfoenix</option>
-                <option>--add-exports</option>
+                <option>javafx.base/com.sun.javafx.runtime=ALL-UNNAMED</option>
+                <option>--add-opens</option>
                 <option>javafx.controls/com.sun.javafx.scene.control.behavior=ALL-UNNAMED</option>
-                <option>--add-reads</option>
-                <option>com.example.pruebamongodbcss=org.apache.pdfbox</option>
-                <!-- Opciones para permitir acceso a Google API -->
-                <option>--add-reads</option>
-                <option>com.example.pruebamongodbcss=com.google.api.client</option>
+                <option>--add-opens</option>
+                <option>javafx.controls/com.sun.javafx.scene.control=ALL-UNNAMED</option>
+                <option>--add-opens</option>
+                <option>javafx.base/com.sun.javafx.binding=ALL-UNNAMED</option>
+                <option>--add-opens</option>
+                <option>javafx.base/com.sun.javafx.event=ALL-UNNAMED</option>
+                <option>--add-opens</option>
+                <option>javafx.graphics/com.sun.javafx.stage=ALL-UNNAMED</option>
+                <option>--add-opens</option>
+                <option>io.github.palexdev.materialfx/io.github.palexdev.materialfx.controls=ALL-UNNAMED</option>
                 <option>--add-reads</option>
                 <option>com.example.pruebamongodbcss=com.google.api.client.json</option>
                 <option>--add-reads</option>
                 <option>com.example.pruebamongodbcss=com.google.api.client.util</option>
                 <option>--add-reads</option>
-                <option>com.example.pruebamongodbcss=com.google.api.services.calendar</option>
-                <option>--add-reads</option>
                 <option>com.example.pruebamongodbcss=com.google.oauth.client</option>
               </options>
+              <mainClass>com.example.pruebamongodbcss/com.example.pruebamongodbcss.Modulos.InicioSesion.PanelInicioSesionController</mainClass>
             </configuration>
           </execution>
         </executions>
