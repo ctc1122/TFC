@@ -6,7 +6,7 @@ import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.Utilidades.GestorSocket;
-import com.jfoenix.controls.*;
+import io.github.palexdev.materialfx.controls.MFXDatePicker;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -17,6 +17,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -38,64 +39,65 @@ import java.util.ResourceBundle;
  */
 public class FacturaFormController implements Initializable {
 
+    // Componente principal
+    @FXML private BorderPane mainPane;
+    @FXML private Label lblTitulo;
+    
     // Datos generales
-    @FXML private VBox rootPane;
-    @FXML private JFXTextField txtNumeroFactura;
-    @FXML private JFXDatePicker dpFechaEmision;
-    @FXML private JFXDatePicker dpFechaVencimiento;
-    @FXML private JFXComboBox<String> cmbEstado;
-    @FXML private JFXComboBox<String> cmbMetodoPago;
+    @FXML private TextField txtNumeroFactura;
+    @FXML private MFXDatePicker dpFechaEmision;
+    @FXML private ComboBox<String> cmbEstado;
     
     // Datos del cliente
-    @FXML private JFXTextField txtNombreCliente;
-    @FXML private JFXTextField txtDniCliente;
-    @FXML private JFXTextField txtDireccionCliente;
-    @FXML private JFXTextField txtTelefonoCliente;
-    @FXML private JFXTextField txtEmailCliente;
-    @FXML private JFXButton btnSeleccionarCliente;
+    @FXML private TextField txtCliente;
+    @FXML private TextField txtDNI;
+    @FXML private TextField txtTelefono;
+    @FXML private TextField txtDireccion;
+    @FXML private Button btnSeleccionarCliente;
     
     // Datos del paciente
-    @FXML private JFXTextField txtNombrePaciente;
-    @FXML private JFXTextField txtEspeciePaciente;
-    @FXML private JFXTextField txtRazaPaciente;
-    @FXML private JFXButton btnSeleccionarPaciente;
+    @FXML private TextField txtPaciente;
+    @FXML private Button btnSeleccionarPaciente;
     
     // Datos del veterinario
-    @FXML private JFXTextField txtVeterinario;
+    @FXML private ComboBox<String> cmbVeterinario;
+    @FXML private TextField txtNumeroColegiado;
     
     // Servicios
-    @FXML private TableView<ModeloFactura.ConceptoFactura> tableServicios;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colDescripcionServicio;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Integer> colCantidadServicio;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Double> colPrecioServicio;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Double> colDescuentoServicio;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colTotalServicio;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Void> colAccionesServicio;
-    @FXML private JFXButton btnAgregarServicio;
+    @FXML private TableView<ModeloFactura.ConceptoFactura> tablaServicios;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colServicioDescripcion;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Integer> colServicioCantidad;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Double> colServicioPrecio;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Double> colServicioIVA;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colServicioSubtotal;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Void> colServicioAcciones;
+    @FXML private Button btnAgregarServicio;
     
     // Medicamentos
-    @FXML private TableView<ModeloFactura.ConceptoFactura> tableMedicamentos;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colDescripcionMedicamento;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Integer> colCantidadMedicamento;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Double> colPrecioMedicamento;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Double> colDescuentoMedicamento;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colTotalMedicamento;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Void> colAccionesMedicamento;
-    @FXML private JFXButton btnAgregarMedicamento;
+    @FXML private TableView<ModeloFactura.ConceptoFactura> tablaMedicamentos;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colMedicamentoNombre;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Integer> colMedicamentoCantidad;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Double> colMedicamentoPrecio;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Double> colMedicamentoIVA;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colMedicamentoSubtotal;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Void> colMedicamentoAcciones;
+    @FXML private Button btnAgregarMedicamento;
     
     // Totales
-    @FXML private Label lblSubtotal;
-    @FXML private Label lblIvaGeneral;
-    @FXML private Label lblIvaMedicamentos;
+    @FXML private Label lblSubtotalServicios;
+    @FXML private Label lblSubtotalMedicamentos;
+    @FXML private Label lblIVAServicios;
+    @FXML private Label lblIVAMedicamentos;
     @FXML private Label lblTotal;
     
     // Observaciones
-    @FXML private JFXTextArea txtObservaciones;
+    @FXML private TextArea txtObservaciones;
     
     // Botones
-    @FXML private JFXButton btnGuardarBorrador;
-    @FXML private JFXButton btnFinalizar;
-    @FXML private JFXButton btnCancelar;
+    @FXML private Button btnGuardarBorrador;
+    @FXML private Button btnGuardar;
+    @FXML private Button btnFinalizar;
+    @FXML private Button btnCancelar;
     
     // Datos
     private ModeloFactura factura;
@@ -146,13 +148,6 @@ public class FacturaFormController implements Initializable {
         // Estados
         cmbEstado.getItems().addAll("Borrador", "Emitida", "Pagada", "Vencida", "Anulada");
         cmbEstado.setValue("Borrador");
-        
-        // Métodos de pago
-        cmbMetodoPago.getItems().addAll(
-            "Efectivo", "Tarjeta de crédito", "Tarjeta de débito", 
-            "Transferencia bancaria", "Bizum", "PayPal"
-        );
-        cmbMetodoPago.setValue("Efectivo");
     }
     
     private void configurarTablas() {
@@ -161,27 +156,27 @@ public class FacturaFormController implements Initializable {
     }
     
     private void configurarTablaServicios() {
-        colDescripcionServicio.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
-        colCantidadServicio.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
-        colPrecioServicio.setCellValueFactory(new PropertyValueFactory<>("precioUnitario"));
-        colDescuentoServicio.setCellValueFactory(new PropertyValueFactory<>("descuento"));
-        colTotalServicio.setCellValueFactory(cellData -> {
+        colServicioDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
+        colServicioCantidad.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
+        colServicioPrecio.setCellValueFactory(new PropertyValueFactory<>("precioUnitario"));
+        colServicioIVA.setCellValueFactory(new PropertyValueFactory<>("tipoIva"));
+        colServicioSubtotal.setCellValueFactory(cellData -> {
             double total = cellData.getValue().getTotal();
             return new SimpleStringProperty(formatoMoneda.format(total));
         });
         
         // Columna de acciones
-        colAccionesServicio.setCellFactory(new Callback<TableColumn<ModeloFactura.ConceptoFactura, Void>, TableCell<ModeloFactura.ConceptoFactura, Void>>() {
+        colServicioAcciones.setCellFactory(new Callback<TableColumn<ModeloFactura.ConceptoFactura, Void>, TableCell<ModeloFactura.ConceptoFactura, Void>>() {
             @Override
             public TableCell<ModeloFactura.ConceptoFactura, Void> call(TableColumn<ModeloFactura.ConceptoFactura, Void> param) {
                 return new TableCell<ModeloFactura.ConceptoFactura, Void>() {
-                    private final JFXButton btnEditar = new JFXButton("Editar");
-                    private final JFXButton btnEliminar = new JFXButton("Eliminar");
+                    private final Button btnEditar = new Button("Editar");
+                    private final Button btnEliminar = new Button("Eliminar");
                     private final HBox hbox = new HBox(5, btnEditar, btnEliminar);
                     
                     {
-                        btnEditar.getStyleClass().addAll("btn-primary", "btn-sm");
-                        btnEliminar.getStyleClass().addAll("btn-danger", "btn-sm");
+                        btnEditar.getStyleClass().add("btn-primary");
+                        btnEliminar.getStyleClass().add("btn-danger");
                         hbox.setAlignment(Pos.CENTER);
                         
                         btnEditar.setOnAction(e -> {
@@ -205,31 +200,31 @@ public class FacturaFormController implements Initializable {
             }
         });
         
-        tableServicios.setItems(listaServicios);
+        tablaServicios.setItems(listaServicios);
     }
     
     private void configurarTablaMedicamentos() {
-        colDescripcionMedicamento.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
-        colCantidadMedicamento.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
-        colPrecioMedicamento.setCellValueFactory(new PropertyValueFactory<>("precioUnitario"));
-        colDescuentoMedicamento.setCellValueFactory(new PropertyValueFactory<>("descuento"));
-        colTotalMedicamento.setCellValueFactory(cellData -> {
+        colMedicamentoNombre.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
+        colMedicamentoCantidad.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
+        colMedicamentoPrecio.setCellValueFactory(new PropertyValueFactory<>("precioUnitario"));
+        colMedicamentoIVA.setCellValueFactory(new PropertyValueFactory<>("tipoIva"));
+        colMedicamentoSubtotal.setCellValueFactory(cellData -> {
             double total = cellData.getValue().getTotal();
             return new SimpleStringProperty(formatoMoneda.format(total));
         });
         
         // Columna de acciones
-        colAccionesMedicamento.setCellFactory(new Callback<TableColumn<ModeloFactura.ConceptoFactura, Void>, TableCell<ModeloFactura.ConceptoFactura, Void>>() {
+        colMedicamentoAcciones.setCellFactory(new Callback<TableColumn<ModeloFactura.ConceptoFactura, Void>, TableCell<ModeloFactura.ConceptoFactura, Void>>() {
             @Override
             public TableCell<ModeloFactura.ConceptoFactura, Void> call(TableColumn<ModeloFactura.ConceptoFactura, Void> param) {
                 return new TableCell<ModeloFactura.ConceptoFactura, Void>() {
-                    private final JFXButton btnEditar = new JFXButton("Editar");
-                    private final JFXButton btnEliminar = new JFXButton("Eliminar");
+                    private final Button btnEditar = new Button("Editar");
+                    private final Button btnEliminar = new Button("Eliminar");
                     private final HBox hbox = new HBox(5, btnEditar, btnEliminar);
                     
                     {
-                        btnEditar.getStyleClass().addAll("btn-primary", "btn-sm");
-                        btnEliminar.getStyleClass().addAll("btn-danger", "btn-sm");
+                        btnEditar.getStyleClass().add("btn-primary");
+                        btnEliminar.getStyleClass().add("btn-danger");
                         hbox.setAlignment(Pos.CENTER);
                         
                         btnEditar.setOnAction(e -> {
@@ -253,17 +248,18 @@ public class FacturaFormController implements Initializable {
             }
         });
         
-        tableMedicamentos.setItems(listaMedicamentos);
+        tablaMedicamentos.setItems(listaMedicamentos);
     }
     
     private void configurarEventos() {
-        btnSeleccionarCliente.setOnAction(e -> seleccionarCliente());
-        btnSeleccionarPaciente.setOnAction(e -> seleccionarPaciente());
-        btnAgregarServicio.setOnAction(e -> agregarServicio());
-        btnAgregarMedicamento.setOnAction(e -> agregarMedicamento());
-        btnGuardarBorrador.setOnAction(e -> guardarBorrador());
-        btnFinalizar.setOnAction(e -> finalizarFactura());
-        btnCancelar.setOnAction(e -> cancelar());
+        btnSeleccionarCliente.setOnAction(e -> onSeleccionarCliente());
+        btnSeleccionarPaciente.setOnAction(e -> onSeleccionarPaciente());
+        btnAgregarServicio.setOnAction(e -> onAgregarServicio());
+        btnAgregarMedicamento.setOnAction(e -> onAgregarMedicamento());
+        btnGuardarBorrador.setOnAction(e -> onGuardarBorrador());
+        btnGuardar.setOnAction(e -> onGuardar());
+        btnFinalizar.setOnAction(e -> onFinalizar());
+        btnCancelar.setOnAction(e -> onCancelar());
         
         // Listeners para recalcular totales
         listaServicios.addListener((javafx.collections.ListChangeListener<ModeloFactura.ConceptoFactura>) c -> calcularTotales());
@@ -279,29 +275,26 @@ public class FacturaFormController implements Initializable {
             dpFechaEmision.setValue(factura.getFechaEmision().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
         }
         if (factura.getFechaVencimiento() != null) {
-            dpFechaVencimiento.setValue(factura.getFechaVencimiento().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+            dpFechaEmision.setValue(factura.getFechaVencimiento().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
         }
         if (factura.getEstado() != null) {
             cmbEstado.setValue(factura.getEstado().getDescripcion());
         }
-        cmbMetodoPago.setValue(factura.getMetodoPago());
         
         // Datos del cliente
-        txtNombreCliente.setText(factura.getNombreCliente());
-        txtDniCliente.setText(factura.getDniCliente());
-        txtDireccionCliente.setText(factura.getDireccionCliente());
-        txtTelefonoCliente.setText(factura.getTelefonoCliente());
-        txtEmailCliente.setText(factura.getEmailCliente());
+        txtCliente.setText(factura.getNombreCliente());
+        txtDNI.setText(factura.getDniCliente());
+        txtTelefono.setText(factura.getTelefonoCliente());
+        txtDireccion.setText(factura.getDireccionCliente());
         propietarioId = factura.getPropietarioId();
         
         // Datos del paciente
-        txtNombrePaciente.setText(factura.getNombrePaciente());
-        txtEspeciePaciente.setText(factura.getEspeciePaciente());
-        txtRazaPaciente.setText(factura.getRazaPaciente());
+        txtPaciente.setText(factura.getNombrePaciente());
         pacienteId = factura.getPacienteId();
         
         // Veterinario
-        txtVeterinario.setText(factura.getVeterinarioNombre());
+        cmbVeterinario.setValue(factura.getVeterinarioNombre());
+        txtNumeroColegiado.setText(factura.getVeterinarioId());
         
         // Servicios y medicamentos
         if (factura.getServicios() != null) {
@@ -359,25 +352,20 @@ public class FacturaFormController implements Initializable {
         VBox content = new VBox(10);
         content.setPadding(new Insets(20));
         
-        JFXTextField txtDescripcion = new JFXTextField(concepto.getDescripcion());
+        TextField txtDescripcion = new TextField(concepto.getDescripcion());
         txtDescripcion.setPromptText("Descripción");
-        txtDescripcion.setLabelFloat(true);
         
-        JFXTextField txtCantidad = new JFXTextField(String.valueOf(concepto.getCantidad()));
+        TextField txtCantidad = new TextField(String.valueOf(concepto.getCantidad()));
         txtCantidad.setPromptText("Cantidad");
-        txtCantidad.setLabelFloat(true);
         
-        JFXTextField txtPrecio = new JFXTextField(String.valueOf(concepto.getPrecioUnitario()));
+        TextField txtPrecio = new TextField(String.valueOf(concepto.getPrecioUnitario()));
         txtPrecio.setPromptText("Precio unitario");
-        txtPrecio.setLabelFloat(true);
         
-        JFXTextField txtDescuento = new JFXTextField(String.valueOf(concepto.getDescuento()));
+        TextField txtDescuento = new TextField(String.valueOf(concepto.getDescuento()));
         txtDescuento.setPromptText("Descuento %");
-        txtDescuento.setLabelFloat(true);
         
-        JFXTextField txtIva = new JFXTextField(String.valueOf(concepto.getTipoIva()));
+        TextField txtIva = new TextField(String.valueOf(concepto.getTipoIva()));
         txtIva.setPromptText("IVA %");
-        txtIva.setLabelFloat(true);
         txtIva.setDisable(!esServicio); // Solo servicios pueden cambiar IVA
         
         content.getChildren().addAll(txtDescripcion, txtCantidad, txtPrecio, txtDescuento, txtIva);
@@ -408,28 +396,30 @@ public class FacturaFormController implements Initializable {
     }
     
     private void calcularTotales() {
-        double subtotal = 0.0;
-        double ivaGeneral = 0.0;
+        double subtotalServicios = 0.0;
+        double ivaServicios = 0.0;
+        double subtotalMedicamentos = 0.0;
         double ivaMedicamentos = 0.0;
         
         // Calcular servicios
         for (ModeloFactura.ConceptoFactura servicio : listaServicios) {
-            subtotal += servicio.getSubtotal();
-            ivaGeneral += servicio.getImporteIva();
+            subtotalServicios += servicio.getSubtotal();
+            ivaServicios += servicio.getImporteIva();
         }
         
         // Calcular medicamentos
         for (ModeloFactura.ConceptoFactura medicamento : listaMedicamentos) {
-            subtotal += medicamento.getSubtotal();
+            subtotalMedicamentos += medicamento.getSubtotal();
             ivaMedicamentos += medicamento.getImporteIva();
         }
         
-        double total = subtotal + ivaGeneral + ivaMedicamentos;
+        double total = subtotalServicios + ivaServicios + subtotalMedicamentos + ivaMedicamentos;
         
         // Actualizar labels
-        lblSubtotal.setText(formatoMoneda.format(subtotal));
-        lblIvaGeneral.setText(formatoMoneda.format(ivaGeneral));
-        lblIvaMedicamentos.setText(formatoMoneda.format(ivaMedicamentos));
+        lblSubtotalServicios.setText(formatoMoneda.format(subtotalServicios));
+        lblIVAServicios.setText(formatoMoneda.format(ivaServicios));
+        lblSubtotalMedicamentos.setText(formatoMoneda.format(subtotalMedicamentos));
+        lblIVAMedicamentos.setText(formatoMoneda.format(ivaMedicamentos));
         lblTotal.setText(formatoMoneda.format(total));
     }
     
@@ -475,29 +465,23 @@ public class FacturaFormController implements Initializable {
         if (dpFechaEmision.getValue() != null) {
             factura.setFechaEmision(Date.from(dpFechaEmision.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant()));
         }
-        if (dpFechaVencimiento.getValue() != null) {
-            factura.setFechaVencimiento(Date.from(dpFechaVencimiento.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant()));
-        }
-        factura.setMetodoPago(cmbMetodoPago.getValue());
+        factura.setMetodoPago(cmbEstado.getValue());
         
         // Datos del cliente
-        factura.setNombreCliente(txtNombreCliente.getText());
-        factura.setDniCliente(txtDniCliente.getText());
-        factura.setDireccionCliente(txtDireccionCliente.getText());
-        factura.setTelefonoCliente(txtTelefonoCliente.getText());
-        factura.setEmailCliente(txtEmailCliente.getText());
+        factura.setNombreCliente(txtCliente.getText());
+        factura.setDniCliente(txtDNI.getText());
+        factura.setTelefonoCliente(txtTelefono.getText());
+        factura.setDireccionCliente(txtDireccion.getText());
         factura.setPropietarioId(propietarioId);
         
         // Datos del paciente
-        factura.setNombrePaciente(txtNombrePaciente.getText());
-        factura.setEspeciePaciente(txtEspeciePaciente.getText());
-        factura.setRazaPaciente(txtRazaPaciente.getText());
+        factura.setNombrePaciente(txtPaciente.getText());
         factura.setPacienteId(pacienteId);
         
         // Veterinario
-        factura.setVeterinarioNombre(txtVeterinario.getText());
+        factura.setVeterinarioNombre(cmbVeterinario.getValue());
         if (usuarioActual != null) {
-            factura.setVeterinarioId(usuarioActual.getId().toString());
+            factura.setVeterinarioId(txtNumeroColegiado.getText());
             factura.setUsuarioCreacion(usuarioActual.getUsuario());
         }
         
@@ -518,12 +502,12 @@ public class FacturaFormController implements Initializable {
     }
     
     private boolean validarFormulario() {
-        if (txtNombreCliente.getText().trim().isEmpty()) {
+        if (txtCliente.getText().trim().isEmpty()) {
             mostrarError("Validación", "El nombre del cliente es obligatorio");
             return false;
         }
         
-        if (txtNombrePaciente.getText().trim().isEmpty()) {
+        if (txtPaciente.getText().trim().isEmpty()) {
             mostrarError("Validación", "El nombre del paciente es obligatorio");
             return false;
         }
@@ -607,7 +591,7 @@ public class FacturaFormController implements Initializable {
     }
     
     private void cerrarVentana() {
-        Stage stage = (Stage) rootPane.getScene().getWindow();
+        Stage stage = (Stage) mainPane.getScene().getWindow();
         stage.close();
     }
     
@@ -622,7 +606,8 @@ public class FacturaFormController implements Initializable {
     public void setUsuarioActual(Usuario usuario) {
         this.usuarioActual = usuario;
         if (usuario != null) {
-            txtVeterinario.setText(usuario.getNombre());
+            cmbVeterinario.setValue(usuario.getNombre());
+            txtNumeroColegiado.setText(usuario.getId().toString());
         }
     }
     
@@ -638,18 +623,15 @@ public class FacturaFormController implements Initializable {
         
         if (paciente != null) {
             this.pacienteId = paciente.getId();
-            txtNombrePaciente.setText(paciente.getNombre());
-            txtEspeciePaciente.setText(paciente.getEspecie());
-            txtRazaPaciente.setText(paciente.getRaza());
+            txtPaciente.setText(paciente.getNombre());
         }
         
         if (propietario != null) {
             this.propietarioId = propietario.getId();
-            txtNombreCliente.setText(propietario.getNombre());
-            txtDniCliente.setText(propietario.getDni());
-            txtDireccionCliente.setText(propietario.getDireccion());
-            txtTelefonoCliente.setText(propietario.getTelefono());
-            txtEmailCliente.setText(propietario.getEmail());
+            txtCliente.setText(propietario.getNombre());
+            txtDNI.setText(propietario.getDni());
+            txtTelefono.setText(propietario.getTelefono());
+            txtDireccion.setText(propietario.getDireccion());
         }
     }
     
@@ -667,5 +649,46 @@ public class FacturaFormController implements Initializable {
         alert.setHeaderText(titulo);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+
+    // Métodos FXML referenciados en el archivo FXML
+    @FXML
+    private void onSeleccionarCliente() {
+        seleccionarCliente();
+    }
+
+    @FXML
+    private void onSeleccionarPaciente() {
+        seleccionarPaciente();
+    }
+
+    @FXML
+    private void onAgregarServicio() {
+        agregarServicio();
+    }
+
+    @FXML
+    private void onAgregarMedicamento() {
+        agregarMedicamento();
+    }
+
+    @FXML
+    private void onGuardarBorrador() {
+        guardarBorrador();
+    }
+
+    @FXML
+    private void onGuardar() {
+        guardarFactura();
+    }
+
+    @FXML
+    private void onFinalizar() {
+        finalizarFactura();
+    }
+
+    @FXML
+    private void onCancelar() {
+        cancelar();
     }
 } 
