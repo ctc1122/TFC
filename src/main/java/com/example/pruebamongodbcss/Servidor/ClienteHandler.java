@@ -228,6 +228,7 @@ public class ClienteHandler implements Runnable {
                                 propietario.setId(id);
                                 synchronized (salida) {
                                     salida.writeInt(Protocolo.CREARPROPIETARIO_RESPONSE);
+                                    salida.writeObject(id);
                                     salida.flush();
                                 }
                             } else {
