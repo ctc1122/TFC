@@ -1,0 +1,245 @@
+/* Estilos para el Buscador de Medicamentos */
+
+/* Contenedores principales */
+.header-section {
+    -fx-background-color: #f8fafc;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 0 0 1 0;
+}
+
+.filter-panel {
+    -fx-background-color: white;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 4, 0, 0, 2);
+}
+
+.action-bar {
+    -fx-background-color: #f8fafc;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1 0 0 0;
+}
+
+/* Títulos y etiquetas */
+.title-large {
+    -fx-text-fill: #1e293b;
+    -fx-font-weight: bold;
+}
+
+.section-title {
+    -fx-text-fill: #334155;
+    -fx-font-weight: bold;
+}
+
+.field-label {
+    -fx-text-fill: #475569;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+.status-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.results-info {
+    -fx-text-fill: #64748b;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+/* Campos de entrada */
+.search-field {
+    -fx-background-color: white;
+    -fx-border-color: #d1d5db;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 12px;
+    -fx-font-size: 14px;
+}
+
+.search-field:focused {
+    -fx-border-color: #3b82f6;
+    -fx-effect: dropshadow(three-pass-box, rgba(59,130,246,0.3), 4, 0, 0, 0);
+}
+
+.filter-combo {
+    -fx-background-color: white;
+    -fx-border-color: #d1d5db;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-font-size: 14px;
+}
+
+.filter-combo:focused {
+    -fx-border-color: #3b82f6;
+}
+
+.stock-spinner {
+    -fx-background-color: white;
+    -fx-border-color: #d1d5db;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+}
+
+.filter-checkbox {
+    -fx-text-fill: #374151;
+    -fx-font-size: 14px;
+}
+
+/* Botones */
+.btn-primary {
+    -fx-background-color: #3b82f6;
+    -fx-text-fill: white;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 16px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.btn-primary:hover {
+    -fx-background-color: #2563eb;
+}
+
+.btn-secondary {
+    -fx-background-color: #6b7280;
+    -fx-text-fill: white;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 16px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.btn-secondary:hover {
+    -fx-background-color: #4b5563;
+}
+
+.btn-warning {
+    -fx-background-color: #f59e0b;
+    -fx-text-fill: white;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 16px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.btn-warning:hover {
+    -fx-background-color: #d97706;
+}
+
+.btn-success {
+    -fx-background-color: #10b981;
+    -fx-text-fill: white;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 16px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.btn-success:hover {
+    -fx-background-color: #059669;
+}
+
+.btn-danger {
+    -fx-background-color: #ef4444;
+    -fx-text-fill: white;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 16px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.btn-danger:hover {
+    -fx-background-color: #dc2626;
+}
+
+.btn-large {
+    -fx-padding: 12px 24px;
+    -fx-font-size: 16px;
+}
+
+.btn-small {
+    -fx-padding: 4px 8px;
+    -fx-font-size: 12px;
+}
+
+/* Tabla */
+.modern-table {
+    -fx-background-color: white;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+.modern-table .column-header-background {
+    -fx-background-color: #f1f5f9;
+    -fx-border-color: #e2e8f0;
+}
+
+.modern-table .column-header {
+    -fx-background-color: transparent;
+    -fx-text-fill: #334155;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-padding: 12px 8px;
+}
+
+.modern-table .table-row-cell {
+    -fx-background-color: white;
+    -fx-border-color: #f1f5f9;
+    -fx-border-width: 0 0 1 0;
+}
+
+.modern-table .table-row-cell:selected {
+    -fx-background-color: #eff6ff;
+    -fx-text-fill: #1e40af;
+}
+
+.modern-table .table-row-cell:hover {
+    -fx-background-color: #f8fafc;
+}
+
+.modern-table .table-cell {
+    -fx-padding: 8px;
+    -fx-font-size: 13px;
+    -fx-text-fill: #374151;
+}
+
+/* Progress indicator */
+.progress-indicator {
+    -fx-progress-color: #3b82f6;
+}
+
+/* Scrollbars */
+.scroll-bar {
+    -fx-background-color: #f1f5f9;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #cbd5e1;
+    -fx-background-radius: 4px;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #94a3b8;
+}
+
+/* Separadores */
+.separator .line {
+    -fx-border-color: #e2e8f0;
+}
+
+/* Tooltips */
+.tooltip {
+    -fx-background-color: #1f2937;
+    -fx-text-fill: white;
+    -fx-background-radius: 4px;
+    -fx-font-size: 12px;
+    -fx-padding: 4px 8px;
+} 

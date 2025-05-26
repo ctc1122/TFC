@@ -4,6 +4,8 @@ import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario;
+import com.example.pruebamongodbcss.Modulos.Inventario.BuscadorMedicamentosController;
+import com.example.pruebamongodbcss.Modulos.Inventario.ModeloMedicamentoInventario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 import io.github.palexdev.materialfx.controls.MFXDatePicker;
@@ -12,9 +14,12 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
@@ -23,11 +28,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
 import org.bson.types.ObjectId;
 
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.URL;
 import java.text.DecimalFormat;
@@ -462,6 +469,326 @@ public class FacturaFormController implements Initializable {
     }
     
     private void agregarMedicamento() {
+        // Verificar disponibilidad del servidor principal para inventario
+        boolean servidorDisponible = false;
+        try {
+            servidorDisponible = gestorSocket != null && gestorSocket.isConectado();
+            if (servidorDisponible) {
+                // Hacer una prueba rápida de conectividad
+                // Si hay problemas, se detectarán en el buscador
+                System.out.println("Servidor disponible, intentando abrir buscador avanzado...");
+            }
+        } catch (Exception e) {
+            System.err.println("Error al verificar conexión del servidor: " + e.getMessage());
+            servidorDisponible = false;
+        }
+        
+        if (servidorDisponible) {
+            // Servidor disponible - intentar abrir buscador sofisticado
+            System.out.println("Abriendo buscador avanzado de medicamentos...");
+            abrirBuscadorMedicamentos();
+        } else {
+            // Servidor no disponible - usar método manual tradicional
+            System.out.println("Servidor no disponible, usando método manual...");
+            
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Servidor Principal");
+            alert.setHeaderText("Servidor no disponible");
+            alert.setContentText("El servidor principal no está disponible para acceder al inventario.\n" +
+                               "Se abrirá el formulario manual para agregar medicamentos.");
+            alert.showAndWait();
+            
+            agregarMedicamentoManual();
+        }
+    }
+    
+    /**
+     * Abre el buscador sofisticado de medicamentos del inventario
+     */
+    private void abrirBuscadorMedicamentos() {
+        try {
+            // Verificar que existe el archivo FXML
+            URL fxmlUrl = getClass().getResource("/com/example/pruebamongodbcss/Modulos/Inventario/buscador-medicamentos.fxml");
+            if (fxmlUrl == null) {
+                System.err.println("No se encontró el archivo FXML del buscador de medicamentos");
+                mostrarAdvertencia("Buscador no disponible", 
+                    "El buscador avanzado de medicamentos no está disponible. Se usará el método manual.");
+                agregarMedicamentoManual();
+                return;
+            }
+            
+            // Cargar el FXML del buscador
+            FXMLLoader loader = new FXMLLoader(fxmlUrl);
+            Parent root = loader.load();
+            
+            // Obtener el controlador
+            BuscadorMedicamentosController controller = loader.getController();
+            if (controller == null) {
+                System.err.println("No se pudo obtener el controlador del buscador");
+                throw new RuntimeException("Controlador no disponible");
+            }
+            
+            // Configurar callback para cuando se seleccione un medicamento
+            controller.setCallbackSeleccion(this::procesarMedicamentoSeleccionado);
+            
+            // Crear y configurar la ventana
+            Stage stage = new Stage();
+            stage.setTitle("🔍 Buscador de Medicamentos - Inventario");
+            stage.initModality(Modality.WINDOW_MODAL);
+            stage.initOwner(mainPane.getScene().getWindow());
+            
+            // Configurar la escena
+            Scene scene = new Scene(root, 1400, 800);
+            
+            // Agregar estilos si existen
+            try {
+                URL stylesUrl = getClass().getResource("/com/example/pruebamongodbcss/Modulos/Inventario/inventario-styles.css");
+                if (stylesUrl != null) {
+                    scene.getStylesheets().add(stylesUrl.toExternalForm());
+                } else {
+                    // Intentar con estilos de facturación
+                    URL facturacionStylesUrl = getClass().getResource("/com/example/pruebamongodbcss/Modulos/Facturacion/facturacion-styles.css");
+                    if (facturacionStylesUrl != null) {
+                        scene.getStylesheets().add(facturacionStylesUrl.toExternalForm());
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("No se pudieron cargar los estilos para el buscador: " + e.getMessage());
+            }
+            
+            stage.setScene(scene);
+            stage.setResizable(true);
+            stage.centerOnScreen();
+            
+            // Mostrar la ventana
+            stage.show();
+            
+            System.out.println("Buscador de medicamentos abierto exitosamente");
+            
+        } catch (IOException e) {
+            System.err.println("Error de E/O al cargar el buscador: " + e.getMessage());
+            e.printStackTrace();
+            mostrarAdvertencia("Error al cargar buscador", 
+                "No se pudo cargar el buscador avanzado de medicamentos.\n" +
+                "Error: " + e.getMessage() + "\n\n" +
+                "Se usará el método manual para agregar medicamentos.");
+            agregarMedicamentoManual();
+        } catch (Exception e) {
+            System.err.println("Error general al abrir buscador: " + e.getMessage());
+            e.printStackTrace();
+            mostrarAdvertencia("Buscador no disponible", 
+                "El buscador avanzado no está disponible en este momento.\n" +
+                "Error: " + e.getMessage() + "\n\n" +
+                "Se usará el método manual para agregar medicamentos.");
+            agregarMedicamentoManual();
+        }
+    }
+    
+    /**
+     * Procesa el medicamento seleccionado del inventario y lo agrega a la factura
+     */
+    private void procesarMedicamentoSeleccionado(ModeloMedicamentoInventario medicamentoInventario) {
+        try {
+            // Crear concepto de factura desde el medicamento del inventario
+            ModeloFactura.ConceptoFactura concepto = new ModeloFactura.ConceptoFactura();
+            
+            // Mapear datos del medicamento del inventario
+            concepto.setDescripcion(medicamentoInventario.getNombreCompleto());
+            concepto.setCantidad(1); // Cantidad inicial
+            concepto.setPrecioUnitario(medicamentoInventario.getPrecioUnitario());
+            concepto.setTipoIva(10.0); // IVA reducido para medicamentos
+            concepto.setDescuento(0.0);
+            
+            // Mostrar diálogo para confirmar/editar cantidad y otros detalles
+            if (editarConceptoMedicamentoInventario(concepto, medicamentoInventario)) {
+                // Verificar stock disponible
+                if (medicamentoInventario.haySuficienteStock(concepto.getCantidad())) {
+                    // Agregar a la lista
+                    listaMedicamentos.add(concepto);
+                    calcularTotales();
+                    
+                    // Opcional: Actualizar stock en el inventario
+                    actualizarStockInventario(medicamentoInventario, concepto.getCantidad());
+                    
+                    mostrarInfo("Medicamento agregado", 
+                        "Se agregó " + concepto.getCantidad() + " unidad(es) de " + 
+                        medicamentoInventario.getNombre() + " a la factura.");
+                } else {
+                    mostrarError("Stock insuficiente", 
+                        "No hay suficiente stock disponible. Stock actual: " + 
+                        medicamentoInventario.getUnidadesDisponibles() + 
+                        ", cantidad solicitada: " + concepto.getCantidad());
+                }
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error", "Error al procesar el medicamento seleccionado: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Diálogo específico para editar medicamentos del inventario
+     */
+    private boolean editarConceptoMedicamentoInventario(ModeloFactura.ConceptoFactura concepto, ModeloMedicamentoInventario medicamentoInventario) {
+        Dialog<ModeloFactura.ConceptoFactura> dialog = new Dialog<>();
+        dialog.setTitle("💊 Medicamento del Inventario");
+        dialog.setHeaderText("Confirme los detalles del medicamento");
+        
+        // Crear contenido del diálogo
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(20));
+        
+        // Información del medicamento (solo lectura)
+        VBox infoBox = new VBox(10);
+        infoBox.setStyle("-fx-background-color: #f8fafc; -fx-border-color: #e2e8f0; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 15px;");
+        
+        Label lblInfo = new Label("📋 Información del Medicamento");
+        lblInfo.setFont(Font.font("System", FontWeight.BOLD, 14));
+        
+        Label lblNombre = new Label("Nombre: " + medicamentoInventario.getNombreCompleto());
+        Label lblLaboratorio = new Label("Laboratorio: " + (medicamentoInventario.getLaboratorio() != null ? medicamentoInventario.getLaboratorio() : "No especificado"));
+        Label lblStock = new Label("Stock disponible: " + medicamentoInventario.getUnidadesDisponibles() + " unidades");
+        Label lblPrecioBase = new Label("Precio base: " + formatoMoneda.format(medicamentoInventario.getPrecioUnitario()));
+        
+        infoBox.getChildren().addAll(lblInfo, lblNombre, lblLaboratorio, lblStock, lblPrecioBase);
+        
+        // Campos editables
+        GridPane grid = new GridPane();
+        grid.setHgap(15);
+        grid.setVgap(15);
+        
+        // Cantidad
+        Label lblCantidad = new Label("Cantidad:");
+        lblCantidad.setFont(Font.font("System", FontWeight.BOLD, 12));
+        Spinner<Integer> spnCantidad = new Spinner<>(1, medicamentoInventario.getUnidadesDisponibles(), concepto.getCantidad());
+        spnCantidad.setEditable(true);
+        
+        // Precio unitario
+        Label lblPrecio = new Label("Precio unitario (€):");
+        lblPrecio.setFont(Font.font("System", FontWeight.BOLD, 12));
+        TextField txtPrecio = new TextField(String.valueOf(concepto.getPrecioUnitario()));
+        
+        // Descuento
+        Label lblDescuento = new Label("Descuento (%):");
+        lblDescuento.setFont(Font.font("System", FontWeight.BOLD, 12));
+        TextField txtDescuento = new TextField(String.valueOf(concepto.getDescuento()));
+        
+        // IVA
+        Label lblIva = new Label("IVA (%):");
+        lblIva.setFont(Font.font("System", FontWeight.BOLD, 12));
+        ComboBox<Double> cmbIva = new ComboBox<>();
+        cmbIva.getItems().addAll(0.0, 4.0, 10.0, 21.0);
+        cmbIva.setValue(concepto.getTipoIva());
+        
+        grid.add(lblCantidad, 0, 0);
+        grid.add(spnCantidad, 1, 0);
+        grid.add(lblPrecio, 0, 1);
+        grid.add(txtPrecio, 1, 1);
+        grid.add(lblDescuento, 0, 2);
+        grid.add(txtDescuento, 1, 2);
+        grid.add(lblIva, 0, 3);
+        grid.add(cmbIva, 1, 3);
+        
+        // Vista previa del total
+        VBox previewBox = new VBox(10);
+        previewBox.setStyle("-fx-background-color: #f0f9ff; -fx-border-color: #0ea5e9; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 15px;");
+        
+        Label lblPreview = new Label("💰 Resumen del Costo");
+        lblPreview.setFont(Font.font("System", FontWeight.BOLD, 14));
+        
+        Label lblSubtotal = new Label("Subtotal: 0,00 €");
+        Label lblIvaAmount = new Label("IVA: 0,00 €");
+        Label lblTotalPreview = new Label("Total: 0,00 €");
+        lblTotalPreview.setFont(Font.font("System", FontWeight.BOLD, 16));
+        lblTotalPreview.setStyle("-fx-text-fill: #0ea5e9;");
+        
+        previewBox.getChildren().addAll(lblPreview, lblSubtotal, lblIvaAmount, new Separator(), lblTotalPreview);
+        
+        // Función para actualizar vista previa
+        Runnable updatePreview = () -> {
+            try {
+                int cantidad = spnCantidad.getValue();
+                double precio = Double.parseDouble(txtPrecio.getText().isEmpty() ? "0" : txtPrecio.getText());
+                double descuento = Double.parseDouble(txtDescuento.getText().isEmpty() ? "0" : txtDescuento.getText());
+                double iva = cmbIva.getValue();
+                
+                double subtotal = cantidad * precio;
+                double descuentoAmount = subtotal * (descuento / 100);
+                double subtotalConDescuento = subtotal - descuentoAmount;
+                double ivaAmount = subtotalConDescuento * (iva / 100);
+                double total = subtotalConDescuento + ivaAmount;
+                
+                lblSubtotal.setText("Subtotal: " + formatoMoneda.format(subtotalConDescuento));
+                lblIvaAmount.setText("IVA (" + iva + "%): " + formatoMoneda.format(ivaAmount));
+                lblTotalPreview.setText("Total: " + formatoMoneda.format(total));
+                
+                // Advertencia de stock
+                if (cantidad > medicamentoInventario.getUnidadesDisponibles()) {
+                    lblStock.setText("⚠️ Stock disponible: " + medicamentoInventario.getUnidadesDisponibles() + " unidades (INSUFICIENTE)");
+                    lblStock.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+                } else {
+                    lblStock.setText("✅ Stock disponible: " + medicamentoInventario.getUnidadesDisponibles() + " unidades");
+                    lblStock.setStyle("-fx-text-fill: green;");
+                }
+                
+            } catch (NumberFormatException e) {
+                lblSubtotal.setText("Subtotal: 0,00 €");
+                lblIvaAmount.setText("IVA: 0,00 €");
+                lblTotalPreview.setText("Total: 0,00 €");
+            }
+        };
+        
+        // Listeners
+        spnCantidad.valueProperty().addListener((obs, oldVal, newVal) -> updatePreview.run());
+        txtPrecio.textProperty().addListener((obs, oldVal, newVal) -> updatePreview.run());
+        txtDescuento.textProperty().addListener((obs, oldVal, newVal) -> updatePreview.run());
+        cmbIva.valueProperty().addListener((obs, oldVal, newVal) -> updatePreview.run());
+        
+        content.getChildren().addAll(infoBox, new Separator(), grid, previewBox);
+        
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        
+        // Configurar resultado
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == ButtonType.OK) {
+                try {
+                    concepto.setCantidad(spnCantidad.getValue());
+                    concepto.setPrecioUnitario(Double.parseDouble(txtPrecio.getText()));
+                    concepto.setDescuento(Double.parseDouble(txtDescuento.getText()));
+                    concepto.setTipoIva(cmbIva.getValue());
+                    concepto.calcularImportes();
+                    return concepto;
+                } catch (NumberFormatException e) {
+                    mostrarError("Error", "Por favor, ingrese valores numéricos válidos");
+                    return null;
+                }
+            }
+            return null;
+        });
+        
+        // Actualizar vista previa inicial
+        updatePreview.run();
+        
+        Optional<ModeloFactura.ConceptoFactura> result = dialog.showAndWait();
+        return result.isPresent();
+    }
+    
+    /**
+     * Actualiza el stock en el inventario después de agregar a la factura
+     */
+    private void actualizarStockInventario(ModeloMedicamentoInventario medicamento, int cantidadUsada) {
+        // Solo actualizar si la factura se finaliza, no en borrador
+        // Por ahora solo mostramos la información
+        System.out.println("Se debería actualizar el stock de " + medicamento.getCodigo() + 
+                          " restando " + cantidadUsada + " unidades cuando se finalice la factura");
+    }
+    
+    /**
+     * Método tradicional para agregar medicamentos manualmente
+     */
+    private void agregarMedicamentoManual() {
         ModeloFactura.ConceptoFactura concepto = new ModeloFactura.ConceptoFactura();
         concepto.setTipoIva(10.0); // IVA reducido para medicamentos
         
@@ -918,6 +1245,14 @@ public class FacturaFormController implements Initializable {
     private void mostrarError(String titulo, String mensaje) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");
+        alert.setHeaderText(titulo);
+        alert.setContentText(mensaje);
+        alert.showAndWait();
+    }
+    
+    private void mostrarAdvertencia(String titulo, String mensaje) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Advertencia");
         alert.setHeaderText(titulo);
         alert.setContentText(mensaje);
         alert.showAndWait();
