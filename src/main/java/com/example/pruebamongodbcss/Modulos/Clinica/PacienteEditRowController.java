@@ -299,12 +299,9 @@ public class PacienteEditRowController implements Initializable {
     }
     
     private void guardarPaciente() {
-        // Lógica para guardar el paciente (igual que antes)
-        // Llama a onGuardarCallback si todo va bien
-        boolean guardado;
+        boolean guardado = false;
         if (esNuevo) {
             try {
-                //Pedir al servidor agregar el paciente
                 gestorServidor.enviarPeticion(Protocolo.CREARPACIENTE_DEVUELVEPACIENTE + Protocolo.SEPARADOR_CODIGO);
                 ObjectOutputStream salida = gestorServidor.getSalida();
                 salida.writeObject(paciente);
@@ -316,6 +313,15 @@ public class PacienteEditRowController implements Initializable {
                     guardado = true;
                 } else {
                     guardado = false;
+                }
+                if (guardado) {
+                    if (onGuardarCallback != null) {
+                        onGuardarCallback.accept(paciente);
+                    }
+                    cerrarVentana();
+                } else {
+                    mostrarAlerta("Error", "Error al guardar",
+                            "Ha ocurrido un error al intentar guardar el paciente.");
                 }
             } catch (IOException | ClassNotFoundException ex) {
             }
@@ -339,6 +345,7 @@ public class PacienteEditRowController implements Initializable {
                     if (onGuardarCallback != null) {
                         onGuardarCallback.accept(paciente);
                     }
+                    cerrarVentana();
                 } else {
                     mostrarAlerta("Error", "Error al guardar",
                             "Ha ocurrido un error al intentar guardar el paciente.");
@@ -346,6 +353,11 @@ public class PacienteEditRowController implements Initializable {
             } catch (IOException ex) {
             }
         }
+    }
+
+    private void cerrarVentana() {
+        Stage stage = (Stage) rowContainer.getScene().getWindow();
+        stage.close();
     }
 
     public void setServicio(ServicioClinica servicio) {
