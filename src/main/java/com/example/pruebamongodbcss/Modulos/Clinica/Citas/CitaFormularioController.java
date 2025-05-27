@@ -188,12 +188,16 @@ public class CitaFormularioController implements Initializable {
      */
     public void setCita(ModeloCita cita) {
         this.cita = cita;
-        this.esEdicion = true;
+        this.esEdicion = cita.getId() != null; // Solo es edición si tiene ID
         
         // Actualizar título
-        lblTitulo.setText("Editar Cita");
-        
-        System.out.println("Configurando cita para edición: " + cita.getId().toString());
+        if (esEdicion) {
+            lblTitulo.setText("Editar Cita");
+            System.out.println("Configurando cita para edición: " + cita.getId().toString());
+        } else {
+            lblTitulo.setText("Nueva Cita");
+            System.out.println("Configurando nueva cita");
+        }
         
         // Asegurarse que los datos necesarios estén cargados antes de popular el formulario
         if (pacientesObservable.isEmpty()) {

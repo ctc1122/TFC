@@ -169,6 +169,9 @@ public class CalendarFXComponent extends BorderPane {
             Calendar citasEnCurso = new Calendar("Citas en curso");
             citasEnCurso.setStyle(Calendar.Style.STYLE2); // Naranja
             
+            Calendar citasPendientesDiagnostico = new Calendar("Pendientes de diagnóstico");
+            citasPendientesDiagnostico.setStyle(Calendar.Style.STYLE5); // Morado
+            
             Calendar citasCompletadas = new Calendar("Citas completadas");
             citasCompletadas.setStyle(Calendar.Style.STYLE3); // Verde
             
@@ -184,6 +187,7 @@ public class CalendarFXComponent extends BorderPane {
             // Configurar nombres cortos
             citasPendientes.setShortName("CP");
             citasEnCurso.setShortName("CEC");
+            citasPendientesDiagnostico.setShortName("PDI");
             citasCompletadas.setShortName("CC");
             citasCanceladas.setShortName("CX");
             eventosReuniones.setShortName("REU");
@@ -192,6 +196,7 @@ public class CalendarFXComponent extends BorderPane {
             // Habilitar la edición de los calendarios
             citasPendientes.setReadOnly(false);
             citasEnCurso.setReadOnly(false);
+            citasPendientesDiagnostico.setReadOnly(false);
             citasCompletadas.setReadOnly(false);
             citasCanceladas.setReadOnly(false);
             eventosReuniones.setReadOnly(false);
@@ -200,6 +205,7 @@ public class CalendarFXComponent extends BorderPane {
             // Agregar a la lista de calendarios
             calendars.add(citasPendientes);
             calendars.add(citasEnCurso);
+            calendars.add(citasPendientesDiagnostico);
             calendars.add(citasCompletadas);
             calendars.add(citasCanceladas);
             calendars.add(eventosReuniones);
@@ -1082,6 +1088,26 @@ public class CalendarFXComponent extends BorderPane {
                     System.err.println("Error al procesar el ID de la cita: " + idException.getMessage());
                     idException.printStackTrace();
                 }
+            } else {
+                // Es una nueva cita - crear una cita con la fecha/hora del Entry
+                com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita nuevaCita = new com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita();
+                
+                // Obtener fecha y hora del Entry
+                LocalDateTime fechaHoraEntry = LocalDateTime.of(entry.getStartDate(), entry.getStartTime());
+                LocalDateTime fechaFinEntry = LocalDateTime.of(entry.getEndDate(), entry.getEndTime());
+                
+                // Calcular duración en minutos
+                long duracionMinutos = java.time.Duration.between(fechaHoraEntry, fechaFinEntry).toMinutes();
+                
+                // Configurar la nueva cita
+                nuevaCita.setFechaHora(fechaHoraEntry);
+                nuevaCita.setEstado(com.example.pruebamongodbcss.Data.EstadoCita.PENDIENTE);
+                nuevaCita.setDuracionMinutos((int) duracionMinutos);
+                nuevaCita.setMotivo("Nueva cita médica");
+                
+                System.out.println("✅ Nueva cita creada con fecha/hora: " + fechaHoraEntry + " (duración: " + duracionMinutos + " min)");
+                
+                controller.setCita(nuevaCita);
             }
             
             // Configurar callback para refrescar el calendario
@@ -1474,26 +1500,67 @@ public class CalendarFXComponent extends BorderPane {
                 
                 // Configurar acciones
                 newAppointmentItem.setOnAction(e -> {
+                    // Obtener la fecha y hora exacta donde se hizo clic
+                    ZonedDateTime fechaHoraClick = param.getZonedDateTime();
+                    
+                    // Logs de depuración detallados
+                    System.out.println("🔍 DEPURACIÓN - Clic detectado:");
+                    System.out.println("   📅 Fecha/hora del parámetro: " + fechaHoraClick);
+                    System.out.println("   📅 Fecha/hora local: " + fechaHoraClick.toLocalDateTime());
+                    System.out.println("   📅 Solo fecha: " + fechaHoraClick.toLocalDate());
+                    System.out.println("   🕐 Solo hora: " + fechaHoraClick.toLocalTime());
+                    
+                    // Crear la entrada con la fecha/hora exacta
                     Entry<String> entry = new Entry<>("Nueva cita médica");
-                    entry.setInterval(param.getZonedDateTime(), param.getZonedDateTime().plusHours(1));
+                    
+                    // Establecer intervalo: desde la hora de clic hasta 30 minutos después (duración estándar)
+                    ZonedDateTime horaInicio = fechaHoraClick;
+                    ZonedDateTime horaFin = fechaHoraClick.plusMinutes(30);
+                    
+                    entry.setInterval(horaInicio, horaFin);
                     entry.setCalendar(calendars.get(0)); // Pendientes
                     entry.setId(""); // Asegurar que sea cadena vacía para nuevas citas
+                    
+                    System.out.println("🕒 Nueva cita creada en: " + horaInicio.toLocalDateTime() + " - " + horaFin.toLocalDateTime());
+                    
                     showEntryDetailsDialog(entry);
                 });
                 
                 newMeetingItem.setOnAction(e -> {
+                    // Obtener la fecha y hora exacta donde se hizo clic
+                    ZonedDateTime fechaHoraClick = param.getZonedDateTime();
+                    
                     Entry<String> entry = new Entry<>("Nueva reunión");
-                    entry.setInterval(param.getZonedDateTime(), param.getZonedDateTime().plusHours(1));
-                    entry.setCalendar(calendars.get(4)); // Reuniones
+                    
+                    // Establecer intervalo: desde la hora de clic hasta 1 hora después
+                    ZonedDateTime horaInicio = fechaHoraClick;
+                    ZonedDateTime horaFin = fechaHoraClick.plusHours(1);
+                    
+                    entry.setInterval(horaInicio, horaFin);
+                    entry.setCalendar(calendars.get(5)); // Reuniones (índice correcto)
                     entry.setId(""); // Asegurar que sea cadena vacía para nuevas reuniones
+                    
+                    System.out.println("🕒 Nueva reunión creada en: " + horaInicio.toLocalDateTime() + " - " + horaFin.toLocalDateTime());
+                    
                     showEntryDetailsDialog(entry);
                 });
                 
                 newReminderItem.setOnAction(e -> {
+                    // Obtener la fecha y hora exacta donde se hizo clic
+                    ZonedDateTime fechaHoraClick = param.getZonedDateTime();
+                    
                     Entry<String> entry = new Entry<>("Nuevo recordatorio");
-                    entry.setInterval(param.getZonedDateTime(), param.getZonedDateTime().plusHours(1));
-                    entry.setCalendar(calendars.get(5)); // Recordatorios
+                    
+                    // Establecer intervalo: desde la hora de clic hasta 1 hora después
+                    ZonedDateTime horaInicio = fechaHoraClick;
+                    ZonedDateTime horaFin = fechaHoraClick.plusHours(1);
+                    
+                    entry.setInterval(horaInicio, horaFin);
+                    entry.setCalendar(calendars.get(6)); // Recordatorios (índice correcto)
                     entry.setId(""); // Asegurar que sea cadena vacía para nuevos recordatorios
+                    
+                    System.out.println("🕒 Nuevo recordatorio creado en: " + horaInicio.toLocalDateTime() + " - " + horaFin.toLocalDateTime());
+                    
                     showEntryDetailsDialog(entry);
                 });
                 
