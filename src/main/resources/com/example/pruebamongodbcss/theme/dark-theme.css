@@ -631,133 +631,160 @@ VBox[style*="white"],
 
 /* ================= ESTILOS ESPECÍFICOS PARA MÓDULO DE INFORMES - TEMA OSCURO ================= */
 
-/* Tarjetas de métricas en tema oscuro - mantener el gris pero mejorar contraste */
-.metric-card {
-    -fx-background-color: #404040 !important; /* Gris más claro para mejor contraste */
-    -fx-border-color: transparent !important; /* Sin bordes */
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 12, 0, 0, 4);
+/* DISEÑO MONOCROMÁTICO UNIFORME SOLO PARA EL MÓDULO DE INFORMES */
+
+/* Contenedores principales SOLO del módulo de informes - MONOCROMÁTICO */
+.informes-view,
+.informes-container,
+.informes-view .main-container,
+.informes-view .content-container,
+.informes-view .scroll-pane,
+.informes-view .scroll-pane > .viewport,
+.informes-view #mainContainer,
+.informes-view #contentContainer,
+.informes-view #scrollPane {
+    -fx-background-color: #3a3a3a !important; /* Color uniforme del sidebar */
 }
 
-/* Métricas */
-.metric-icon {
-    -fx-font-size: 24px;
-    -fx-text-fill: #f0f0f0; /* Texto muy claro */
+/* Tarjetas de métricas SOLO en módulo de informes - MONOCROMÁTICO */
+.informes-view .metric-card,
+.informes-container .metric-card {
+    -fx-background-color: #3a3a3a !important; /* Mismo color que el fondo */
+    -fx-border-color: transparent !important;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0, 0, 2) !important; /* Sombra muy sutil */
 }
 
-.metric-title {
-    -fx-font-size: 12px;
-    -fx-text-fill: #e0e0e0; /* Texto claro y visible */
-}
-
-.metric-value {
-    -fx-font-size: 24px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #ffffff; /* Blanco puro para máximo contraste */
-}
-
-.metric-change {
-    -fx-font-size: 12px;
-}
-
-.metric-change-positive {
-    -fx-text-fill: #2ecc71; /* Verde brillante */
-}
-
-.metric-change-negative {
-    -fx-text-fill: #e74c3c; /* Rojo brillante */
-}
-
-/* Tarjetas de reportes en tema oscuro */
-.report-card {
-    -fx-background-color: #3a3a3a !important; /* Gris medio */
+/* Tarjetas de reportes SOLO en módulo de informes - MONOCROMÁTICO */
+.informes-view .report-card,
+.informes-container .report-card {
+    -fx-background-color: #3a3a3a !important; /* Mismo color que el fondo */
     -fx-background-radius: 15px;
     -fx-cursor: hand;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 15, 0, 0, 4);
-    -fx-border-color: transparent !important; /* Sin bordes */
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0, 0, 2) !important; /* Sombra muy sutil */
+    -fx-border-color: transparent !important;
     -fx-border-width: 0px;
 }
 
-.report-card-hover:hover {
-    -fx-background-color: #4a4a4a !important; /* Gris más claro al hover */
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.7), 20, 0, 0, 6);
+.informes-view .report-card:hover,
+.informes-container .report-card:hover {
+    -fx-background-color: #404040 !important; /* Solo un poquito más claro al hover */
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 10, 0, 0, 3) !important; /* Sombra ligeramente más visible */
 }
 
-.report-icon {
-    -fx-font-size: 48px;
-}
-
-.report-title {
-    -fx-font-size: 16px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #ffffff; /* Blanco puro para máxima visibilidad */
-}
-
-.report-description {
-    -fx-font-size: 12px;
-    -fx-text-fill: #e0e0e0; /* Gris claro para buen contraste */
-}
-
-/* Botón de refresh en tema oscuro */
-#btnRefresh, .refresh-button {
-    -fx-background-color: #4d7eff !important; /* Azul del tema oscuro */
-    -fx-text-fill: #ffffff !important;
-    -fx-background-radius: 8px;
-    -fx-border-color: transparent;
+/* Contenedores de gráficos SOLO en módulo de informes - MONOCROMÁTICO */
+.informes-view .chart-container,
+.informes-container .chart-container {
+    -fx-background-color: #3a3a3a !important; /* Mismo color que el fondo */
+    -fx-border-color: transparent !important;
     -fx-border-width: 0px;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 8, 0, 0, 3);
-}
-
-#btnRefresh:hover, .refresh-button:hover {
-    -fx-background-color: #3d5af1 !important;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 10, 0, 0, 4);
-}
-
-/* Contenedores de gráficos en tema oscuro */
-.chart-container {
-    -fx-background-color: #3a3a3a !important;
-    -fx-border-color: transparent !important; /* Sin bordes */
-    -fx-border-width: 0px;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 12, 0, 0, 4);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0, 0, 2) !important; /* Sombra muy sutil */
     -fx-background-radius: 8px;
 }
 
-/* Títulos de secciones en tema oscuro */
-.informes-section-title {
-    -fx-font-size: 18px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #ffffff; /* Blanco puro para máxima visibilidad */
-    -fx-padding: 10px 0;
+/* TEXTO CON CONTRASTE PARA VISIBILIDAD SOLO EN MÓDULO DE INFORMES */
+
+/* Métricas - texto visible pero no agresivo SOLO en informes */
+.informes-view .metric-icon,
+.informes-container .metric-icon {
+    -fx-text-fill: #e0e0e0 !important; /* Gris claro en lugar de blanco puro */
 }
 
-/* Títulos principales y etiquetas en tema oscuro */
-.title-label {
-    -fx-text-fill: #ffffff !important; /* Asegurar que todos los títulos se vean */
+.informes-view .metric-title,
+.informes-container .metric-title {
+    -fx-text-fill: #d0d0d0 !important; /* Gris claro suave */
+    -fx-font-weight: normal !important; /* Sin negrita para ser más sutil */
 }
 
-.subtitle-label {
-    -fx-text-fill: #e0e0e0 !important; /* Subtítulos visibles */
+.informes-view .metric-value,
+.informes-container .metric-value {
+    -fx-text-fill: #f0f0f0 !important; /* Casi blanco pero suave */
+    -fx-font-weight: bold !important; /* Solo los valores importantes en negrita */
 }
 
-.small-label {
-    -fx-text-fill: #c0c0c0 !important; /* Texto pequeño visible */
+.informes-view .metric-change,
+.informes-container .metric-change {
+    -fx-font-weight: normal !important; /* Sin negrita para ser más sutil */
 }
 
-/* Etiquetas de gráficos */
-.chart-title {
-    -fx-text-fill: #ffffff !important;
+/* Reportes - texto visible pero elegante SOLO en informes */
+.informes-view .report-title,
+.informes-container .report-title {
+    -fx-text-fill: #e0e0e0 !important; /* Gris claro */
+    -fx-font-weight: normal !important; /* Sin negrita para ser más elegante */
 }
 
-.chart-legend {
-    -fx-text-fill: #e0e0e0 !important;
+.informes-view .report-description,
+.informes-container .report-description {
+    -fx-text-fill: #c0c0c0 !important; /* Gris medio para descripciones */
+    -fx-font-weight: normal !important;
 }
 
-/* Ejes de gráficos en tema oscuro */
-.axis {
-    -fx-tick-label-fill: #e0e0e0;
+/* Títulos de secciones SOLO en informes - visibles pero elegantes */
+.informes-view .informes-section-title,
+.informes-container .informes-section-title {
+    -fx-text-fill: #f0f0f0 !important; /* Casi blanco para títulos principales */
+    -fx-font-weight: bold !important; /* Solo títulos principales en negrita */
 }
 
-.axis-label {
-    -fx-text-fill: #e0e0e0;
+.informes-view .title-label,
+.informes-container .title-label {
+    -fx-text-fill: #e0e0e0 !important; /* Gris claro */
+    -fx-font-weight: normal !important; /* Sin negrita para ser más sutil */
+}
+
+.informes-view .subtitle-label,
+.informes-container .subtitle-label {
+    -fx-text-fill: #d0d0d0 !important; /* Gris claro suave */
+    -fx-font-weight: normal !important;
+}
+
+/* Etiquetas de gráficos SOLO en informes - visibles pero sutiles */
+.informes-view .chart-title,
+.informes-container .chart-title {
+    -fx-text-fill: #e0e0e0 !important; /* Gris claro */
+    -fx-font-weight: normal !important; /* Sin negrita para ser más elegante */
+}
+
+.informes-view .chart-legend,
+.informes-container .chart-legend {
+    -fx-text-fill: #d0d0d0 !important; /* Gris claro suave */
+    -fx-font-weight: normal !important;
+}
+
+/* Ejes de gráficos SOLO en informes - visibles pero discretos */
+.informes-view .axis,
+.informes-container .axis,
+.informes-view .axis-label,
+.informes-container .axis-label {
+    -fx-tick-label-fill: #c0c0c0 !important; /* Gris medio */
+    -fx-text-fill: #c0c0c0 !important;
+    -fx-font-weight: normal !important; /* Sin negrita para ser más discreto */
+}
+
+/* TODOS los labels SOLO en módulo de informes - visibles pero elegantes */
+.informes-view .label,
+.informes-container .label,
+.informes-view Label,
+.informes-container Label {
+    -fx-text-fill: #d0d0d0 !important; /* Gris claro suave */
+    -fx-font-weight: normal !important; /* Sin negrita para ser más elegante */
+}
+
+/* Gráficos con fondo transparente SOLO en informes - MONOCROMÁTICO */
+.informes-view .chart,
+.informes-container .chart,
+.informes-view .chart-plot-background,
+.informes-container .chart-plot-background {
+    -fx-background-color: transparent !important;
+}
+
+/* Líneas de grid SOLO en informes - muy sutiles */
+.informes-view .chart-vertical-grid-lines,
+.informes-container .chart-vertical-grid-lines,
+.informes-view .chart-horizontal-grid-lines,
+.informes-container .chart-horizontal-grid-lines {
+    -fx-stroke: rgba(255, 255, 255, 0.1) !important; /* Líneas muy sutiles */
+    -fx-stroke-dash-array: none !important;
 }
 
 /* ================= SOBRESCRITURA FORZADA DE BORDES EN TEMA OSCURO ================= */

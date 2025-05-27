@@ -72,6 +72,11 @@ public class InformesController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         servicioInformes = new ServicioInformes();
         
+        // Aplicar clases específicas para el módulo de informes
+        mainContainer.getStyleClass().add("informes-view");
+        scrollPane.getStyleClass().add("informes-container");
+        contentContainer.getStyleClass().add("informes-container");
+        
         // Aplicar tema a los contenedores principales
         ThemeUtil.applyModuleTheme(mainContainer);
         ThemeUtil.applyModuleTheme(scrollPane);
@@ -458,7 +463,7 @@ public class InformesController implements Initializable {
             // Crear una vista de análisis comparativo
             VBox comparativoContainer = new VBox();
             comparativoContainer.setSpacing(20);
-            comparativoContainer.getStyleClass().addAll("module-main-container");
+            comparativoContainer.getStyleClass().addAll("module-main-container", "informes-view");
             comparativoContainer.setPadding(new Insets(20));
             
             // Aplicar tema al contenedor
@@ -583,7 +588,7 @@ public class InformesController implements Initializable {
             // Crear una vista rápida de análisis de servicios
             VBox analisisContainer = new VBox();
             analisisContainer.setSpacing(20);
-            analisisContainer.getStyleClass().addAll("module-main-container");
+            analisisContainer.getStyleClass().addAll("module-main-container", "informes-view");
             analisisContainer.setPadding(new Insets(20));
             
             // Aplicar tema al contenedor
