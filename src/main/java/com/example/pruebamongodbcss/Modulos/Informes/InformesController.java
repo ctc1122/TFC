@@ -72,6 +72,11 @@ public class InformesController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         servicioInformes = new ServicioInformes();
         
+        // Aplicar tema a los contenedores principales
+        ThemeUtil.applyModuleTheme(mainContainer);
+        ThemeUtil.applyModuleTheme(scrollPane);
+        ThemeUtil.applyModuleTheme(contentContainer);
+        
         // Configurar el scroll pane
         scrollPane.setFitToWidth(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
@@ -178,20 +183,15 @@ public class InformesController implements Initializable {
     
     private VBox crearTarjetaMetrica(String titulo, String valor, String icono, String color, String cambio) {
         VBox tarjeta = new VBox();
-        tarjeta.getStyleClass().add("metric-card");
+        tarjeta.getStyleClass().addAll("metric-card", "module-card");
         tarjeta.setAlignment(Pos.CENTER);
         tarjeta.setSpacing(10);
         tarjeta.setPadding(new Insets(20));
         tarjeta.setPrefWidth(200);
         tarjeta.setPrefHeight(120);
         
-        // Estilo de la tarjeta
-        tarjeta.setStyle(
-            "-fx-background-color: white;" +
-            "-fx-background-radius: 10;" +
-            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);" +
-            "-fx-border-radius: 10;"
-        );
+        // Aplicar tema a la tarjeta
+        ThemeUtil.applyCardTheme(tarjeta);
         
         // Icono y título
         HBox header = new HBox();
@@ -474,15 +474,19 @@ public class InformesController implements Initializable {
             // Crear una vista de análisis comparativo
             VBox comparativoContainer = new VBox();
             comparativoContainer.setSpacing(20);
-            comparativoContainer.setStyle("-fx-padding: 20; -fx-background-color: #f8f9fa;");
+            comparativoContainer.getStyleClass().addAll("module-main-container");
+            comparativoContainer.setPadding(new Insets(20));
+            
+            // Aplicar tema al contenedor
+            ThemeUtil.applyModuleTheme(comparativoContainer);
             
             // Título
             Label titulo = new Label("Análisis Comparativo Anual");
-            titulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;");
+            titulo.getStyleClass().addAll("title-label");
             
             // Botón volver
             Button btnVolver = new Button("← Volver al Dashboard");
-            btnVolver.setStyle("-fx-background-color: #6c757d; -fx-text-fill: white; -fx-background-radius: 5;");
+            btnVolver.getStyleClass().addAll("btn-secondary");
             btnVolver.setOnAction(e -> cargarDashboard());
             
             HBox header = new HBox();
@@ -500,7 +504,9 @@ public class InformesController implements Initializable {
             VBox metricaActual = new VBox();
             metricaActual.setAlignment(Pos.CENTER);
             metricaActual.setSpacing(10);
-            metricaActual.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;");
+            metricaActual.getStyleClass().addAll("module-card");
+            metricaActual.setPadding(new Insets(20));
+            ThemeUtil.applyCardTheme(metricaActual);
             metricaActual.getChildren().addAll(
                 new Label("Año Actual"),
                 new Label(formatoMoneda.format(comparativa.getTotalAnoActual()))
@@ -509,7 +515,9 @@ public class InformesController implements Initializable {
             VBox metricaAnterior = new VBox();
             metricaAnterior.setAlignment(Pos.CENTER);
             metricaAnterior.setSpacing(10);
-            metricaAnterior.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;");
+            metricaAnterior.getStyleClass().addAll("module-card");
+            metricaAnterior.setPadding(new Insets(20));
+            ThemeUtil.applyCardTheme(metricaAnterior);
             metricaAnterior.getChildren().addAll(
                 new Label("Año Anterior"),
                 new Label(formatoMoneda.format(comparativa.getTotalAnoAnterior()))
@@ -518,7 +526,9 @@ public class InformesController implements Initializable {
             VBox metricaCrecimiento = new VBox();
             metricaCrecimiento.setAlignment(Pos.CENTER);
             metricaCrecimiento.setSpacing(10);
-            metricaCrecimiento.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;");
+            metricaCrecimiento.getStyleClass().addAll("module-card");
+            metricaCrecimiento.setPadding(new Insets(20));
+            ThemeUtil.applyCardTheme(metricaCrecimiento);
             metricaCrecimiento.getChildren().addAll(
                 new Label("Crecimiento"),
                 new Label(formatoPorcentaje.format(comparativa.getPorcentajeCrecimiento() / 100.0))
@@ -550,7 +560,9 @@ public class InformesController implements Initializable {
             chart.getData().addAll(serieActual, serieAnterior);
             
             VBox chartContainer = new VBox();
-            chartContainer.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;");
+            chartContainer.getStyleClass().addAll("module-card", "chart-container");
+            chartContainer.setPadding(new Insets(20));
+            ThemeUtil.applyCardTheme(chartContainer);
             chartContainer.getChildren().add(chart);
             
             comparativoContainer.getChildren().addAll(header, metricas, chartContainer);
@@ -578,15 +590,19 @@ public class InformesController implements Initializable {
             // Crear una vista rápida de análisis de servicios
             VBox analisisContainer = new VBox();
             analisisContainer.setSpacing(20);
-            analisisContainer.setStyle("-fx-padding: 20; -fx-background-color: #f8f9fa;");
+            analisisContainer.getStyleClass().addAll("module-main-container");
+            analisisContainer.setPadding(new Insets(20));
+            
+            // Aplicar tema al contenedor
+            ThemeUtil.applyModuleTheme(analisisContainer);
             
             // Título
             Label titulo = new Label("Análisis de Servicios Más Demandados");
-            titulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;");
+            titulo.getStyleClass().addAll("title-label");
             
             // Botón volver
             Button btnVolver = new Button("← Volver al Dashboard");
-            btnVolver.setStyle("-fx-background-color: #6c757d; -fx-text-fill: white; -fx-background-radius: 5;");
+            btnVolver.getStyleClass().addAll("btn-secondary");
             btnVolver.setOnAction(e -> cargarDashboard());
             
             HBox header = new HBox();
@@ -598,6 +614,8 @@ public class InformesController implements Initializable {
             
             // Crear tabla de servicios
             TableView<ServicioInformes.ServicioVendido> tablaServicios = new TableView<>();
+            tablaServicios.getStyleClass().addAll("module-card");
+            ThemeUtil.applyCardTheme(tablaServicios);
             
             TableColumn<ServicioInformes.ServicioVendido, String> colNombre = new TableColumn<>("Servicio");
             colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
@@ -616,7 +634,6 @@ public class InformesController implements Initializable {
             
             tablaServicios.getColumns().addAll(colNombre, colCantidad, colTotal);
             tablaServicios.getItems().addAll(topServicios);
-            tablaServicios.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
             
             analisisContainer.getChildren().addAll(header, tablaServicios);
             

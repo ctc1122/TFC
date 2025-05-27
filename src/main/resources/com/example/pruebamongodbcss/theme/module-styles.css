@@ -3,37 +3,37 @@
 /* ================= ESTILOS GENERALES TEMA CLARO ================= */
 /* Paneles y headers */
 .panel-header {
-    -fx-background-color: #4a6fd1;
+    -fx-background-color: #606C38;
     -fx-padding: 15px 20px;
 }
 
 .panel-header .label {
-    -fx-text-fill: white;
+    -fx-text-fill: #FEFAE0;
     -fx-font-size: 18px;
     -fx-font-weight: bold;
 }
 
 .panel-content {
-    -fx-background-color: white;
+    -fx-background-color: #FEFAE0;
 }
 
 /* Estilos de tablas - Tema claro */
 .table-view {
-    -fx-background-color: white;
-    -fx-border-color: #e0e0e0;
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #DDA15E;
     -fx-border-radius: 4px;
 }
 
 .table-view .column-header {
-    -fx-background-color: #4a6fd1;
-    -fx-text-fill: white;
+    -fx-background-color: #606C38;
+    -fx-text-fill: #FEFAE0;
     -fx-font-weight: bold;
     -fx-border-width: 0 1px 0 0;
-    -fx-border-color: #e0e0e0;
+    -fx-border-color: #DDA15E;
 }
 
 .table-view .column-header-background .label {
-    -fx-text-fill: white;
+    -fx-text-fill: #FEFAE0;
     -fx-font-weight: bold;
     -fx-padding: 10px 0 10px 5px;
 }
@@ -42,66 +42,66 @@
     -fx-alignment: center-left;
     -fx-padding: 10px 5px;
     -fx-border-width: 0 0 1px 0;
-    -fx-border-color: #f0f0f0;
-    -fx-text-fill: #333333;
+    -fx-border-color: #DDA15E;
+    -fx-text-fill: #283618;
 }
 
 .table-view .table-row-cell {
-    -fx-background-color: white;
+    -fx-background-color: #FFFFFF;
 }
 
 .table-view .table-row-cell:hover {
-    -fx-background-color: #f5f5f5;
+    -fx-background-color: #FEFAE0;
 }
 
 .table-view .table-row-cell:selected {
-    -fx-background-color: derive(#4a6fd1, 90%);
-    -fx-text-fill: #333333;
+    -fx-background-color: rgba(96, 108, 56, 0.3);
+    -fx-text-fill: #283618;
 }
 
 .table-view .table-row-cell:odd {
-    -fx-background-color: #f8f9fa;
+    -fx-background-color: #FEFAE0;
 }
 
 .table-view .table-row-cell:empty {
-    -fx-background-color: white;
+    -fx-background-color: #FFFFFF;
 }
 
 /* Tab pane - Tema claro */
 .tab-pane .tab-header-area {
-    -fx-background-color: #f0f0f0;
+    -fx-background-color: #FEFAE0;
 }
 
 .tab-pane .tab-header-background {
-    -fx-background-color: #f0f0f0;
+    -fx-background-color: #FEFAE0;
 }
 
 .tab-pane .tab {
-    -fx-background-color: #f0f0f0;
+    -fx-background-color: #FEFAE0;
     -fx-background-radius: 4px 4px 0 0;
     -fx-padding: 5px 10px;
 }
 
 .tab-pane .tab:selected {
-    -fx-background-color: #4a6fd1;
+    -fx-background-color: #606C38;
 }
 
 .tab-pane .tab:selected .tab-label {
-    -fx-text-fill: white;
+    -fx-text-fill: #FEFAE0;
 }
 
 .tab-pane .tab .tab-label {
-    -fx-text-fill: #333333;
+    -fx-text-fill: #283618;
 }
 
 .tab-pane .tab-content-area {
-    -fx-background-color: white;
+    -fx-background-color: #FFFFFF;
 }
 
 /* Botones - Tema claro */
 .btn-primary {
-    -fx-background-color: #4a6fd1;
-    -fx-text-fill: white;
+    -fx-background-color: #606C38;
+    -fx-text-fill: #FEFAE0;
     -fx-font-weight: normal;
     -fx-cursor: hand;
     -fx-padding: 7px 15px;
@@ -109,12 +109,12 @@
 }
 
 .btn-primary:hover {
-    -fx-background-color: derive(#4a6fd1, 15%);
+    -fx-background-color: #283618;
 }
 
 .btn-secondary {
-    -fx-background-color: #4caf50;
-    -fx-text-fill: white;
+    -fx-background-color: #DDA15E;
+    -fx-text-fill: #283618;
     -fx-font-weight: normal;
     -fx-cursor: hand;
     -fx-padding: 7px 15px;
@@ -122,12 +122,13 @@
 }
 
 .btn-secondary:hover {
-    -fx-background-color: derive(#4caf50, 15%);
+    -fx-background-color: #BC6C25;
+    -fx-text-fill: #FEFAE0;
 }
 
 .btn-danger {
-    -fx-background-color: #e74a3b;
-    -fx-text-fill: white;
+    -fx-background-color: #BC6C25;
+    -fx-text-fill: #FEFAE0;
     -fx-font-weight: normal;
     -fx-cursor: hand;
     -fx-padding: 7px 15px;
@@ -135,12 +136,12 @@
 }
 
 .btn-danger:hover {
-    -fx-background-color: derive(#e74a3b, 15%);
+    -fx-background-color: #8B4513;
 }
 
 .btn-info {
-    -fx-background-color: #17a2b8;
-    -fx-text-fill: white;
+    -fx-background-color: #606C38;
+    -fx-text-fill: #FEFAE0;
     -fx-font-weight: normal;
     -fx-cursor: hand;
     -fx-padding: 7px 15px;
@@ -148,12 +149,12 @@
 }
 
 .btn-info:hover {
-    -fx-background-color: derive(#17a2b8, 15%);
+    -fx-background-color: #283618;
 }
 
 .btn-warning {
-    -fx-background-color: #f1c40f;
-    -fx-text-fill: white;
+    -fx-background-color: #DDA15E;
+    -fx-text-fill: #283618;
     -fx-font-weight: normal;
     -fx-cursor: hand;
     -fx-padding: 7px 15px;
@@ -161,12 +162,13 @@
 }
 
 .btn-warning:hover {
-    -fx-background-color: derive(#f1c40f, 15%);
+    -fx-background-color: #BC6C25;
+    -fx-text-fill: #FEFAE0;
 }
 
 .btn-success {
-    -fx-background-color: #1cc88a;
-    -fx-text-fill: white;
+    -fx-background-color: #606C38;
+    -fx-text-fill: #FEFAE0;
     -fx-font-weight: normal;
     -fx-cursor: hand;
     -fx-padding: 7px 15px;
@@ -174,7 +176,7 @@
 }
 
 .btn-success:hover {
-    -fx-background-color: derive(#1cc88a, 15%);
+    -fx-background-color: #283618;
 }
 
 /* ================= ESTILOS ESPECÍFICOS MODO OSCURO ================= */
@@ -186,12 +188,12 @@
 }
 
 .dark-theme .panel-content {
-    -fx-background-color: #1b1d21;
+    -fx-background-color: #1e1e1e;
 }
 
 /* Tablas - Tema oscuro */
 .dark-theme .table-view {
-    -fx-background-color: #25272c;
+    -fx-background-color: #2d2d2d;
     -fx-border-color: #383b45;
 }
 
@@ -206,7 +208,7 @@
 }
 
 .dark-theme .table-view .table-row-cell {
-    -fx-background-color: #25272c;
+    -fx-background-color: #2d2d2d;
 }
 
 .dark-theme .table-view .table-row-cell:hover {
@@ -226,20 +228,20 @@
 }
 
 .dark-theme .table-view .table-row-cell:empty {
-    -fx-background-color: #25272c;
+    -fx-background-color: #2d2d2d;
 }
 
 /* Tab pane - Tema oscuro */
 .dark-theme .tab-pane .tab-header-area {
-    -fx-background-color: #25272c;
+    -fx-background-color: #2d2d2d;
 }
 
 .dark-theme .tab-pane .tab-header-background {
-    -fx-background-color: #25272c;
+    -fx-background-color: #2d2d2d;
 }
 
 .dark-theme .tab-pane .tab {
-    -fx-background-color: #25272c;
+    -fx-background-color: #2d2d2d;
 }
 
 .dark-theme .tab-pane .tab:selected {
@@ -255,7 +257,7 @@
 }
 
 .dark-theme .tab-pane .tab-content-area {
-    -fx-background-color: #1b1d21;
+    -fx-background-color: #1e1e1e;
 }
 
 /* Campos de texto - Tema oscuro */
@@ -301,16 +303,59 @@
 
 /* Específico para el panel de empresa */
 .empresa-header {
-    -fx-background-color: #4a6fd1;
+    -fx-background-color: #606C38;
     -fx-padding: 15px 20px;
 }
 
 .empresa-header .label {
-    -fx-text-fill: white;
+    -fx-text-fill: #FEFAE0;
     -fx-font-size: 18px;
     -fx-font-weight: bold;
 }
 
 .dark-theme .empresa-header {
     -fx-background-color: #2d3748;
+}
+
+/* ================= CORRECCIONES PARA MÓDULOS ESPECÍFICOS ================= */
+
+/* Sobrescribir fondos hardcodeados en módulos */
+.informes-container,
+.main-container,
+.content-container,
+.scroll-pane,
+.main-scroll,
+.main-scroll > .viewport {
+    -fx-background-color: #FEFAE0 !important;
+}
+
+.dark-theme .informes-container,
+.dark-theme .main-container,
+.dark-theme .content-container,
+.dark-theme .scroll-pane,
+.dark-theme .main-scroll,
+.dark-theme .main-scroll > .viewport {
+    -fx-background-color: #1e1e1e !important;
+}
+
+/* Tarjetas y paneles de contenido */
+.metric-card,
+.report-card,
+.chart-container,
+.stat-card,
+.card-container {
+    -fx-background-color: #FFFFFF !important;
+    -fx-border-color: #DDA15E !important;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+.dark-theme .metric-card,
+.dark-theme .report-card,
+.dark-theme .chart-container,
+.dark-theme .stat-card,
+.dark-theme .card-container {
+    -fx-background-color: #2d2d2d !important;
+    -fx-border-color: #383b45 !important;
 } 

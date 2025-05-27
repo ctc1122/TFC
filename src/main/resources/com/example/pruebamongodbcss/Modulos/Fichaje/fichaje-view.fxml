@@ -36,7 +36,7 @@
             
             <!-- Panel de Selección de Módulos (VISIBLE por defecto) -->
             <VBox fx:id="panelSeleccionModulos" styleClass="module-selection-container" spacing="20.0" visible="true" managed="true">
-               <Label style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-alignment: CENTER; -fx-text-fill: #1a1a1a;" text="Selecciona un módulo" />
+               <Label styleClass="module-selection-title" text="Selecciona un módulo" />
                <FlowPane styleClass="cards-container" hgap="30.0" vgap="20.0" alignment="CENTER">
                   <!-- Tarjeta de Fichaje -->
                   <VBox fx:id="cardFichaje" styleClass="module-card, fichaje-card" spacing="15.0" onMouseClicked="#abrirModuloFichaje">
@@ -74,7 +74,7 @@
             <VBox fx:id="panelFichajePrincipal" spacing="20.0" visible="false" managed="false">
                <HBox alignment="CENTER_LEFT" spacing="10.0">
                   <Button fx:id="btnVolverSeleccion" styleClass="back-button" text="← Volver" />
-                  <Label style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1a1a1a;" text="Módulo de Fichaje" />
+                  <Label styleClass="section-title" text="Módulo de Fichaje" />
                </HBox>
                
                <!-- Panel de Fichaje Actual -->
@@ -121,7 +121,7 @@
                
                <!-- Sección de Historial -->
                <VBox styleClass="historial-section" spacing="15.0">
-                  <Label style="-fx-font-size: 16px; -fx-font-weight: 600; -fx-text-fill: #333333;" text="Historial de Fichajes" />
+                  <Label styleClass="section-title" text="Historial de Fichajes" />
                   
                   <!-- Barra de Filtros Responsive -->
                   <VBox spacing="10.0">

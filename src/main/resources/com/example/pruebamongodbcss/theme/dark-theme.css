@@ -33,12 +33,63 @@
     -fx-clinic-header-bg: #2d3748;
     -fx-clinic-header-text: #e0e0e0;
     -fx-clinic-content-bg: -fx-primary-color;
+    
+    /* Variables para módulos específicos - Tema oscuro */
+    -fx-module-bg: #1e1e1e; /* Fondo principal de módulos */
+    -fx-module-content-bg: #2d2d2d; /* Fondo de contenido */
+    -fx-module-card-bg: #2d2d2d; /* Fondo de tarjetas */
+    -fx-module-border: #383b45; /* Bordes */
 }
 
 /* Root elements */
 .root {
     -fx-background-color: -fx-primary-gradient;
     -fx-font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ================= CORRECCIONES PARA MÓDULOS - TEMA OSCURO ================= */
+
+/* Sobrescribir todos los fondos hardcodeados problemáticos */
+.informes-container,
+.main-container,
+.content-container,
+.scroll-pane,
+.main-scroll,
+.main-scroll > .viewport,
+VBox[style*="#f8f9fa"],
+ScrollPane[style*="#f8f9fa"],
+HBox[style*="#f8f9fa"],
+BorderPane[style*="#f8f9fa"] {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Tarjetas y paneles de contenido */
+.metric-card,
+.report-card,
+.chart-container,
+.stat-card,
+VBox[style*="white"],
+.card-container {
+    -fx-background-color: -fx-module-card-bg !important;
+    -fx-border-color: -fx-module-border !important;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+/* Específico para el módulo de informes */
+.informes-view,
+.informes-main-container,
+#mainContainer,
+#contentContainer,
+#scrollPane {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Específico para reportes */
+.reporte-container,
+.reporte-content {
+    -fx-background-color: -fx-module-bg !important;
 }
 
 /* Header styling like "Midnight City" in the image */
@@ -498,4 +549,79 @@
     -fx-font-size: 16px;
     -fx-font-weight: bold;
     -fx-padding: 10px 0;
+}
+
+/* ================= CORRECCIONES ESPECÍFICAS PARA MÓDULOS - TEMA OSCURO ================= */
+
+/* Módulo de Informes - Corregir fondos hardcodeados */
+.informes-view .scroll-pane,
+.informes-view .scroll-pane > .viewport,
+.informes-view .content-container,
+.informes-view VBox,
+.informes-view HBox,
+.informes-view BorderPane {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Módulo de Facturación - Corregir fondos hardcodeados */
+.facturacion-view .main-pane,
+.facturacion-view .scroll-pane,
+.facturacion-view .scroll-pane > .viewport {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Sobrescribir estilos inline específicos */
+*[style*="#f8f9fa"] {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+*[style*="white"] {
+    -fx-background-color: -fx-module-card-bg !important;
+}
+
+/* Específico para elementos con estilos hardcodeados */
+.scroll-pane[style*="#f8f9fa"],
+.vbox[style*="#f8f9fa"],
+.hbox[style*="#f8f9fa"],
+.borderpane[style*="#f8f9fa"] {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Asegurar que las tarjetas mantengan el fondo oscuro pero con bordes correctos */
+.vbox[style*="white"],
+.hbox[style*="white"] {
+    -fx-background-color: -fx-module-card-bg !important;
+    -fx-border-color: -fx-module-border !important;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+}
+
+/* ================= CLASES APLICADAS AUTOMÁTICAMENTE POR THEMEMANAGER ================= */
+
+/* Contenedores principales de módulos */
+.module-main-container {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Tarjetas y paneles de contenido */
+.module-card {
+    -fx-background-color: -fx-module-card-bg !important;
+    -fx-border-color: -fx-module-border !important;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+/* Corrección para fondos hardcodeados problemáticos */
+.hardcoded-bg-fix {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Corrección para fondos blancos hardcodeados */
+.hardcoded-white-bg {
+    -fx-background-color: -fx-module-card-bg !important;
+    -fx-border-color: -fx-module-border !important;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
 } 

@@ -5,6 +5,8 @@ import java.util.List;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ToggleButton;
 
@@ -26,7 +28,9 @@ public class ThemeManager {
         "Carrusel.css",
         "chatOscuro.css",
         "estilos.css",
-        "clinica-styles.css"
+        "clinica-styles.css",
+        "informes-styles.css",
+        "facturacion-styles.css"
     );
     
     // Propiedad observable para el tema oscuro
@@ -178,6 +182,64 @@ public class ThemeManager {
                 scene.getRoot().getStyleClass().add("light-theme");
             }
         }
+        
+        // Aplicar clases específicas a nodos para sobrescribir estilos hardcodeados
+        applyThemeClassesToNodes(scene.getRoot());
+    }
+    
+    /**
+     * Aplica clases CSS específicas a nodos para sobrescribir estilos hardcodeados
+     * @param node Nodo raíz para aplicar las clases
+     */
+    private void applyThemeClassesToNodes(Node node) {
+        // Aplicar clases específicas según el tipo de nodo y su ID
+        if (node.getId() != null) {
+            String nodeId = node.getId().toLowerCase();
+            
+            // Identificar contenedores principales de módulos
+            if (nodeId.contains("maincontainer") || nodeId.contains("contentcontainer") || 
+                nodeId.contains("scrollpane") || nodeId.contains("informes") ||
+                nodeId.contains("main") && nodeId.contains("pane")) {
+                
+                if (!node.getStyleClass().contains("module-main-container")) {
+                    node.getStyleClass().add("module-main-container");
+                }
+            }
+            
+            // Identificar tarjetas y paneles de contenido
+            if (nodeId.contains("card") || nodeId.contains("metric") || 
+                nodeId.contains("chart") || nodeId.contains("report")) {
+                
+                if (!node.getStyleClass().contains("module-card")) {
+                    node.getStyleClass().add("module-card");
+                }
+            }
+        }
+        
+        // Aplicar clases basadas en el estilo inline del nodo
+        String style = node.getStyle();
+        if (style != null && !style.isEmpty()) {
+            // Identificar nodos con fondos hardcodeados problemáticos
+            if (style.contains("#f8f9fa") || style.contains("f8f9fa")) {
+                if (!node.getStyleClass().contains("hardcoded-bg-fix")) {
+                    node.getStyleClass().add("hardcoded-bg-fix");
+                }
+            }
+            
+            if (style.contains("white") && style.contains("background")) {
+                if (!node.getStyleClass().contains("hardcoded-white-bg")) {
+                    node.getStyleClass().add("hardcoded-white-bg");
+                }
+            }
+        }
+        
+        // Procesar recursivamente todos los nodos hijos
+        if (node instanceof Parent) {
+            Parent parent = (Parent) node;
+            for (Node child : parent.getChildrenUnmodifiable()) {
+                applyThemeClassesToNodes(child);
+            }
+        }
     }
     
     /**
@@ -195,5 +257,24 @@ public class ThemeManager {
      */
     public String getCurrentThemePath() {
         return darkThemeProperty.get() ? DARK_THEME_PATH : LIGHT_THEME_PATH;
+    }
+    
+    /**
+     * Fuerza la actualización del tema en una escena específica
+     * Útil cuando se cargan nuevos contenidos dinámicamente
+     * @param scene Escena a actualizar
+     */
+    public void forceUpdateScene(Scene scene) {
+        if (registeredScenes.contains(scene)) {
+            applyThemeToScene(scene);
+        }
+    }
+    
+    /**
+     * Fuerza la actualización del tema en todas las escenas registradas
+     * Útil para aplicar cambios después de cargar contenido dinámico
+     */
+    public void forceUpdateAllScenes() {
+        updateAllScenes();
     }
 } 
