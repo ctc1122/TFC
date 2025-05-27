@@ -800,4 +800,61 @@ VBox[style*="white"],
     -fx-border-width: 1px;
     -fx-border-radius: 8px;
     -fx-background-radius: 8px;
+}
+
+/* ================= ESTILOS ESPECÍFICOS PARA MÓDULO DE INFORMES ================= */
+
+/* Métricas */
+.metric-icon {
+    -fx-font-size: 24px;
+}
+
+.metric-title {
+    -fx-font-size: 12px;
+    -fx-text-fill: #606C38;
+}
+
+.metric-value {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #283618;
+}
+
+.metric-change {
+    -fx-font-size: 12px;
+}
+
+.metric-change-positive {
+    -fx-text-fill: #4CAF50;
+}
+
+.metric-change-negative {
+    -fx-text-fill: #f44336;
+}
+
+/* Tarjetas de reportes */
+.report-card {
+    -fx-background-radius: 15px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(40, 54, 24, 0.1), 15, 0, 0, 3);
+}
+
+.report-card-hover:hover {
+    -fx-background-color: #F5F5F0 !important;
+    -fx-effect: dropshadow(gaussian, rgba(40, 54, 24, 0.2), 20, 0, 0, 5);
+}
+
+.report-icon {
+    -fx-font-size: 48px;
+}
+
+.report-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #283618;
+}
+
+.report-description {
+    -fx-font-size: 12px;
+    -fx-text-fill: #606C38;
 } 

@@ -2,43 +2,43 @@
 
 /* Base Colors */
 * {
-    -fx-primary-color: #1e1e1e; /* Dark background like in the image */
-    -fx-primary-gradient: linear-gradient(to right, #232526 0%, #353637 50%, #414345 100%);
-    -fx-secondary-color: #2d2d2d;
+    -fx-primary-color: #2d2d2d; /* Gris oscuro en lugar de negro puro */
+    -fx-primary-gradient: linear-gradient(to right, #2d2d2d 0%, #3a3a3a 50%, #404040 100%);
+    -fx-secondary-color: #3a3a3a; /* Gris más claro para tarjetas */
     -fx-accent-color: #4d7eff;
-    -fx-light-accent: #383b45;
-    -fx-text-color: #e0e0e0;
-    -fx-light-text-color: #acacac;
+    -fx-light-accent: #4a4a4a; /* Gris para bordes */
+    -fx-text-color: #f0f0f0; /* Texto más claro */
+    -fx-light-text-color: #c0c0c0; /* Texto secundario más claro */
     -fx-success-color: #2ecc71;
     -fx-warning-color: #f1c40f;
     -fx-error-color: #e74c3c;
     -fx-info-color: #3498db;
-    -fx-header-bg: rgba(20, 20, 20, 0.9);
-    -fx-nav-button-bg: rgba(50, 50, 50, 0.7);
+    -fx-header-bg: rgba(45, 45, 45, 0.9);
+    -fx-nav-button-bg: rgba(60, 60, 60, 0.7);
 
     /* Chart Colors */
     -fx-chart-primary: #4d7eff;
     -fx-chart-secondary: #3fd9fb;
     -fx-chart-tertiary: #50e3b9;
-    -fx-chart-background: #25272c;
+    -fx-chart-background: #3a3a3a;
     
     /* Sidebar Colors */
-    -fx-sidebar-bg: #25272c;
+    -fx-sidebar-bg: #3a3a3a;
     -fx-sidebar-button-bg: transparent;
-    -fx-sidebar-button-text: #e0e0e0;
+    -fx-sidebar-button-text: #f0f0f0;
     -fx-sidebar-button-hover: rgba(77, 126, 255, 0.2);
     
     /* Específicos de la clínica veterinaria */
-    -fx-clinic-tab-bg: #2d2d2d;
-    -fx-clinic-header-bg: #2d3748;
-    -fx-clinic-header-text: #e0e0e0;
+    -fx-clinic-tab-bg: #3a3a3a;
+    -fx-clinic-header-bg: #404040;
+    -fx-clinic-header-text: #f0f0f0;
     -fx-clinic-content-bg: -fx-primary-color;
     
     /* Variables para módulos específicos - Tema oscuro */
-    -fx-module-bg: #1e1e1e; /* Fondo principal de módulos */
-    -fx-module-content-bg: #2d2d2d; /* Fondo de contenido */
-    -fx-module-card-bg: #2d2d2d; /* Fondo de tarjetas */
-    -fx-module-border: #383b45; /* Bordes */
+    -fx-module-bg: #2d2d2d; /* Fondo principal de módulos - gris oscuro */
+    -fx-module-content-bg: #3a3a3a; /* Fondo de contenido - gris medio */
+    -fx-module-card-bg: #404040; /* Fondo de tarjetas - gris más claro */
+    -fx-module-border: #4a4a4a; /* Bordes - gris claro */
 }
 
 /* Root elements */
@@ -188,7 +188,7 @@ VBox[style*="white"],
 }
 
 .table-view .column-header-background {
-    -fx-background-color: -fx-clinic-header-bg;
+    -fx-background-color: #404040;
     -fx-background-radius: 8px 8px 0 0;
 }
 
@@ -200,7 +200,7 @@ VBox[style*="white"],
 }
 
 .table-view .column-header .label {
-    -fx-text-fill: -fx-clinic-header-text;
+    -fx-text-fill: #f0f0f0;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-alignment: CENTER_LEFT;
@@ -208,23 +208,23 @@ VBox[style*="white"],
 
 .table-view .table-cell {
     -fx-padding: 10px 10px 10px 10px;
-    -fx-text-fill: -fx-text-color;
+    -fx-text-fill: #f0f0f0;
     -fx-alignment: CENTER_LEFT;
     -fx-border-width: 0 0 1 0;
     -fx-border-color: -fx-light-accent;
 }
 
 .table-row-cell {
-    -fx-background-color: -fx-secondary-color;
+    -fx-background-color: #3a3a3a;
 }
 
 .table-row-cell:odd {
-    -fx-background-color: derive(-fx-secondary-color, -5%);
+    -fx-background-color: #353535;
 }
 
 .table-row-cell:selected {
-    -fx-background-color: -fx-light-accent;
-    -fx-text-fill: -fx-text-color;
+    -fx-background-color: #4d7eff;
+    -fx-text-fill: white;
 }
 
 /* Buttons */
@@ -314,16 +314,17 @@ VBox[style*="white"],
 
 /* Text fields */
 .text-field {
-    -fx-background-color: derive(-fx-secondary-color, 5%);
+    -fx-background-color: #404040;
     -fx-background-radius: 5px;
     -fx-border-color: -fx-light-accent;
     -fx-border-radius: 5px;
     -fx-padding: 8px;
-    -fx-text-fill: -fx-text-color;
+    -fx-text-fill: #f0f0f0;
 }
 
 .text-field:focused {
     -fx-border-color: -fx-accent-color;
+    -fx-border-width: 2px;
 }
 
 /* Status indicators */
@@ -426,7 +427,7 @@ VBox[style*="white"],
 }
 
 .progress-bar > .track {
-    -fx-background-color: -fx-light-accent;
+    -fx-background-color: #4a4a4a;
     -fx-background-radius: 3px;
 }
 
@@ -439,7 +440,7 @@ VBox[style*="white"],
 }
 
 .circular-progress-background {
-    -fx-stroke: -fx-light-accent;
+    -fx-stroke: #4a4a4a;
     -fx-fill: transparent;
     -fx-stroke-width: 8px;
     -fx-stroke-line-cap: round;
@@ -451,12 +452,12 @@ VBox[style*="white"],
 }
 
 .scroll-bar .thumb {
-    -fx-background-color: derive(-fx-light-accent, 10%);
+    -fx-background-color: #4a4a4a;
     -fx-background-radius: 10px;
 }
 
 .scroll-bar .thumb:hover {
-    -fx-background-color: derive(-fx-light-accent, 20%);
+    -fx-background-color: #5a5a5a;
 }
 
 .scroll-bar .increment-button,
@@ -466,24 +467,24 @@ VBox[style*="white"],
 
 /* Date pickers y combos - Versión oscura */
 .date-picker, .combo-box {
-    -fx-background-color: derive(-fx-secondary-color, 5%);
-    -fx-border-color: -fx-light-accent;
+    -fx-background-color: #404040;
+    -fx-border-color: #4a4a4a;
     -fx-border-radius: 5px;
-    -fx-text-fill: -fx-text-color;
+    -fx-text-fill: #f0f0f0;
 }
 
 .date-picker .arrow-button, .combo-box .arrow-button {
-    -fx-background-color: derive(-fx-secondary-color, 10%);
+    -fx-background-color: #4a4a4a;
 }
 
 .date-picker .text-field, .combo-box .text-field {
-    -fx-background-color: derive(-fx-secondary-color, 5%);
-    -fx-text-fill: -fx-text-color;
+    -fx-background-color: #404040;
+    -fx-text-fill: #f0f0f0;
 }
 
 .date-picker .cell, .combo-box .cell, .combo-box-popup .list-cell {
-    -fx-background-color: -fx-secondary-color;
-    -fx-text-fill: -fx-text-color;
+    -fx-background-color: #3a3a3a;
+    -fx-text-fill: #f0f0f0;
 }
 
 .date-picker:focused, .combo-box:focused {
@@ -624,4 +625,61 @@ VBox[style*="white"],
     -fx-border-width: 1px;
     -fx-border-radius: 8px;
     -fx-background-radius: 8px;
+}
+
+/* ================= ESTILOS ESPECÍFICOS PARA MÓDULO DE INFORMES - TEMA OSCURO ================= */
+
+/* Métricas */
+.metric-icon {
+    -fx-font-size: 24px;
+}
+
+.metric-title {
+    -fx-font-size: 12px;
+    -fx-text-fill: #c0c0c0;
+}
+
+.metric-value {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #f0f0f0;
+}
+
+.metric-change {
+    -fx-font-size: 12px;
+}
+
+.metric-change-positive {
+    -fx-text-fill: #2ecc71;
+}
+
+.metric-change-negative {
+    -fx-text-fill: #e74c3c;
+}
+
+/* Tarjetas de reportes */
+.report-card {
+    -fx-background-radius: 15px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 15, 0, 0, 3);
+}
+
+.report-card-hover:hover {
+    -fx-background-color: #4a4a4a !important;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 20, 0, 0, 5);
+}
+
+.report-icon {
+    -fx-font-size: 48px;
+}
+
+.report-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #f0f0f0;
+}
+
+.report-description {
+    -fx-font-size: 12px;
+    -fx-text-fill: #c0c0c0;
 } 

@@ -199,26 +199,28 @@ public class InformesController implements Initializable {
         header.setSpacing(10);
         
         Label iconLabel = new Label(icono);
-        iconLabel.setStyle("-fx-font-size: 24px;");
+        iconLabel.getStyleClass().add("metric-icon");
         
         Label titleLabel = new Label(titulo);
-        titleLabel.getStyleClass().add("metric-title");
-        titleLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+        titleLabel.getStyleClass().addAll("metric-title", "small-label");
         
         header.getChildren().addAll(iconLabel, titleLabel);
         
         // Valor principal
         Label valueLabel = new Label(valor);
-        valueLabel.getStyleClass().add("metric-value");
-        valueLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: " + color + ";");
+        valueLabel.getStyleClass().addAll("metric-value", "title-label");
         
         tarjeta.getChildren().addAll(header, valueLabel);
         
         // Cambio porcentual si se proporciona
         if (cambio != null) {
             Label changeLabel = new Label(cambio);
-            changeLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + 
-                (cambio.startsWith("-") ? "#f44336" : "#4CAF50") + ";");
+            changeLabel.getStyleClass().add("metric-change");
+            if (cambio.startsWith("-")) {
+                changeLabel.getStyleClass().add("metric-change-negative");
+            } else {
+                changeLabel.getStyleClass().add("metric-change-positive");
+            }
             tarjeta.getChildren().add(changeLabel);
         }
         
@@ -339,42 +341,18 @@ public class InformesController implements Initializable {
     
     private VBox crearTarjetaReporte(String titulo, String descripcion, String iconPath, Runnable accion) {
         VBox tarjeta = new VBox();
-        tarjeta.getStyleClass().add("report-card");
+        tarjeta.getStyleClass().addAll("report-card", "module-card");
         tarjeta.setAlignment(Pos.CENTER);
         tarjeta.setSpacing(15);
         tarjeta.setPadding(new Insets(20));
         tarjeta.setPrefWidth(250);
         tarjeta.setPrefHeight(180);
         
-        // Estilo de la tarjeta
-        tarjeta.setStyle(
-            "-fx-background-color: white;" +
-            "-fx-background-radius: 15;" +
-            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 3);" +
-            "-fx-border-radius: 15;" +
-            "-fx-cursor: hand;"
-        );
+        // Aplicar tema a la tarjeta
+        ThemeUtil.applyCardTheme(tarjeta);
         
-        // Efecto hover
-        tarjeta.setOnMouseEntered(e -> {
-            tarjeta.setStyle(
-                "-fx-background-color: #f5f5f5;" +
-                "-fx-background-radius: 15;" +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 20, 0, 0, 5);" +
-                "-fx-border-radius: 15;" +
-                "-fx-cursor: hand;"
-            );
-        });
-        
-        tarjeta.setOnMouseExited(e -> {
-            tarjeta.setStyle(
-                "-fx-background-color: white;" +
-                "-fx-background-radius: 15;" +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 3);" +
-                "-fx-border-radius: 15;" +
-                "-fx-cursor: hand;"
-            );
-        });
+        // Agregar clase para efectos hover
+        tarjeta.getStyleClass().add("report-card-hover");
         
         // Icono
         try {
@@ -385,19 +363,19 @@ public class InformesController implements Initializable {
             tarjeta.getChildren().add(icon);
         } catch (Exception e) {
             Label iconLabel = new Label("📊");
-            iconLabel.setStyle("-fx-font-size: 48px;");
+            iconLabel.getStyleClass().add("report-icon");
             tarjeta.getChildren().add(iconLabel);
         }
         
         // Título
         Label titleLabel = new Label(titulo);
-        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
+        titleLabel.getStyleClass().addAll("report-title", "subtitle-label");
         titleLabel.setWrapText(true);
         titleLabel.setAlignment(Pos.CENTER);
         
         // Descripción
         Label descLabel = new Label(descripcion);
-        descLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
+        descLabel.getStyleClass().addAll("report-description", "small-label");
         descLabel.setWrapText(true);
         descLabel.setAlignment(Pos.CENTER);
         
