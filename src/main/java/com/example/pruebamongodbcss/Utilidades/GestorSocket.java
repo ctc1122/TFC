@@ -31,10 +31,11 @@ public class GestorSocket {
         try {
             System.out.println("Intentando conectar al servidor alternativo: " + SERVER_HOST + ":" + SERVER_PORT_ALT);
             
-            socket = new Socket(SERVER_HOST, SERVER_PORT_ALT);
+            socket = new Socket();
+            socket.connect(new java.net.InetSocketAddress(SERVER_HOST, SERVER_PORT_ALT), 30000); // 30 segundos de timeout para conexión
             socket.setKeepAlive(true); // Mantener la conexión viva
             socket.setTcpNoDelay(true); // Desactivar el algoritmo de Nagle para envío inmediato
-            socket.setSoTimeout(30000); // Timeout de 30 segundos para operaciones de lectura
+            socket.setSoTimeout(60000); // Timeout de 60 segundos para operaciones de lectura
             
             // Importante: primero crear el ObjectOutputStream antes que el ObjectInputStream
             salida = new ObjectOutputStream(socket.getOutputStream());

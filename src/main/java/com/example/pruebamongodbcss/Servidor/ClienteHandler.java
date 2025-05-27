@@ -228,6 +228,7 @@ public class ClienteHandler implements Runnable {
                                 propietario.setId(id);
                                 synchronized (salida) {
                                     salida.writeInt(Protocolo.CREARPROPIETARIO_RESPONSE);
+                                    salida.writeObject(id != null ? id.toString() : null);
                                     salida.flush();
                                 }
                             } else {
@@ -1428,6 +1429,17 @@ public class ClienteHandler implements Runnable {
                     }
                     System.err.println("Error al procesar mensaje: " + e.getMessage());
                     e.printStackTrace();
+                    
+                    // Intentar enviar un mensaje de error al cliente antes de cerrar
+                    try {
+                        synchronized (salida) {
+                            salida.writeInt(Protocolo.ERROR_GENERICO);
+                            salida.writeUTF("Error interno del servidor: " + e.getMessage());
+                            salida.flush();
+                        }
+                    } catch (IOException ex) {
+                        System.err.println("No se pudo enviar mensaje de error al cliente: " + ex.getMessage());
+                    }
                     break;
                 } catch (NumberFormatException e) {
                     System.err.println("Error: Código de operación inválido");

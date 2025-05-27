@@ -17,6 +17,7 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.beans.property.SimpleStringProperty?>
 
 <BorderPane fx:id="mainPane" styleClass="panel-content" stylesheets="@../css/clinica-styles.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.ClinicaController">
    <top>
@@ -118,7 +119,8 @@
                                     <content>
                                        <TableView fx:id="tablaPropietarios" VBox.vgrow="ALWAYS" style="-fx-background-color: white;">
                                           <columns>
-                                             <TableColumn fx:id="colNombrePropietario" text="Nombre" />
+                                             <TableColumn fx:id="colNombre" text="Nombre" />
+                                             <TableColumn fx:id="colApellidos" text="Apellidos" />
                                              <TableColumn fx:id="colDNI" text="DNI" />
                                              <TableColumn fx:id="colTelefono" text="Teléfono" />
                                              <TableColumn fx:id="colEmail" text="Email" />

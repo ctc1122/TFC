@@ -93,7 +93,8 @@ public class ClinicaController implements Initializable {
     // Tab de Propietarios
     @FXML private Tab tabPropietarios;
     @FXML private TableView<ModeloPropietario> tablaPropietarios;
-    @FXML private TableColumn<ModeloPropietario, String> colNombrePropietario;
+    @FXML private TableColumn<ModeloPropietario, String> colNombre;
+    @FXML private TableColumn<ModeloPropietario, String> colApellidos;
     @FXML private TableColumn<ModeloPropietario, String> colDNI;
     @FXML private TableColumn<ModeloPropietario, String> colTelefono;
     @FXML private TableColumn<ModeloPropietario, String> colEmail;
@@ -1315,96 +1316,138 @@ public class ClinicaController implements Initializable {
     }
     
     private void configurarTablaPropietarios() {
-        // Configurar la tabla para ser editable
         tablaPropietarios.setEditable(true);
-        
-        // Hacer que la tabla sea responsive
         tablaPropietarios.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        
-        // Configurar propiedades de columnas para que sean responsive
-        configurarColumnaCabecera(colNombrePropietario, "Nombre\nCompleto", 0.3, tablaPropietarios);
-        configurarColumnaCabecera(colDNI, "DNI/NIF", 0.2, tablaPropietarios);
-        configurarColumnaCabecera(colTelefono, "Teléfono", 0.2, tablaPropietarios);
-        configurarColumnaCabecera(colEmail, "Correo\nElectrónico", 0.3, tablaPropietarios);
-        
-        // Añadir celdas editables para cada columna
-        colNombrePropietario.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getNombreCompleto()));
-        colNombrePropietario.setCellFactory(column -> new TableCell<ModeloPropietario, String>() {
+
+        configurarColumnaCabecera(colNombre, "Nombre", 0.15, tablaPropietarios);
+        configurarColumnaCabecera(colApellidos, "Apellidos", 0.15, tablaPropietarios);
+        configurarColumnaCabecera(colDNI, "DNI/NIF", 0.15, tablaPropietarios);
+        configurarColumnaCabecera(colTelefono, "Teléfono", 0.15, tablaPropietarios);
+        configurarColumnaCabecera(colEmail, "Email", 0.15, tablaPropietarios);
+
+        // Configurar las celdas para mostrar los datos
+        colNombre.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getNombre()));
+        colApellidos.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getApellidos()));
+        colDNI.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDni()));
+        colTelefono.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getTelefono()));
+        colEmail.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getEmail()));
+
+        // Configurar las celdas para ser editables
+        colNombre.setCellFactory(column -> new TableCell<ModeloPropietario, String>() {
             private TextField textField;
-            private final TextField tfNombre = new TextField();
-            private final TextField tfApellidos = new TextField();
-            private final HBox hbox = new HBox(5, new Label("Nombre:"), tfNombre, new Label("Apellidos:"), tfApellidos);
-            
-            {
-                hbox.setAlignment(Pos.CENTER_LEFT);
-            }
-            
             @Override
             public void startEdit() {
-                ModeloPropietario propietario = getTableView().getItems().get(getIndex());
-                
-                if (!propietario.isEditando()) {
-                    return;
+                if (!isEmpty()) {
+                    super.startEdit();
+                    if (textField == null) {
+                        createTextField();
+                    }
+                    setText(null);
+                    setGraphic(textField);
+                    textField.selectAll();
                 }
-                
-                super.startEdit();
-                
-                tfNombre.setText(propietario.getNombre());
-                tfApellidos.setText(propietario.getApellidos());
-                
-                setGraphic(hbox);
-                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-                tfNombre.requestFocus();
             }
-            
             @Override
             public void cancelEdit() {
                 super.cancelEdit();
                 setText(getItem());
                 setGraphic(null);
-                setContentDisplay(ContentDisplay.TEXT_ONLY);
             }
-            
             @Override
             public void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                
                 if (empty) {
                     setText(null);
                     setGraphic(null);
                 } else {
-                    ModeloPropietario propietario = getTableView().getItems().get(getIndex());
-                    
-                    if (propietario.isEditando()) {
-                        if (isEditing()) {
-                            tfNombre.setText(propietario.getNombre());
-                            tfApellidos.setText(propietario.getApellidos());
-                            setGraphic(hbox);
-                            setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-                        } else {
-                            setText(propietario.getNombreCompleto());
-                            setGraphic(null);
-                            setContentDisplay(ContentDisplay.TEXT_ONLY);
-                            setOnMouseClicked(e -> startEdit());
+                    if (isEditing()) {
+                        if (textField != null) {
+                            textField.setText(getString());
                         }
+                        setText(null);
+                        setGraphic(textField);
                     } else {
-                        setText(propietario.getNombreCompleto());
+                        setText(getString());
                         setGraphic(null);
-                        setContentDisplay(ContentDisplay.TEXT_ONLY);
-                        setOnMouseClicked(null);
                     }
                 }
             }
-            
+            private void createTextField() {
+                textField = new TextField(getString());
+                textField.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
+                textField.focusedProperty().addListener((arg0, arg1, arg2) -> {
+                    if (!arg2) {
+                        commitEdit(textField.getText());
+                    }
+                });
+            }
+            private String getString() {
+                return getItem() == null ? "" : getItem();
+            }
             @Override
             public void commitEdit(String newValue) {
                 super.commitEdit(newValue);
-                
                 ModeloPropietario propietario = getTableView().getItems().get(getIndex());
-                propietario.setNombre(tfNombre.getText());
-                propietario.setApellidos(tfApellidos.getText());
-                
-                tablaPropietarios.refresh();
+                propietario.setNombre(newValue);
+            }
+        });
+
+        colApellidos.setCellFactory(column -> new TableCell<ModeloPropietario, String>() {
+            private TextField textField;
+            @Override
+            public void startEdit() {
+                if (!isEmpty()) {
+                    super.startEdit();
+                    if (textField == null) {
+                        createTextField();
+                    }
+                    setText(null);
+                    setGraphic(textField);
+                    textField.selectAll();
+                }
+            }
+            @Override
+            public void cancelEdit() {
+                super.cancelEdit();
+                setText(getItem());
+                setGraphic(null);
+            }
+            @Override
+            public void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    if (isEditing()) {
+                        if (textField != null) {
+                            textField.setText(getString());
+                        }
+                        setText(null);
+                        setGraphic(textField);
+                    } else {
+                        setText(getString());
+                        setGraphic(null);
+                    }
+                }
+            }
+            private void createTextField() {
+                textField = new TextField(getString());
+                textField.setMinWidth(this.getWidth() - this.getGraphicTextGap() * 2);
+                textField.focusedProperty().addListener((arg0, arg1, arg2) -> {
+                    if (!arg2) {
+                        commitEdit(textField.getText());
+                    }
+                });
+            }
+            private String getString() {
+                return getItem() == null ? "" : getItem();
+            }
+            @Override
+            public void commitEdit(String newValue) {
+                super.commitEdit(newValue);
+                ModeloPropietario propietario = getTableView().getItems().get(getIndex());
+                propietario.setApellidos(newValue);
             }
         });
         
@@ -1844,7 +1887,7 @@ public class ClinicaController implements Initializable {
         
         // Activar la celda del nombre para empezar a editar inmediatamente
         Platform.runLater(() -> {
-            tablaPropietarios.edit(0, colNombrePropietario);
+            tablaPropietarios.edit(0, colNombre);
         });
     }
     
@@ -2312,7 +2355,7 @@ public class ClinicaController implements Initializable {
         
         // Activar la celda del nombre para empezar a editar inmediatamente
         Platform.runLater(() -> {
-            tablaPropietarios.edit(0, colNombrePropietario);
+            tablaPropietarios.edit(0, colNombre);
         });
     }
     
