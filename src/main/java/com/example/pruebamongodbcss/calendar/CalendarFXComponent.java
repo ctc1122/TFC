@@ -263,6 +263,36 @@ public class CalendarFXComponent extends BorderPane {
             updateTimeThread.setDaemon(true);
             updateTimeThread.start();
             
+            // SISTEMA AUTOMÁTICO TEMPORALMENTE DESHABILITADO
+            // Causa conflictos de socket - necesita implementación con conexiones independientes
+            /*
+            // Sistema automático de gestión de estados de citas
+            Thread autoStatusThread = new Thread("Calendar: Auto Status Management Thread") {
+                @Override
+                public void run() {
+                    while (true) {
+                        try {
+                            // Ejecutar verificación automática de estados cada 2 minutos
+                            verificarYActualizarEstadosAutomaticos();
+                            
+                            // Esperar 2 minutos antes de la siguiente verificación
+                            sleep(120000); // 2 minutos
+                        } catch (InterruptedException e) {
+                            System.out.println("Hilo de gestión automática de estados interrumpido");
+                            break;
+                        } catch (Exception e) {
+                            System.err.println("Error en gestión automática de estados: " + e.getMessage());
+                            e.printStackTrace();
+                            // Continuar ejecutándose a pesar del error
+                        }
+                    }
+                }
+            };
+            
+            autoStatusThread.setDaemon(true);
+            autoStatusThread.start();
+            */
+            
             // Crear barra de herramientas personalizada
             createCustomToolbar();
             
@@ -330,7 +360,11 @@ public class CalendarFXComponent extends BorderPane {
             
             // Configurar callback para refrescar el calendario
             controller.setCitaGuardadaCallback(() -> {
-                refreshCalendarFromDatabase();
+                System.out.println("🔄 Cita guardada, refrescando calendario inmediatamente...");
+                Platform.runLater(() -> {
+                    refreshCalendarFromDatabase();
+                    System.out.println("✅ Calendario refrescado después de guardar cita");
+                });
             });
             
             // Mostrar el formulario en una ventana modal
@@ -599,9 +633,11 @@ public class CalendarFXComponent extends BorderPane {
                 case "EN_CURSO":
                     return calendars.get(1); // Citas en curso
                 case "COMPLETADA":
-                    return calendars.get(2); // Citas completadas
+                case "PENDIENTE_DE_FACTURAR":
+                    return calendars.get(2); // Citas completadas (incluye pendientes de facturar)
                 case "CANCELADA":
-                    return calendars.get(3); // Citas canceladas
+                case "ABSENTISMO":
+                    return calendars.get(3); // Citas canceladas (incluye absentismo)
                 default:
                     return calendars.get(0); // Por defecto, pendientes
             }
@@ -648,7 +684,24 @@ public class CalendarFXComponent extends BorderPane {
      * Refresca los datos del calendario desde la base de datos
      */
     public void refreshCalendarFromDatabase() {
-        loadAppointmentsFromDatabase();
+        System.out.println("🔄 Iniciando refresco del calendario...");
+        
+        // Ejecutar en un hilo separado para no bloquear la UI
+        new Thread(() -> {
+            try {
+                // Cargar datos en el hilo de fondo
+                loadAppointmentsFromDatabase();
+                
+                // Refrescar la vista en el hilo de JavaFX
+                Platform.runLater(() -> {
+                    refreshCalendar();
+                    System.out.println("✅ Refresco del calendario completado");
+                });
+            } catch (Exception e) {
+                System.err.println("❌ Error al refrescar calendario: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }).start();
     }
     
     /**
@@ -922,8 +975,14 @@ public class CalendarFXComponent extends BorderPane {
                 com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente paciente = servicioClinica.obtenerPacientePorId(new org.bson.types.ObjectId(event.getPacienteId()));
                 ModeloCita cita = servicioClinica.obtenerCitaPorId(new org.bson.types.ObjectId(event.getId()));
                 controller.setPaciente(paciente, cita);
+                
+                // Configurar callback para refrescar inmediatamente el calendario
                 controller.setOnGuardarCallback(() -> {
-                    refreshCalendarFromDatabase();
+                    System.out.println("🔄 Refrescando calendario después de guardar diagnóstico...");
+                    Platform.runLater(() -> {
+                        refreshCalendarFromDatabase();
+                        System.out.println("✅ Calendario refrescado");
+                    });
                 });
 
                 // 3. Cuando termine, mostrar el formulario y cerrar el splash
@@ -1112,7 +1171,11 @@ public class CalendarFXComponent extends BorderPane {
             
             // Configurar callback para refrescar el calendario
             controller.setCitaGuardadaCallback(() -> {
-                refreshCalendarFromDatabase();
+                System.out.println("🔄 Cita guardada, refrescando calendario inmediatamente...");
+                Platform.runLater(() -> {
+                    refreshCalendarFromDatabase();
+                    System.out.println("✅ Calendario refrescado después de guardar cita");
+                });
             });
             
             // Mostrar el formulario en una ventana modal
@@ -1154,7 +1217,11 @@ public class CalendarFXComponent extends BorderPane {
             
             // Configurar callback para refrescar el calendario
             controller.setEventoGuardadoCallback(() -> {
-                refreshCalendarFromDatabase();
+                System.out.println("🔄 Evento guardado, refrescando calendario inmediatamente...");
+                Platform.runLater(() -> {
+                    refreshCalendarFromDatabase();
+                    System.out.println("✅ Calendario refrescado después de guardar evento");
+                });
             });
             
             // Si es edición, pasar el evento
@@ -1203,12 +1270,16 @@ public class CalendarFXComponent extends BorderPane {
             javafx.scene.control.RadioButton pendienteRadio = new javafx.scene.control.RadioButton("Pendiente");
             javafx.scene.control.RadioButton enCursoRadio = new javafx.scene.control.RadioButton("En Curso");
             javafx.scene.control.RadioButton completadaRadio = new javafx.scene.control.RadioButton("Completada");
+            javafx.scene.control.RadioButton pendienteFacturarRadio = new javafx.scene.control.RadioButton("Pendiente de Facturar");
             javafx.scene.control.RadioButton canceladaRadio = new javafx.scene.control.RadioButton("Cancelada");
+            javafx.scene.control.RadioButton absentismoRadio = new javafx.scene.control.RadioButton("Absentismo");
             
             pendienteRadio.setToggleGroup(toggleGroup);
             enCursoRadio.setToggleGroup(toggleGroup);
             completadaRadio.setToggleGroup(toggleGroup);
+            pendienteFacturarRadio.setToggleGroup(toggleGroup);
             canceladaRadio.setToggleGroup(toggleGroup);
+            absentismoRadio.setToggleGroup(toggleGroup);
             
             // Establecer el estado actual como seleccionado
             String currentStatus = getCurrentStatusFromCalendar(entry.getCalendar());
@@ -1222,8 +1293,14 @@ public class CalendarFXComponent extends BorderPane {
                 case "COMPLETADA":
                     completadaRadio.setSelected(true);
                     break;
+                case "PENDIENTE_DE_FACTURAR":
+                    pendienteFacturarRadio.setSelected(true);
+                    break;
                 case "CANCELADA":
                     canceladaRadio.setSelected(true);
+                    break;
+                case "ABSENTISMO":
+                    absentismoRadio.setSelected(true);
                     break;
                 default:
                     pendienteRadio.setSelected(true);
@@ -1235,7 +1312,9 @@ public class CalendarFXComponent extends BorderPane {
             grid.add(pendienteRadio, 0, 1);
             grid.add(enCursoRadio, 0, 2);
             grid.add(completadaRadio, 0, 3);
-            grid.add(canceladaRadio, 0, 4);
+            grid.add(pendienteFacturarRadio, 0, 4);
+            grid.add(canceladaRadio, 0, 5);
+            grid.add(absentismoRadio, 0, 6);
             
             // Establecer el contenido expandible del diálogo
             dialog.getDialogPane().setExpandableContent(grid);
@@ -1270,8 +1349,16 @@ public class CalendarFXComponent extends BorderPane {
     private String getCurrentStatusFromCalendar(Calendar calendar) {
         if (calendar == calendars.get(0)) return "PENDIENTE";
         if (calendar == calendars.get(1)) return "EN_CURSO";
-        if (calendar == calendars.get(2)) return "COMPLETADA";
-        if (calendar == calendars.get(3)) return "CANCELADA";
+        if (calendar == calendars.get(2)) {
+            // Para el calendario de completadas, necesitamos verificar el título para distinguir
+            // entre COMPLETADA y PENDIENTE_DE_FACTURAR, pero por defecto devolvemos COMPLETADA
+            return "COMPLETADA";
+        }
+        if (calendar == calendars.get(3)) {
+            // Para el calendario de canceladas, necesitamos verificar el título para distinguir
+            // entre CANCELADA y ABSENTISMO, pero por defecto devolvemos CANCELADA
+            return "CANCELADA";
+        }
         return "PENDIENTE";
     }
     
@@ -1286,8 +1373,12 @@ public class CalendarFXComponent extends BorderPane {
                 return "EN_CURSO";
             case "Completada":
                 return "COMPLETADA";
+            case "Pendiente de Facturar":
+                return "PENDIENTE_DE_FACTURAR";
             case "Cancelada":
                 return "CANCELADA";
+            case "Absentismo":
+                return "ABSENTISMO";
             default:
                 return "PENDIENTE";
         }
@@ -1319,7 +1410,8 @@ public class CalendarFXComponent extends BorderPane {
             if (codigo == Protocolo.CAMBIAR_ESTADO_CITA_RESPONSE) {
                 boolean success = ois.readBoolean();
                 if (success) {
-                    // Éxito: refrescar el calendario
+                    // Éxito: refrescar el calendario inmediatamente
+                    System.out.println("🔄 Estado cambiado exitosamente, refrescando calendario...");
                     refreshCalendarFromDatabase();
                     
                     // Mostrar mensaje de éxito
@@ -1355,8 +1447,12 @@ public class CalendarFXComponent extends BorderPane {
                 return "En Curso";
             case "COMPLETADA":
                 return "Completada";
+            case "PENDIENTE_DE_FACTURAR":
+                return "Pendiente de Facturar";
             case "CANCELADA":
                 return "Cancelada";
+            case "ABSENTISMO":
+                return "Absentismo";
             default:
                 return status;
         }
@@ -1411,18 +1507,32 @@ public class CalendarFXComponent extends BorderPane {
             MenuItem deleteItem = new MenuItem("Eliminar cita");
             MenuItem changeStatusItem = new MenuItem("Cambiar estado");
             
+            // Verificar si la cita ya ha pasado
+            LocalDateTime fechaHoraCita = LocalDateTime.of(entry.getStartDate(), entry.getStartTime());
+            LocalDateTime ahora = LocalDateTime.now();
+            boolean citaPasada = fechaHoraCita.isBefore(ahora);
+            
             // Configurar acción de edición
             editItem.setOnAction(e -> {
                 showEntryDetailsDialog(entry);
             });
             
-            // Configurar acción de eliminación
+            // Configurar acción de eliminación (siempre disponible pero con nombre diferente para citas pasadas)
+            if (citaPasada) {
+                deleteItem.setText("Cancelar cita");
+            }
             deleteItem.setOnAction(e -> {
-                // Confirmar eliminación
+                // Confirmar eliminación/cancelación
                 Alert confirmDialog = new Alert(AlertType.CONFIRMATION);
-                confirmDialog.setTitle("Eliminar cita");
-                confirmDialog.setHeaderText("¿Está seguro que desea eliminar esta cita?");
-                confirmDialog.setContentText("Esta acción no se puede deshacer.");
+                if (citaPasada) {
+                    confirmDialog.setTitle("Cancelar cita");
+                    confirmDialog.setHeaderText("¿Está seguro que desea cancelar esta cita?");
+                    confirmDialog.setContentText("Esta cita ya ha pasado su fecha programada.");
+                } else {
+                    confirmDialog.setTitle("Eliminar cita");
+                    confirmDialog.setHeaderText("¿Está seguro que desea eliminar esta cita?");
+                    confirmDialog.setContentText("Esta acción no se puede deshacer.");
+                }
                 
                 Optional<ButtonType> result = confirmDialog.showAndWait();
                 if (result.isPresent() && result.get() == ButtonType.OK) {
@@ -1450,18 +1560,19 @@ public class CalendarFXComponent extends BorderPane {
                             calendar.removeEntry(entry);
                         }
                         
-                        // Refrescar la vista
+                        // Refrescar la vista inmediatamente
+                        System.out.println("🔄 Cita eliminada exitosamente, refrescando calendario...");
                         refreshCalendarFromDatabase();
                         
                         // Mostrar mensaje de éxito
                         Alert alert = new Alert(AlertType.INFORMATION);
                         alert.setTitle("Éxito");
                         alert.setHeaderText(null);
-                        alert.setContentText("La cita ha sido eliminada correctamente.");
+                        alert.setContentText(citaPasada ? "La cita ha sido cancelada correctamente." : "La cita ha sido eliminada correctamente.");
                         alert.showAndWait();
                     } else {
                         // Mostrar error
-                        showErrorMessage("Error", "No se pudo eliminar la cita. Por favor, inténtelo de nuevo.");
+                        showErrorMessage("Error", citaPasada ? "No se pudo cancelar la cita. Por favor, inténtelo de nuevo." : "No se pudo eliminar la cita. Por favor, inténtelo de nuevo.");
                         // Refrescar de todos modos para asegurar consistencia
                         refreshCalendarFromDatabase();
                     }
@@ -1478,6 +1589,14 @@ public class CalendarFXComponent extends BorderPane {
                                          entry.getCalendar() == calendars.get(1) || // En curso
                                          entry.getCalendar() == calendars.get(2) || // Completadas
                                          entry.getCalendar() == calendars.get(3);   // Canceladas
+            
+            // Deshabilitar "Editar cita" y "Cambiar estado" para citas pasadas
+            if (citaPasada) {
+                editItem.setDisable(true);
+                editItem.setText("Editar cita (no disponible - cita pasada)");
+                changeStatusItem.setDisable(true);
+                changeStatusItem.setText("Cambiar estado (no disponible - cita pasada)");
+            }
             
             // Agregar opciones al menú
             contextMenu.getItems().addAll(editItem, deleteItem);
@@ -2264,6 +2383,103 @@ public class CalendarFXComponent extends BorderPane {
         } catch (Exception e) {
             e.printStackTrace();
             showErrorMessage("Error", "No se pudo abrir el formulario de facturación: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Verifica y actualiza automáticamente los estados de las citas según las reglas de negocio:
+     * 1. Citas PENDIENTES que han pasado su hora -> ABSENTISMO
+     * 2. Citas PENDIENTES que llegan a su hora -> EN_CURSO
+     */
+    private void verificarYActualizarEstadosAutomaticos() {
+        try {
+            System.out.println("🔄 Verificando estados automáticos de citas...");
+            
+            // Crear una conexión independiente para evitar conflictos
+            GestorSocket gestorSocketAuto = GestorSocket.getInstance();
+            
+            // Obtener todas las citas desde el servidor
+            gestorSocketAuto.enviarPeticion(Protocolo.DAMETODASLASCITAS + Protocolo.SEPARADOR_CODIGO);
+            ObjectInputStream ois = gestorSocketAuto.getEntrada();
+            int codigo = ois.readInt();
+            
+            if (codigo != Protocolo.DAMETODASLASCITAS_RESPONSE) {
+                System.err.println("Error al obtener citas para verificación automática");
+                gestorSocketAuto.cerrarConexion();
+                return;
+            }
+            
+            List<CalendarEvent> events = (List<CalendarEvent>) ois.readObject();
+            LocalDateTime ahora = LocalDateTime.now();
+            int citasActualizadas = 0;
+            
+            for (CalendarEvent event : events) {
+                // Solo procesar citas médicas
+                if (!esCitaMedica(event) || event.getEstado() == null) {
+                    continue;
+                }
+                
+                String estadoActual = event.getEstado().toUpperCase();
+                LocalDateTime fechaHoraCita = parseDateTime(event.getStart());
+                
+                // Calcular diferencia en minutos
+                long minutosHastaLaCita = java.time.Duration.between(ahora, fechaHoraCita).toMinutes();
+                
+                String nuevoEstado = null;
+                
+                // REGLA 1: Citas PENDIENTES que han pasado más de 15 minutos -> ABSENTISMO
+                if ("PENDIENTE".equals(estadoActual) && minutosHastaLaCita < -15) {
+                    nuevoEstado = "ABSENTISMO";
+                    System.out.println("📅 Cita " + event.getId() + " marcada como ABSENTISMO (pasó " + Math.abs(minutosHastaLaCita) + " minutos)");
+                }
+                // REGLA 2: Citas PENDIENTES que llegan a su hora (entre -5 y +5 minutos) -> EN_CURSO
+                else if ("PENDIENTE".equals(estadoActual) && minutosHastaLaCita >= -5 && minutosHastaLaCita <= 5) {
+                    nuevoEstado = "EN_CURSO";
+                    System.out.println("🕐 Cita " + event.getId() + " puesta EN_CURSO automáticamente");
+                }
+                
+                // Actualizar estado si es necesario
+                if (nuevoEstado != null) {
+                    try {
+                        gestorSocketAuto.enviarPeticion(Protocolo.CAMBIAR_ESTADO_CITA + Protocolo.SEPARADOR_CODIGO + 
+                                                      event.getId() + Protocolo.SEPARADOR_PARAMETROS + nuevoEstado);
+                        ObjectInputStream oisUpdate = gestorSocketAuto.getEntrada();
+                        int codigoUpdate = oisUpdate.readInt();
+                        
+                        if (codigoUpdate == Protocolo.CAMBIAR_ESTADO_CITA_RESPONSE) {
+                            boolean success = oisUpdate.readBoolean();
+                            if (success) {
+                                citasActualizadas++;
+                                System.out.println("✅ Estado actualizado: " + event.getId() + " -> " + nuevoEstado);
+                            } else {
+                                System.err.println("❌ Error al actualizar estado de cita: " + event.getId());
+                            }
+                        } else if (codigoUpdate == Protocolo.ERROR_CAMBIAR_ESTADO_CITA) {
+                            String errorMsg = oisUpdate.readUTF();
+                            System.err.println("❌ Error del servidor al cambiar estado: " + errorMsg);
+                        }
+                    } catch (Exception updateException) {
+                        System.err.println("❌ Error de comunicación al actualizar cita " + event.getId() + ": " + updateException.getMessage());
+                    }
+                }
+            }
+            
+            // Cerrar la conexión independiente
+            gestorSocketAuto.cerrarConexion();
+            
+            // Si se actualizaron citas, refrescar el calendario en el hilo de JavaFX
+            if (citasActualizadas > 0) {
+                System.out.println("🔄 " + citasActualizadas + " citas actualizadas automáticamente. Refrescando calendario...");
+                Platform.runLater(() -> {
+                    refreshCalendarFromDatabase();
+                });
+            } else {
+                System.out.println("✅ Verificación automática completada. No hay citas que actualizar.");
+            }
+            
+        } catch (Exception e) {
+            System.err.println("❌ Error en verificación automática de estados: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

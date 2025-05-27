@@ -10,6 +10,7 @@ public enum EstadoCita {
     PENDIENTE_DE_FACTURAR("Pendiente de facturar", "#4CAF50"), // verde
     COMPLETADA("Completada", "#FFFFFF"), // blanco
     CANCELADA("Cancelada", "#E57373"), // rojo claro
+    ABSENTISMO("Absentismo", "#FF5722"), // rojo oscuro
     REPROGRAMADA("Reprogramada", "#BDBDBD"); // gris
 
     private final String descripcion;

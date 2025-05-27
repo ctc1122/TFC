@@ -871,14 +871,26 @@ public class ServicioClinica {
                 case "PENDIENTE":
                     nuevoEstado = EstadoCita.PENDIENTE;
                     break;
+                case "EN_SALA_DE_ESPERA":
+                    nuevoEstado = EstadoCita.EN_SALA_DE_ESPERA;
+                    break;
                 case "EN_CURSO":
                     nuevoEstado = EstadoCita.EN_CURSO;
+                    break;
+                case "PENDIENTE_DE_FACTURAR":
+                    nuevoEstado = EstadoCita.PENDIENTE_DE_FACTURAR;
                     break;
                 case "COMPLETADA":
                     nuevoEstado = EstadoCita.COMPLETADA;
                     break;
                 case "CANCELADA":
                     nuevoEstado = EstadoCita.CANCELADA;
+                    break;
+                case "ABSENTISMO":
+                    nuevoEstado = EstadoCita.ABSENTISMO;
+                    break;
+                case "REPROGRAMADA":
+                    nuevoEstado = EstadoCita.REPROGRAMADA;
                     break;
                 default:
                     System.err.println("Estado no válido: " + nuevoEstadoString);

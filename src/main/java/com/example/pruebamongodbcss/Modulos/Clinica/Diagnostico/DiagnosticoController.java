@@ -5,9 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
-import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,7 +18,7 @@ import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloDiagnostico;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario;
-import com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica;
+import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 import com.itextpdf.text.DocumentException;
 
 import javafx.application.Platform;
@@ -92,7 +90,7 @@ public class DiagnosticoController implements Initializable {
     private ModeloCita citaActual;
     
     // Servicios
-    private final ServicioClinica servicioClinica = new ServicioClinica();
+    private GestorSocket gestorSocket;
     private final ServicioDiagnosticoUMLS servicioDiagnosticoUMLS = new ServicioDiagnosticoUMLS();
     
     // Lista observable para almacenar los diagnósticos seleccionados
@@ -111,43 +109,23 @@ public class DiagnosticoController implements Initializable {
     
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        // Configurar las partes esenciales de la interfaz primero
+        // Inicializar gestor de socket
+        gestorSocket = GestorSocket.getInstance();
+        
+        // Configurar las partes esenciales de la interfaz
         configurarTabla();
-        
-        // Inicializar fechas inmediatamente
-        // dpFecha.setValue(LocalDate.now());
-        
-        // Configurar eventos de la interfaz de usuario
-        btnAgregarDiagnostico.setOnAction(event -> agregarDiagnostico());
-        btnQuitarDiagnostico.setOnAction(event -> quitarDiagnostico());
-        btnGuardar.setOnAction(event -> guardarDiagnostico());
-        btnCancelar.setOnAction(event -> cancelar());
+        configurarControlesDiagnosticos();
+        configurarBusquedaEnTiempoReal();
         
         // Configurar lista de diagnósticos seleccionados
         lstDiagnosticosSeleccionados.setItems(diagnosticosSeleccionados);
         
-        // Configurar selección de diagnóstico
-        tblDiagnosticos.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            diagnosticoSeleccionado = newVal;
-        });
-        
         // Inicializar lista vacía para mostrar la interfaz inmediatamente
         tblDiagnosticos.setItems(FXCollections.observableArrayList());
         
-        // Retrasar las operaciones más pesadas
+        // Cargar datos iniciales de diagnósticos en segundo plano
         Platform.runLater(() -> {
-            // Configuraciones que no son críticas para la visualización inicial
-            configurarBusquedaEnTiempoReal();
-            
-            // Carga de datos en segundo plano
             executorService.submit(() -> {
-                // Cargar pacientes
-                List<ModeloPaciente> listaPacientes = servicioClinica.obtenerTodosPacientes();
-                Platform.runLater(() -> {
-                    // cmbPacientes.setItems(FXCollections.observableArrayList(listaPacientes));
-                });
-                
-                // Cargar diagnósticos limitados (solo 50 para que sea más rápido)
                 try {
                     ObservableList<ModeloDiagnosticoUMLS> diagnosticos = 
                         servicioDiagnosticoUMLS.obtenerDiagnosticosLimitados(50);
@@ -162,18 +140,6 @@ public class DiagnosticoController implements Initializable {
                 }
             });
         });
-
-        DateTimeFormatter formatoFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        DateTimeFormatter formatoHora = DateTimeFormatter.ofPattern("HH:mm");
-
-        colDescripcion.setCellValueFactory(cellData -> cellData.getValue().strProperty());
-        colCodigo.setCellValueFactory(cellData -> cellData.getValue().cuiProperty());
-        colFuente.setCellValueFactory(cellData -> cellData.getValue().sabProperty());
-        
-        // Ajustar anchos de columnas
-        colDescripcion.prefWidthProperty().bind(tblDiagnosticos.widthProperty().multiply(0.6));
-        colCodigo.prefWidthProperty().bind(tblDiagnosticos.widthProperty().multiply(0.2));
-        colFuente.prefWidthProperty().bind(tblDiagnosticos.widthProperty().multiply(0.2));
     }
     
     /**
@@ -194,9 +160,16 @@ public class DiagnosticoController implements Initializable {
      * Configura los controles relacionados con la selección de diagnósticos.
      */
     private void configurarControlesDiagnosticos() {
-        // Configurar botones para agregar/quitar diagnósticos
+        // Configurar eventos de la interfaz de usuario
         btnAgregarDiagnostico.setOnAction(event -> agregarDiagnostico());
         btnQuitarDiagnostico.setOnAction(event -> quitarDiagnostico());
+        btnGuardar.setOnAction(event -> guardarDiagnostico());
+        btnCancelar.setOnAction(event -> cancelar());
+        
+        // Configurar selección de diagnóstico en la tabla
+        tblDiagnosticos.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            diagnosticoSeleccionado = newVal;
+        });
         
         // Configurar selección en la lista de diagnósticos seleccionados
         lstDiagnosticosSeleccionados.getSelectionModel().selectedItemProperty().addListener(
@@ -465,40 +438,83 @@ public class DiagnosticoController implements Initializable {
             diagnostico.setVeterinario("Dr. Veterinario");
         }
         
-        // Guardar diagnóstico
-        ObjectId id = servicioClinica.guardarDiagnostico(diagnostico);
-        if (id != null) {
-            diagnostico.setId(id);
-            // Cambiar estado de la cita a 'PENDIENTE_DE_FACTURAR' si hay cita asociada
-            if (citaActual != null && citaActual.getId() != null) {
-                executorService.submit(() -> {
-                    boolean actualizado = servicioClinica.cambiarEstadoCita(citaActual.getId(), com.example.pruebamongodbcss.Data.EstadoCita.PENDIENTE_DE_FACTURAR);
-                    Platform.runLater(() -> {
-                        if (actualizado) {
-                            mostrarInformacion("Diagnóstico guardado", "El diagnóstico ha sido guardado y la cita está pendiente de facturar.");
-                        } else {
-                            mostrarError("Advertencia", "El diagnóstico se guardó pero no se pudo actualizar el estado de la cita.");
-                        }
-                        // Cerrar la ventana de forma segura
-                        Stage stage = (Stage) contenedorPrincipal.getScene().getWindow();
-                        stage.close();
+        // Guardar diagnóstico usando protocolo
+        try {
+            gestorSocket.enviarPeticion(com.example.pruebamongodbcss.Protocolo.Protocolo.GUARDAR_DIAGNOSTICO + com.example.pruebamongodbcss.Protocolo.Protocolo.SEPARADOR_CODIGO);
+            gestorSocket.getSalida().writeObject(diagnostico);
+            gestorSocket.getSalida().flush();
+            
+            int codigo = gestorSocket.getEntrada().readInt();
+            if (codigo == com.example.pruebamongodbcss.Protocolo.Protocolo.GUARDAR_DIAGNOSTICO_RESPONSE) {
+                ObjectId id = (ObjectId) gestorSocket.getEntrada().readObject();
+                if (id != null) {
+                    diagnostico.setId(id);
+                    
+                    // Mostrar mensaje de éxito inmediato
+                    mostrarInformacion("Diagnóstico guardado", "El diagnóstico ha sido guardado correctamente.");
+                    
+                    // Cambiar estado de la cita a 'PENDIENTE_DE_FACTURAR' si hay cita asociada
+                    if (citaActual != null && citaActual.getId() != null) {
+                        // Usar Platform.runLater para evitar problemas de concurrencia
+                        Platform.runLater(() -> {
+                            try {
+                                gestorSocket.enviarPeticion(com.example.pruebamongodbcss.Protocolo.Protocolo.CAMBIAR_ESTADO_CITA + 
+                                    com.example.pruebamongodbcss.Protocolo.Protocolo.SEPARADOR_CODIGO + 
+                                    citaActual.getId().toString() + 
+                                    com.example.pruebamongodbcss.Protocolo.Protocolo.SEPARADOR_PARAMETROS + 
+                                    "PENDIENTE_DE_FACTURAR");
+                                
+                                int codigoCita = gestorSocket.getEntrada().readInt();
+                                if (codigoCita == com.example.pruebamongodbcss.Protocolo.Protocolo.CAMBIAR_ESTADO_CITA_RESPONSE) {
+                                    boolean actualizado = gestorSocket.getEntrada().readBoolean();
+                                    if (actualizado) {
+                                        System.out.println("✅ Estado de cita actualizado a PENDIENTE_DE_FACTURAR");
+                                        
+                                        // Ejecutar callback para refrescar el calendario
+                                        if (onGuardarCallback != null) {
+                                            onGuardarCallback.run();
+                                        }
+                                        
+                                        // Cerrar el formulario automáticamente
+                                        Platform.runLater(() -> {
+                                            // Obtener la ventana actual y cerrarla
+                                            Stage stage = (Stage) btnGuardar.getScene().getWindow();
+                                            stage.close();
+                                        });
+                                        
+                                    } else {
+                                        System.err.println("⚠️ No se pudo actualizar el estado de la cita");
+                                    }
+                                } else if (codigoCita == com.example.pruebamongodbcss.Protocolo.Protocolo.ERROR_CAMBIAR_ESTADO_CITA) {
+                                    String errorMsg = gestorSocket.getEntrada().readUTF();
+                                    System.err.println("❌ Error al cambiar estado: " + errorMsg);
+                                }
+                            } catch (Exception e) {
+                                System.err.println("❌ Error al cambiar estado de cita: " + e.getMessage());
+                            }
+                        });
+                    } else {
+                        // Si no hay cita asociada, ejecutar callback y cerrar de todos modos
                         if (onGuardarCallback != null) {
                             onGuardarCallback.run();
                         }
-                    });
-                });
-            } else {
-                mostrarInformacion("Diagnóstico guardado", "El diagnóstico ha sido guardado correctamente");
-                // Cerrar la ventana de forma segura
-                Stage stage = (Stage) contenedorPrincipal.getScene().getWindow();
-                stage.close();
-                if (onGuardarCallback != null) {
-                    onGuardarCallback.run();
+                        
+                        // Cerrar el formulario
+                        Platform.runLater(() -> {
+                            Stage stage = (Stage) btnGuardar.getScene().getWindow();
+                            stage.close();
+                        });
+                    }
+                } else {
+                    mostrarError("Error", "No se pudo guardar el diagnóstico.");
                 }
+            } else if (codigo == com.example.pruebamongodbcss.Protocolo.Protocolo.ERROR_GUARDAR_DIAGNOSTICO) {
+                String errorMsg = gestorSocket.getEntrada().readUTF();
+                mostrarError("Error del servidor", "Error al guardar diagnóstico: " + errorMsg);
             }
-        } else {
-            mostrarError("Error al guardar", 
-                    "No se pudo guardar el diagnóstico. Intente nuevamente");
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error de comunicación", "No se pudo comunicar con el servidor: " + e.getMessage());
         }
     }
     
@@ -526,10 +542,21 @@ public class DiagnosticoController implements Initializable {
         if (file != null) {
             executorService.submit(() -> {
                 try {
-                    // Obtener datos del propietario
+                    // Obtener propietario usando protocolo
                     ModeloPropietario propietario = null;
                     if (paciente.getPropietarioId() != null) {
-                        propietario = servicioClinica.obtenerPropietarioPorId(paciente.getPropietarioId());
+                        try {
+                            gestorSocket.enviarPeticion(com.example.pruebamongodbcss.Protocolo.Protocolo.OBTENERPROPIETARIO_POR_ID + 
+                                com.example.pruebamongodbcss.Protocolo.Protocolo.SEPARADOR_CODIGO + 
+                                paciente.getPropietarioId().toString());
+                            
+                            int codigo = gestorSocket.getEntrada().readInt();
+                            if (codigo == com.example.pruebamongodbcss.Protocolo.Protocolo.OBTENERPROPIETARIO_POR_ID_RESPONSE) {
+                                propietario = (ModeloPropietario) gestorSocket.getEntrada().readObject();
+                            }
+                        } catch (Exception e) {
+                            System.err.println("Error al obtener propietario: " + e.getMessage());
+                        }
                     }
                     
                     // Obtener fecha de próxima visita
@@ -596,10 +623,21 @@ public class DiagnosticoController implements Initializable {
         if (file != null) {
             executorService.submit(() -> {
                 try {
-                    // Obtener datos del propietario
+                    // Obtener propietario usando protocolo
                     ModeloPropietario propietario = null;
                     if (pacienteParam.getPropietarioId() != null) {
-                        propietario = servicioClinica.obtenerPropietarioPorId(pacienteParam.getPropietarioId());
+                        try {
+                            gestorSocket.enviarPeticion(com.example.pruebamongodbcss.Protocolo.Protocolo.OBTENERPROPIETARIO_POR_ID + 
+                                com.example.pruebamongodbcss.Protocolo.Protocolo.SEPARADOR_CODIGO + 
+                                pacienteParam.getPropietarioId().toString());
+                            
+                            int codigo = gestorSocket.getEntrada().readInt();
+                            if (codigo == com.example.pruebamongodbcss.Protocolo.Protocolo.OBTENERPROPIETARIO_POR_ID_RESPONSE) {
+                                propietario = (ModeloPropietario) gestorSocket.getEntrada().readObject();
+                            }
+                        } catch (Exception e) {
+                            System.err.println("Error al obtener propietario: " + e.getMessage());
+                        }
                     }
                     
                     // Parsear diagnósticos UMLS del texto almacenado (simplificado)
