@@ -879,14 +879,18 @@ public class CalendarFXComponent extends BorderPane {
                 abrirVistaDiagnostico(event);
                 return;
             }
-            
+            // Si el evento es una cita médica y está pendiente de facturar, abrir facturación
+            if (event.getTipoEvento() == CalendarEvent.EventoTipo.CITA_MEDICA && 
+                "PENDIENTE_DE_FACTURAR".equalsIgnoreCase(event.getEstado())) {
+                abrirFormularioFacturacionDesdeCita(event);
+                return;
+            }
             // Para otros tipos de eventos o citas no en curso, mostrar el formulario normal
             if (event.getTipoEvento() == CalendarEvent.EventoTipo.CITA_MEDICA) {
                 showCitaFormulario(event, entry);
             } else {
                 showEventoFormulario(event, entry);
             }
-            
         } catch (Exception e) {
             e.printStackTrace();
             showErrorMessage("Error al mostrar detalles", "No se pudieron mostrar los detalles: " + e.getMessage());
@@ -1000,6 +1004,7 @@ public class CalendarFXComponent extends BorderPane {
                 
                 if (cita != null && cita.getPacienteId() != null) {
                     event.setPacienteId(cita.getPacienteId().toString());
+                    event.setEstado(cita.getEstado().name()); // <-- Esto es lo importante
                 }
             } catch (Exception e) {
                 System.err.println("Error al obtener el ID del paciente: " + e.getMessage());
@@ -2162,5 +2167,36 @@ public class CalendarFXComponent extends BorderPane {
      */
     private boolean esRecordatorio(CalendarEvent event) {
         return event.getTipoEvento() == CalendarEvent.EventoTipo.RECORDATORIO;
+    }
+
+    // Agrego el método para abrir el formulario de facturación desde una cita
+    private void abrirFormularioFacturacionDesdeCita(CalendarEvent event) {
+        try {
+            // Obtener la cita, paciente y propietario
+            com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
+            org.bson.types.ObjectId citaId = new org.bson.types.ObjectId(event.getId());
+            com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = servicioClinica.obtenerCitaPorId(citaId);
+            com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente paciente = servicioClinica.obtenerPacientePorId(cita.getPacienteId());
+            com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario propietario = servicioClinica.obtenerPropietarioPorId(paciente.getPropietarioId());
+
+            // Cargar el formulario de facturación
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Facturacion/factura-form.fxml"));
+            Parent root = loader.load();
+            com.example.pruebamongodbcss.Modulos.Facturacion.FacturaFormController controller = loader.getController();
+            controller.cargarDatosDesdeCita(cita, paciente, propietario);
+
+            Stage stage = new Stage();
+            stage.setTitle("Facturación - Cita: " + cita.getNombrePaciente());
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(root));
+            stage.setResizable(true);
+            stage.showAndWait();
+
+            // Refrescar el calendario después de cerrar
+            refreshCalendarFromDatabase();
+        } catch (Exception e) {
+            e.printStackTrace();
+            showErrorMessage("Error", "No se pudo abrir el formulario de facturación: " + e.getMessage());
+        }
     }
 }
