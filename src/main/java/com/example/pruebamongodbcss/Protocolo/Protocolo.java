@@ -287,6 +287,33 @@ public interface Protocolo {
     static final int ACTUALIZAR_FICHAJE_RESPONSE=1192;
     static final int ERROR_ACTUALIZAR_FICHAJE=1193;
 
+    // Constantes para citas
+    public static final int GUARDAR_CITA = 1210;
+    public static final int GUARDAR_CITA_RESPONSE = 1211;
+    public static final int ERROR_GUARDAR_CITA = 1212;
+    public static final int ACTUALIZAR_CITA = 1213;
+    public static final int ACTUALIZAR_CITA_RESPONSE = 1214;
+    public static final int ERROR_ACTUALIZAR_CITA = 1215;
+    public static final int ELIMINAR_CITA = 1216;
+    public static final int ELIMINAR_CITA_RESPONSE = 1217;
+    public static final int ERROR_ELIMINAR_CITA = 1218;
 
-    
+    // Constantes para búsqueda de citas por rango de fechas
+    public static final int BUSCAR_CITAS_POR_RANGO_FECHAS = 1200;
+    public static final int BUSCAR_CITAS_POR_RANGO_FECHAS_RESPONSE = 1201;
+    public static final int ERROR_BUSCAR_CITAS_POR_RANGO_FECHAS = 1202;
+
+    // Constantes para verificación de conflictos horarios
+    public static final int HAY_CONFLICTO_HORARIO = 1203;
+    public static final int HAY_CONFLICTO_HORARIO_RESPONSE = 1204;
+    public static final int ERROR_HAY_CONFLICTO_HORARIO = 1205;
+
+    // Constantes para búsqueda de razas
+    public static final int BUSCAR_RAZAS_POR_TIPO_ANIMAL = 1206;
+    public static final int BUSCAR_RAZAS_POR_TIPO_ANIMAL_RESPONSE = 1207;
+    public static final int ERROR_BUSCAR_RAZAS_POR_TIPO_ANIMAL = 1208;
+
+    // Constante para error genérico
+    public static final int ERROR_GENERICO = 1209;
+
 } 
