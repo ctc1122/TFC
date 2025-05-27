@@ -687,23 +687,100 @@ VBox[style*="white"],
 .informes-view .metric-icon,
 .informes-container .metric-icon {
     -fx-text-fill: #e0e0e0 !important; /* Gris claro en lugar de blanco puro */
+    -fx-alignment: center !important;
 }
 
 .informes-view .metric-title,
 .informes-container .metric-title {
     -fx-text-fill: #d0d0d0 !important; /* Gris claro suave */
     -fx-font-weight: normal !important; /* Sin negrita para ser más sutil */
+    -fx-alignment: center !important;
+    -fx-text-alignment: center !important;
 }
 
 .informes-view .metric-value,
 .informes-container .metric-value {
     -fx-text-fill: #f0f0f0 !important; /* Casi blanco pero suave */
     -fx-font-weight: bold !important; /* Solo los valores importantes en negrita */
+    -fx-alignment: center !important;
+    -fx-text-alignment: center !important;
 }
 
 .informes-view .metric-change,
 .informes-container .metric-change {
     -fx-font-weight: normal !important; /* Sin negrita para ser más sutil */
+    -fx-alignment: center !important;
+    -fx-text-alignment: center !important;
+}
+
+/* Contenedores de métricas - centrado perfecto SOLO en informes */
+.informes-view .metric-card,
+.informes-container .metric-card {
+    -fx-background-color: #3a3a3a !important; /* Mismo color que el fondo */
+    -fx-border-color: transparent !important;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0, 0, 2) !important; /* Sombra muy sutil */
+    -fx-alignment: center !important;
+}
+
+/* Headers de métricas - centrado perfecto SOLO en informes */
+.informes-view .metric-card HBox,
+.informes-container .metric-card HBox,
+.informes-view .metric-card .header,
+.informes-container .metric-card .header {
+    -fx-alignment: center !important;
+    -fx-spacing: 8px !important;
+}
+
+/* Todos los labels dentro de tarjetas de métricas - centrados SOLO en informes */
+.informes-view .metric-card Label,
+.informes-container .metric-card Label,
+.informes-view .metric-card .label,
+.informes-container .metric-card .label {
+    -fx-alignment: center !important;
+    -fx-text-alignment: center !important;
+    -fx-content-display: center !important;
+}
+
+/* Mejorar alineación específica de elementos de métricas SOLO en informes */
+.informes-view .metric-card .metric-title,
+.informes-container .metric-card .metric-title {
+    -fx-alignment: center !important;
+    -fx-text-alignment: center !important;
+    -fx-wrap-text: true !important;
+    -fx-max-width: infinity !important;
+}
+
+.informes-view .metric-card .metric-value,
+.informes-container .metric-card .metric-value {
+    -fx-alignment: center !important;
+    -fx-text-alignment: center !important;
+    -fx-max-width: infinity !important;
+}
+
+.informes-view .metric-card .metric-icon,
+.informes-container .metric-card .metric-icon {
+    -fx-alignment: center !important;
+    -fx-text-alignment: center !important;
+}
+
+.informes-view .metric-card .metric-change,
+.informes-container .metric-card .metric-change {
+    -fx-alignment: center !important;
+    -fx-text-alignment: center !important;
+    -fx-max-width: infinity !important;
+}
+
+/* Asegurar que los HBox dentro de las tarjetas estén centrados SOLO en informes */
+.informes-view .metric-card > HBox,
+.informes-container .metric-card > HBox {
+    -fx-alignment: center !important;
+    -fx-fill-height: false !important;
+}
+
+/* Centrar todo el contenido de las tarjetas de métricas SOLO en informes */
+.informes-view .metric-card > *,
+.informes-container .metric-card > * {
+    -fx-alignment: center !important;
 }
 
 /* Reportes - texto visible pero elegante SOLO en informes */
@@ -843,4 +920,40 @@ GridPane {
     -fx-border-color: transparent !important;
     -fx-border-width: 0px !important;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 8, 0, 0, 3) !important;
+}
+
+/* ================= MÓDULO DE INFORMES - TRANSPARENCIA FORZADA ================= */
+
+/* Contenedores principales del módulo de informes - SIEMPRE TRANSPARENTES */
+.informes-view,
+.informes-container,
+.informes-view .main-container,
+.informes-view .content-container,
+.informes-view .scroll-pane,
+.informes-view .scroll-pane > .viewport,
+.informes-view #mainContainer,
+.informes-view #contentContainer,
+.informes-view #scrollPane,
+.informes-view .metrics-container,
+.informes-view .charts-container,
+.informes-view .reports-grid {
+    -fx-background-color: transparent !important;
+    -fx-border-color: transparent !important;
+    -fx-border-width: 0px !important;
+}
+
+/* SOLO contenedores VBox, HBox, BorderPane, ScrollPane, GridPane principales - NO tarjetas individuales */
+.informes-view > VBox,
+.informes-view > HBox,
+.informes-view > BorderPane,
+.informes-view > ScrollPane,
+.informes-view > GridPane,
+.informes-container > VBox,
+.informes-container > HBox,
+.informes-container > BorderPane,
+.informes-container > ScrollPane,
+.informes-container > GridPane {
+    -fx-background-color: transparent !important;
+    -fx-border-color: transparent !important;
+    -fx-border-width: 0px !important;
 } 

@@ -62,7 +62,6 @@ public class InformesController implements Initializable {
     
     @FXML
     private JFXButton btnRefresh;
-    
     private ServicioInformes servicioInformes;
     private Usuario usuarioActual;
     private DecimalFormat formatoMoneda = new DecimalFormat("€#,##0.00");
@@ -77,10 +76,24 @@ public class InformesController implements Initializable {
         scrollPane.getStyleClass().add("informes-container");
         contentContainer.getStyleClass().add("informes-container");
         
-        // Aplicar tema a los contenedores principales
-        ThemeUtil.applyModuleTheme(mainContainer);
-        ThemeUtil.applyModuleTheme(scrollPane);
-        ThemeUtil.applyModuleTheme(contentContainer);
+        // Aplicar IDs para que los selectores CSS funcionen
+        mainContainer.setId("mainContainer");
+        scrollPane.setId("scrollPane");
+        contentContainer.setId("contentContainer");
+        
+        // Aplicar clases CSS a los contenedores de métricas, gráficos y reportes
+        if (metricsContainer != null) {
+            metricsContainer.getStyleClass().add("metrics-container");
+        }
+        if (chartsContainer != null) {
+            chartsContainer.getStyleClass().add("charts-container");
+        }
+        if (reportsGrid != null) {
+            reportsGrid.getStyleClass().add("reports-grid");
+        }
+        
+        // Hacer todos los contenedores transparentes con estilos inline como respaldo
+        aplicarTransparenciaForzada();
         
         // Configurar el scroll pane
         scrollPane.setFitToWidth(true);
@@ -95,6 +108,25 @@ public class InformesController implements Initializable {
         
         // Configurar actualización automática cada 5 minutos
         configurarActualizacionAutomatica();
+    }
+    
+    private void aplicarTransparenciaForzada() {
+        // Aplicar transparencia con estilos inline como respaldo
+        String transparentStyle = "-fx-background-color: transparent; -fx-border-color: transparent; -fx-border-width: 0px;";
+        
+        mainContainer.setStyle(transparentStyle);
+        scrollPane.setStyle(transparentStyle);
+        contentContainer.setStyle(transparentStyle);
+        
+        if (metricsContainer != null) {
+            metricsContainer.setStyle(transparentStyle);
+        }
+        if (chartsContainer != null) {
+            chartsContainer.setStyle(transparentStyle);
+        }
+        if (reportsGrid != null) {
+            reportsGrid.setStyle(transparentStyle);
+        }
     }
     
     public void setUsuarioActual(Usuario usuario) {
@@ -144,6 +176,9 @@ public class InformesController implements Initializable {
                 // Cargar tarjetas de reportes
                 cargarTarjetasReportes();
                 
+                // Reaplica transparencia después de cargar contenido
+                aplicarTransparenciaForzada();
+                
             } catch (Exception e) {
                 System.err.println("Error al cargar dashboard: " + e.getMessage());
                 e.printStackTrace();
@@ -155,9 +190,7 @@ public class InformesController implements Initializable {
         ServicioInformes.DashboardMetricas metricas = servicioInformes.obtenerMetricasDashboard();
         
         // Crear tarjetas de métricas
-        VBox ventasHoy = crearTarjetaMetrica("Ventas Hoy", 
-            formatoMoneda.format(metricas.getVentasHoy()), 
-            "💰", "#4CAF50");
+        VBox ventasHoy = crearTarjetaMetrica("Ventas Hoy", formatoMoneda.format(metricas.getVentasHoy()), "💰", "#4CAF50", null);
             
         VBox ventasMes = crearTarjetaMetrica("Ventas del Mes", 
             formatoMoneda.format(metricas.getVentasMesActual()), 
@@ -171,17 +204,24 @@ public class InformesController implements Initializable {
             
         VBox citasHoy = crearTarjetaMetrica("Citas Hoy", 
             String.valueOf(metricas.getCitasHoy()), 
-            "📅", "#9C27B0");
+            "📅", "#9C27B0", null);
             
         VBox promedioVentas = crearTarjetaMetrica("Promedio Diario", 
             formatoMoneda.format(metricas.getPromedioVentasDiarias()), 
-            "📊", "#607D8B");
+            "📊", "#607D8B", null);
         
+        // Limpiar y configurar el contenedor
+        metricsContainer.getChildren().clear();
         metricsContainer.getChildren().addAll(ventasHoy, ventasMes, clientesAno, citasHoy, promedioVentas);
-        metricsContainer.setSpacing(20);
+        metricsContainer.setSpacing(15);
         metricsContainer.setAlignment(Pos.CENTER);
+        metricsContainer.setPadding(new Insets(20));
+        
+        // Hacer el contenedor transparente
+        metricsContainer.setStyle("-fx-background-color: transparent;");
     }
     
+    // Método sobrecargado para métricas sin cambio porcentual
     private VBox crearTarjetaMetrica(String titulo, String valor, String icono, String color) {
         return crearTarjetaMetrica(titulo, valor, icono, color, null);
     }
@@ -190,41 +230,55 @@ public class InformesController implements Initializable {
         VBox tarjeta = new VBox();
         tarjeta.getStyleClass().addAll("metric-card", "module-card");
         tarjeta.setAlignment(Pos.CENTER);
-        tarjeta.setSpacing(10);
-        tarjeta.setPadding(new Insets(20));
+        tarjeta.setSpacing(8);
+        tarjeta.setPadding(new Insets(15));
         tarjeta.setPrefWidth(200);
         tarjeta.setPrefHeight(120);
+        tarjeta.setMaxWidth(200);
+        tarjeta.setMinWidth(200);
         
-        // Aplicar tema a la tarjeta
-        ThemeUtil.applyCardTheme(tarjeta);
+        // NO aplicar transparencia - dejar que el CSS maneje el estilo
+        // tarjeta.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
         
-        // Icono y título
+        // Icono y título en la misma línea
         HBox header = new HBox();
         header.setAlignment(Pos.CENTER);
-        header.setSpacing(10);
+        header.setSpacing(8);
+        header.setMaxWidth(Double.MAX_VALUE);
         
         Label iconLabel = new Label(icono);
         iconLabel.getStyleClass().add("metric-icon");
+        iconLabel.setStyle("-fx-font-size: 16px;");
         
         Label titleLabel = new Label(titulo);
         titleLabel.getStyleClass().addAll("metric-title", "small-label");
+        titleLabel.setStyle("-fx-font-size: 12px; -fx-text-alignment: center;");
+        titleLabel.setWrapText(true);
+        titleLabel.setMaxWidth(Double.MAX_VALUE);
+        titleLabel.setAlignment(Pos.CENTER);
         
         header.getChildren().addAll(iconLabel, titleLabel);
         
-        // Valor principal
+        // Valor principal centrado
         Label valueLabel = new Label(valor);
         valueLabel.getStyleClass().addAll("metric-value", "title-label");
+        valueLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-alignment: center;");
+        valueLabel.setAlignment(Pos.CENTER);
+        valueLabel.setMaxWidth(Double.MAX_VALUE);
         
         tarjeta.getChildren().addAll(header, valueLabel);
         
         // Cambio porcentual si se proporciona
-        if (cambio != null) {
+        if (cambio != null && !cambio.trim().isEmpty()) {
             Label changeLabel = new Label(cambio);
             changeLabel.getStyleClass().add("metric-change");
+            changeLabel.setStyle("-fx-font-size: 11px; -fx-text-alignment: center;");
+            changeLabel.setAlignment(Pos.CENTER);
+            changeLabel.setMaxWidth(Double.MAX_VALUE);
             if (cambio.startsWith("-")) {
-                changeLabel.getStyleClass().add("metric-change-negative");
+                changeLabel.setStyle(changeLabel.getStyle() + "; -fx-text-fill: #e74c3c;");
             } else {
-                changeLabel.getStyleClass().add("metric-change-positive");
+                changeLabel.setStyle(changeLabel.getStyle() + "; -fx-text-fill: #2ecc71;");
             }
             tarjeta.getChildren().add(changeLabel);
         }
@@ -249,7 +303,8 @@ public class InformesController implements Initializable {
         ventasContainer.setSpacing(10);
         ventasContainer.setPrefWidth(400);
         ventasContainer.getStyleClass().add("chart-container");
-        ThemeUtil.applyCardTheme(ventasContainer);
+        // NO aplicar transparencia - dejar que el CSS maneje el estilo
+        // ventasContainer.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
         
         VBox citasContainer = new VBox();
         
@@ -260,11 +315,14 @@ public class InformesController implements Initializable {
         citasContainer.setSpacing(10);
         citasContainer.setPrefWidth(400);
         citasContainer.getStyleClass().add("chart-container");
-        ThemeUtil.applyCardTheme(citasContainer);
+        // NO aplicar transparencia - dejar que el CSS maneje el estilo
+        // citasContainer.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
         
+        chartsContainer.getChildren().clear();
         chartsContainer.getChildren().addAll(ventasContainer, citasContainer);
         chartsContainer.setSpacing(30);
         chartsContainer.setAlignment(Pos.CENTER);
+        chartsContainer.setStyle("-fx-background-color: transparent;");
     }
     
     private LineChart<String, Number> crearGraficoVentas() {
@@ -306,9 +364,12 @@ public class InformesController implements Initializable {
     
     private void cargarTarjetasReportes() {
         // Configurar el grid
+        reportsGrid.getChildren().clear();
         reportsGrid.setHgap(20);
         reportsGrid.setVgap(20);
         reportsGrid.setPadding(new Insets(20));
+        reportsGrid.setAlignment(Pos.CENTER);
+        reportsGrid.setStyle("-fx-background-color: transparent;");
         
         // Crear tarjetas de reportes
         VBox reporteVentas = crearTarjetaReporte("Reporte de Ventas", 
@@ -359,8 +420,8 @@ public class InformesController implements Initializable {
         tarjeta.setPrefWidth(250);
         tarjeta.setPrefHeight(180);
         
-        // Aplicar tema a la tarjeta
-        ThemeUtil.applyCardTheme(tarjeta);
+        // NO aplicar transparencia - dejar que el CSS maneje el estilo
+        // tarjeta.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-cursor: hand;");
         
         // Agregar clase para efectos hover
         tarjeta.getStyleClass().add("report-card-hover");
@@ -375,6 +436,7 @@ public class InformesController implements Initializable {
         } catch (Exception e) {
             Label iconLabel = new Label("📊");
             iconLabel.getStyleClass().add("report-icon");
+            iconLabel.setStyle("-fx-font-size: 32px;");
             tarjeta.getChildren().add(iconLabel);
         }
         
@@ -383,12 +445,16 @@ public class InformesController implements Initializable {
         titleLabel.getStyleClass().addAll("report-title", "subtitle-label");
         titleLabel.setWrapText(true);
         titleLabel.setAlignment(Pos.CENTER);
+        titleLabel.setMaxWidth(Double.MAX_VALUE);
+        titleLabel.setStyle("-fx-text-alignment: center; -fx-font-weight: bold;");
         
         // Descripción
         Label descLabel = new Label(descripcion);
         descLabel.getStyleClass().addAll("report-description", "small-label");
         descLabel.setWrapText(true);
         descLabel.setAlignment(Pos.CENTER);
+        descLabel.setMaxWidth(Double.MAX_VALUE);
+        descLabel.setStyle("-fx-text-alignment: center; -fx-font-size: 11px;");
         
         tarjeta.getChildren().addAll(titleLabel, descLabel);
         
@@ -645,5 +711,25 @@ public class InformesController implements Initializable {
     @FXML
     private void volverAlDashboard() {
         cargarDashboard();
+    }
+    
+    /**
+     * Método público para reaplica transparencia después de cambios de tema
+     * Puede ser llamado desde ThemeManager o otros controladores
+     */
+    public void reaplicarTransparencia() {
+        Platform.runLater(() -> {
+            aplicarTransparenciaForzada();
+            
+            // También reaplica las clases CSS
+            mainContainer.getStyleClass().removeAll("informes-view");
+            mainContainer.getStyleClass().add("informes-view");
+            
+            scrollPane.getStyleClass().removeAll("informes-container");
+            scrollPane.getStyleClass().add("informes-container");
+            
+            contentContainer.getStyleClass().removeAll("informes-container");
+            contentContainer.getStyleClass().add("informes-container");
+        });
     }
 } 

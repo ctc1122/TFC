@@ -997,4 +997,40 @@ GridPane {
     -fx-border-color: transparent !important;
     -fx-border-width: 0px !important;
     -fx-effect: dropshadow(gaussian, rgba(40, 54, 24, 0.2), 8, 0, 0, 3) !important;
-} 
+}
+
+/* ================= MÓDULO DE INFORMES - TRANSPARENCIA FORZADA ================= */
+
+/* Contenedores principales del módulo de informes - SIEMPRE TRANSPARENTES */
+.informes-view,
+.informes-container,
+.informes-view .main-container,
+.informes-view .content-container,
+.informes-view .scroll-pane,
+.informes-view .scroll-pane > .viewport,
+.informes-view #mainContainer,
+.informes-view #contentContainer,
+.informes-view #scrollPane,
+.informes-view .metrics-container,
+.informes-view .charts-container,
+.informes-view .reports-grid {
+    -fx-background-color: transparent !important;
+    -fx-border-color: transparent !important;
+    -fx-border-width: 0px !important;
+}
+
+/* SOLO contenedores VBox, HBox, BorderPane, ScrollPane, GridPane principales - NO tarjetas individuales */
+.informes-view > VBox,
+.informes-view > HBox,
+.informes-view > BorderPane,
+.informes-view > ScrollPane,
+.informes-view > GridPane,
+.informes-container > VBox,
+.informes-container > HBox,
+.informes-container > BorderPane,
+.informes-container > ScrollPane,
+.informes-container > GridPane {
+    -fx-background-color: transparent !important;
+    -fx-border-color: transparent !important;
+    -fx-border-width: 0px !important;
+}
