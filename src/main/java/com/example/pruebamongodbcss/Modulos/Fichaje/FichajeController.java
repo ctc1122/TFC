@@ -128,34 +128,6 @@ public class FichajeController implements Initializable {
             // Inicializar gestor de socket
             gestorSocket = GestorSocket.getInstance();
             
-            // Aplicar tema oscuro si está activo - mejorado
-            Platform.runLater(() -> {
-                try {
-                    // Buscar el nodo raíz más apropiado
-                    javafx.scene.Node rootNode = null;
-                    if (panelSeleccionModulos != null && panelSeleccionModulos.getScene() != null) {
-                        rootNode = panelSeleccionModulos.getScene().getRoot();
-                    } else if (panelSeleccionModulos != null && panelSeleccionModulos.getParent() != null) {
-                        // Buscar hacia arriba hasta encontrar el nodo raíz
-                        javafx.scene.Parent parent = panelSeleccionModulos.getParent();
-                        while (parent.getParent() != null) {
-                            parent = parent.getParent();
-                        }
-                        rootNode = parent;
-                    }
-                    
-                    // Aplicar tema oscuro si está activo
-                    if (rootNode != null && com.example.pruebamongodbcss.theme.ThemeManager.getInstance().isDarkTheme()) {
-                        if (!rootNode.getStyleClass().contains("dark-theme")) {
-                            rootNode.getStyleClass().add("dark-theme");
-                        }
-                        System.out.println("Tema oscuro aplicado al módulo de fichaje");
-                    }
-                } catch (Exception e) {
-                    System.err.println("Error al aplicar tema: " + e.getMessage());
-                }
-            });
-            
             // Configurar tabla de historial
             configurarTablaHistorial();
             

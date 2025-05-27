@@ -30,12 +30,12 @@
 
 /* ===== PANEL PRINCIPAL DEL MÓDULO DE FICHAJE ===== */
 .fichaje-main-panel {
-    -fx-background-color: #ffffff;
+    -fx-background-color: #ffffff !important;
 }
 
 /* ===== FONDO PARA MODO OSCURO ===== */
 .dark-theme .fichaje-main-panel {
-    -fx-background-color: linear-gradient(to bottom, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%) !important;
+    -fx-background-color: #1a1a1a !important;
 }
 
 .dark-theme .header-container {
@@ -54,11 +54,11 @@
     -fx-font-size: 32px;
     -fx-font-weight: bold;
     -fx-text-alignment: CENTER;
-    -fx-text-fill: #1a1a1a;
+    -fx-text-fill: #1a1a1a !important;
 }
 
 .dark-theme .selection-title {
-    -fx-text-fill: #E8E8E8 !important;
+    -fx-text-fill: #ffffff !important;
 }
 
 .cards-container {
@@ -127,11 +127,11 @@
     -fx-font-size: 22px;
     -fx-font-weight: bold;
     -fx-text-alignment: CENTER;
-    -fx-text-fill: #1a1a1a;
+    -fx-text-fill: #1a1a1a !important;
 }
 
 .dark-theme .card-title {
-    -fx-text-fill: #F0F0F0 !important;
+    -fx-text-fill: #ffffff !important;
 }
 
 .card-content {
@@ -143,22 +143,22 @@
     -fx-font-size: 14px;
     -fx-text-alignment: CENTER;
     -fx-wrap-text: true;
-    -fx-text-fill: #555555;
+    -fx-text-fill: #555555 !important;
 }
 
 .dark-theme .card-description {
-    -fx-text-fill: #B0B0B0 !important;
+    -fx-text-fill: #cccccc !important;
 }
 
 .card-subtitle {
     -fx-font-size: 16px;
     -fx-font-weight: 600;
     -fx-text-alignment: CENTER;
-    -fx-text-fill: #333333;
+    -fx-text-fill: #333333 !important;
 }
 
 .dark-theme .card-subtitle {
-    -fx-text-fill: #C0C0C0 !important;
+    -fx-text-fill: #e0e0e0 !important;
 }
 
 .card-footer {
@@ -298,41 +298,41 @@
 .module-title {
     -fx-font-size: 24px;
     -fx-font-weight: bold;
-    -fx-text-fill: #1a1a1a;
+    -fx-text-fill: #1a1a1a !important;
 }
 
 .dark-theme .module-title {
-    -fx-text-fill: #F5F5F5 !important;
+    -fx-text-fill: #ffffff !important;
 }
 
 .section-title {
     -fx-font-size: 20px;
     -fx-font-weight: bold;
-    -fx-text-fill: #1a1a1a;
+    -fx-text-fill: #1a1a1a !important;
 }
 
 .dark-theme .section-title {
-    -fx-text-fill: #F5F5F5 !important;
+    -fx-text-fill: #ffffff !important;
 }
 
 .section-subtitle {
     -fx-font-size: 16px;
     -fx-font-weight: 600;
-    -fx-text-fill: #34495E;
+    -fx-text-fill: #333333 !important;
 }
 
 .dark-theme .section-subtitle {
-    -fx-text-fill: #D5D5D5 !important;
+    -fx-text-fill: #e0e0e0 !important;
 }
 
 .field-label {
     -fx-font-size: 13px;
     -fx-font-weight: 500;
-    -fx-text-fill: #1a1a1a;
+    -fx-text-fill: #1a1a1a !important;
 }
 
 .dark-theme .field-label {
-    -fx-text-fill: #C5C5C5 !important;
+    -fx-text-fill: #cccccc !important;
 }
 
 .info-value {
@@ -344,13 +344,13 @@
 .user-info-label, .status-label, .filter-label {
     -fx-font-size: 13px;
     -fx-font-weight: 500;
-    -fx-text-fill: #1a1a1a;
+    -fx-text-fill: #1a1a1a !important;
 }
 
 .dark-theme .user-info-label, 
 .dark-theme .status-label, 
 .dark-theme .filter-label {
-    -fx-text-fill: #C5C5C5 !important;
+    -fx-text-fill: #cccccc !important;
 }
 
 .user-name {
@@ -545,11 +545,11 @@
     -fx-font-weight: 500;
     -fx-text-alignment: CENTER;
     -fx-wrap-text: true;
-    -fx-text-fill: #2C3E50;
+    -fx-text-fill: #2C3E50 !important;
 }
 
 .dark-theme .stat-label {
-    -fx-text-fill: #BDC3C7 !important;
+    -fx-text-fill: #cccccc !important;
 }
 
 /* ===== INFO CARDS ===== */
@@ -842,16 +842,16 @@
 .module-title, .section-title, .section-subtitle, .field-label, 
 .user-info-label, .status-label, .filter-label, .stat-label,
 .card-title, .card-subtitle, .card-description, .status-text {
-    -fx-text-fill: #2C3E50;
+    -fx-text-fill: #2C3E50 !important;
 }
 
 .dark-theme .module-title, 
 .dark-theme .section-title {
-    -fx-text-fill: #F5F5F5 !important;
+    -fx-text-fill: #ffffff !important;
 }
 
 .dark-theme .section-subtitle {
-    -fx-text-fill: #D5D5D5 !important;
+    -fx-text-fill: #e0e0e0 !important;
 }
 
 .dark-theme .field-label,
@@ -861,9 +861,9 @@
 .dark-theme .stat-label,
 .dark-theme .status-text,
 .dark-theme .date-display {
-    -fx-text-fill: #C5C5C5 !important;
+    -fx-text-fill: #cccccc !important;
 }
 
 .dark-theme .card-title {
-    -fx-text-fill: #FFFFFF !important;
+    -fx-text-fill: #ffffff !important;
 } 
