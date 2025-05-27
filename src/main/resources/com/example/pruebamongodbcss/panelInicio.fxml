@@ -45,6 +45,7 @@
                      <JFXButton fx:id="btnEmpresa" styleClass="itemMenu" prefWidth="200" text="Empresa" alignment="BASELINE_LEFT" />
                      <JFXButton fx:id="btnChat" text="Chat" styleClass="itemMenu" alignment="BASELINE_LEFT" prefWidth="200"/>
                      <JFXButton fx:id="btnFacturacion" text="Facturación" styleClass="itemMenu" alignment="BASELINE_LEFT" prefWidth="200"/>
+                     <JFXButton fx:id="btnInformes" text="Informes" styleClass="itemMenu" alignment="BASELINE_LEFT" prefWidth="200"/>
                      <JFXButton fx:id="btnSalir" styleClass="itemMenu,item-salir" prefWidth="200" text="Cerrar sesión" alignment="BASELINE_LEFT" />
                   </children>
                </VBox>
@@ -98,6 +99,7 @@
                   <JFXButton fx:id="btnEmpresaCarousel" styleClass="boton-carrusel" prefWidth="50" prefHeight="50" visible="false" />
                  <JFXButton fx:id="btnChatCarousel" styleClass="boton-carrusel" prefWidth="50" prefHeight="50" visible="false" />
                   <JFXButton fx:id="btnFacturacionCarousel" styleClass="boton-carrusel" prefWidth="50" prefHeight="50" visible="false" />
+                  <JFXButton fx:id="btnInformesCarousel" styleClass="boton-carrusel" prefWidth="50" prefHeight="50" visible="false" />
                   <JFXButton fx:id="btnSalirCarousel" styleClass="boton-carrusel" prefWidth="50" prefHeight="50" visible="false" />
                </children>
             </Pane>
