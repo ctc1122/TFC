@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 import com.example.pruebamongodbcss.Data.Usuario;
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXDatePicker;
 
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -16,6 +14,8 @@ import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Button;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -25,16 +25,16 @@ import javafx.scene.layout.VBox;
 public class ReporteVentasController implements Initializable {
 
     @FXML
-    private JFXDatePicker fechaInicio;
+    private DatePicker fechaInicio;
     
     @FXML
-    private JFXDatePicker fechaFin;
+    private DatePicker fechaFin;
     
     @FXML
-    private JFXButton btnGenerar;
+    private Button btnGenerar;
     
     @FXML
-    private JFXButton btnExportar;
+    private Button btnExportar;
     
     @FXML
     private Label lblTotalVentas;

@@ -14,6 +14,7 @@ import javafx.animation.FadeTransition;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -25,8 +26,12 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -428,28 +433,198 @@ public class InformesController implements Initializable {
     }
     
     private void abrirReporteClientes() {
-        // Implementar reporte de clientes
-        System.out.println("Abriendo reporte de clientes...");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Informes/reporte-clientes.fxml"));
+            Parent reporteView = ThemeUtil.loadWithTheme(loader);
+            
+            ReporteClientesController controller = loader.getController();
+            if (controller != null) {
+                controller.setUsuarioActual(usuarioActual);
+            }
+            
+            mainContainer.setCenter(reporteView);
+        } catch (IOException e) {
+            System.err.println("Error al cargar reporte de clientes: " + e.getMessage());
+        }
     }
     
     private void abrirReporteFichajes() {
-        // Implementar reporte de fichajes
-        System.out.println("Abriendo reporte de fichajes...");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Informes/reporte-empleados.fxml"));
+            Parent reporteView = ThemeUtil.loadWithTheme(loader);
+            
+            ReporteEmpleadosController controller = loader.getController();
+            if (controller != null) {
+                controller.setUsuarioActual(usuarioActual);
+            }
+            
+            mainContainer.setCenter(reporteView);
+        } catch (IOException e) {
+            System.err.println("Error al cargar reporte de empleados: " + e.getMessage());
+        }
     }
     
     private void abrirReporteCitas() {
-        // Implementar reporte de citas
-        System.out.println("Abriendo reporte de citas...");
+        // Mostrar análisis comparativo anual
+        mostrarAnalisisComparativo();
+    }
+    
+    private void mostrarAnalisisComparativo() {
+        try {
+            // Crear una vista de análisis comparativo
+            VBox comparativoContainer = new VBox();
+            comparativoContainer.setSpacing(20);
+            comparativoContainer.setStyle("-fx-padding: 20; -fx-background-color: #f8f9fa;");
+            
+            // Título
+            Label titulo = new Label("Análisis Comparativo Anual");
+            titulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;");
+            
+            // Botón volver
+            Button btnVolver = new Button("← Volver al Dashboard");
+            btnVolver.setStyle("-fx-background-color: #6c757d; -fx-text-fill: white; -fx-background-radius: 5;");
+            btnVolver.setOnAction(e -> cargarDashboard());
+            
+            HBox header = new HBox();
+            header.setSpacing(20);
+            header.getChildren().addAll(titulo, btnVolver);
+            
+            // Obtener datos comparativos
+            ServicioInformes.ComparativaAnual comparativa = servicioInformes.obtenerComparativaAnual();
+            
+            // Métricas comparativas
+            HBox metricas = new HBox();
+            metricas.setSpacing(40);
+            metricas.setAlignment(Pos.CENTER);
+            
+            VBox metricaActual = new VBox();
+            metricaActual.setAlignment(Pos.CENTER);
+            metricaActual.setSpacing(10);
+            metricaActual.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;");
+            metricaActual.getChildren().addAll(
+                new Label("Año Actual"),
+                new Label(formatoMoneda.format(comparativa.getTotalAnoActual()))
+            );
+            
+            VBox metricaAnterior = new VBox();
+            metricaAnterior.setAlignment(Pos.CENTER);
+            metricaAnterior.setSpacing(10);
+            metricaAnterior.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;");
+            metricaAnterior.getChildren().addAll(
+                new Label("Año Anterior"),
+                new Label(formatoMoneda.format(comparativa.getTotalAnoAnterior()))
+            );
+            
+            VBox metricaCrecimiento = new VBox();
+            metricaCrecimiento.setAlignment(Pos.CENTER);
+            metricaCrecimiento.setSpacing(10);
+            metricaCrecimiento.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;");
+            metricaCrecimiento.getChildren().addAll(
+                new Label("Crecimiento"),
+                new Label(formatoPorcentaje.format(comparativa.getPorcentajeCrecimiento() / 100.0))
+            );
+            
+            metricas.getChildren().addAll(metricaActual, metricaAnterior, metricaCrecimiento);
+            
+            // Gráfico comparativo
+            CategoryAxis xAxis = new CategoryAxis();
+            NumberAxis yAxis = new NumberAxis();
+            LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
+            chart.setTitle("Comparativa de Ventas por Mes");
+            chart.setPrefHeight(400);
+            
+            XYChart.Series<String, Number> serieActual = new XYChart.Series<>();
+            serieActual.setName("Año Actual");
+            
+            XYChart.Series<String, Number> serieAnterior = new XYChart.Series<>();
+            serieAnterior.setName("Año Anterior");
+            
+            for (ServicioInformes.DatoGrafico dato : comparativa.getVentasAnoActual()) {
+                serieActual.getData().add(new XYChart.Data<>(dato.getEtiqueta(), dato.getValor()));
+            }
+            
+            for (ServicioInformes.DatoGrafico dato : comparativa.getVentasAnoAnterior()) {
+                serieAnterior.getData().add(new XYChart.Data<>(dato.getEtiqueta(), dato.getValor()));
+            }
+            
+            chart.getData().addAll(serieActual, serieAnterior);
+            
+            VBox chartContainer = new VBox();
+            chartContainer.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;");
+            chartContainer.getChildren().add(chart);
+            
+            comparativoContainer.getChildren().addAll(header, metricas, chartContainer);
+            
+            mainContainer.setCenter(comparativoContainer);
+            
+        } catch (Exception e) {
+            System.err.println("Error al mostrar análisis comparativo: " + e.getMessage());
+        }
     }
     
     private void abrirReporteFinanciero() {
-        // Implementar reporte financiero
-        System.out.println("Abriendo reporte financiero...");
+        // Redirigir al reporte de ventas con análisis financiero extendido
+        abrirReporteVentas();
     }
     
     private void abrirReporteInventario() {
-        // Implementar reporte de inventario
-        System.out.println("Abriendo reporte de inventario...");
+        // Implementar reporte de inventario/servicios
+        System.out.println("Abriendo análisis de servicios más demandados...");
+        mostrarAnalisisServicios();
+    }
+    
+    private void mostrarAnalisisServicios() {
+        try {
+            // Crear una vista rápida de análisis de servicios
+            VBox analisisContainer = new VBox();
+            analisisContainer.setSpacing(20);
+            analisisContainer.setStyle("-fx-padding: 20; -fx-background-color: #f8f9fa;");
+            
+            // Título
+            Label titulo = new Label("Análisis de Servicios Más Demandados");
+            titulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;");
+            
+            // Botón volver
+            Button btnVolver = new Button("← Volver al Dashboard");
+            btnVolver.setStyle("-fx-background-color: #6c757d; -fx-text-fill: white; -fx-background-radius: 5;");
+            btnVolver.setOnAction(e -> cargarDashboard());
+            
+            HBox header = new HBox();
+            header.setSpacing(20);
+            header.getChildren().addAll(titulo, btnVolver);
+            
+            // Obtener datos de servicios
+            List<ServicioInformes.ServicioVendido> topServicios = servicioInformes.obtenerTopServicios(10);
+            
+            // Crear tabla de servicios
+            TableView<ServicioInformes.ServicioVendido> tablaServicios = new TableView<>();
+            
+            TableColumn<ServicioInformes.ServicioVendido, String> colNombre = new TableColumn<>("Servicio");
+            colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
+            colNombre.setPrefWidth(300);
+            
+            TableColumn<ServicioInformes.ServicioVendido, Integer> colCantidad = new TableColumn<>("Cantidad");
+            colCantidad.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
+            colCantidad.setPrefWidth(150);
+            
+            TableColumn<ServicioInformes.ServicioVendido, String> colTotal = new TableColumn<>("Total Facturado");
+            colTotal.setCellValueFactory(cellData -> {
+                double total = cellData.getValue().getTotal();
+                return new SimpleStringProperty(formatoMoneda.format(total));
+            });
+            colTotal.setPrefWidth(150);
+            
+            tablaServicios.getColumns().addAll(colNombre, colCantidad, colTotal);
+            tablaServicios.getItems().addAll(topServicios);
+            tablaServicios.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
+            
+            analisisContainer.getChildren().addAll(header, tablaServicios);
+            
+            mainContainer.setCenter(analisisContainer);
+            
+        } catch (Exception e) {
+            System.err.println("Error al mostrar análisis de servicios: " + e.getMessage());
+        }
     }
     
     @FXML
