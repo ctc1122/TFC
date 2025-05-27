@@ -231,6 +231,30 @@ public class ThemeManager {
                     node.getStyleClass().add("hardcoded-white-bg");
                 }
             }
+            
+            // Eliminar bordes naranjas hardcodeados
+            if (style.contains("#DDA15E") || style.contains("DDA15E")) {
+                // Eliminar el estilo de borde naranja del estilo inline
+                String newStyle = style.replaceAll("-fx-border-color\\s*:\\s*#?DDA15E\\s*;?", "");
+                newStyle = newStyle.replaceAll("-fx-border-width\\s*:\\s*[^;]*;?", "");
+                node.setStyle(newStyle.trim().isEmpty() ? null : newStyle);
+            }
+        }
+        
+        // Forzar eliminación de bordes naranjas en todos los contenedores
+        if (node instanceof javafx.scene.layout.Region) {
+            javafx.scene.layout.Region region = (javafx.scene.layout.Region) node;
+            String className = node.getClass().getSimpleName().toLowerCase();
+            
+            if (className.contains("vbox") || className.contains("hbox") || 
+                className.contains("borderpane") || className.contains("gridpane") ||
+                className.contains("scrollpane")) {
+                
+                // Agregar clase para eliminar bordes
+                if (!node.getStyleClass().contains("no-orange-borders")) {
+                    node.getStyleClass().add("no-orange-borders");
+                }
+            }
         }
         
         // Procesar recursivamente todos los nodos hijos

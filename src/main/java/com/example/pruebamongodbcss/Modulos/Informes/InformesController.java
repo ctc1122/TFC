@@ -236,20 +236,26 @@ public class InformesController implements Initializable {
         
         // Contenedores para los gráficos
         VBox ventasContainer = new VBox();
-        ventasContainer.getChildren().addAll(
-            new Label("Ventas Mensuales"),
-            ventasChart
-        );
+        
+        Label ventasTitle = new Label("Ventas Mensuales");
+        ventasTitle.getStyleClass().addAll("informes-section-title", "subtitle-label");
+        
+        ventasContainer.getChildren().addAll(ventasTitle, ventasChart);
         ventasContainer.setSpacing(10);
         ventasContainer.setPrefWidth(400);
+        ventasContainer.getStyleClass().add("chart-container");
+        ThemeUtil.applyCardTheme(ventasContainer);
         
         VBox citasContainer = new VBox();
-        citasContainer.getChildren().addAll(
-            new Label("Distribución de Citas"),
-            citasChart
-        );
+        
+        Label citasTitle = new Label("Distribución de Citas");
+        citasTitle.getStyleClass().addAll("informes-section-title", "subtitle-label");
+        
+        citasContainer.getChildren().addAll(citasTitle, citasChart);
         citasContainer.setSpacing(10);
         citasContainer.setPrefWidth(400);
+        citasContainer.getStyleClass().add("chart-container");
+        ThemeUtil.applyCardTheme(citasContainer);
         
         chartsContainer.getChildren().addAll(ventasContainer, citasContainer);
         chartsContainer.setSpacing(30);
@@ -460,7 +466,7 @@ public class InformesController implements Initializable {
             
             // Título
             Label titulo = new Label("Análisis Comparativo Anual");
-            titulo.getStyleClass().addAll("title-label");
+            titulo.getStyleClass().addAll("informes-section-title", "title-label");
             
             // Botón volver
             Button btnVolver = new Button("← Volver al Dashboard");
@@ -482,35 +488,44 @@ public class InformesController implements Initializable {
             VBox metricaActual = new VBox();
             metricaActual.setAlignment(Pos.CENTER);
             metricaActual.setSpacing(10);
-            metricaActual.getStyleClass().addAll("module-card");
+            metricaActual.getStyleClass().addAll("module-card", "metric-card");
             metricaActual.setPadding(new Insets(20));
             ThemeUtil.applyCardTheme(metricaActual);
-            metricaActual.getChildren().addAll(
-                new Label("Año Actual"),
-                new Label(formatoMoneda.format(comparativa.getTotalAnoActual()))
-            );
+            
+            Label labelActual = new Label("Año Actual");
+            labelActual.getStyleClass().addAll("metric-title", "subtitle-label");
+            Label valorActual = new Label(formatoMoneda.format(comparativa.getTotalAnoActual()));
+            valorActual.getStyleClass().addAll("metric-value", "title-label");
+            
+            metricaActual.getChildren().addAll(labelActual, valorActual);
             
             VBox metricaAnterior = new VBox();
             metricaAnterior.setAlignment(Pos.CENTER);
             metricaAnterior.setSpacing(10);
-            metricaAnterior.getStyleClass().addAll("module-card");
+            metricaAnterior.getStyleClass().addAll("module-card", "metric-card");
             metricaAnterior.setPadding(new Insets(20));
             ThemeUtil.applyCardTheme(metricaAnterior);
-            metricaAnterior.getChildren().addAll(
-                new Label("Año Anterior"),
-                new Label(formatoMoneda.format(comparativa.getTotalAnoAnterior()))
-            );
+            
+            Label labelAnterior = new Label("Año Anterior");
+            labelAnterior.getStyleClass().addAll("metric-title", "subtitle-label");
+            Label valorAnterior = new Label(formatoMoneda.format(comparativa.getTotalAnoAnterior()));
+            valorAnterior.getStyleClass().addAll("metric-value", "title-label");
+            
+            metricaAnterior.getChildren().addAll(labelAnterior, valorAnterior);
             
             VBox metricaCrecimiento = new VBox();
             metricaCrecimiento.setAlignment(Pos.CENTER);
             metricaCrecimiento.setSpacing(10);
-            metricaCrecimiento.getStyleClass().addAll("module-card");
+            metricaCrecimiento.getStyleClass().addAll("module-card", "metric-card");
             metricaCrecimiento.setPadding(new Insets(20));
             ThemeUtil.applyCardTheme(metricaCrecimiento);
-            metricaCrecimiento.getChildren().addAll(
-                new Label("Crecimiento"),
-                new Label(formatoPorcentaje.format(comparativa.getPorcentajeCrecimiento() / 100.0))
-            );
+            
+            Label labelCrecimiento = new Label("Crecimiento");
+            labelCrecimiento.getStyleClass().addAll("metric-title", "subtitle-label");
+            Label valorCrecimiento = new Label(formatoPorcentaje.format(comparativa.getPorcentajeCrecimiento() / 100.0));
+            valorCrecimiento.getStyleClass().addAll("metric-value", "title-label");
+            
+            metricaCrecimiento.getChildren().addAll(labelCrecimiento, valorCrecimiento);
             
             metricas.getChildren().addAll(metricaActual, metricaAnterior, metricaCrecimiento);
             
@@ -576,7 +591,7 @@ public class InformesController implements Initializable {
             
             // Título
             Label titulo = new Label("Análisis de Servicios Más Demandados");
-            titulo.getStyleClass().addAll("title-label");
+            titulo.getStyleClass().addAll("informes-section-title", "title-label");
             
             // Botón volver
             Button btnVolver = new Button("← Volver al Dashboard");

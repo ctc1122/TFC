@@ -20,16 +20,18 @@
 /* Estilos de tablas - Tema claro */
 .table-view {
     -fx-background-color: #FFFFFF;
-    -fx-border-color: #DDA15E;
+    -fx-border-color: transparent;
     -fx-border-radius: 4px;
+    -fx-border-width: 0px;
+    -fx-effect: dropshadow(gaussian, rgba(40, 54, 24, 0.2), 10, 0, 0, 3);
 }
 
 .table-view .column-header {
     -fx-background-color: #606C38;
     -fx-text-fill: #FEFAE0;
     -fx-font-weight: bold;
-    -fx-border-width: 0 1px 0 0;
-    -fx-border-color: #DDA15E;
+    -fx-border-width: 0;
+    -fx-border-color: transparent;
 }
 
 .table-view .column-header-background .label {
@@ -41,8 +43,8 @@
 .table-view .table-cell {
     -fx-alignment: center-left;
     -fx-padding: 10px 5px;
-    -fx-border-width: 0 0 1px 0;
-    -fx-border-color: #DDA15E;
+    -fx-border-width: 0;
+    -fx-border-color: transparent;
     -fx-text-fill: #283618;
 }
 
@@ -345,10 +347,11 @@
 .stat-card,
 .card-container {
     -fx-background-color: #FFFFFF !important;
-    -fx-border-color: #DDA15E !important;
-    -fx-border-width: 1px;
+    -fx-border-color: transparent !important;
+    -fx-border-width: 0px;
     -fx-border-radius: 8px;
     -fx-background-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(40, 54, 24, 0.2), 10, 0, 0, 3);
 }
 
 .dark-theme .metric-card,
@@ -357,5 +360,6 @@
 .dark-theme .stat-card,
 .dark-theme .card-container {
     -fx-background-color: #2d2d2d !important;
-    -fx-border-color: #383b45 !important;
+    -fx-border-color: transparent !important;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 10, 0, 0, 3);
 } 
