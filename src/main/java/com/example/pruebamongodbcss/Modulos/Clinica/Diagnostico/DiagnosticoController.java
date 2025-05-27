@@ -21,17 +21,13 @@ import com.example.pruebamongodbcss.Modulos.Clinica.ModeloDiagnostico;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario;
 import com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica;
-import com.example.pruebamongodbcss.Modulos.Facturacion.FacturacionController;
 import com.itextpdf.text.DocumentException;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
@@ -45,7 +41,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 /**
@@ -82,7 +77,6 @@ public class DiagnosticoController implements Initializable {
     // Exportación
     @FXML private Button btnExportarPDF;
     @FXML private Button btnExportarCSV;
-    @FXML private Button btnFacturar;
     
     @FXML private TextArea txtTratamiento;
     @FXML private TextArea txtObservaciones;
@@ -95,6 +89,7 @@ public class DiagnosticoController implements Initializable {
     private ModeloDiagnosticoUMLS diagnosticoSeleccionado;
     private ModeloPaciente paciente;
     private ModeloDiagnostico diagnosticoActual;
+    private ModeloCita citaActual;
     
     // Servicios
     private final ServicioClinica servicioClinica = new ServicioClinica();
@@ -315,6 +310,7 @@ public class DiagnosticoController implements Initializable {
      */
     public void setPaciente(ModeloPaciente paciente, ModeloCita citaSeleccionada) {
         this.paciente = paciente;
+        this.citaActual = citaSeleccionada;
         actualizarDatosPaciente();
         if (citaSeleccionada != null) {
             String fecha = citaSeleccionada.getFechaHora().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
@@ -473,12 +469,32 @@ public class DiagnosticoController implements Initializable {
         ObjectId id = servicioClinica.guardarDiagnostico(diagnostico);
         if (id != null) {
             diagnostico.setId(id);
-            mostrarInformacion("Diagnóstico guardado", 
-                    "El diagnóstico ha sido guardado correctamente");
-            
-            // Llamar al callback si está configurado
-            if (onGuardarCallback != null) {
-                onGuardarCallback.run();
+            // Cambiar estado de la cita a 'PENDIENTE_DE_FACTURAR' si hay cita asociada
+            if (citaActual != null && citaActual.getId() != null) {
+                executorService.submit(() -> {
+                    boolean actualizado = servicioClinica.cambiarEstadoCita(citaActual.getId(), com.example.pruebamongodbcss.Data.EstadoCita.PENDIENTE_DE_FACTURAR);
+                    Platform.runLater(() -> {
+                        if (actualizado) {
+                            mostrarInformacion("Diagnóstico guardado", "El diagnóstico ha sido guardado y la cita está pendiente de facturar.");
+                        } else {
+                            mostrarError("Advertencia", "El diagnóstico se guardó pero no se pudo actualizar el estado de la cita.");
+                        }
+                        // Cerrar la ventana de forma segura
+                        Stage stage = (Stage) contenedorPrincipal.getScene().getWindow();
+                        stage.close();
+                        if (onGuardarCallback != null) {
+                            onGuardarCallback.run();
+                        }
+                    });
+                });
+            } else {
+                mostrarInformacion("Diagnóstico guardado", "El diagnóstico ha sido guardado correctamente");
+                // Cerrar la ventana de forma segura
+                Stage stage = (Stage) contenedorPrincipal.getScene().getWindow();
+                stage.close();
+                if (onGuardarCallback != null) {
+                    onGuardarCallback.run();
+                }
             }
         } else {
             mostrarError("Error al guardar", 
@@ -759,47 +775,6 @@ public class DiagnosticoController implements Initializable {
     public void cancelar() {
         if (onCancelarCallback != null) {
             onCancelarCallback.run();
-        }
-    }
-    
-    /**
-     * Abre el módulo de facturación con los datos del diagnóstico
-     */
-    @FXML
-    public void facturarDiagnostico() {
-        if (paciente == null) {
-            mostrarError("Error", "No hay paciente seleccionado para facturar");
-            return;
-        }
-        
-        try {
-            // Obtener datos del propietario
-            ModeloPropietario propietario = servicioClinica.obtenerPropietarioPorId(paciente.getPropietarioId());
-            if (propietario == null) {
-                mostrarError("Error", "No se pudo encontrar el propietario del paciente");
-                return;
-            }
-            
-            // Cargar el módulo de facturación
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Facturacion/facturacion-view.fxml"));
-            Parent root = loader.load();
-            
-            FacturacionController facturacionController = loader.getController();
-            
-            // Crear nueva factura desde el diagnóstico
-            // Nota: Si hay una cita asociada, se puede pasar, sino null
-            facturacionController.crearFacturaDesdeCita(null, paciente, propietario);
-            
-            Stage stage = new Stage();
-            stage.setTitle("Facturación - Diagnóstico: " + paciente.getNombre());
-            stage.initModality(Modality.APPLICATION_MODAL);
-            stage.setScene(new Scene(root));
-            stage.setResizable(true);
-            stage.showAndWait();
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            mostrarError("Error", "No se pudo abrir el módulo de facturación: " + e.getMessage());
         }
     }
 } 

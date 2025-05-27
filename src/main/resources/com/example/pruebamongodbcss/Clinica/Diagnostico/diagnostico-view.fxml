@@ -155,7 +155,6 @@
                 <Region HBox.hgrow="ALWAYS" />
                 <Button fx:id="btnExportarPDF" mnemonicParsing="false" onAction="#exportarPDF" styleClass="button-export" text="Exportar a PDF" />
                 <Button fx:id="btnExportarCSV" mnemonicParsing="false" onAction="#exportarCSV" styleClass="button-export" text="Exportar a CSV" />
-                <Button fx:id="btnFacturar" mnemonicParsing="false" onAction="#facturarDiagnostico" styleClass="button-success" text="Facturar" />
                 <Button fx:id="btnCancelar" cancelButton="true" mnemonicParsing="false" onAction="#cancelar" styleClass="button-cancel" text="Cancelar" />
                 <Button fx:id="btnGuardar" defaultButton="true" mnemonicParsing="false" onAction="#guardarDiagnostico" styleClass="button-primary" text="Guardar" />
             </HBox>
