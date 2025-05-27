@@ -7,6 +7,8 @@ import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
 import com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica;
 import com.example.pruebamongodbcss.Modulos.Clinica.PacienteEditRowController;
+import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -55,6 +57,7 @@ public class CitaFormularioController implements Initializable {
     @FXML private Button btnGuardar;
     
     private ServicioClinica servicio;
+    private GestorSocket gestorSocket;
     private ModeloCita cita;
     private boolean esEdicion = false;
     private Runnable citaGuardadaCallback;
@@ -163,6 +166,17 @@ public class CitaFormularioController implements Initializable {
     }
     
     /**
+     * Establece el gestor de socket
+     */
+    public void setGestorSocket(GestorSocket gestorSocket) {
+        this.gestorSocket = gestorSocket;
+        
+        // Cargar datos iniciales
+        cargarPacientes();
+        cargarVeterinarios();
+    }
+    
+    /**
      * Establece el callback a ejecutar cuando se guarda una cita
      */
     public void setCitaGuardadaCallback(Runnable callback) {
@@ -200,9 +214,25 @@ public class CitaFormularioController implements Initializable {
      * Carga la lista de pacientes
      */
     private void cargarPacientes() {
-        if (servicio != null) {
-            pacientesObservable.clear();
-            
+        pacientesObservable.clear();
+        
+        if (gestorSocket != null) {
+            // Usar gestorSocket
+            try {
+                gestorSocket.enviarPeticion(Protocolo.OBTENER_TODOS_PACIENTES + Protocolo.SEPARADOR_CODIGO);
+                
+                int codigo = gestorSocket.getEntrada().readInt();
+                if (codigo == Protocolo.OBTENER_TODOS_PACIENTES_RESPONSE) {
+                    @SuppressWarnings("unchecked")
+                    List<ModeloPaciente> pacientes = (List<ModeloPaciente>) gestorSocket.getEntrada().readObject();
+                    pacientesObservable.addAll(pacientes);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.err.println("Error al cargar pacientes: " + e.getMessage());
+            }
+        } else if (servicio != null) {
+            // Usar servicio directo (compatibilidad)
             List<ModeloPaciente> pacientes = servicio.obtenerTodosPacientes();
             pacientesObservable.addAll(pacientes);
         }
@@ -212,11 +242,34 @@ public class CitaFormularioController implements Initializable {
      * Carga la lista de veterinarios
      */
     private void cargarVeterinarios() {
-        if (servicio != null) {
-            List<String> veterinarios = new ArrayList<>();
-            mapaVeterinariosId.clear();
-            
-            // Cargar veterinarios desde la base de datos
+        List<String> veterinarios = new ArrayList<>();
+        mapaVeterinariosId.clear();
+        
+        if (gestorSocket != null) {
+            // Usar gestorSocket
+            try {
+                gestorSocket.enviarPeticion(Protocolo.GETALLVETERINARIOS + Protocolo.SEPARADOR_CODIGO);
+                gestorSocket.getSalida().writeObject(Usuario.Rol.VETERINARIO);
+                gestorSocket.getSalida().flush();
+                
+                int codigo = gestorSocket.getEntrada().readInt();
+                if (codigo == Protocolo.GETALLVETERINARIOS_RESPONSE) {
+                    @SuppressWarnings("unchecked")
+                    List<Usuario> listaVeterinarios = (List<Usuario>) gestorSocket.getEntrada().readObject();
+                    
+                    // Convertir la lista de objetos Usuario a una lista de nombres
+                    for (Usuario veterinario : listaVeterinarios) {
+                        String nombreCompleto = "Dr. " + veterinario.getNombre() + " " + veterinario.getApellido();
+                        veterinarios.add(nombreCompleto);
+                        mapaVeterinariosId.put(nombreCompleto, veterinario.getId());
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.err.println("Error al cargar veterinarios: " + e.getMessage());
+            }
+        } else if (servicio != null) {
+            // Usar servicio directo (compatibilidad)
             ServicioUsuarios servicioUsuarios = new ServicioUsuarios();
             List<Usuario> listaVeterinarios = servicioUsuarios.buscarVeterinarios();
             
@@ -226,19 +279,19 @@ public class CitaFormularioController implements Initializable {
                 veterinarios.add(nombreCompleto);
                 mapaVeterinariosId.put(nombreCompleto, veterinario.getId());
             }
-            
-            // Si no hay veterinarios en la base de datos, usar datos de ejemplo
-            if (veterinarios.isEmpty()) {
-                veterinarios.add("Dr. Juan Pérez");
-                veterinarios.add("Dra. María González");
-                veterinarios.add("Dr. Carlos Rodríguez");
-            }
-            
-            cmbVeterinario.setItems(FXCollections.observableArrayList(veterinarios));
-            
-            if (!veterinarios.isEmpty()) {
-                cmbVeterinario.getSelectionModel().select(0);
-            }
+        }
+        
+        // Si no hay veterinarios en la base de datos, usar datos de ejemplo
+        if (veterinarios.isEmpty()) {
+            veterinarios.add("Dr. Juan Pérez");
+            veterinarios.add("Dra. María González");
+            veterinarios.add("Dr. Carlos Rodríguez");
+        }
+        
+        cmbVeterinario.setItems(FXCollections.observableArrayList(veterinarios));
+        
+        if (!veterinarios.isEmpty()) {
+            cmbVeterinario.getSelectionModel().select(0);
         }
     }
     
@@ -397,7 +450,31 @@ public class CitaFormularioController implements Initializable {
         }
         
         // Validar que no haya conflicto de horarios
-        if (servicio.hayConflictoHorario(fechaHora, DURACION_CITA_MINUTOS, citaId)) {
+        boolean hayConflicto = false;
+        if (gestorSocket != null) {
+            // Usar gestorSocket
+            try {
+                gestorSocket.enviarPeticion(Protocolo.HAY_CONFLICTO_HORARIO + Protocolo.SEPARADOR_CODIGO);
+                gestorSocket.getSalida().writeObject(fechaHora);
+                gestorSocket.getSalida().writeInt(DURACION_CITA_MINUTOS);
+                gestorSocket.getSalida().writeObject(citaId);
+                gestorSocket.getSalida().flush();
+                
+                int codigo = gestorSocket.getEntrada().readInt();
+                if (codigo == Protocolo.HAY_CONFLICTO_HORARIO_RESPONSE) {
+                    hayConflicto = gestorSocket.getEntrada().readBoolean();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                mostrarError("Error al validar conflicto de horarios: " + e.getMessage());
+                return false;
+            }
+        } else if (servicio != null) {
+            // Usar servicio directo (compatibilidad)
+            hayConflicto = servicio.hayConflictoHorario(fechaHora, DURACION_CITA_MINUTOS, citaId);
+        }
+        
+        if (hayConflicto) {
             mostrarError("Ya existe una cita programada para esa fecha y hora.");
             return false;
         }
@@ -503,7 +580,27 @@ public class CitaFormularioController implements Initializable {
             cita.setObservaciones(txtObservaciones.getText().trim());
             
             // Guardar en la base de datos
-            ObjectId id = servicio.guardarCita(cita);
+            ObjectId id = null;
+            if (gestorSocket != null) {
+                // Usar gestorSocket
+                try {
+                    gestorSocket.enviarPeticion(Protocolo.GUARDAR_CITA + Protocolo.SEPARADOR_CODIGO);
+                    gestorSocket.getSalida().writeObject(cita);
+                    gestorSocket.getSalida().flush();
+                    
+                    int codigo = gestorSocket.getEntrada().readInt();
+                    if (codigo == Protocolo.GUARDAR_CITA_RESPONSE) {
+                        id = (ObjectId) gestorSocket.getEntrada().readObject();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    mostrarError("Error al guardar la cita: " + e.getMessage());
+                    return;
+                }
+            } else if (servicio != null) {
+                // Usar servicio directo (compatibilidad)
+                id = servicio.guardarCita(cita);
+            }
             
             if (id != null) {
                 // Ejecutar callback si existe
@@ -538,20 +635,43 @@ public class CitaFormularioController implements Initializable {
             try {
                 String tipoAnimal = paciente.getEspecie();
                 if (tipoAnimal != null && !tipoAnimal.isEmpty()) {
-                    String[] razas = servicio.buscarRazasPorTipoAnimal(tipoAnimal);
+                    String[] razas = null;
                     
-                    // Crear diálogo para mostrar las razas
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setTitle("Razas de " + tipoAnimal);
-                    alert.setHeaderText("Razas disponibles para: " + tipoAnimal);
+                    if (gestorSocket != null) {
+                        // Usar gestorSocket
+                        try {
+                            gestorSocket.enviarPeticion(Protocolo.BUSCAR_RAZAS_POR_TIPO_ANIMAL + Protocolo.SEPARADOR_CODIGO + tipoAnimal);
+                            
+                            int codigo = gestorSocket.getEntrada().readInt();
+                            if (codigo == Protocolo.BUSCAR_RAZAS_POR_TIPO_ANIMAL_RESPONSE) {
+                                razas = (String[]) gestorSocket.getEntrada().readObject();
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            mostrarError("Error al buscar razas: " + e.getMessage());
+                            return;
+                        }
+                    } else if (servicio != null) {
+                        // Usar servicio directo (compatibilidad)
+                        razas = servicio.buscarRazasPorTipoAnimal(tipoAnimal);
+                    }
                     
-                    TextArea textArea = new TextArea();
-                    textArea.setEditable(false);
-                    textArea.setWrapText(true);
-                    textArea.setText(String.join("\n", razas));
-                    
-                    alert.getDialogPane().setContent(textArea);
-                    alert.showAndWait();
+                    if (razas != null) {
+                        // Crear diálogo para mostrar las razas
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                        alert.setTitle("Razas de " + tipoAnimal);
+                        alert.setHeaderText("Razas disponibles para: " + tipoAnimal);
+                        
+                        TextArea textArea = new TextArea();
+                        textArea.setEditable(false);
+                        textArea.setWrapText(true);
+                        textArea.setText(String.join("\n", razas));
+                        
+                        alert.getDialogPane().setContent(textArea);
+                        alert.showAndWait();
+                    } else {
+                        mostrarError("No se encontraron razas para el tipo de animal: " + tipoAnimal);
+                    }
                 } else {
                     mostrarError("El paciente seleccionado no tiene un tipo de animal definido.");
                 }

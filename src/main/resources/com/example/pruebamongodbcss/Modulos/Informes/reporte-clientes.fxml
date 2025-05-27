@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Informes.ReporteClientesController">
+   <top>
+      <VBox spacing="20.0" style="-fx-background-color: #f8f9fa;">
+         <children>
+            <!-- Título y controles -->
+            <HBox alignment="CENTER_LEFT" spacing="20.0">
+               <children>
+                  <Label style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Reporte de Clientes" />
+                  <Button onAction="#volverAlDashboard" style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-background-radius: 5;" text="← Volver al Dashboard" />
+               </children>
+            </HBox>
+            
+            <!-- Controles -->
+            <HBox alignment="CENTER_LEFT" spacing="20.0">
+               <children>
+                  <Button fx:id="btnGenerar" style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-background-radius: 5;" text="Actualizar Reporte" />
+                  <Button fx:id="btnExportar" style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-background-radius: 5;" text="Exportar PDF" />
+               </children>
+            </HBox>
+         </children>
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+      </VBox>
+   </top>
+   <center>
+      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: #f8f9fa;">
+         <content>
+            <VBox spacing="30.0" style="-fx-background-color: #f8f9fa;">
+               <children>
+                  <!-- Métricas resumen -->
+                  <VBox spacing="15.0">
+                     <children>
+                        <Label style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Estadísticas de Clientes" />
+                        <HBox alignment="CENTER" spacing="40.0">
+                           <children>
+                              <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;">
+                                 <children>
+                                    <Label style="-fx-font-size: 14px; -fx-text-fill: #666;" text="Total Clientes" />
+                                    <Label fx:id="lblTotalClientes" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #007bff;" text="0" />
+                                 </children>
+                              </VBox>
+                              <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;">
+                                 <children>
+                                    <Label style="-fx-font-size: 14px; -fx-text-fill: #666;" text="Nuevos Este Mes" />
+                                    <Label fx:id="lblClientesNuevosMes" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #28a745;" text="0" />
+                                 </children>
+                              </VBox>
+                              <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;">
+                                 <children>
+                                    <Label style="-fx-font-size: 14px; -fx-text-fill: #666;" text="Clientes Activos" />
+                                    <Label fx:id="lblClientesActivos" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #ff6b35;" text="0" />
+                                 </children>
+                              </VBox>
+                              <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;">
+                                 <children>
+                                    <Label style="-fx-font-size: 14px; -fx-text-fill: #666;" text="Promedio Mascotas" />
+                                    <Label fx:id="lblPromedioMascotas" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #9c27b0;" text="0.0" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                     </children>
+                     <padding>
+                        <Insets left="20.0" right="20.0" />
+                     </padding>
+                  </VBox>
+                  
+                  <!-- Gráfico de evolución -->
+                  <VBox spacing="15.0">
+                     <children>
+                        <Label style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Evolución de Clientes" />
+                        <VBox fx:id="chartContainer" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;" />
+                     </children>
+                     <padding>
+                        <Insets left="20.0" right="20.0" />
+                     </padding>
+                  </VBox>
+                  
+                  <!-- Tabla de top clientes -->
+                  <VBox spacing="15.0">
+                     <children>
+                        <Label style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Top 10 Clientes por Facturación" />
+                        <TableView fx:id="tableTopClientes" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);">
+                          <columns>
+                            <TableColumn fx:id="colCliente" prefWidth="250.0" text="Cliente" />
+                            <TableColumn fx:id="colTotalFacturado" prefWidth="150.0" text="Total Facturado" />
+                            <TableColumn fx:id="colNumeroFacturas" prefWidth="120.0" text="Nº Facturas" />
+                            <TableColumn fx:id="colPromedioFactura" prefWidth="150.0" text="Promedio por Factura" />
+                          </columns>
+                        </TableView>
+                     </children>
+                     <padding>
+                        <Insets left="20.0" right="20.0" />
+                     </padding>
+                  </VBox>
+               </children>
+               <padding>
+                  <Insets bottom="30.0" top="20.0" />
+               </padding>
+            </VBox>
+         </content>
+      </ScrollPane>
+   </center>
+</BorderPane> 

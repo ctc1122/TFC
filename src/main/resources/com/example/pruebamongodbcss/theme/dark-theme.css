@@ -2,43 +2,94 @@
 
 /* Base Colors */
 * {
-    -fx-primary-color: #1e1e1e; /* Dark background like in the image */
-    -fx-primary-gradient: linear-gradient(to right, #232526 0%, #353637 50%, #414345 100%);
-    -fx-secondary-color: #2d2d2d;
+    -fx-primary-color: #2d2d2d; /* Gris oscuro en lugar de negro puro */
+    -fx-primary-gradient: linear-gradient(to right, #2d2d2d 0%, #3a3a3a 50%, #404040 100%);
+    -fx-secondary-color: #3a3a3a; /* Gris más claro para tarjetas */
     -fx-accent-color: #4d7eff;
-    -fx-light-accent: #383b45;
-    -fx-text-color: #e0e0e0;
-    -fx-light-text-color: #acacac;
+    -fx-light-accent: #4a4a4a; /* Gris para bordes */
+    -fx-text-color: #f0f0f0; /* Texto más claro */
+    -fx-light-text-color: #c0c0c0; /* Texto secundario más claro */
     -fx-success-color: #2ecc71;
     -fx-warning-color: #f1c40f;
     -fx-error-color: #e74c3c;
     -fx-info-color: #3498db;
-    -fx-header-bg: rgba(20, 20, 20, 0.9);
-    -fx-nav-button-bg: rgba(50, 50, 50, 0.7);
+    -fx-header-bg: rgba(45, 45, 45, 0.9);
+    -fx-nav-button-bg: rgba(60, 60, 60, 0.7);
 
     /* Chart Colors */
     -fx-chart-primary: #4d7eff;
     -fx-chart-secondary: #3fd9fb;
     -fx-chart-tertiary: #50e3b9;
-    -fx-chart-background: #25272c;
+    -fx-chart-background: #3a3a3a;
     
     /* Sidebar Colors */
-    -fx-sidebar-bg: #25272c;
+    -fx-sidebar-bg: #3a3a3a;
     -fx-sidebar-button-bg: transparent;
-    -fx-sidebar-button-text: #e0e0e0;
+    -fx-sidebar-button-text: #f0f0f0;
     -fx-sidebar-button-hover: rgba(77, 126, 255, 0.2);
     
     /* Específicos de la clínica veterinaria */
-    -fx-clinic-tab-bg: #2d2d2d;
-    -fx-clinic-header-bg: #2d3748;
-    -fx-clinic-header-text: #e0e0e0;
+    -fx-clinic-tab-bg: #3a3a3a;
+    -fx-clinic-header-bg: #404040;
+    -fx-clinic-header-text: #f0f0f0;
     -fx-clinic-content-bg: -fx-primary-color;
+    
+    /* Variables para módulos específicos - Tema oscuro */
+    -fx-module-bg: #2d2d2d; /* Fondo principal de módulos - gris oscuro */
+    -fx-module-content-bg: #3a3a3a; /* Fondo de contenido - gris medio */
+    -fx-module-card-bg: #404040; /* Fondo de tarjetas - gris más claro */
+    -fx-module-border: #4a4a4a; /* Bordes - gris claro */
 }
 
 /* Root elements */
 .root {
     -fx-background-color: -fx-primary-gradient;
     -fx-font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ================= CORRECCIONES PARA MÓDULOS - TEMA OSCURO ================= */
+
+/* Sobrescribir todos los fondos hardcodeados problemáticos */
+.informes-container,
+.main-container,
+.content-container,
+.scroll-pane,
+.main-scroll,
+.main-scroll > .viewport,
+VBox[style*="#f8f9fa"],
+ScrollPane[style*="#f8f9fa"],
+HBox[style*="#f8f9fa"],
+BorderPane[style*="#f8f9fa"] {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Tarjetas y paneles de contenido */
+.metric-card,
+.report-card,
+.chart-container,
+.stat-card,
+VBox[style*="white"],
+.card-container {
+    -fx-background-color: -fx-module-card-bg !important;
+    -fx-border-color: -fx-module-border !important;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+/* Específico para el módulo de informes */
+.informes-view,
+.informes-main-container,
+#mainContainer,
+#contentContainer,
+#scrollPane {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Específico para reportes */
+.reporte-container,
+.reporte-content {
+    -fx-background-color: -fx-module-bg !important;
 }
 
 /* Header styling like "Midnight City" in the image */
@@ -134,22 +185,25 @@
     -fx-background-color: transparent;
     -fx-background-radius: 8px;
     -fx-padding: 0;
+    -fx-border-color: transparent;
+    -fx-border-width: 0px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 10, 0, 0, 3);
 }
 
 .table-view .column-header-background {
-    -fx-background-color: -fx-clinic-header-bg;
+    -fx-background-color: #404040;
     -fx-background-radius: 8px 8px 0 0;
 }
 
 .table-view .column-header, .table-view .filler {
     -fx-background-color: transparent;
     -fx-size: 45px;
-    -fx-border-width: 0 0 1 0;
-    -fx-border-color: -fx-light-accent;
+    -fx-border-width: 0;
+    -fx-border-color: transparent;
 }
 
 .table-view .column-header .label {
-    -fx-text-fill: -fx-clinic-header-text;
+    -fx-text-fill: #f0f0f0;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-alignment: CENTER_LEFT;
@@ -157,23 +211,23 @@
 
 .table-view .table-cell {
     -fx-padding: 10px 10px 10px 10px;
-    -fx-text-fill: -fx-text-color;
+    -fx-text-fill: #f0f0f0;
     -fx-alignment: CENTER_LEFT;
-    -fx-border-width: 0 0 1 0;
-    -fx-border-color: -fx-light-accent;
+    -fx-border-width: 0;
+    -fx-border-color: transparent;
 }
 
 .table-row-cell {
-    -fx-background-color: -fx-secondary-color;
+    -fx-background-color: #3a3a3a;
 }
 
 .table-row-cell:odd {
-    -fx-background-color: derive(-fx-secondary-color, -5%);
+    -fx-background-color: #353535;
 }
 
 .table-row-cell:selected {
-    -fx-background-color: -fx-light-accent;
-    -fx-text-fill: -fx-text-color;
+    -fx-background-color: #4d7eff;
+    -fx-text-fill: white;
 }
 
 /* Buttons */
@@ -234,8 +288,7 @@
 
 /* Charts */
 .chart {
-    -fx-background-color: transparent;
-    -fx-padding: 10px;
+    -fx-background-color: transparent !important;
 }
 
 .chart-series-line {
@@ -248,31 +301,32 @@
 .default-color2.chart-series-line { -fx-stroke: -fx-chart-tertiary; }
 
 .chart-plot-background {
-    -fx-background-color: transparent;
+    -fx-background-color: rgba(255, 255, 255, 0.05) !important; /* Fondo muy sutil */
 }
 
 .chart-vertical-grid-lines {
-    -fx-stroke: -fx-light-accent;
-    -fx-stroke-dash-array: 3 3;
+    -fx-stroke: rgba(255, 255, 255, 0.2);
+    -fx-stroke-dash-array: none; /* Sin rayas, líneas continuas suaves */
 }
 
 .chart-horizontal-grid-lines {
-    -fx-stroke: -fx-light-accent;
-    -fx-stroke-dash-array: 3 3;
+    -fx-stroke: rgba(255, 255, 255, 0.2);
+    -fx-stroke-dash-array: none; /* Sin rayas, líneas continuas suaves */
 }
 
 /* Text fields */
 .text-field {
-    -fx-background-color: derive(-fx-secondary-color, 5%);
+    -fx-background-color: #404040;
     -fx-background-radius: 5px;
     -fx-border-color: -fx-light-accent;
     -fx-border-radius: 5px;
     -fx-padding: 8px;
-    -fx-text-fill: -fx-text-color;
+    -fx-text-fill: #f0f0f0;
 }
 
 .text-field:focused {
     -fx-border-color: -fx-accent-color;
+    -fx-border-width: 2px;
 }
 
 /* Status indicators */
@@ -375,7 +429,7 @@
 }
 
 .progress-bar > .track {
-    -fx-background-color: -fx-light-accent;
+    -fx-background-color: #4a4a4a;
     -fx-background-radius: 3px;
 }
 
@@ -388,7 +442,7 @@
 }
 
 .circular-progress-background {
-    -fx-stroke: -fx-light-accent;
+    -fx-stroke: #4a4a4a;
     -fx-fill: transparent;
     -fx-stroke-width: 8px;
     -fx-stroke-line-cap: round;
@@ -400,12 +454,12 @@
 }
 
 .scroll-bar .thumb {
-    -fx-background-color: derive(-fx-light-accent, 10%);
+    -fx-background-color: #4a4a4a;
     -fx-background-radius: 10px;
 }
 
 .scroll-bar .thumb:hover {
-    -fx-background-color: derive(-fx-light-accent, 20%);
+    -fx-background-color: #5a5a5a;
 }
 
 .scroll-bar .increment-button,
@@ -415,24 +469,24 @@
 
 /* Date pickers y combos - Versión oscura */
 .date-picker, .combo-box {
-    -fx-background-color: derive(-fx-secondary-color, 5%);
-    -fx-border-color: -fx-light-accent;
+    -fx-background-color: #404040;
+    -fx-border-color: #4a4a4a;
     -fx-border-radius: 5px;
-    -fx-text-fill: -fx-text-color;
+    -fx-text-fill: #f0f0f0;
 }
 
 .date-picker .arrow-button, .combo-box .arrow-button {
-    -fx-background-color: derive(-fx-secondary-color, 10%);
+    -fx-background-color: #4a4a4a;
 }
 
 .date-picker .text-field, .combo-box .text-field {
-    -fx-background-color: derive(-fx-secondary-color, 5%);
-    -fx-text-fill: -fx-text-color;
+    -fx-background-color: #404040;
+    -fx-text-fill: #f0f0f0;
 }
 
 .date-picker .cell, .combo-box .cell, .combo-box-popup .list-cell {
-    -fx-background-color: -fx-secondary-color;
-    -fx-text-fill: -fx-text-color;
+    -fx-background-color: #3a3a3a;
+    -fx-text-fill: #f0f0f0;
 }
 
 .date-picker:focused, .combo-box:focused {
@@ -498,4 +552,295 @@
     -fx-font-size: 16px;
     -fx-font-weight: bold;
     -fx-padding: 10px 0;
+}
+
+/* ================= CORRECCIONES ESPECÍFICAS PARA MÓDULOS - TEMA OSCURO ================= */
+
+/* Módulo de Informes - Corregir fondos hardcodeados */
+.informes-view .scroll-pane,
+.informes-view .scroll-pane > .viewport,
+.informes-view .content-container,
+.informes-view VBox,
+.informes-view HBox,
+.informes-view BorderPane {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Módulo de Facturación - Corregir fondos hardcodeados */
+.facturacion-view .main-pane,
+.facturacion-view .scroll-pane,
+.facturacion-view .scroll-pane > .viewport {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Sobrescribir estilos inline específicos */
+*[style*="#f8f9fa"] {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+*[style*="white"] {
+    -fx-background-color: -fx-module-card-bg !important;
+}
+
+/* Específico para elementos con estilos hardcodeados */
+.scroll-pane[style*="#f8f9fa"],
+.vbox[style*="#f8f9fa"],
+.hbox[style*="#f8f9fa"],
+.borderpane[style*="#f8f9fa"] {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Asegurar que las tarjetas mantengan el fondo oscuro pero con bordes correctos */
+.vbox[style*="white"],
+.hbox[style*="white"] {
+    -fx-background-color: -fx-module-card-bg !important;
+    -fx-border-color: -fx-module-border !important;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+}
+
+/* ================= CLASES APLICADAS AUTOMÁTICAMENTE POR THEMEMANAGER ================= */
+
+/* Contenedores principales de módulos */
+.module-main-container {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Tarjetas y paneles de contenido */
+.module-card {
+    -fx-background-color: -fx-module-card-bg !important;
+    -fx-border-color: -fx-module-border !important;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+/* Corrección para fondos hardcodeados problemáticos */
+.hardcoded-bg-fix {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Corrección para fondos blancos hardcodeados */
+.hardcoded-white-bg {
+    -fx-background-color: -fx-module-card-bg !important;
+    -fx-border-color: -fx-module-border !important;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+/* ================= ESTILOS ESPECÍFICOS PARA MÓDULO DE INFORMES - TEMA OSCURO ================= */
+
+/* DISEÑO MONOCROMÁTICO UNIFORME SOLO PARA EL MÓDULO DE INFORMES */
+
+/* Contenedores principales SOLO del módulo de informes - MONOCROMÁTICO */
+.informes-view,
+.informes-container,
+.informes-view .main-container,
+.informes-view .content-container,
+.informes-view .scroll-pane,
+.informes-view .scroll-pane > .viewport,
+.informes-view #mainContainer,
+.informes-view #contentContainer,
+.informes-view #scrollPane {
+    -fx-background-color: #3a3a3a !important; /* Color uniforme del sidebar */
+}
+
+/* Tarjetas de métricas SOLO en módulo de informes - MONOCROMÁTICO */
+.informes-view .metric-card,
+.informes-container .metric-card {
+    -fx-background-color: #3a3a3a !important; /* Mismo color que el fondo */
+    -fx-border-color: transparent !important;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0, 0, 2) !important; /* Sombra muy sutil */
+}
+
+/* Tarjetas de reportes SOLO en módulo de informes - MONOCROMÁTICO */
+.informes-view .report-card,
+.informes-container .report-card {
+    -fx-background-color: #3a3a3a !important; /* Mismo color que el fondo */
+    -fx-background-radius: 15px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0, 0, 2) !important; /* Sombra muy sutil */
+    -fx-border-color: transparent !important;
+    -fx-border-width: 0px;
+}
+
+.informes-view .report-card:hover,
+.informes-container .report-card:hover {
+    -fx-background-color: #404040 !important; /* Solo un poquito más claro al hover */
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 10, 0, 0, 3) !important; /* Sombra ligeramente más visible */
+}
+
+/* Contenedores de gráficos SOLO en módulo de informes - MONOCROMÁTICO */
+.informes-view .chart-container,
+.informes-container .chart-container {
+    -fx-background-color: #3a3a3a !important; /* Mismo color que el fondo */
+    -fx-border-color: transparent !important;
+    -fx-border-width: 0px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0, 0, 2) !important; /* Sombra muy sutil */
+    -fx-background-radius: 8px;
+}
+
+/* TEXTO CON CONTRASTE PARA VISIBILIDAD SOLO EN MÓDULO DE INFORMES */
+
+/* Métricas - texto visible pero no agresivo SOLO en informes */
+.informes-view .metric-icon,
+.informes-container .metric-icon {
+    -fx-text-fill: #e0e0e0 !important; /* Gris claro en lugar de blanco puro */
+}
+
+.informes-view .metric-title,
+.informes-container .metric-title {
+    -fx-text-fill: #d0d0d0 !important; /* Gris claro suave */
+    -fx-font-weight: normal !important; /* Sin negrita para ser más sutil */
+}
+
+.informes-view .metric-value,
+.informes-container .metric-value {
+    -fx-text-fill: #f0f0f0 !important; /* Casi blanco pero suave */
+    -fx-font-weight: bold !important; /* Solo los valores importantes en negrita */
+}
+
+.informes-view .metric-change,
+.informes-container .metric-change {
+    -fx-font-weight: normal !important; /* Sin negrita para ser más sutil */
+}
+
+/* Reportes - texto visible pero elegante SOLO en informes */
+.informes-view .report-title,
+.informes-container .report-title {
+    -fx-text-fill: #e0e0e0 !important; /* Gris claro */
+    -fx-font-weight: normal !important; /* Sin negrita para ser más elegante */
+}
+
+.informes-view .report-description,
+.informes-container .report-description {
+    -fx-text-fill: #c0c0c0 !important; /* Gris medio para descripciones */
+    -fx-font-weight: normal !important;
+}
+
+/* Títulos de secciones SOLO en informes - visibles pero elegantes */
+.informes-view .informes-section-title,
+.informes-container .informes-section-title {
+    -fx-text-fill: #f0f0f0 !important; /* Casi blanco para títulos principales */
+    -fx-font-weight: bold !important; /* Solo títulos principales en negrita */
+}
+
+.informes-view .title-label,
+.informes-container .title-label {
+    -fx-text-fill: #e0e0e0 !important; /* Gris claro */
+    -fx-font-weight: normal !important; /* Sin negrita para ser más sutil */
+}
+
+.informes-view .subtitle-label,
+.informes-container .subtitle-label {
+    -fx-text-fill: #d0d0d0 !important; /* Gris claro suave */
+    -fx-font-weight: normal !important;
+}
+
+/* Etiquetas de gráficos SOLO en informes - visibles pero sutiles */
+.informes-view .chart-title,
+.informes-container .chart-title {
+    -fx-text-fill: #e0e0e0 !important; /* Gris claro */
+    -fx-font-weight: normal !important; /* Sin negrita para ser más elegante */
+}
+
+.informes-view .chart-legend,
+.informes-container .chart-legend {
+    -fx-text-fill: #d0d0d0 !important; /* Gris claro suave */
+    -fx-font-weight: normal !important;
+}
+
+/* Ejes de gráficos SOLO en informes - visibles pero discretos */
+.informes-view .axis,
+.informes-container .axis,
+.informes-view .axis-label,
+.informes-container .axis-label {
+    -fx-tick-label-fill: #c0c0c0 !important; /* Gris medio */
+    -fx-text-fill: #c0c0c0 !important;
+    -fx-font-weight: normal !important; /* Sin negrita para ser más discreto */
+}
+
+/* TODOS los labels SOLO en módulo de informes - visibles pero elegantes */
+.informes-view .label,
+.informes-container .label,
+.informes-view Label,
+.informes-container Label {
+    -fx-text-fill: #d0d0d0 !important; /* Gris claro suave */
+    -fx-font-weight: normal !important; /* Sin negrita para ser más elegante */
+}
+
+/* Gráficos con fondo transparente SOLO en informes - MONOCROMÁTICO */
+.informes-view .chart,
+.informes-container .chart,
+.informes-view .chart-plot-background,
+.informes-container .chart-plot-background {
+    -fx-background-color: transparent !important;
+}
+
+/* Líneas de grid SOLO en informes - muy sutiles */
+.informes-view .chart-vertical-grid-lines,
+.informes-container .chart-vertical-grid-lines,
+.informes-view .chart-horizontal-grid-lines,
+.informes-container .chart-horizontal-grid-lines {
+    -fx-stroke: rgba(255, 255, 255, 0.1) !important; /* Líneas muy sutiles */
+    -fx-stroke-dash-array: none !important;
+}
+
+/* ================= SOBRESCRITURA FORZADA DE BORDES EN TEMA OSCURO ================= */
+
+/* Eliminar TODOS los bordes de contenedores */
+.content-panel,
+.glass-panel,
+.card,
+.metric-card,
+.report-card,
+.chart-container,
+.stat-card,
+.card-container,
+.module-card,
+.informes-container,
+.main-container,
+.content-container,
+VBox,
+HBox,
+BorderPane,
+ScrollPane,
+GridPane {
+    -fx-border-color: transparent !important;
+    -fx-border-width: 0px !important;
+}
+
+/* Aplicar sombreados suaves a todos los contenedores principales */
+.content-panel,
+.glass-panel,
+.card,
+.metric-card,
+.report-card,
+.chart-container,
+.stat-card,
+.card-container,
+.module-card {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 12, 0, 0, 4) !important;
+}
+
+/* Tablas sin bordes */
+.table-view,
+.table-view .column-header,
+.table-view .table-cell,
+.table-row-cell {
+    -fx-border-color: transparent !important;
+    -fx-border-width: 0px !important;
+}
+
+/* Aplicar sombreado a las tablas */
+.table-view {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 10, 0, 0, 3) !important;
+}
+
+/* Clase específica para eliminar bordes en tema oscuro */
+.no-orange-borders {
+    -fx-border-color: transparent !important;
+    -fx-border-width: 0px !important;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 8, 0, 0, 3) !important;
 } 

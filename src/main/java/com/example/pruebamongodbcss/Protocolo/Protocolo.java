@@ -287,8 +287,6 @@ public interface Protocolo {
     static final int ACTUALIZAR_FICHAJE_RESPONSE=1192;
     static final int ERROR_ACTUALIZAR_FICHAJE=1193;
 
-    // Código genérico para errores no específicos
-    static final int ERROR_GENERICO=9999;
 
     
 } 

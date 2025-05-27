@@ -36,7 +36,7 @@
             
             <!-- Panel de Selección de Módulos (VISIBLE por defecto) -->
             <VBox fx:id="panelSeleccionModulos" styleClass="module-selection-container" spacing="20.0" visible="true" managed="true">
-               <Label styleClass="selection-title" text="Selecciona un módulo" />
+               <Label styleClass="module-selection-title" text="Selecciona un módulo" />
                <FlowPane styleClass="cards-container" hgap="30.0" vgap="20.0" alignment="CENTER">
                   <!-- Tarjeta de Fichaje -->
                   <VBox fx:id="cardFichaje" styleClass="module-card, fichaje-card" spacing="15.0" onMouseClicked="#abrirModuloFichaje">
@@ -121,7 +121,7 @@
                
                <!-- Sección de Historial -->
                <VBox styleClass="historial-section" spacing="15.0">
-                  <Label styleClass="section-subtitle" text="Historial de Fichajes" />
+                  <Label styleClass="section-title" text="Historial de Fichajes" />
                   
                   <!-- Barra de Filtros Responsive -->
                   <VBox spacing="10.0">

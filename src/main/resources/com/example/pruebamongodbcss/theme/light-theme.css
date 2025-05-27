@@ -36,12 +36,63 @@
     -fx-clinic-header-bg: #606C38;
     -fx-clinic-header-text: #FEFAE0;
     -fx-clinic-content-bg: -fx-primary-gradient;
+    
+    /* Variables para módulos específicos */
+    -fx-module-bg: #FEFAE0; /* Fondo principal de módulos */
+    -fx-module-content-bg: #FFFFFF; /* Fondo de contenido */
+    -fx-module-card-bg: #FFFFFF; /* Fondo de tarjetas */
+    -fx-module-border: transparent; /* Sin bordes */
 }
 
 /* Root elements */
 .root {
     -fx-background-color: #FEFAE0;
     -fx-font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ================= CORRECCIONES PARA MÓDULOS ================= */
+
+/* Sobrescribir todos los fondos hardcodeados problemáticos */
+.informes-container,
+.main-container,
+.content-container,
+.scroll-pane,
+.main-scroll,
+.main-scroll > .viewport,
+VBox[style*="#f8f9fa"],
+ScrollPane[style*="#f8f9fa"],
+HBox[style*="#f8f9fa"],
+BorderPane[style*="#f8f9fa"] {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Tarjetas y paneles de contenido */
+.metric-card,
+.report-card,
+.chart-container,
+.stat-card,
+VBox[style*="white"],
+.card-container {
+    -fx-background-color: -fx-module-card-bg !important;
+    -fx-border-color: -fx-module-border !important;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+/* Específico para el módulo de informes */
+.informes-view,
+.informes-main-container,
+#mainContainer,
+#contentContainer,
+#scrollPane {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Específico para reportes */
+.reporte-container,
+.reporte-content {
+    -fx-background-color: -fx-module-bg !important;
 }
 
 /* Header styling */
@@ -159,9 +210,10 @@
     -fx-background-color: transparent;
     -fx-background-radius: 8px;
     -fx-padding: 0;
-    -fx-border-color: #DDA15E;
+    -fx-border-color: transparent;
     -fx-border-radius: 8px;
-    -fx-border-width: 1px;
+    -fx-border-width: 0px;
+    -fx-effect: dropshadow(gaussian, rgba(40, 54, 24, 0.2), 10, 0, 0, 3);
 }
 
 .table-view .column-header-background {
@@ -172,8 +224,8 @@
 .table-view .column-header, .table-view .filler {
     -fx-background-color: transparent;
     -fx-size: 45px;
-    -fx-border-width: 0 0 1 0;
-    -fx-border-color: #283618;
+    -fx-border-width: 0;
+    -fx-border-color: transparent;
 }
 
 .table-view .column-header .label {
@@ -187,8 +239,8 @@
     -fx-padding: 10px 10px 10px 10px;
     -fx-text-fill: #283618;
     -fx-alignment: CENTER_LEFT;
-    -fx-border-width: 0 0 1 0;
-    -fx-border-color: rgba(96, 108, 56, 0.2);
+    -fx-border-width: 0;
+    -fx-border-color: transparent;
 }
 
 .table-row-cell {
@@ -674,4 +726,275 @@
 #headerPanel, #mainHeader, #tableHeader, #blueHeader {
     -fx-background-color: #606C38 !important;
     -fx-text-fill: #FEFAE0 !important;
+}
+
+/* ================= CORRECCIONES ESPECÍFICAS PARA MÓDULOS ================= */
+
+/* Módulo de Informes - Corregir fondos hardcodeados */
+.informes-view .scroll-pane,
+.informes-view .scroll-pane > .viewport,
+.informes-view .content-container,
+.informes-view VBox,
+.informes-view HBox,
+.informes-view BorderPane {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Módulo de Facturación - Corregir fondos hardcodeados */
+.facturacion-view .main-pane,
+.facturacion-view .scroll-pane,
+.facturacion-view .scroll-pane > .viewport {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Sobrescribir estilos inline específicos */
+*[style*="#f8f9fa"] {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+*[style*="white"] {
+    -fx-background-color: -fx-module-card-bg !important;
+}
+
+/* Específico para elementos con estilos hardcodeados */
+.scroll-pane[style*="#f8f9fa"],
+.vbox[style*="#f8f9fa"],
+.hbox[style*="#f8f9fa"],
+.borderpane[style*="#f8f9fa"] {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Asegurar que las tarjetas mantengan el fondo blanco pero con bordes correctos */
+.vbox[style*="white"],
+.hbox[style*="white"] {
+    -fx-background-color: -fx-module-card-bg !important;
+    -fx-border-color: -fx-module-border !important;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+}
+
+/* ================= CLASES APLICADAS AUTOMÁTICAMENTE POR THEMEMANAGER ================= */
+
+/* Contenedores principales de módulos */
+.module-main-container {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Tarjetas y paneles de contenido */
+.module-card {
+    -fx-background-color: -fx-module-card-bg !important;
+    -fx-border-color: -fx-module-border !important;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+/* Corrección para fondos hardcodeados problemáticos */
+.hardcoded-bg-fix {
+    -fx-background-color: -fx-module-bg !important;
+}
+
+/* Corrección para fondos blancos hardcodeados */
+.hardcoded-white-bg {
+    -fx-background-color: -fx-module-card-bg !important;
+    -fx-border-color: -fx-module-border !important;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+/* ================= ESTILOS ESPECÍFICOS PARA MÓDULO DE INFORMES ================= */
+
+/* Tarjetas de métricas con fondo verde */
+.metric-card {
+    -fx-background-color: #606C38 !important; /* Verde principal de la paleta */
+    -fx-border-color: transparent !important; /* Sin bordes */
+    -fx-effect: dropshadow(gaussian, rgba(40, 54, 24, 0.3), 12, 0, 0, 4);
+}
+
+/* Métricas */
+.metric-icon {
+    -fx-font-size: 24px;
+    -fx-text-fill: #FEFAE0; /* Texto claro sobre fondo verde */
+}
+
+.metric-title {
+    -fx-font-size: 12px;
+    -fx-text-fill: #FEFAE0; /* Texto claro sobre fondo verde */
+}
+
+.metric-value {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #FEFAE0; /* Texto claro sobre fondo verde */
+}
+
+.metric-change {
+    -fx-font-size: 12px;
+}
+
+.metric-change-positive {
+    -fx-text-fill: #DDA15E; /* Tan claro para contraste */
+}
+
+.metric-change-negative {
+    -fx-text-fill: #BC6C25; /* Tan oscuro para contraste */
+}
+
+/* Tarjetas de reportes con fondo verde claro */
+.report-card {
+    -fx-background-color: #DDA15E !important; /* Tan/verde claro de la paleta */
+    -fx-background-radius: 15px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(40, 54, 24, 0.25), 15, 0, 0, 4);
+    -fx-border-color: transparent !important; /* Sin bordes */
+    -fx-border-width: 0px;
+}
+
+.report-card-hover:hover {
+    -fx-background-color: #BC6C25 !important; /* Tan más oscuro al hover */
+    -fx-effect: dropshadow(gaussian, rgba(40, 54, 24, 0.4), 20, 0, 0, 6);
+}
+
+.report-icon {
+    -fx-font-size: 48px;
+}
+
+.report-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #283618; /* Verde oscuro para buen contraste */
+}
+
+.report-description {
+    -fx-font-size: 12px;
+    -fx-text-fill: #283618; /* Verde oscuro para buen contraste */
+}
+
+/* Botón de refresh verde */
+#btnRefresh, .refresh-button {
+    -fx-background-color: #606C38 !important;
+    -fx-text-fill: #FEFAE0 !important;
+    -fx-background-radius: 8px;
+    -fx-border-color: transparent;
+    -fx-border-width: 0px;
+    -fx-effect: dropshadow(gaussian, rgba(40, 54, 24, 0.3), 8, 0, 0, 3);
+}
+
+#btnRefresh:hover, .refresh-button:hover {
+    -fx-background-color: #283618 !important;
+    -fx-effect: dropshadow(gaussian, rgba(40, 54, 24, 0.4), 10, 0, 0, 4);
+}
+
+/* Contenedores de gráficos con fondo verde como las métricas */
+.chart-container {
+    -fx-background-color: #606C38 !important; /* Mismo verde que las métricas */
+    -fx-border-color: transparent !important; /* Sin bordes */
+    -fx-border-width: 0px;
+    -fx-effect: dropshadow(gaussian, rgba(40, 54, 24, 0.3), 12, 0, 0, 4);
+    -fx-background-radius: 8px;
+}
+
+/* Títulos de secciones en gráficos - texto blanco sobre fondo verde */
+.informes-section-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #FEFAE0; /* Texto blanco sobre fondo verde */
+    -fx-padding: 10px 0;
+}
+
+/* Gráficos con fondo transparente para mostrar el verde del contenedor */
+.chart {
+    -fx-background-color: transparent !important;
+}
+
+.chart-plot-background {
+    -fx-background-color: rgba(254, 250, 224, 0.1) !important; /* Fondo muy sutil */
+}
+
+/* Líneas de grid más suaves */
+.chart-vertical-grid-lines {
+    -fx-stroke: rgba(254, 250, 224, 0.3);
+    -fx-stroke-dash-array: none; /* Sin rayas, líneas continuas suaves */
+}
+
+.chart-horizontal-grid-lines {
+    -fx-stroke: rgba(254, 250, 224, 0.3);
+    -fx-stroke-dash-array: none; /* Sin rayas, líneas continuas suaves */
+}
+
+/* Etiquetas de gráficos en blanco */
+.chart-title {
+    -fx-text-fill: #FEFAE0 !important;
+}
+
+.chart-legend {
+    -fx-text-fill: #FEFAE0 !important;
+}
+
+/* Ejes de gráficos */
+.axis {
+    -fx-tick-label-fill: #FEFAE0;
+}
+
+.axis-label {
+    -fx-text-fill: #FEFAE0;
+}
+
+/* ================= SOBRESCRITURA FORZADA DE BORDES NARANJAS ================= */
+
+/* Eliminar TODOS los bordes naranjas de contenedores */
+.content-panel,
+.glass-panel,
+.card,
+.metric-card,
+.report-card,
+.chart-container,
+.stat-card,
+.card-container,
+.module-card,
+.informes-container,
+.main-container,
+.content-container,
+VBox,
+HBox,
+BorderPane,
+ScrollPane,
+GridPane {
+    -fx-border-color: transparent !important;
+    -fx-border-width: 0px !important;
+}
+
+/* Aplicar sombreados suaves a todos los contenedores principales */
+.content-panel,
+.glass-panel,
+.card,
+.metric-card,
+.report-card,
+.chart-container,
+.stat-card,
+.card-container,
+.module-card {
+    -fx-effect: dropshadow(gaussian, rgba(40, 54, 24, 0.25), 12, 0, 0, 4) !important;
+}
+
+/* Tablas sin bordes naranjas */
+.table-view,
+.table-view .column-header,
+.table-view .table-cell,
+.table-row-cell {
+    -fx-border-color: transparent !important;
+    -fx-border-width: 0px !important;
+}
+
+/* Aplicar sombreado a las tablas */
+.table-view {
+    -fx-effect: dropshadow(gaussian, rgba(40, 54, 24, 0.2), 10, 0, 0, 3) !important;
+}
+
+/* Clase específica para eliminar bordes naranjas */
+.no-orange-borders {
+    -fx-border-color: transparent !important;
+    -fx-border-width: 0px !important;
+    -fx-effect: dropshadow(gaussian, rgba(40, 54, 24, 0.2), 8, 0, 0, 3) !important;
 } 

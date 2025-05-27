@@ -12,7 +12,7 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 
 /**
- * Utilidad para facilitar la aplicación de temas en cualquier controlador o ventana
+ * Utilidad para ayudar con la aplicación de temas en la aplicación
  */
 public class ThemeUtil {
     
@@ -185,5 +185,143 @@ public class ThemeUtil {
         ThemeManager.getInstance().registerScene(scene);
         
         return scene;
+    }
+    
+    /**
+     * Aplica el tema actual a un nodo específico y todos sus hijos
+     * @param node Nodo al que aplicar el tema
+     */
+    public static void applyThemeToNode(Node node) {
+        ThemeManager themeManager = ThemeManager.getInstance();
+        
+        // Aplicar clases específicas según el tipo de nodo
+        applyThemeClassesToNode(node);
+        
+        // Si el nodo tiene hijos, aplicar recursivamente
+        if (node instanceof Parent) {
+            Parent parent = (Parent) node;
+            for (Node child : parent.getChildrenUnmodifiable()) {
+                applyThemeToNode(child);
+            }
+        }
+    }
+    
+    /**
+     * Elimina estilos hardcodeados problemáticos de un nodo
+     * @param node Nodo del que eliminar estilos problemáticos
+     */
+    public static void removeHardcodedStyles(Node node) {
+        String style = node.getStyle();
+        if (style != null && !style.isEmpty()) {
+            // Eliminar colores de fondo hardcodeados problemáticos
+            style = style.replaceAll("-fx-background-color\\s*:\\s*#f8f9fa\\s*;?", "");
+            style = style.replaceAll("-fx-background-color\\s*:\\s*white\\s*;?", "");
+            style = style.replaceAll("-fx-background-color\\s*:\\s*#ffffff\\s*;?", "");
+            
+            // Limpiar estilos vacíos
+            style = style.trim();
+            if (style.endsWith(";")) {
+                style = style.substring(0, style.length() - 1);
+            }
+            
+            node.setStyle(style.isEmpty() ? null : style);
+        }
+        
+        // Aplicar recursivamente a los hijos
+        if (node instanceof Parent) {
+            Parent parent = (Parent) node;
+            for (Node child : parent.getChildrenUnmodifiable()) {
+                removeHardcodedStyles(child);
+            }
+        }
+    }
+    
+    /**
+     * Aplica clases CSS específicas a un nodo basándose en su ID y estilo
+     * @param node Nodo al que aplicar las clases
+     */
+    private static void applyThemeClassesToNode(Node node) {
+        // Aplicar clases específicas según el tipo de nodo y su ID
+        if (node.getId() != null) {
+            String nodeId = node.getId().toLowerCase();
+            
+            // Identificar contenedores principales de módulos
+            if (nodeId.contains("maincontainer") || nodeId.contains("contentcontainer") || 
+                nodeId.contains("scrollpane") || nodeId.contains("informes") ||
+                (nodeId.contains("main") && nodeId.contains("pane"))) {
+                
+                if (!node.getStyleClass().contains("module-main-container")) {
+                    node.getStyleClass().add("module-main-container");
+                }
+            }
+            
+            // Identificar tarjetas y paneles de contenido
+            if (nodeId.contains("card") || nodeId.contains("metric") || 
+                nodeId.contains("chart") || nodeId.contains("report")) {
+                
+                if (!node.getStyleClass().contains("module-card")) {
+                    node.getStyleClass().add("module-card");
+                }
+            }
+        }
+        
+        // Aplicar clases basadas en el estilo inline del nodo
+        String style = node.getStyle();
+        if (style != null && !style.isEmpty()) {
+            // Identificar nodos con fondos hardcodeados problemáticos
+            if (style.contains("#f8f9fa") || style.contains("f8f9fa")) {
+                if (!node.getStyleClass().contains("hardcoded-bg-fix")) {
+                    node.getStyleClass().add("hardcoded-bg-fix");
+                }
+            }
+            
+            if (style.contains("white") && style.contains("background")) {
+                if (!node.getStyleClass().contains("hardcoded-white-bg")) {
+                    node.getStyleClass().add("hardcoded-white-bg");
+                }
+            }
+        }
+    }
+    
+    /**
+     * Fuerza la actualización del tema en la escena actual
+     * @param scene Escena a actualizar
+     */
+    public static void forceThemeUpdate(Scene scene) {
+        ThemeManager.getInstance().forceUpdateScene(scene);
+    }
+    
+    /**
+     * Aplica el tema correcto a un contenedor de módulo específico
+     * @param container Contenedor del módulo
+     */
+    public static void applyModuleTheme(Node container) {
+        // Eliminar estilos hardcodeados problemáticos
+        removeHardcodedStyles(container);
+        
+        // Aplicar clases de tema
+        applyThemeToNode(container);
+        
+        // Agregar clase específica de módulo si no la tiene
+        if (!container.getStyleClass().contains("module-main-container")) {
+            container.getStyleClass().add("module-main-container");
+        }
+    }
+    
+    /**
+     * Aplica el tema correcto a una tarjeta o panel de contenido
+     * @param card Tarjeta o panel de contenido
+     */
+    public static void applyCardTheme(Node card) {
+        // Eliminar estilos hardcodeados problemáticos
+        removeHardcodedStyles(card);
+        
+        // Aplicar clases de tema
+        applyThemeToNode(card);
+        
+        // Agregar clase específica de tarjeta si no la tiene
+        if (!card.getStyleClass().contains("module-card")) {
+            card.getStyleClass().add("module-card");
+        }
     }
 } 

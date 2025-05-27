@@ -51,10 +51,10 @@ public class PanelInicioController implements Initializable {
     private VBox sidebar;
 
     @FXML
-    private JFXButton btnMenuPrincipal, btnAnimales, btnFichaje, btnSalir, btnToggleSidebar, but_clientes, btnEmpresa, btnChicha, btnEventCounter, btnChat, btnFacturacion;
+    private JFXButton btnMenuPrincipal, btnAnimales, btnFichaje, btnSalir, btnToggleSidebar, but_clientes, btnEmpresa, btnChicha, btnEventCounter, btnChat, btnFacturacion, btnInformes;
 
     @FXML
-    private JFXButton btnMenuPrincipalCarousel, btnAnimalesCarousel, btnFichajeCarousel, btnSalirCarousel, but_clientesCarousel, btnEmpresaCarousel, btnChatCarousel, btnFacturacionCarousel;
+    private JFXButton btnMenuPrincipalCarousel, btnAnimalesCarousel, btnFichajeCarousel, btnSalirCarousel, but_clientesCarousel, btnEmpresaCarousel, btnChatCarousel, btnFacturacionCarousel, btnInformesCarousel;
 
     @FXML
     private Label lblClinica;
@@ -135,6 +135,7 @@ public class PanelInicioController implements Initializable {
             setButtonIcon(btnSalir, "/Iconos/iconSalir.png", 32, 32);
             setButtonIcon(btnChat, "/Iconos/iconChat.png", 32, 32);
             setButtonIcon(btnFacturacion, "/Iconos/iconInvoice1.png", 32, 32);
+            setButtonIcon(btnInformes, "/Iconos/iconChart.png", 32, 32);
 
             // Configurar iconos y tooltips para los botones del carrusel
             setButtonIcon(btnMenuPrincipalCarousel, "/Iconos/iconInicio4.png", 32, 32);
@@ -145,6 +146,7 @@ public class PanelInicioController implements Initializable {
             setButtonIcon(btnSalirCarousel, "/Iconos/iconSalir.png", 32, 32);
             setButtonIcon(btnChatCarousel, "/Iconos/iconChat.png", 32, 32);
             setButtonIcon(btnFacturacionCarousel, "/Iconos/iconInvoice1.png", 32, 32);
+            setButtonIcon(btnInformesCarousel, "/Iconos/iconChart.png", 32, 32);
 
             // Tooltips para los botones del carrusel
             btnMenuPrincipalCarousel.setTooltip(new Tooltip("Menú Principal"));
@@ -153,6 +155,7 @@ public class PanelInicioController implements Initializable {
             btnFichajeCarousel.setTooltip(new Tooltip("Fichaje"));
             btnSalirCarousel.setTooltip(new Tooltip("Cerrar sesión"));
             btnFacturacionCarousel.setTooltip(new Tooltip("Facturación"));
+            btnInformesCarousel.setTooltip(new Tooltip("Informes"));
 
             // Configurar eventos del carrusel
             btnChicha.setOnAction(e -> toggleMenuRadial());
@@ -172,13 +175,13 @@ public class PanelInicioController implements Initializable {
                 abrirModuloFichaje();
                 mantenerCarruselVisible(); // Mantener el carrusel visible después de la acción
             });
-
-
-
             btnSalirCarousel.setOnAction(event -> cerrarSesion());
-
             btnFacturacionCarousel.setOnAction(event -> {
                 abrirModuloFacturacion();
+                mantenerCarruselVisible(); // Mantener el carrusel visible después de la acción
+            });
+            btnInformesCarousel.setOnAction(event -> {
+                abrirModuloInformes();
                 mantenerCarruselVisible(); // Mantener el carrusel visible después de la acción
             });
 
@@ -217,6 +220,7 @@ public class PanelInicioController implements Initializable {
             btnFichaje.setOnAction(event -> abrirModuloFichaje());
             btnChat.setOnAction(event -> abrirChat());
             btnFacturacion.setOnAction(event -> abrirModuloFacturacion());
+            btnInformes.setOnAction(event -> abrirModuloInformes());
             btnSalir.setOnAction(event -> cerrarSesion());
             if (btnEmpresa != null) {
                 btnEmpresa.setOnAction(event -> abrirModuloEmpresa());
@@ -231,7 +235,7 @@ public class PanelInicioController implements Initializable {
             configurarArrastreBoton(btnChicha);
             
             // Configurar z-order y estilo circular para los botones del carrusel
-            JFXButton[] botonesCarousel = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel, btnChatCarousel, btnFacturacionCarousel};
+            JFXButton[] botonesCarousel = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel, btnChatCarousel, btnFacturacionCarousel, btnInformesCarousel};
             for (JFXButton boton : botonesCarousel) {
                 boton.getStyleClass().removeAll("itemMenu");
                 if (!boton.getStyleClass().contains("circleMenuButton")) {
@@ -527,7 +531,7 @@ public class PanelInicioController implements Initializable {
      * Desmarca todos los botones del menú lateral
      */
     private void desmarcaTodosLosBotones() {
-        JFXButton[] botones = {btnMenuPrincipal, btnAnimales, but_clientes, btnFichaje, btnEmpresa, btnSalir, btnChat, btnFacturacion};
+        JFXButton[] botones = {btnMenuPrincipal, btnAnimales, but_clientes, btnFichaje, btnEmpresa, btnSalir, btnChat, btnFacturacion, btnInformes};
         for (JFXButton boton : botones) {
             if (boton != null) {
                 boton.getStyleClass().remove("menu-button-selected");
@@ -655,6 +659,7 @@ public class PanelInicioController implements Initializable {
                 but_clientes.setText("Clientes");
                 btnChat.setText("Chat");
                 btnFacturacion.setText("Facturacion");
+                btnInformes.setText("Informes");
                 if (separator != null) {
                     separator.setVisible(true);
                 }
@@ -669,6 +674,7 @@ public class PanelInicioController implements Initializable {
                 but_clientes.setText("");
                 btnChat.setText("");
                 btnFacturacion.setText("");
+                btnInformes.setText("");
                 if (separator != null) {
                     separator.setVisible(false);
                 }
@@ -681,7 +687,7 @@ public class PanelInicioController implements Initializable {
     }
 
     private void toggleMenuRadial() {
-        JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnEmpresaCarousel, btnSalirCarousel, btnChatCarousel, btnFacturacionCarousel};
+        JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnEmpresaCarousel, btnSalirCarousel, btnChatCarousel, btnFacturacionCarousel, btnInformesCarousel};
         double baseRadio = 100;
         double radio = baseRadio + (botones.length - 6) * 30; // Aumenta el radio si hay más de 6 botones
         double centerX = btnChicha.getLayoutX() + btnChicha.getWidth() / 2;
@@ -745,7 +751,7 @@ public class PanelInicioController implements Initializable {
         btnChicha.setVisible(false);
         
         // Ocultar botones del carrusel
-        JFXButton[] botonesCarousel = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel, btnFacturacionCarousel};
+        JFXButton[] botonesCarousel = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel, btnFacturacionCarousel, btnInformesCarousel};
         for (JFXButton boton : botonesCarousel) {
             boton.setVisible(false);
         }
@@ -789,7 +795,7 @@ public class PanelInicioController implements Initializable {
         btnChicha.toFront();
         
         // Asegurar que los botones del carrusel existen pero están inicialmente ocultos
-        JFXButton[] botonesCarousel = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnEmpresaCarousel, btnSalirCarousel, btnChatCarousel, btnFacturacionCarousel};
+        JFXButton[] botonesCarousel = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnEmpresaCarousel, btnSalirCarousel, btnChatCarousel, btnFacturacionCarousel, btnInformesCarousel};
         for (JFXButton boton : botonesCarousel) {
             if (!mainPane.getChildren().contains(boton)) {
                 mainPane.getChildren().add(boton);
@@ -897,7 +903,7 @@ public class PanelInicioController implements Initializable {
         btnChicha.setVisible(false);
         
         // Ocultar los botones del carrusel
-        JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel,btnEmpresaCarousel, btnChatCarousel, btnFacturacionCarousel};
+        JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel, btnFacturacionCarousel, btnInformesCarousel};
         for (JFXButton boton : botones) {
             boton.setVisible(false);
         }
@@ -940,7 +946,7 @@ public class PanelInicioController implements Initializable {
             
             // Si el menú está visible, asegurarse de que los botones del menú también estén visibles
             if (menuVisible) {
-                JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnEmpresaCarousel, btnSalirCarousel, btnChatCarousel, btnFacturacionCarousel};
+                JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnEmpresaCarousel, btnSalirCarousel, btnChatCarousel, btnFacturacionCarousel, btnInformesCarousel};
                 for (JFXButton boton : botones) {
                     if (!mainPane.getChildren().contains(boton)) {
                         mainPane.getChildren().add(boton);
@@ -969,7 +975,7 @@ public class PanelInicioController implements Initializable {
             
             // Si el menú está desplegado, traer también los botones al frente
             if (menuVisible) {
-                JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnEmpresaCarousel, btnSalirCarousel, btnChatCarousel, btnFacturacionCarousel};
+                JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnEmpresaCarousel, btnSalirCarousel, btnChatCarousel, btnFacturacionCarousel, btnInformesCarousel};
                 for (JFXButton boton : botones) {
                     boton.toFront();
                 }
@@ -1291,6 +1297,41 @@ public class PanelInicioController implements Initializable {
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
             mostrarError("Error", "Error al abrir el chat: " + e.getMessage());
+        }
+    }
+
+    private void abrirModuloInformes() {
+        try {
+            // Desmarcar otros botones y marcar el seleccionado
+            desmarcaTodosLosBotones();
+            btnInformes.getStyleClass().add("menu-button-selected");
+            
+            // Cargar la vista de informes
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Informes/informes-view.fxml"));
+            Parent contenido = ThemeUtil.loadWithTheme(loader);
+            
+            // Obtener el controlador y configurar el usuario actual
+            com.example.pruebamongodbcss.Modulos.Informes.InformesController informesController = loader.getController();
+            if (informesController != null && usuarioActual != null) {
+                informesController.setUsuarioActual(usuarioActual);
+            }
+            
+            // Obtener el BorderPane central y reemplazar su contenido
+            BorderPane centerPane = (BorderPane) root.getCenter();
+            centerPane.setCenter(contenido);
+            
+            // Asegurarse de que todas las ventanas tengan el tema aplicado
+            javafx.application.Platform.runLater(ThemeUtil::applyThemeToAllOpenWindows);
+            
+            // Actualizar el título
+            lblClinica.setText("Informes");
+            
+            // Mantener visible el carrusel si está activo
+            mantenerCarruselVisible();
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostrarError("Error", "Error al cargar el módulo de informes: " + e.getMessage());
         }
     }
 }

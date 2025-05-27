@@ -118,17 +118,14 @@ public class PropietarioEditRowController implements Initializable {
                     if (respuesta == Protocolo.CREARPROPIETARIO_RESPONSE) {
                         // Leer el ID asignado por el servidor
                         Object idObj = entrada.readObject();
-                        if (idObj != null) {
-                            try {
-                                // Convertir el String a ObjectId
-                                org.bson.types.ObjectId objectId = new org.bson.types.ObjectId(idObj.toString());
-                                propietario.setId(objectId);
-                                guardado = true;
-                            } catch (IllegalArgumentException e) {
-                                mostrarAlerta("Error", "Error al procesar el ID", 
-                                    "El ID recibido del servidor no es válido: " + e.getMessage());
-                                guardado = false;
-                            }
+                        if (idObj != null && idObj instanceof org.bson.types.ObjectId) {
+                            // El servidor ya envía un ObjectId directamente
+                            propietario.setId((org.bson.types.ObjectId) idObj);
+                            guardado = true;
+                        } else {
+                            mostrarAlerta("Error", "Error al procesar el ID", 
+                                "El ID recibido del servidor no es válido.");
+                            guardado = false;
                         }
                     }
                 } else {
