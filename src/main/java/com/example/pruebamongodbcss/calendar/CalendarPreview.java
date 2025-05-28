@@ -2,14 +2,14 @@ package com.example.pruebamongodbcss.calendar;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Random;
 
 import com.calendarfx.model.Calendar;
-import com.calendarfx.model.CalendarSource;
 import com.calendarfx.model.Entry;
-import com.calendarfx.view.CalendarView;
 
 import javafx.application.Platform;
+import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
 
 /**
@@ -18,8 +18,7 @@ import javafx.scene.layout.BorderPane;
  */
 public class CalendarPreview extends BorderPane {
     
-    private CalendarView calendarView;
-    private CalendarSource calendarSource;
+    private CalendarFXComponent calendarFXComponent;
     
     /**
      * Constructor que inicializa el componente del calendario para vista previa.
@@ -33,47 +32,25 @@ public class CalendarPreview extends BorderPane {
      */
     private void initialize() {
         try {
-            // Crear el componente principal de la vista
-            calendarView = new CalendarView();
+            calendarFXComponent = new CalendarFXComponent();
+            calendarFXComponent.getCalendarView().showDayPage();
+            calendarFXComponent.getCalendarView().setShowSearchField(false);
+            calendarFXComponent.getCalendarView().setShowPrintButton(false);
+            setCenter(calendarFXComponent);
             
-            // Simplificar la interfaz
-            calendarView.setShowAddCalendarButton(false);
-            calendarView.setShowPrintButton(false);
-            calendarView.setShowSourceTray(false);
-            calendarView.setShowToolBar(false);
-            calendarView.setShowSearchField(false);
-            
-            // Crear los calendarios con sus estilos
-            Calendar citasNormales = new Calendar("Citas normales");
-            citasNormales.setStyle(Calendar.Style.STYLE1);
-            
-            Calendar citasUrgentes = new Calendar("Citas urgentes");
-            citasUrgentes.setStyle(Calendar.Style.STYLE2);
-            
-            // Agregar los calendarios a una fuente
-            calendarSource = new CalendarSource("Vista Previa");
-            calendarSource.getCalendars().addAll(citasNormales, citasUrgentes);
-            
-            // Registrar la fuente del calendario
-            calendarView.getCalendarSources().add(calendarSource);
-            
-            // Configurar fecha y hora actual
-            calendarView.setToday(LocalDate.now());
-            calendarView.setTime(LocalTime.now());
-            
-            // Solo mostrar la vista semanal
-            calendarView.showWeekPage();
-            calendarView.setRequestedTime(LocalTime.of(9, 0));
-            
-            // Desactivar la edición para la vista previa
-            calendarView.setEntryEditPolicy(param -> false);
-            calendarView.setEntryDetailsCallback(param -> null);
-            
-            // Agregar eventos de ejemplo
-            createSampleEntries(citasNormales, citasUrgentes);
-            
-            // Agregar el calendario a este BorderPane
-            setCenter(calendarView);
+            // Ocultar los otros botones de la barra de vista de día, dejando solo el de la izquierda (agenda)
+            Platform.runLater(() -> {
+                Node toolBar = calendarFXComponent.getCalendarView().getDayPage().lookup(".tool-bar");
+                if (toolBar != null) {
+                    List<Node> buttons = toolBar.lookupAll(".toggle-button").stream().toList();
+                    for (int i = 0; i < buttons.size(); i++) {
+                        if (i != 0) {
+                            buttons.get(i).setVisible(false);
+                            buttons.get(i).setManaged(false);
+                        }
+                    }
+                }
+            });
             
             // Actualizar la hora en segundo plano
             Thread updateTimeThread = new Thread("Calendar Preview Time Thread") {
@@ -81,8 +58,8 @@ public class CalendarPreview extends BorderPane {
                 public void run() {
                     while (true) {
                         Platform.runLater(() -> {
-                            calendarView.setToday(LocalDate.now());
-                            calendarView.setTime(LocalTime.now());
+                            calendarFXComponent.getCalendarView().setToday(LocalDate.now());
+                            calendarFXComponent.getCalendarView().setTime(LocalTime.now());
                         });
                         try {
                             sleep(60000); // Actualiza cada minuto
