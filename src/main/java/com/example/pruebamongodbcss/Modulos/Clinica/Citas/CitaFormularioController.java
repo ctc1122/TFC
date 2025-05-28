@@ -208,10 +208,8 @@ public class CitaFormularioController implements Initializable {
             cargarVeterinarios();
         }
         
-        // Cargar datos de la cita después de un breve retraso para asegurar que los datos estén cargados
-        javafx.application.Platform.runLater(() -> {
-            cargarDatosCita();
-        });
+        // Cargar datos de la cita en el formulario
+        cargarDatosCita();
     }
     
     /**
@@ -583,39 +581,81 @@ public class CitaFormularioController implements Initializable {
             cita.setEstado(cmbEstado.getValue());
             cita.setObservaciones(txtObservaciones.getText().trim());
             
-            // Guardar en la base de datos
+            // Guardar en la base de datos usando una conexión independiente
             ObjectId id = null;
-            if (gestorSocket != null) {
-                // Usar gestorSocket
-                try {
-                    gestorSocket.enviarPeticion(Protocolo.GUARDAR_CITA + Protocolo.SEPARADOR_CODIGO);
-                    gestorSocket.getSalida().writeObject(cita);
-                    gestorSocket.getSalida().flush();
-                    
-                    int codigo = gestorSocket.getEntrada().readInt();
-                    if (codigo == Protocolo.GUARDAR_CITA_RESPONSE) {
-                        id = (ObjectId) gestorSocket.getEntrada().readObject();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    mostrarError("Error al guardar la cita: " + e.getMessage());
-                    return;
-                }
-            } else if (servicio != null) {
-                // Usar servicio directo (compatibilidad)
-                id = servicio.guardarCita(cita);
-            }
+            GestorSocket gestorSocketIndependiente = null;
             
-            if (id != null) {
-                // Ejecutar callback si existe
-                if (citaGuardadaCallback != null) {
-                    citaGuardadaCallback.run();
+            try {
+                if (gestorSocket != null) {
+                    // Crear una nueva conexión independiente para evitar conflictos
+                    gestorSocketIndependiente = GestorSocket.crearConexionIndependiente();
+                    
+                    System.out.println("🔄 Guardando cita con conexión independiente...");
+                    
+                    // Enviar petición de guardar cita
+                    gestorSocketIndependiente.enviarPeticion(Protocolo.GUARDAR_CITA + Protocolo.SEPARADOR_CODIGO);
+                    gestorSocketIndependiente.getSalida().writeObject(cita);
+                    gestorSocketIndependiente.getSalida().flush();
+                    
+                    // Leer respuesta
+                    int codigo = gestorSocketIndependiente.getEntrada().readInt();
+                    if (codigo == Protocolo.GUARDAR_CITA_RESPONSE) {
+                        id = (ObjectId) gestorSocketIndependiente.getEntrada().readObject();
+                        System.out.println("✅ Cita guardada exitosamente con ID: " + id);
+                    } else if (codigo == Protocolo.ERROR_GUARDAR_CITA) {
+                        System.err.println("❌ Error del servidor al guardar cita");
+                        mostrarError("Error del servidor al guardar la cita.");
+                        return;
+                    } else {
+                        System.err.println("❌ Código de respuesta inesperado: " + codigo);
+                        mostrarError("Respuesta inesperada del servidor.");
+                        return;
+                    }
+                } else if (servicio != null) {
+                    // Usar servicio directo (compatibilidad)
+                    id = servicio.guardarCita(cita);
+                    System.out.println("✅ Cita guardada directamente con servicio, ID: " + id);
                 }
                 
-                // Cerrar ventana
-                cerrarVentana();
-            } else {
-                mostrarError("Ha ocurrido un error al guardar la cita.");
+                if (id != null) {
+                    System.out.println("🎉 Cita guardada correctamente, ejecutando callback...");
+                    
+                    // Ejecutar callback si existe (esto refrescará el calendario)
+                    if (citaGuardadaCallback != null) {
+                        // Ejecutar el callback en un hilo separado con un pequeño retraso
+                        // para asegurar que la transacción se complete
+                        new Thread(() -> {
+                            try {
+                                Thread.sleep(500); // Esperar 500ms para asegurar consistencia
+                                javafx.application.Platform.runLater(() -> {
+                                    citaGuardadaCallback.run();
+                                });
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                            }
+                        }).start();
+                    }
+                    
+                    // Cerrar ventana
+                    cerrarVentana();
+                } else {
+                    mostrarError("Ha ocurrido un error al guardar la cita.");
+                }
+                
+            } catch (Exception e) {
+                System.err.println("❌ Error al guardar la cita: " + e.getMessage());
+                e.printStackTrace();
+                mostrarError("Error al guardar la cita: " + e.getMessage());
+            } finally {
+                // Cerrar la conexión independiente
+                if (gestorSocketIndependiente != null) {
+                    try {
+                        gestorSocketIndependiente.cerrarConexion();
+                        System.out.println("🔌 Conexión independiente cerrada correctamente");
+                    } catch (Exception e) {
+                        System.err.println("Error al cerrar conexión independiente: " + e.getMessage());
+                    }
+                }
             }
         }
     }

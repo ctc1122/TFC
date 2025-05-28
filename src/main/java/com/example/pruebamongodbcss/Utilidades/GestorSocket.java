@@ -27,6 +27,20 @@ public class GestorSocket {
         return instance;
     }
 
+    /**
+     * Crea una nueva conexión independiente al servidor.
+     * Esta conexión no interfiere con el singleton y debe ser cerrada manualmente.
+     * @return Una nueva instancia de GestorSocket con conexión independiente
+     * @throws IOException Si no se puede establecer la conexión
+     */
+    public static GestorSocket crearConexionIndependiente() throws IOException {
+        GestorSocket nuevaConexion = new GestorSocket();
+        if (!nuevaConexion.isConectado()) {
+            throw new IOException("No se pudo establecer conexión independiente con el servidor");
+        }
+        return nuevaConexion;
+    }
+
     private void conectarAlServidor() {
         try {
             System.out.println("Intentando conectar al servidor alternativo: " + SERVER_HOST + ":" + SERVER_PORT_ALT);
@@ -85,7 +99,10 @@ public class GestorSocket {
                     socket.close();
                 }
                 conectado = false;
-                instance = null; // Permitir una nueva instancia después de cerrar
+                // Solo resetear instance si es la instancia singleton
+                if (this == instance) {
+                    instance = null;
+                }
             }
         } catch (IOException e) {
             System.err.println("Error al cerrar la conexión: " + e.getMessage());

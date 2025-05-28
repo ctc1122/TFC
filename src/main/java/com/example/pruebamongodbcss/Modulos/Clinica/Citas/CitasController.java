@@ -1,10 +1,10 @@
 package com.example.pruebamongodbcss.Modulos.Clinica.Citas;
 
-import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -219,54 +219,326 @@ public class CitasController implements Initializable {
      * Carga las citas desde el servicio
      */
     private void cargarCitas() {
+        System.out.println("🔄 Iniciando carga de citas en CitasController...");
         citasObservable.clear();
         
-        if (dpFechaInicio.getValue() != null && dpFechaFin.getValue() != null) {
-            List<ModeloCita> citas = buscarCitasPorRangoFechas(
-                    dpFechaInicio.getValue(), 
-                    dpFechaFin.getValue());
+        // Usar una conexión independiente para evitar conflictos
+        GestorSocket gestorSocketCitas = null;
+        try {
+            gestorSocketCitas = GestorSocket.crearConexionIndependiente();
+            
+            // Primero intentar obtener todas las citas
+            List<ModeloCita> todasLasCitas = obtenerTodasLasCitas(gestorSocketCitas);
+            System.out.println("📋 Total de citas obtenidas: " + todasLasCitas.size());
+            
+            if (todasLasCitas.isEmpty()) {
+                System.out.println("⚠️ No se encontraron citas en la base de datos");
+                return;
+            }
+            
+            List<ModeloCita> citasFiltradas = new ArrayList<>(todasLasCitas);
+            
+            // Aplicar filtro por rango de fechas si están definidas
+            if (dpFechaInicio.getValue() != null && dpFechaFin.getValue() != null) {
+                LocalDate fechaInicio = dpFechaInicio.getValue();
+                LocalDate fechaFin = dpFechaFin.getValue();
+                
+                citasFiltradas.removeIf(cita -> {
+                    LocalDate fechaCita = cita.getFechaHora().toLocalDate();
+                    return fechaCita.isBefore(fechaInicio) || fechaCita.isAfter(fechaFin);
+                });
+                
+                System.out.println("📅 Citas después de filtro por fechas (" + fechaInicio + " - " + fechaFin + "): " + citasFiltradas.size());
+            }
             
             // Aplicar filtro por búsqueda de texto si existe
             String textoBusqueda = txtBuscarCita.getText().trim().toLowerCase();
             if (!textoBusqueda.isEmpty()) {
-                citas.removeIf(cita -> 
+                citasFiltradas.removeIf(cita -> 
                     !cita.getNombrePaciente().toLowerCase().contains(textoBusqueda) && 
                     !cita.getNombreVeterinario().toLowerCase().contains(textoBusqueda) &&
                     !cita.getMotivo().toLowerCase().contains(textoBusqueda));
+                
+                System.out.println("🔍 Citas después de filtro por texto '" + textoBusqueda + "': " + citasFiltradas.size());
             }
             
             // Aplicar filtro por estado si está seleccionado
             String estadoSeleccionado = cmbEstadoFiltro.getSelectionModel().getSelectedItem();
             if (estadoSeleccionado != null && !estadoSeleccionado.equals("Todos")) {
-                citas.removeIf(cita -> !cita.getEstadoAsString().equals(estadoSeleccionado));
+                citasFiltradas.removeIf(cita -> !cita.getEstadoAsString().equals(estadoSeleccionado));
+                System.out.println("📊 Citas después de filtro por estado '" + estadoSeleccionado + "': " + citasFiltradas.size());
             }
             
-            citasObservable.addAll(citas);
+            // Agregar las citas filtradas a la tabla
+            citasObservable.addAll(citasFiltradas);
+            System.out.println("✅ Citas cargadas en la tabla: " + citasObservable.size());
+            
+        } catch (Exception e) {
+            System.err.println("❌ Error al cargar citas: " + e.getMessage());
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al cargar citas", 
+                "No se pudieron cargar las citas: " + e.getMessage());
+        } finally {
+            // Cerrar la conexión independiente
+            if (gestorSocketCitas != null) {
+                try {
+                    gestorSocketCitas.cerrarConexion();
+                    System.out.println("🔌 Conexión de citas cerrada correctamente");
+                } catch (Exception e) {
+                    System.err.println("Error al cerrar conexión de citas: " + e.getMessage());
+                }
+            }
         }
     }
     
     /**
-     * Métodos privados para comunicación con el servidor
+     * Obtiene todas las citas desde el servidor usando una conexión específica
      */
-    private List<ModeloCita> buscarCitasPorRangoFechas(LocalDate fechaInicio, LocalDate fechaFin) {
+    private List<ModeloCita> obtenerTodasLasCitas(GestorSocket gestorSocketEspecifico) {
         try {
-            gestorSocket.enviarPeticion(Protocolo.BUSCAR_CITAS_POR_RANGO_FECHAS + Protocolo.SEPARADOR_CODIGO);
-            gestorSocket.getSalida().writeObject(fechaInicio);
-            gestorSocket.getSalida().writeObject(fechaFin);
-            gestorSocket.getSalida().flush();
+            System.out.println("📡 Solicitando todas las citas al servidor...");
+            gestorSocketEspecifico.enviarPeticion(Protocolo.DAMETODASLASCITAS + Protocolo.SEPARADOR_CODIGO);
             
-            int codigo = gestorSocket.getEntrada().readInt();
-            if (codigo == Protocolo.BUSCAR_CITAS_POR_RANGO_FECHAS_RESPONSE) {
+            int codigo = gestorSocketEspecifico.getEntrada().readInt();
+            if (codigo == Protocolo.DAMETODASLASCITAS_RESPONSE) {
+                // El servidor devuelve CalendarEvent, necesitamos convertir a ModeloCita
                 @SuppressWarnings("unchecked")
-                List<ModeloCita> citas = (List<ModeloCita>) gestorSocket.getEntrada().readObject();
+                List<com.example.pruebamongodbcss.calendar.CalendarEvent> eventos = 
+                    (List<com.example.pruebamongodbcss.calendar.CalendarEvent>) gestorSocketEspecifico.getEntrada().readObject();
+                
+                System.out.println("📦 Eventos recibidos del servidor: " + eventos.size());
+                
+                // Convertir CalendarEvent a ModeloCita solo para citas médicas
+                List<ModeloCita> citas = new ArrayList<>();
+                for (com.example.pruebamongodbcss.calendar.CalendarEvent evento : eventos) {
+                    if (evento.getTipoEvento() == com.example.pruebamongodbcss.calendar.CalendarEvent.EventoTipo.CITA_MEDICA) {
+                        ModeloCita cita = convertirEventoACita(evento);
+                        if (cita != null) {
+                            citas.add(cita);
+                        }
+                    }
+                }
+                
+                System.out.println("🏥 Citas médicas convertidas: " + citas.size());
                 return citas;
+                
+            } else if (codigo == Protocolo.ERROR_DAMETODASLASCITAS) {
+                String errorMsg = gestorSocketEspecifico.getEntrada().readUTF();
+                System.err.println("❌ Error del servidor: " + errorMsg);
+                throw new RuntimeException("Error del servidor: " + errorMsg);
+            } else {
+                System.err.println("❌ Código de respuesta inesperado: " + codigo);
+                throw new RuntimeException("Respuesta inesperada del servidor (código: " + codigo + ")");
             }
         } catch (Exception e) {
+            System.err.println("❌ Error al obtener todas las citas: " + e.getMessage());
             e.printStackTrace();
-            mostrarAlerta("Error", "Error al buscar citas", 
-                "No se pudieron cargar las citas: " + e.getMessage());
+            throw new RuntimeException("Error de comunicación: " + e.getMessage());
         }
-        return new java.util.ArrayList<>();
+    }
+    
+    /**
+     * Convierte un CalendarEvent a ModeloCita
+     */
+    private ModeloCita convertirEventoACita(com.example.pruebamongodbcss.calendar.CalendarEvent evento) {
+        try {
+            ModeloCita cita = new ModeloCita();
+            
+            System.out.println("🔄 Convirtiendo evento: " + evento.getId() + " - " + evento.getTitle());
+            
+            // ID
+            if (evento.getId() != null && !evento.getId().isEmpty()) {
+                cita.setId(new org.bson.types.ObjectId(evento.getId()));
+            }
+            
+            // Título y motivo
+            cita.setMotivo(evento.getTitle() != null ? evento.getTitle() : "Sin motivo");
+            
+            // Fecha y hora
+            if (evento.getStart() != null) {
+                LocalDateTime fechaHora = parseDateTime(evento.getStart());
+                cita.setFechaHora(fechaHora);
+            }
+            
+            // Estado
+            if (evento.getEstado() != null) {
+                try {
+                    EstadoCita estado = EstadoCita.valueOf(evento.getEstado().toUpperCase());
+                    cita.setEstado(estado);
+                } catch (IllegalArgumentException e) {
+                    cita.setEstado(EstadoCita.PENDIENTE);
+                }
+            } else {
+                cita.setEstado(EstadoCita.PENDIENTE);
+            }
+            
+            // Veterinario
+            if (evento.getUsuario() != null) {
+                cita.setUsuarioAsignado(evento.getUsuario());
+                cita.setNombreVeterinario("Dr. " + evento.getUsuario());
+            }
+            
+            // Ubicación
+            if (evento.getLocation() != null) {
+                cita.setObservaciones("Ubicación: " + evento.getLocation());
+            }
+            
+            // MÉTODO ALTERNATIVO: Obtener la cita completa desde la base de datos
+            // En lugar de intentar reconstruir desde CalendarEvent, obtenemos la cita original
+            if (evento.getId() != null && !evento.getId().isEmpty()) {
+                try {
+                    ModeloCita citaCompleta = obtenerCitaCompletaPorId(evento.getId());
+                    if (citaCompleta != null) {
+                        System.out.println("✅ Cita completa obtenida para: " + evento.getId());
+                        return citaCompleta;
+                    } else {
+                        System.out.println("⚠️ No se pudo obtener cita completa para: " + evento.getId());
+                    }
+                } catch (Exception e) {
+                    System.err.println("❌ Error al obtener cita completa: " + e.getMessage());
+                }
+            }
+            
+            // Si no pudimos obtener la cita completa, intentar obtener el paciente por separado
+            System.out.println("🔍 Intentando obtener paciente por separado...");
+            System.out.println("   PacienteId del evento: " + evento.getPacienteId());
+            
+            if (evento.getPacienteId() != null && !evento.getPacienteId().isEmpty()) {
+                try {
+                    org.bson.types.ObjectId pacienteId = new org.bson.types.ObjectId(evento.getPacienteId());
+                    cita.setPacienteId(pacienteId);
+                    
+                    // Obtener datos del paciente
+                    ModeloPaciente paciente = obtenerPacientePorIdDirecto(pacienteId);
+                    if (paciente != null) {
+                        cita.setNombrePaciente(paciente.getNombre());
+                        cita.setTipoAnimal(paciente.getEspecie());
+                        cita.setRazaAnimal(paciente.getRaza());
+                        System.out.println("✅ Paciente obtenido: " + paciente.getNombre());
+                    } else {
+                        System.out.println("⚠️ No se pudo obtener paciente con ID: " + pacienteId);
+                    }
+                } catch (Exception e) {
+                    System.err.println("❌ Error al procesar paciente para cita " + evento.getId() + ": " + e.getMessage());
+                }
+            } else {
+                System.out.println("⚠️ Evento sin pacienteId: " + evento.getId());
+            }
+            
+            return cita;
+            
+        } catch (Exception e) {
+            System.err.println("❌ Error al convertir evento a cita: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    /**
+     * Obtiene una cita completa por ID desde la base de datos
+     */
+    private ModeloCita obtenerCitaCompletaPorId(String citaId) {
+        GestorSocket gestorSocketCita = null;
+        try {
+            gestorSocketCita = GestorSocket.crearConexionIndependiente();
+            gestorSocketCita.enviarPeticion(Protocolo.OBTENER_CITA_POR_ID + Protocolo.SEPARADOR_CODIGO + citaId);
+            
+            int codigo = gestorSocketCita.getEntrada().readInt();
+            if (codigo == Protocolo.OBTENER_CITA_POR_ID_RESPONSE) {
+                ModeloCita cita = (ModeloCita) gestorSocketCita.getEntrada().readObject();
+                
+                // Si la cita tiene pacienteId pero no nombre, obtener el paciente
+                if (cita != null && cita.getPacienteId() != null && 
+                    (cita.getNombrePaciente() == null || cita.getNombrePaciente().isEmpty())) {
+                    
+                    ModeloPaciente paciente = obtenerPacientePorIdDirecto(cita.getPacienteId());
+                    if (paciente != null) {
+                        cita.setNombrePaciente(paciente.getNombre());
+                        cita.setTipoAnimal(paciente.getEspecie());
+                        cita.setRazaAnimal(paciente.getRaza());
+                    }
+                }
+                
+                return cita;
+            } else if (codigo == Protocolo.ERROR_OBTENER_CITA_POR_ID) {
+                String errorMsg = gestorSocketCita.getEntrada().readUTF();
+                System.err.println("Error del servidor al obtener cita: " + errorMsg);
+            }
+        } catch (Exception e) {
+            System.err.println("Error al obtener cita completa " + citaId + ": " + e.getMessage());
+        } finally {
+            if (gestorSocketCita != null) {
+                try {
+                    gestorSocketCita.cerrarConexion();
+                } catch (Exception e) {
+                    System.err.println("Error al cerrar conexión de cita: " + e.getMessage());
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Obtiene un paciente por ID usando una conexión directa
+     */
+    private ModeloPaciente obtenerPacientePorIdDirecto(org.bson.types.ObjectId pacienteId) {
+        GestorSocket gestorSocketPaciente = null;
+        try {
+            System.out.println("🔍 Obteniendo paciente con ID: " + pacienteId);
+            gestorSocketPaciente = GestorSocket.crearConexionIndependiente();
+            gestorSocketPaciente.enviarPeticion(Protocolo.OBTENERPACIENTE_POR_ID + Protocolo.SEPARADOR_CODIGO + pacienteId.toString());
+            
+            int codigo = gestorSocketPaciente.getEntrada().readInt();
+            if (codigo == Protocolo.OBTENERPACIENTE_POR_ID_RESPONSE) {
+                ModeloPaciente paciente = (ModeloPaciente) gestorSocketPaciente.getEntrada().readObject();
+                if (paciente != null) {
+                    System.out.println("✅ Paciente encontrado: " + paciente.getNombre() + " (" + paciente.getEspecie() + ")");
+                } else {
+                    System.out.println("⚠️ Paciente es null para ID: " + pacienteId);
+                }
+                return paciente;
+            } else if (codigo == Protocolo.ERROROBTENERPACIENTE_POR_ID) {
+                String errorMsg = gestorSocketPaciente.getEntrada().readUTF();
+                System.err.println("❌ Error del servidor al obtener paciente: " + errorMsg);
+            } else {
+                System.err.println("❌ Código de respuesta inesperado: " + codigo);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error al obtener paciente " + pacienteId + ": " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            if (gestorSocketPaciente != null) {
+                try {
+                    gestorSocketPaciente.cerrarConexion();
+                } catch (Exception e) {
+                    System.err.println("Error al cerrar conexión de paciente: " + e.getMessage());
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Convierte una cadena de fecha ISO a LocalDateTime
+     */
+    private LocalDateTime parseDateTime(String dateTimeStr) {
+        if (dateTimeStr == null || dateTimeStr.isEmpty()) {
+            return LocalDateTime.now();
+        }
+        
+        try {
+            // Manejar tanto formato ISO completo como sin zona horaria
+            String cleanedStr = dateTimeStr.replace("Z", "");
+            if (cleanedStr.contains("T")) {
+                return LocalDateTime.parse(cleanedStr);
+            } else {
+                // Si no tiene formato ISO con T, intentar interpretar como fecha local
+                return LocalDateTime.parse(cleanedStr);
+            }
+        } catch (Exception e) {
+            System.err.println("Error al parsear fecha: " + dateTimeStr + " - " + e.getMessage());
+            return LocalDateTime.now();
+        }
     }
     
     private boolean eliminarCita(org.bson.types.ObjectId citaId) {
@@ -627,19 +899,28 @@ public class CitasController implements Initializable {
                 controller.setCita(cita);
             }
             
-            // Configurar callback para actualizar después de guardar
-            controller.setCitaGuardadaCallback(() -> cargarCitas());
+            // Configurar callback para refrescar la tabla cuando se guarde la cita
+            controller.setCitaGuardadaCallback(() -> {
+                System.out.println("🔄 Cita guardada desde formulario, refrescando tabla...");
+                Platform.runLater(() -> {
+                    cargarCitas();
+                    System.out.println("✅ Tabla de citas refrescada");
+                });
+            });
             
             Stage stage = new Stage();
             stage.setTitle(cita == null ? "Nueva Cita" : "Editar Cita");
-            stage.setScene(new Scene(root));
             stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(root));
             stage.showAndWait();
             
-        } catch (IOException e) {
+            // Refrescar la tabla después de cerrar el formulario
+            cargarCitas();
+            
+        } catch (Exception e) {
             e.printStackTrace();
             mostrarAlerta("Error", "Error al abrir formulario", 
-                "Ha ocurrido un error al intentar abrir el formulario de cita: " + e.getMessage());
+                "No se pudo abrir el formulario de citas: " + e.getMessage());
         }
     }
     
@@ -667,5 +948,15 @@ public class CitasController implements Initializable {
         alert.setHeaderText(encabezado);
         alert.setContentText(contenido);
         return alert.showAndWait();
+    }
+    
+    /**
+     * Método público para refrescar las citas desde otros controladores
+     */
+    public void refrescarCitas() {
+        System.out.println("🔄 Refrescando citas desde controlador externo...");
+        Platform.runLater(() -> {
+            cargarCitas();
+        });
     }
 } 
