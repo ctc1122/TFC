@@ -6,10 +6,11 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.calendarfx.model.Calendar;
@@ -17,53 +18,36 @@ import com.calendarfx.model.CalendarSource;
 import com.calendarfx.model.Entry;
 import com.calendarfx.view.CalendarView;
 import com.calendarfx.view.DateControl;
+import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
+import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.example.pruebamongodbcss.Utilidades.GestorSocket;
+import com.example.pruebamongodbcss.Utils.SplashUtils;
 
 import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
-
 import javafx.scene.Node;
-
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
-
 import javafx.scene.control.ContextMenu;
-
+import javafx.scene.control.Control;
 import javafx.scene.control.Label;
-import javafx.scene.control.Labeled;
 import javafx.scene.control.MenuItem;
-
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
-
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
-import javafx.scene.control.Control;
-
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-
-import com.example.pruebamongodbcss.PanelInicioController;
-import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
-import com.example.pruebamongodbcss.Protocolo.Protocolo;
-import com.example.pruebamongodbcss.Utilidades.GestorSocket;
-import com.example.pruebamongodbcss.calendar.EventoFormularioController;
-import java.time.format.DateTimeFormatter;
-import org.bson.types.ObjectId;
-import javafx.scene.control.Tooltip;
-import javafx.scene.input.MouseEvent;
 import javafx.util.Duration;
-import com.example.pruebamongodbcss.Data.EstadoCita;
-import com.example.pruebamongodbcss.Utils.SplashUtils;
 
 
 
@@ -263,25 +247,27 @@ public class CalendarFXComponent extends BorderPane {
             updateTimeThread.setDaemon(true);
             updateTimeThread.start();
             
-            // SISTEMA AUTOMÁTICO TEMPORALMENTE DESHABILITADO
-            // Causa conflictos de socket - necesita implementación con conexiones independientes
-            /*
-            // Sistema automático de gestión de estados de citas
-            Thread autoStatusThread = new Thread("Calendar: Auto Status Management Thread") {
+            // Hilo para refrescar el calendario cada 2 minutos (sincronización automática)
+            Thread refreshThread = new Thread("Calendar: Auto Refresh Thread") {
                 @Override
                 public void run() {
                     while (true) {
                         try {
-                            // Ejecutar verificación automática de estados cada 2 minutos
-                            verificarYActualizarEstadosAutomaticos();
-                            
-                            // Esperar 2 minutos antes de la siguiente verificación
+                            // Esperar 2 minutos antes del siguiente refresh
                             sleep(120000); // 2 minutos
+                            
+                            // Refrescar el calendario en el hilo de JavaFX
+                            Platform.runLater(() -> {
+                                System.out.println("🔄 Refresh automático del calendario cada 2 minutos...");
+                                refreshCalendarFromDatabase();
+                                System.out.println("✅ Refresh automático completado");
+                            });
+                            
                         } catch (InterruptedException e) {
-                            System.out.println("Hilo de gestión automática de estados interrumpido");
+                            System.out.println("Hilo de refresh automático interrumpido");
                             break;
                         } catch (Exception e) {
-                            System.err.println("Error en gestión automática de estados: " + e.getMessage());
+                            System.err.println("Error en refresh automático: " + e.getMessage());
                             e.printStackTrace();
                             // Continuar ejecutándose a pesar del error
                         }
@@ -289,9 +275,8 @@ public class CalendarFXComponent extends BorderPane {
                 }
             };
             
-            autoStatusThread.setDaemon(true);
-            autoStatusThread.start();
-            */
+            refreshThread.setDaemon(true);
+            refreshThread.start();
             
             // Crear barra de herramientas personalizada
             createCustomToolbar();
@@ -1643,14 +1628,6 @@ public class CalendarFXComponent extends BorderPane {
                                          entry.getCalendar() == calendars.get(2) || // Completadas
                                          entry.getCalendar() == calendars.get(3);   // Canceladas
             
-            // Deshabilitar "Editar cita" y "Cambiar estado" para citas pasadas
-            if (citaPasada) {
-                editItem.setDisable(true);
-                editItem.setText("Editar cita (no disponible - cita pasada)");
-                changeStatusItem.setDisable(true);
-                changeStatusItem.setText("Cambiar estado (no disponible - cita pasada)");
-            }
-            
             // Agregar opciones al menú
             contextMenu.getItems().addAll(editItem, deleteItem);
             if (isMedicalAppointment) {
@@ -2761,5 +2738,53 @@ public class CalendarFXComponent extends BorderPane {
             e.printStackTrace();
             showErrorMessage("Error al cargar citas", "Error general: " + e.getMessage());
         }
+    }
+
+    /**
+     * Método público para probar manualmente la verificación automática desde el cliente
+     */
+    public void probarVerificacionAutomaticaManual() {
+        new Thread(() -> {
+            try {
+                System.out.println("🧪 PRUEBA MANUAL: Ejecutando verificación automática desde cliente...");
+                
+                // Crear conexión independiente
+                GestorSocket gestorSocketPrueba = GestorSocket.crearConexionIndependiente();
+                
+                try {
+                    // Enviar petición de prueba
+                    gestorSocketPrueba.enviarPeticion(Protocolo.PROBAR_VERIFICACION_AUTOMATICA + Protocolo.SEPARADOR_CODIGO);
+                    
+                    // Leer respuesta
+                    ObjectInputStream ois = gestorSocketPrueba.getEntrada();
+                    int codigo = ois.readInt();
+                    
+                    if (codigo == Protocolo.PROBAR_VERIFICACION_AUTOMATICA_RESPONSE) {
+                        int citasActualizadas = ois.readInt();
+                        System.out.println("✅ Prueba completada. " + citasActualizadas + " citas actualizadas.");
+                        
+                        // Refrescar el calendario si se actualizaron citas
+                        if (citasActualizadas > 0) {
+                            Platform.runLater(() -> {
+                                refreshCalendarFromDatabase();
+                                System.out.println("🔄 Calendario refrescado después de la prueba");
+                            });
+                        }
+                    } else if (codigo == Protocolo.ERROR_PROBAR_VERIFICACION_AUTOMATICA) {
+                        String errorMsg = ois.readUTF();
+                        System.err.println("❌ Error en prueba: " + errorMsg);
+                    } else {
+                        System.err.println("❌ Código de respuesta inesperado: " + codigo);
+                    }
+                    
+                } finally {
+                    gestorSocketPrueba.cerrarConexion();
+                }
+                
+            } catch (Exception e) {
+                System.err.println("❌ Error en prueba manual: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }).start();
     }
 }

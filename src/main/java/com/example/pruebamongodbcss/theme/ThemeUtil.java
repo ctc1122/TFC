@@ -77,6 +77,12 @@ public class ThemeUtil {
      * @param node Nodo raíz para buscar escenas
      */
     private static void findAndRegisterAllScenes(Node node) {
+        // EXCLUSIÓN TOTAL DEL CALENDARIO: No registrar escenas del calendario nativo
+        if (isCalendarComponent(node)) {
+            System.out.println("🚫 ThemeUtil: Excluyendo componente de calendario del registro de escenas");
+            return; // Salir inmediatamente sin procesar este nodo ni sus hijos
+        }
+        
         // Registrar la escena si está disponible
         if (node.getScene() != null) {
             ThemeManager.getInstance().registerScene(node.getScene());
@@ -92,7 +98,7 @@ public class ThemeUtil {
             }
         }
         
-        // Procesar recursivamente todos los nodos hijos
+        // Procesar recursivamente todos los nodos hijos (solo si no es componente de calendario)
         if (node instanceof Parent) {
             Parent parent = (Parent) node;
             for (Node child : parent.getChildrenUnmodifiable()) {
@@ -107,6 +113,12 @@ public class ThemeUtil {
      * @param node Nodo al que agregar las clases de estilo
      */
     private static void addStylingClasses(Node node) {
+        // EXCLUSIÓN TOTAL DEL CALENDARIO: No agregar clases de estilo al calendario nativo
+        if (isCalendarComponent(node)) {
+            System.out.println("🚫 ThemeUtil: Excluyendo componente de calendario de la adición de clases de estilo");
+            return; // Salir inmediatamente sin procesar este nodo ni sus hijos
+        }
+        
         // Aplicar clase específica para paneles principales
         if (node.getId() != null && node.getId().endsWith("mainPane") && node instanceof Region) {
             node.getStyleClass().add("clinic-main-panel");
@@ -117,7 +129,7 @@ public class ThemeUtil {
             node.getStyleClass().add("clinic-header");
         }
         
-        // Procesar recursivamente todos los nodos hijos
+        // Procesar recursivamente todos los nodos hijos (solo si no es componente de calendario)
         if (node instanceof Parent) {
             Parent parent = (Parent) node;
             for (Node child : parent.getChildrenUnmodifiable()) {
@@ -192,6 +204,12 @@ public class ThemeUtil {
      * @param node Nodo al que aplicar el tema
      */
     public static void applyThemeToNode(Node node) {
+        // EXCLUSIÓN TOTAL DEL CALENDARIO: No aplicar ningún tema al calendario nativo
+        if (isCalendarComponent(node)) {
+            System.out.println("🚫 ThemeUtil: Excluyendo componente de calendario de la aplicación de temas");
+            return; // Salir inmediatamente sin procesar este nodo ni sus hijos
+        }
+        
         ThemeManager themeManager = ThemeManager.getInstance();
         
         // Aplicar clases específicas según el tipo de nodo
@@ -211,6 +229,12 @@ public class ThemeUtil {
      * @param node Nodo del que eliminar estilos problemáticos
      */
     public static void removeHardcodedStyles(Node node) {
+        // EXCLUSIÓN TOTAL DEL CALENDARIO: No modificar estilos del calendario nativo
+        if (isCalendarComponent(node)) {
+            System.out.println("🚫 ThemeUtil: Excluyendo componente de calendario de la eliminación de estilos");
+            return; // Salir inmediatamente sin procesar este nodo ni sus hijos
+        }
+        
         String style = node.getStyle();
         if (style != null && !style.isEmpty()) {
             // Eliminar colores de fondo hardcodeados problemáticos
@@ -241,6 +265,11 @@ public class ThemeUtil {
      * @param node Nodo al que aplicar las clases
      */
     private static void applyThemeClassesToNode(Node node) {
+        // EXCLUSIÓN TOTAL DEL CALENDARIO: No aplicar clases CSS al calendario nativo
+        if (isCalendarComponent(node)) {
+            return; // Salir inmediatamente sin procesar este nodo
+        }
+        
         // Aplicar clases específicas según el tipo de nodo y su ID
         if (node.getId() != null) {
             String nodeId = node.getId().toLowerCase();
@@ -284,6 +313,70 @@ public class ThemeUtil {
     }
     
     /**
+     * Verifica si un nodo es parte del componente de calendario y debe ser excluido del tema
+     * @param node Nodo a verificar
+     * @return true si es parte del calendario y debe ser excluido
+     */
+    private static boolean isCalendarComponent(Node node) {
+        if (node == null) return false;
+        
+        // Verificar por ID específico del calendario
+        if (node.getId() != null) {
+            String nodeId = node.getId().toLowerCase();
+            if (nodeId.contains("calendar-fx-isolated-component") || 
+                nodeId.contains("calendar-view-isolated") ||
+                nodeId.contains("calendar-day-page") ||
+                nodeId.contains("calendar-week-page") ||
+                nodeId.contains("calendar-month-page") ||
+                nodeId.contains("calendar-year-page")) {
+                return true;
+            }
+        }
+        
+        // Verificar por clase del nodo
+        String className = node.getClass().getName().toLowerCase();
+        if (className.contains("calendarfx") || 
+            className.contains("calendar") && className.contains("view") ||
+            className.contains("com.calendarfx")) {
+            return true;
+        }
+        
+        // Verificar por clases CSS
+        if (node.getStyleClass() != null) {
+            for (String styleClass : node.getStyleClass()) {
+                if (styleClass.toLowerCase().contains("calendar") ||
+                    styleClass.toLowerCase().contains("calendarfx")) {
+                    return true;
+                }
+            }
+        }
+        
+        // Verificar si es instancia de CalendarFXComponent
+        if (node.getClass().getName().contains("CalendarFXComponent")) {
+            return true;
+        }
+        
+        // Verificar si algún padre es un componente de calendario
+        Node parent = node.getParent();
+        while (parent != null) {
+            if (parent.getId() != null && 
+                (parent.getId().contains("calendar-fx-isolated-component") ||
+                 parent.getId().contains("calendar-view-isolated"))) {
+                return true;
+            }
+            
+            if (parent.getClass().getName().contains("CalendarFXComponent") ||
+                parent.getClass().getName().toLowerCase().contains("calendarfx")) {
+                return true;
+            }
+            
+            parent = parent.getParent();
+        }
+        
+        return false;
+    }
+    
+    /**
      * Fuerza la actualización del tema en la escena actual
      * @param scene Escena a actualizar
      */
@@ -296,6 +389,12 @@ public class ThemeUtil {
      * @param container Contenedor del módulo
      */
     public static void applyModuleTheme(Node container) {
+        // EXCLUSIÓN TOTAL DEL CALENDARIO: No aplicar tema de módulo al calendario nativo
+        if (isCalendarComponent(container)) {
+            System.out.println("🚫 ThemeUtil: Excluyendo componente de calendario del tema de módulo");
+            return; // Salir inmediatamente sin procesar
+        }
+        
         // Eliminar estilos hardcodeados problemáticos
         removeHardcodedStyles(container);
         
@@ -313,6 +412,12 @@ public class ThemeUtil {
      * @param card Tarjeta o panel de contenido
      */
     public static void applyCardTheme(Node card) {
+        // EXCLUSIÓN TOTAL DEL CALENDARIO: No aplicar tema de tarjeta al calendario nativo
+        if (isCalendarComponent(card)) {
+            System.out.println("🚫 ThemeUtil: Excluyendo componente de calendario del tema de tarjeta");
+            return; // Salir inmediatamente sin procesar
+        }
+        
         // Eliminar estilos hardcodeados problemáticos
         removeHardcodedStyles(card);
         

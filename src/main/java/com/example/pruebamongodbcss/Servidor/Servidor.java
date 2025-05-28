@@ -44,6 +44,48 @@ public class Servidor {
             serverSocket = new ServerSocket(puerto);
             System.out.println("Servidor iniciado en puerto " + puerto);
 
+            // Iniciar hilo automático para gestión de estados de citas
+            Thread autoStatusThread = new Thread("Server: Auto Status Management Thread") {
+                @Override
+                public void run() {
+                    // Esperar 30 segundos antes de la primera verificación para que el servidor esté completamente iniciado
+                    try {
+                        Thread.sleep(30000);
+                    } catch (InterruptedException e) {
+                        System.out.println("Hilo de gestión automática de estados interrumpido durante inicialización");
+                        return;
+                    }
+                    
+                    // Crear instancia del servicio de calendario
+                    com.example.pruebamongodbcss.calendar.CalendarService calendarService = 
+                        new com.example.pruebamongodbcss.calendar.CalendarService();
+                    
+                    while (running) {
+                        try {
+                            // Ejecutar verificación automática de estados cada 2 minutos
+                            int citasActualizadas = calendarService.verificarYActualizarEstadosAutomaticos();
+                            if (citasActualizadas > 0) {
+                                System.out.println("🔄 Servidor: " + citasActualizadas + " citas actualizadas automáticamente");
+                            }
+                            
+                            // Esperar 2 minutos antes de la siguiente verificación
+                            Thread.sleep(60000); // 2 minutos
+                        } catch (InterruptedException e) {
+                            System.out.println("Hilo de gestión automática de estados interrumpido");
+                            break;
+                        } catch (Exception e) {
+                            System.err.println("Error en gestión automática de estados: " + e.getMessage());
+                            e.printStackTrace();
+                            // Continuar ejecutándose a pesar del error
+                        }
+                    }
+                }
+            };
+            
+            autoStatusThread.setDaemon(true);
+            autoStatusThread.start();
+            System.out.println("🤖 Hilo automático de gestión de estados de citas iniciado");
+
             while (running) {
                 try {
                     // Esperar a que un cliente se conecte

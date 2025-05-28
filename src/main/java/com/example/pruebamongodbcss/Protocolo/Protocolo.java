@@ -321,4 +321,9 @@ public interface Protocolo {
     public static final int OBTENER_CITAS_POR_USUARIO_RESPONSE = 1233;
     public static final int ERROR_OBTENER_CITAS_POR_USUARIO = 1234;
 
+    // Constantes para verificación automática de estados
+    public static final int PROBAR_VERIFICACION_AUTOMATICA = 1235;
+    public static final int PROBAR_VERIFICACION_AUTOMATICA_RESPONSE = 1236;
+    public static final int ERROR_PROBAR_VERIFICACION_AUTOMATICA = 1237;
+
 } 

@@ -798,6 +798,26 @@ public class ClienteHandler implements Runnable {
                                 }
                             }
                             break;
+                        case Protocolo.PROBAR_VERIFICACION_AUTOMATICA:
+                            System.out.println("🧪 Procesando solicitud de prueba de verificación automática...");
+                            try {
+                                int citasActualizadas = calendarService.probarVerificacionAutomatica();
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.PROBAR_VERIFICACION_AUTOMATICA_RESPONSE);
+                                    salida.writeInt(citasActualizadas);
+                                    salida.flush();
+                                }
+                                System.out.println("✅ Prueba de verificación automática completada. " + citasActualizadas + " citas actualizadas.");
+                            } catch (Exception e) {
+                                System.err.println("❌ Error en prueba de verificación automática: " + e.getMessage());
+                                e.printStackTrace();
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_PROBAR_VERIFICACION_AUTOMATICA);
+                                    salida.writeUTF("Error: " + e.getMessage());
+                                    salida.flush();
+                                }
+                            }
+                            break;
                         case Protocolo.OBTENER_RESUMEN_EVENTOS_USUARIO:
                             System.out.println("Procesando solicitud de obtener resumen de eventos por usuario...");
                             if (parametros.length >= 1) {
