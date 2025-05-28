@@ -1034,3 +1034,58 @@ GridPane {
     -fx-border-color: transparent !important;
     -fx-border-width: 0px !important;
 }
+
+/* ================= MÓDULO DE FICHAJE - TEMA CLARO ================= */
+
+/* Estilos específicos para gráficos del módulo de fichaje */
+.fichaje-main-panel .chart .chart-title {
+    -fx-text-fill: #2c3e50 !important;
+    -fx-font-size: 16px !important;
+    -fx-font-weight: bold !important;
+}
+
+.fichaje-main-panel .chart .axis {
+    -fx-tick-label-fill: #495057 !important;
+}
+
+.fichaje-main-panel .chart .axis-label {
+    -fx-text-fill: #495057 !important;
+    -fx-font-size: 12px !important;
+}
+
+.fichaje-main-panel .chart .chart-legend {
+    -fx-text-fill: #495057 !important;
+}
+
+.fichaje-main-panel .chart .chart-legend-item {
+    -fx-text-fill: #495057 !important;
+}
+
+/* Títulos y labels específicos del módulo fichaje */
+.fichaje-main-panel .module-title {
+    -fx-text-fill: #2c3e50 !important;
+    -fx-font-size: 24px !important;
+    -fx-font-weight: bold !important;
+}
+
+.fichaje-main-panel .back-button {
+    -fx-background-color: #f8f9fa;
+    -fx-text-fill: #495057 !important;
+    -fx-border-color: #ced4da;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 12px;
+}
+
+.fichaje-main-panel .back-button:hover {
+    -fx-background-color: #e9ecef;
+    -fx-text-fill: #212529 !important;
+}
+
+/* Headers de contenedores */
+.fichaje-main-panel .header-container {
+    -fx-background-color: transparent;
+}
+
+/* ================= FIN MÓDULO DE FICHAJE - TEMA CLARO ================= */

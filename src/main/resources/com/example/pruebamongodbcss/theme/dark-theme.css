@@ -956,4 +956,148 @@ GridPane {
     -fx-background-color: transparent !important;
     -fx-border-color: transparent !important;
     -fx-border-width: 0px !important;
-} 
+}
+
+/* ================= MÓDULO DE FICHAJE - TEMA OSCURO ================= */
+
+/* Estilos específicos para gráficos del módulo de fichaje */
+.fichaje-main-panel .chart .chart-title {
+    -fx-text-fill: #2c3e50 !important;
+    -fx-font-size: 16px !important;
+    -fx-font-weight: bold !important;
+}
+
+.fichaje-main-panel .chart .axis {
+    -fx-tick-label-fill: #2c3e50 !important;
+}
+
+.fichaje-main-panel .chart .axis-label {
+    -fx-text-fill: #2c3e50 !important;
+    -fx-font-size: 12px !important;
+}
+
+.fichaje-main-panel .chart .chart-legend {
+    -fx-text-fill: #2c3e50 !important;
+}
+
+.fichaje-main-panel .chart .chart-legend-item {
+    -fx-text-fill: #2c3e50 !important;
+}
+
+/* Líneas de los gráficos */
+.fichaje-main-panel .chart .chart-series-line {
+    -fx-stroke: #4CAF50 !important;
+    -fx-stroke-width: 3px !important;
+}
+
+.fichaje-main-panel .chart .default-color0.chart-series-line {
+    -fx-stroke: #4CAF50 !important;
+}
+
+.fichaje-main-panel .chart .default-color1.chart-series-line {
+    -fx-stroke: #2196F3 !important;
+}
+
+.fichaje-main-panel .chart .default-color2.chart-series-line {
+    -fx-stroke: #FF9800 !important;
+}
+
+/* Símbolos de los gráficos de línea */
+.fichaje-main-panel .chart .chart-line-symbol {
+    -fx-background-color: #4CAF50 !important;
+    -fx-background-radius: 4px;
+}
+
+.fichaje-main-panel .chart .default-color0.chart-line-symbol {
+    -fx-background-color: #4CAF50 !important;
+}
+
+.fichaje-main-panel .chart .default-color1.chart-line-symbol {
+    -fx-background-color: #2196F3 !important;
+}
+
+.fichaje-main-panel .chart .default-color2.chart-line-symbol {
+    -fx-background-color: #FF9800 !important;
+}
+
+/* Barras de los gráficos */
+.fichaje-main-panel .chart .default-color0.chart-bar {
+    -fx-bar-fill: #4CAF50 !important;
+}
+
+.fichaje-main-panel .chart .default-color1.chart-bar {
+    -fx-bar-fill: #2196F3 !important;
+}
+
+.fichaje-main-panel .chart .default-color2.chart-bar {
+    -fx-bar-fill: #FF9800 !important;
+}
+
+/* Sectores de gráficos circulares */
+.fichaje-main-panel .chart .default-color0.chart-pie {
+    -fx-pie-color: #4CAF50 !important;
+}
+
+.fichaje-main-panel .chart .default-color1.chart-pie {
+    -fx-pie-color: #2196F3 !important;
+}
+
+.fichaje-main-panel .chart .default-color2.chart-pie {
+    -fx-pie-color: #FF9800 !important;
+}
+
+.fichaje-main-panel .chart .default-color3.chart-pie {
+    -fx-pie-color: #f44336 !important;
+}
+
+.fichaje-main-panel .chart .default-color4.chart-pie {
+    -fx-pie-color: #9C27B0 !important;
+}
+
+/* Fondo del gráfico - más claro para contrastar con texto oscuro */
+.fichaje-main-panel .chart .chart-plot-background {
+    -fx-background-color: #f8f9fa !important;
+}
+
+/* Fondo general del gráfico */
+.fichaje-main-panel .chart {
+    -fx-background-color: #f8f9fa !important;
+}
+
+/* Líneas de cuadrícula - más oscuras para ser visibles en fondo claro */
+.fichaje-main-panel .chart .chart-vertical-grid-lines {
+    -fx-stroke: #dee2e6 !important;
+}
+
+.fichaje-main-panel .chart .chart-horizontal-grid-lines {
+    -fx-stroke: #dee2e6 !important;
+}
+
+/* Títulos y labels específicos del módulo fichaje */
+.fichaje-main-panel .module-title {
+    -fx-text-fill: #ffffff !important;
+    -fx-font-size: 24px !important;
+    -fx-font-weight: bold !important;
+}
+
+.fichaje-main-panel .back-button {
+    -fx-background-color: #404040;
+    -fx-text-fill: #ffffff !important;
+    -fx-border-color: #555555;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 12px;
+}
+
+.fichaje-main-panel .back-button:hover {
+    -fx-background-color: #505050;
+    -fx-text-fill: #ffffff !important;
+}
+
+/* Headers de contenedores */
+.fichaje-main-panel .header-container {
+    -fx-background-color: transparent;
+}
+
+/* ================= FIN MÓDULO DE FICHAJE - TEMA OSCURO ================= */ 
