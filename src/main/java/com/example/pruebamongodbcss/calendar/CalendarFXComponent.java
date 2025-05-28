@@ -373,226 +373,164 @@ public class CalendarFXComponent extends BorderPane {
      * Carga las citas desde la base de datos aplicando los filtros adecuados según el rol del usuario
      */
     private void loadAppointmentsFromDatabase() {
-        try {
-            System.out.println("Cargando citas desde la base de datos...");
-            
-            // Limpiar todas las entradas existentes
-            for (Calendar calendar : calendars) {
-                calendar.clear();
-            }
-            
-            List<CalendarEvent> events = new ArrayList<>();
-            
-            // Cargar citas según el rol del usuario
-            if (usuarioActual != null) {
-                String username = usuarioActual.getUsuario();
-                com.example.pruebamongodbcss.Data.Usuario.Rol rol = usuarioActual.getRol();
+        // Usar un hilo separado para no bloquear la UI
+        new Thread(() -> {
+            GestorSocket gestorSocketIndependiente = null;
+            try {
+                System.out.println("🔄 Cargando citas desde la base de datos...");
                 
-                System.out.println("Usuario actual en loadAppointmentsFromDatabase: " + username + ", Rol: " + (rol != null ? rol.name() : "null"));
+                // Crear una conexión independiente para evitar conflictos
+                gestorSocketIndependiente = GestorSocket.crearConexionIndependiente();
                 
-                if (rol == com.example.pruebamongodbcss.Data.Usuario.Rol.ADMINISTRADOR) {
-                    // Administradores ven absolutamente todo
-                    System.out.println("Administrador: Cargando todas las citas y eventos");
-
-                    try {
-                        gestorSocket.enviarPeticion(Protocolo.DAMETODASLASCITAS + Protocolo.SEPARADOR_CODIGO);
-                        ObjectInputStream ois = gestorSocket.getEntrada();
-                        int codigo = ois.readInt();
-                        if (codigo == Protocolo.DAMETODASLASCITAS_RESPONSE) {
-                            events = (List<CalendarEvent>) ois.readObject();
-                            System.out.println("Administrador: Cargadas " + events.size() + " citas correctamente");
-                        } else if (codigo == Protocolo.ERROR_DAMETODASLASCITAS) {
-                            String errorMsg = ois.readUTF();
-                            System.err.println("Error del servidor: " + errorMsg);
-                            showErrorMessage("Error", "No se pudieron cargar las citas: " + errorMsg);
-                            return;
-                        } else {
-                            System.err.println("Código de respuesta inesperado: " + codigo);
-                            showErrorMessage("Error", "Respuesta inesperada del servidor (código: " + codigo + ")");
-                            return;
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Error de comunicación con el servidor: " + e.getMessage());
-                        e.printStackTrace();
-                        showErrorMessage("Error de Comunicación", "No se pudo conectar con el servidor: " + e.getMessage());
-                        return;
+                // Limpiar todas las entradas existentes en el hilo de JavaFX
+                Platform.runLater(() -> {
+                    for (Calendar calendar : calendars) {
+                        calendar.clear();
                     }
-                } 
-                else if (rol == com.example.pruebamongodbcss.Data.Usuario.Rol.AUXILIAR) {
-                    // Auxiliares ven todas las CITAS MÉDICAS de cualquier veterinario, pero no recordatorios ni reuniones
-                    System.out.println("Auxiliar: Cargando todas las citas y eventos");
-                    
-                    try {
-                        gestorSocket.enviarPeticion(Protocolo.DAMETODASLASCITAS + Protocolo.SEPARADOR_CODIGO);
-                        ObjectInputStream ois = gestorSocket.getEntrada();
-                        int codigo = ois.readInt();
-                        if (codigo == Protocolo.DAMETODASLASCITAS_RESPONSE) {
-                            events = (List<CalendarEvent>) ois.readObject();
-                            System.out.println("Auxiliar: Cargadas " + events.size() + " citas desde servidor");
-                        } else if (codigo == Protocolo.ERROR_DAMETODASLASCITAS) {
-                            String errorMsg = ois.readUTF();
-                            System.err.println("Error del servidor: " + errorMsg);
-                            showErrorMessage("Error", "No se pudieron cargar las citas: " + errorMsg);
-                            return;
-                        } else {
-                            System.err.println("Código de respuesta inesperado: " + codigo);
-                            showErrorMessage("Error", "Respuesta inesperada del servidor (código: " + codigo + ")");
-                            return;
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Error de comunicación con el servidor: " + e.getMessage());
-                        e.printStackTrace();
-                        showErrorMessage("Error de Comunicación", "No se pudo conectar con el servidor: " + e.getMessage());
-                        return;
-                    }
-
-                    // Filtrar solo citas médicas para auxiliares
-                    events = events.stream()
-                        .filter(event -> esCitaMedica(event))
-                        .collect(Collectors.toList());
-                    System.out.println("Auxiliar: Filtradas a " + events.size() + " citas médicas");
-                } 
-                else if (rol == com.example.pruebamongodbcss.Data.Usuario.Rol.VETERINARIO) {
-                    // Los veterinarios ven:
-                    // 1. Sus propias citas médicas (donde usuarioAsignado == username)
-                    // 2. Sus propios recordatorios y reuniones
-                    try {
-                        gestorSocket.enviarPeticion(Protocolo.DAMETODASLASCITAS + Protocolo.SEPARADOR_CODIGO);
-                        ObjectInputStream ois = gestorSocket.getEntrada();
-                        int codigo = ois.readInt();
-                        if (codigo == Protocolo.DAMETODASLASCITAS_RESPONSE) {
-                            List<CalendarEvent> allEvents = (List<CalendarEvent>) ois.readObject();
-                            System.out.println("Veterinario: Recibidas " + allEvents.size() + " citas del servidor");
-                            
-                            for (CalendarEvent event : allEvents) {
-                                boolean isMine = username.equals(event.getUsuario());
-                                boolean isCitaMedica = esCitaMedica(event);
-                                boolean isReunionOrRecordatorio = 
-                                    esReunion(event) || esRecordatorio(event);
-                                
-                                // Si la cita está asignada a este veterinario o es un recordatorio/reunión suyo
-                                if (isMine && (isCitaMedica || isReunionOrRecordatorio)) {
-                                    events.add(event);
-                                }
-                            }
-                        } else if (codigo == Protocolo.ERROR_DAMETODASLASCITAS) {
-                            String errorMsg = ois.readUTF();
-                            System.err.println("Error del servidor: " + errorMsg);
-                            showErrorMessage("Error", "No se pudieron cargar las citas: " + errorMsg);
-                            return;
-                        } else {
-                            System.err.println("Código de respuesta inesperado: " + codigo);
-                            showErrorMessage("Error", "Respuesta inesperada del servidor (código: " + codigo + ")");
-                            return;
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Error de comunicación con el servidor: " + e.getMessage());
-                        e.printStackTrace();
-                        showErrorMessage("Error de Comunicación", "No se pudo conectar con el servidor: " + e.getMessage());
-                        return;
-                    }
-                    System.out.println("Veterinario: Filtradas a " + events.size() + " citas y eventos propios");
-                } 
-                else {
-                    // Otros usuarios solo ven sus propios eventos
-                    try {
-                        gestorSocket.enviarPeticion(Protocolo.OBTENER_EVENTOS_POR_USUARIO + Protocolo.SEPARADOR_CODIGO + username);
-                        ObjectInputStream ois = gestorSocket.getEntrada();
-                        int codigo = ois.readInt();
-                        if (codigo == Protocolo.OBTENER_EVENTOS_POR_USUARIO_RESPONSE) {
-                            events = (List<CalendarEvent>) ois.readObject();
-                            System.out.println("Usuario estándar: Cargadas " + events.size() + " citas propias");
-                        } else if (codigo == Protocolo.ERROR_OBTENER_EVENTOS_POR_USUARIO) {
-                            String errorMsg = ois.readUTF();
-                            System.err.println("Error del servidor: " + errorMsg);
-                            showErrorMessage("Error", "No se pudieron cargar los eventos del usuario: " + errorMsg);
-                            return;
-                        } else {
-                            System.err.println("Código de respuesta inesperado: " + codigo);
-                            showErrorMessage("Error", "Respuesta inesperada del servidor (código: " + codigo + ")");
-                            return;
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Error de comunicación con el servidor: " + e.getMessage());
-                        e.printStackTrace();
-                        showErrorMessage("Error de Comunicación", "No se pudo conectar con el servidor: " + e.getMessage());
-                        return;
-                    }
-                }
-            } else {
-                // Si no hay usuario, mostrar todas las citas
-                try {
-                    gestorSocket.enviarPeticion(Protocolo.DAMETODASLASCITAS + Protocolo.SEPARADOR_CODIGO);
-                    ObjectInputStream ois = gestorSocket.getEntrada();
-                    int codigo = ois.readInt();
-                    if (codigo == Protocolo.DAMETODASLASCITAS_RESPONSE) {
-                        events = (List<CalendarEvent>) ois.readObject();
-                        System.out.println("Sin usuario: Cargadas " + events.size() + " citas");
-                    } else if (codigo == Protocolo.ERROR_DAMETODASLASCITAS) {
-                        String errorMsg = ois.readUTF();
-                        System.err.println("Error del servidor: " + errorMsg);
-                        showErrorMessage("Error", "No se pudieron cargar las citas: " + errorMsg);
-                        return;
-                    } else {
-                        System.err.println("Código de respuesta inesperado: " + codigo);
-                        showErrorMessage("Error", "Respuesta inesperada del servidor (código: " + codigo + ")");
-                        return;
-                    }
-                } catch (Exception e) {
-                    System.err.println("Error de comunicación con el servidor: " + e.getMessage());
-                    e.printStackTrace();
-                    showErrorMessage("Error de Comunicación", "No se pudo conectar con el servidor: " + e.getMessage());
+                });
+                
+                List<CalendarEvent> events = new ArrayList<>();
+                
+                // Cargar todas las citas de forma simple
+                System.out.println("📤 Solicitando todas las citas al servidor...");
+                gestorSocketIndependiente.enviarPeticion(Protocolo.DAMETODASLASCITAS + Protocolo.SEPARADOR_CODIGO);
+                
+                ObjectInputStream ois = gestorSocketIndependiente.getEntrada();
+                int codigo = ois.readInt();
+                
+                if (codigo == Protocolo.DAMETODASLASCITAS_RESPONSE) {
+                    events = (List<CalendarEvent>) ois.readObject();
+                    System.out.println("✅ Cargadas " + events.size() + " citas correctamente");
+                } else if (codigo == Protocolo.ERROR_DAMETODASLASCITAS) {
+                    System.err.println("❌ Error del servidor al cargar citas");
+                    Platform.runLater(() -> showErrorMessage("Error", "No se pudieron cargar las citas del servidor"));
+                    return;
+                } else {
+                    System.err.println("❌ Código de respuesta inesperado: " + codigo);
+                    Platform.runLater(() -> showErrorMessage("Error", "Respuesta inesperada del servidor"));
                     return;
                 }
-            }
-            
-            System.out.println("Se encontraron " + events.size() + " eventos para mostrar.");
-            
-            // Convertir eventos a entradas del calendario
-            for (CalendarEvent event : events) {
-                try {
-                    Calendar targetCalendar = getTargetCalendar(event);
-                    String motivo = event.getTitle() != null ? event.getTitle().toUpperCase() : "CITA";
-                    String estadoStr = event.getEstado() != null ? event.getEstado().toUpperCase() : "PENDIENTE";
-                    String titulo = motivo + " - " + estadoStr;
-                    Entry<String> entry = new Entry<>(titulo);
-                    entry.setId(event.getId());
-                    entry.setLocation(event.getLocation());
-                    
-                    // Asignar calendar según el estado
-                    entry.setCalendar(targetCalendar);
-                    
-                    // Convertir fechas de String a LocalDateTime
-                    LocalDateTime startDateTime = parseDateTime(event.getStart());
-                    LocalDateTime endDateTime = parseDateTime(event.getEnd());
-                    
-                    if (startDateTime != null && endDateTime != null) {
-                        entry.changeStartDate(startDateTime.toLocalDate());
-                        entry.changeStartTime(startDateTime.toLocalTime());
-                        entry.changeEndDate(endDateTime.toLocalDate());
-                        entry.changeEndTime(endDateTime.toLocalTime());
-                        
-                        // Agregar notas si hay descripción
-                        if (event.getDescription() != null && !event.getDescription().isEmpty()) {
-                            entryDescriptions.put(entry.getId(), event.getDescription());
+                
+                // Filtrar eventos según el rol del usuario
+                List<CalendarEvent> eventosFinales = filtrarEventosPorRol(events);
+                
+                System.out.println("📊 Se mostrarán " + eventosFinales.size() + " eventos después del filtrado");
+                
+                // Convertir eventos a entradas del calendario en el hilo de JavaFX
+                Platform.runLater(() -> {
+                    try {
+                        for (CalendarEvent event : eventosFinales) {
+                            agregarEventoAlCalendario(event);
                         }
-                        
-                        // Agregar al calendario correspondiente
-                        targetCalendar.addEntry(entry);
+                        System.out.println("✅ Eventos cargados con éxito en el calendario visual");
+                        refreshCalendar();
+                    } catch (Exception e) {
+                        System.err.println("❌ Error al agregar eventos al calendario: " + e.getMessage());
+                        e.printStackTrace();
                     }
-                } catch (Exception entryException) {
-                    System.err.println("Error al procesar evento individual: " + entryException.getMessage());
-                    // Continuar con el siguiente evento en lugar de fallar completamente
+                });
+                
+            } catch (Exception e) {
+                System.err.println("❌ Error al cargar citas: " + e.getMessage());
+                e.printStackTrace();
+                Platform.runLater(() -> showErrorMessage("Error al cargar citas", "Error: " + e.getMessage()));
+            } finally {
+                // Cerrar la conexión independiente
+                if (gestorSocketIndependiente != null) {
+                    try {
+                        gestorSocketIndependiente.cerrarConexion();
+                        System.out.println("🔌 Conexión independiente cerrada correctamente");
+                    } catch (Exception e) {
+                        System.err.println("⚠️ Error al cerrar conexión: " + e.getMessage());
+                    }
                 }
             }
+        }).start();
+    }
+    
+    /**
+     * Filtra los eventos según el rol del usuario actual
+     */
+    private List<CalendarEvent> filtrarEventosPorRol(List<CalendarEvent> todosLosEventos) {
+        if (usuarioActual == null) {
+            System.out.println("⚠️ No hay usuario actual, mostrando todos los eventos");
+            return todosLosEventos;
+        }
+        
+        String username = usuarioActual.getUsuario();
+        com.example.pruebamongodbcss.Data.Usuario.Rol rol = usuarioActual.getRol();
+        
+        System.out.println("🔍 Filtrando eventos para usuario: " + username + ", Rol: " + (rol != null ? rol.name() : "null"));
+        
+        if (rol == com.example.pruebamongodbcss.Data.Usuario.Rol.ADMINISTRADOR) {
+            // Administradores ven todo
+            System.out.println("👑 Administrador: mostrando todos los eventos");
+            return todosLosEventos;
+        } else if (rol == com.example.pruebamongodbcss.Data.Usuario.Rol.AUXILIAR) {
+            // Auxiliares ven todas las citas médicas
+            List<CalendarEvent> citasMedicas = todosLosEventos.stream()
+                .filter(this::esCitaMedica)
+                .collect(Collectors.toList());
+            System.out.println("🏥 Auxiliar: mostrando " + citasMedicas.size() + " citas médicas");
+            return citasMedicas;
+        } else if (rol == com.example.pruebamongodbcss.Data.Usuario.Rol.VETERINARIO) {
+            // Veterinarios ven sus propias citas y eventos
+            List<CalendarEvent> eventosVeterinario = todosLosEventos.stream()
+                .filter(event -> {
+                    boolean esMio = username.equals(event.getUsuario());
+                    boolean esCita = esCitaMedica(event);
+                    boolean esEvento = esReunion(event) || esRecordatorio(event);
+                    return esMio && (esCita || esEvento);
+                })
+                .collect(Collectors.toList());
+            System.out.println("👨‍⚕️ Veterinario: mostrando " + eventosVeterinario.size() + " eventos propios");
+            return eventosVeterinario;
+        } else {
+            // Otros usuarios ven solo sus eventos
+            List<CalendarEvent> eventosUsuario = todosLosEventos.stream()
+                .filter(event -> username.equals(event.getUsuario()))
+                .collect(Collectors.toList());
+            System.out.println("👤 Usuario estándar: mostrando " + eventosUsuario.size() + " eventos propios");
+            return eventosUsuario;
+        }
+    }
+    
+    /**
+     * Agrega un evento individual al calendario visual
+     */
+    private void agregarEventoAlCalendario(CalendarEvent event) {
+        try {
+            Calendar targetCalendar = getTargetCalendar(event);
+            String motivo = event.getTitle() != null ? event.getTitle().toUpperCase() : "CITA";
+            String estadoStr = event.getEstado() != null ? event.getEstado().toUpperCase() : "PENDIENTE";
+            String titulo = motivo + " - " + estadoStr;
             
-            System.out.println("Eventos cargados con éxito en el calendario visual.");
-            refreshCalendar();
+            Entry<String> entry = new Entry<>(titulo);
+            entry.setId(event.getId());
+            entry.setLocation(event.getLocation());
+            entry.setCalendar(targetCalendar);
             
+            // Convertir fechas de String a LocalDateTime
+            LocalDateTime startDateTime = parseDateTime(event.getStart());
+            LocalDateTime endDateTime = parseDateTime(event.getEnd());
+            
+            if (startDateTime != null && endDateTime != null) {
+                entry.changeStartDate(startDateTime.toLocalDate());
+                entry.changeStartTime(startDateTime.toLocalTime());
+                entry.changeEndDate(endDateTime.toLocalDate());
+                entry.changeEndTime(endDateTime.toLocalTime());
+                
+                // Agregar notas si hay descripción
+                if (event.getDescription() != null && !event.getDescription().isEmpty()) {
+                    entryDescriptions.put(entry.getId(), event.getDescription());
+                }
+                
+                // Agregar al calendario correspondiente
+                targetCalendar.addEntry(entry);
+            }
         } catch (Exception e) {
-            System.err.println("Error general al cargar citas: " + e.getMessage());
-            e.printStackTrace();
-            showErrorMessage("Error al cargar citas", "Error general: " + e.getMessage());
+            System.err.println("❌ Error al procesar evento individual: " + e.getMessage());
+            // Continuar con el siguiente evento en lugar de fallar completamente
         }
     }
     
@@ -672,45 +610,8 @@ public class CalendarFXComponent extends BorderPane {
     public void refreshCalendarFromDatabase() {
         System.out.println("🔄 Iniciando refresco del calendario...");
         
-        // Ejecutar en un hilo separado para no bloquear la UI
-        new Thread(() -> {
-            try {
-                // Usar una conexión independiente para evitar conflictos
-                GestorSocket gestorSocketRefresh = null;
-                try {
-                    gestorSocketRefresh = GestorSocket.crearConexionIndependiente();
-                    
-                    // Cargar datos usando la conexión independiente
-                    loadAppointmentsFromDatabaseWithSocket(gestorSocketRefresh);
-                    
-                    // Refrescar la vista en el hilo de JavaFX
-                    Platform.runLater(() -> {
-                        refreshCalendar();
-                        System.out.println("✅ Refresco del calendario completado");
-                    });
-                } finally {
-                    // Cerrar la conexión independiente
-                    if (gestorSocketRefresh != null) {
-                        gestorSocketRefresh.cerrarConexion();
-                        System.out.println("🔌 Conexión de refresco cerrada correctamente");
-                    }
-                }
-            } catch (Exception e) {
-                System.err.println("❌ Error al refrescar calendario: " + e.getMessage());
-                e.printStackTrace();
-                
-                // En caso de error, intentar con la conexión principal
-                Platform.runLater(() -> {
-                    try {
-                        loadAppointmentsFromDatabase();
-                        refreshCalendar();
-                        System.out.println("✅ Refresco del calendario completado (conexión principal)");
-                    } catch (Exception fallbackException) {
-                        System.err.println("❌ Error también en conexión principal: " + fallbackException.getMessage());
-                    }
-                });
-            }
-        }).start();
+        // Simplemente llamar al método de carga principal
+        loadAppointmentsFromDatabase();
     }
     
     /**
@@ -2442,374 +2343,43 @@ public class CalendarFXComponent extends BorderPane {
     }
     
     /**
-     * Verifica y actualiza automáticamente los estados de las citas según las reglas de negocio:
-     * 1. Citas PENDIENTES que han pasado su hora -> ABSENTISMO
-     * 2. Citas PENDIENTES que llegan a su hora -> EN_CURSO
+     * Verifica y actualiza automáticamente los estados de las citas
      */
     private void verificarYActualizarEstadosAutomaticos() {
+        // Usar una conexión independiente para evitar conflictos
+        GestorSocket gestorSocketAuto = null;
         try {
+            gestorSocketAuto = GestorSocket.crearConexionIndependiente();
+            
             System.out.println("🔄 Verificando estados automáticos de citas...");
             
-            // Crear una conexión independiente para evitar conflictos
-            GestorSocket gestorSocketAuto = GestorSocket.getInstance();
-            
-            // Obtener todas las citas desde el servidor
+            // Solicitar verificación automática al servidor
             gestorSocketAuto.enviarPeticion(Protocolo.DAMETODASLASCITAS + Protocolo.SEPARADOR_CODIGO);
             ObjectInputStream ois = gestorSocketAuto.getEntrada();
             int codigo = ois.readInt();
             
             if (codigo != Protocolo.DAMETODASLASCITAS_RESPONSE) {
-                System.err.println("Error al obtener citas para verificación automática");
-                gestorSocketAuto.cerrarConexion();
+                System.err.println("❌ Error al obtener citas para verificación automática");
                 return;
             }
             
-            List<CalendarEvent> events = (List<CalendarEvent>) ois.readObject();
-            LocalDateTime ahora = LocalDateTime.now();
-            int citasActualizadas = 0;
+            List<CalendarEvent> todasLasCitas = (List<CalendarEvent>) ois.readObject();
+            System.out.println("📋 Verificando " + todasLasCitas.size() + " citas para actualización automática");
             
-            for (CalendarEvent event : events) {
-                // Solo procesar citas médicas
-                if (!esCitaMedica(event) || event.getEstado() == null) {
-                    continue;
-                }
-                
-                String estadoActual = event.getEstado().toUpperCase();
-                LocalDateTime fechaHoraCita = parseDateTime(event.getStart());
-                
-                // Calcular diferencia en minutos
-                long minutosHastaLaCita = java.time.Duration.between(ahora, fechaHoraCita).toMinutes();
-                
-                String nuevoEstado = null;
-                
-                // REGLA 1: Citas PENDIENTES que han pasado más de 15 minutos -> ABSENTISMO
-                if ("PENDIENTE".equals(estadoActual) && minutosHastaLaCita < -15) {
-                    nuevoEstado = "ABSENTISMO";
-                    System.out.println("📅 Cita " + event.getId() + " marcada como ABSENTISMO (pasó " + Math.abs(minutosHastaLaCita) + " minutos)");
-                }
-                // REGLA 2: Citas PENDIENTES que llegan a su hora (entre -5 y +5 minutos) -> EN_CURSO
-                else if ("PENDIENTE".equals(estadoActual) && minutosHastaLaCita >= -5 && minutosHastaLaCita <= 5) {
-                    nuevoEstado = "EN_CURSO";
-                    System.out.println("🕐 Cita " + event.getId() + " puesta EN_CURSO automáticamente");
-                }
-                
-                // Actualizar estado si es necesario
-                if (nuevoEstado != null) {
-                    try {
-                        gestorSocketAuto.enviarPeticion(Protocolo.CAMBIAR_ESTADO_CITA + Protocolo.SEPARADOR_CODIGO + 
-                                                      event.getId() + Protocolo.SEPARADOR_PARAMETROS + nuevoEstado);
-                        ObjectInputStream oisUpdate = gestorSocketAuto.getEntrada();
-                        int codigoUpdate = oisUpdate.readInt();
-                        
-                        if (codigoUpdate == Protocolo.CAMBIAR_ESTADO_CITA_RESPONSE) {
-                            boolean success = oisUpdate.readBoolean();
-                            if (success) {
-                                citasActualizadas++;
-                                System.out.println("✅ Estado actualizado: " + event.getId() + " -> " + nuevoEstado);
-                            } else {
-                                System.err.println("❌ Error al actualizar estado de cita: " + event.getId());
-                            }
-                        } else if (codigoUpdate == Protocolo.ERROR_CAMBIAR_ESTADO_CITA) {
-                            String errorMsg = oisUpdate.readUTF();
-                            System.err.println("❌ Error del servidor al cambiar estado: " + errorMsg);
-                        }
-                    } catch (Exception updateException) {
-                        System.err.println("❌ Error de comunicación al actualizar cita " + event.getId() + ": " + updateException.getMessage());
-                    }
-                }
-            }
-            
-            // Cerrar la conexión independiente
-            gestorSocketAuto.cerrarConexion();
-            
-            // Si se actualizaron citas, refrescar el calendario en el hilo de JavaFX
-            if (citasActualizadas > 0) {
-                System.out.println("🔄 " + citasActualizadas + " citas actualizadas automáticamente. Refrescando calendario...");
-                Platform.runLater(() -> {
-                    refreshCalendarFromDatabase();
-                });
-            } else {
-                System.out.println("✅ Verificación automática completada. No hay citas que actualizar.");
-            }
+            // Aquí puedes agregar lógica para verificar y actualizar estados automáticamente
+            // Por ejemplo, cambiar citas vencidas a "PERDIDA" o similar
             
         } catch (Exception e) {
-            System.err.println("❌ Error en verificación automática de estados: " + e.getMessage());
+            System.err.println("❌ Error en verificación automática: " + e.getMessage());
             e.printStackTrace();
-        }
-    }
-
-    /**
-     * Carga las citas desde la base de datos usando un GestorSocket específico
-     * @param gestorSocketEspecifico El GestorSocket a usar para la comunicación
-     */
-    private void loadAppointmentsFromDatabaseWithSocket(GestorSocket gestorSocketEspecifico) {
-        try {
-            System.out.println("Cargando citas desde la base de datos con socket específico...");
-            
-            // Limpiar todas las entradas existentes
-            for (Calendar calendar : calendars) {
-                calendar.clear();
-            }
-            
-            List<CalendarEvent> events = new ArrayList<>();
-            
-            // Cargar citas según el rol del usuario
-            if (usuarioActual != null) {
-                String username = usuarioActual.getUsuario();
-                com.example.pruebamongodbcss.Data.Usuario.Rol rol = usuarioActual.getRol();
-                
-                System.out.println("Usuario actual en loadAppointmentsFromDatabaseWithSocket: " + username + ", Rol: " + (rol != null ? rol.name() : "null"));
-                
-                if (rol == com.example.pruebamongodbcss.Data.Usuario.Rol.ADMINISTRADOR) {
-                    // Administradores ven absolutamente todo
-                    System.out.println("Administrador: Cargando todas las citas y eventos");
-
-                    try {
-                        gestorSocketEspecifico.enviarPeticion(Protocolo.DAMETODASLASCITAS + Protocolo.SEPARADOR_CODIGO);
-                        ObjectInputStream ois = gestorSocketEspecifico.getEntrada();
-                        int codigo = ois.readInt();
-                        if (codigo == Protocolo.DAMETODASLASCITAS_RESPONSE) {
-                            events = (List<CalendarEvent>) ois.readObject();
-                            System.out.println("Administrador: Cargadas " + events.size() + " citas correctamente");
-                        } else if (codigo == Protocolo.ERROR_DAMETODASLASCITAS) {
-                            String errorMsg = ois.readUTF();
-                            System.err.println("Error del servidor: " + errorMsg);
-                            showErrorMessage("Error", "No se pudieron cargar las citas: " + errorMsg);
-                            return;
-                        } else {
-                            System.err.println("Código de respuesta inesperado: " + codigo);
-                            showErrorMessage("Error", "Respuesta inesperada del servidor (código: " + codigo + ")");
-                            return;
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Error de comunicación con el servidor: " + e.getMessage());
-                        e.printStackTrace();
-                        showErrorMessage("Error de Comunicación", "No se pudo conectar con el servidor: " + e.getMessage());
-                        return;
-                    }
-                } 
-                else if (rol == com.example.pruebamongodbcss.Data.Usuario.Rol.AUXILIAR) {
-                    // Auxiliares ven todas las CITAS MÉDICAS de cualquier veterinario, pero no recordatorios ni reuniones
-                    System.out.println("Auxiliar: Cargando todas las citas y eventos");
-                    
-                    try {
-                        gestorSocketEspecifico.enviarPeticion(Protocolo.DAMETODASLASCITAS + Protocolo.SEPARADOR_CODIGO);
-                        ObjectInputStream ois = gestorSocketEspecifico.getEntrada();
-                        int codigo = ois.readInt();
-                        if (codigo == Protocolo.DAMETODASLASCITAS_RESPONSE) {
-                            events = (List<CalendarEvent>) ois.readObject();
-                            System.out.println("Auxiliar: Cargadas " + events.size() + " citas desde servidor");
-                        } else if (codigo == Protocolo.ERROR_DAMETODASLASCITAS) {
-                            String errorMsg = ois.readUTF();
-                            System.err.println("Error del servidor: " + errorMsg);
-                            showErrorMessage("Error", "No se pudieron cargar las citas: " + errorMsg);
-                            return;
-                        } else {
-                            System.err.println("Código de respuesta inesperado: " + codigo);
-                            showErrorMessage("Error", "Respuesta inesperada del servidor (código: " + codigo + ")");
-                            return;
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Error de comunicación con el servidor: " + e.getMessage());
-                        e.printStackTrace();
-                        showErrorMessage("Error de Comunicación", "No se pudo conectar con el servidor: " + e.getMessage());
-                        return;
-                    }
-
-                    // Filtrar solo citas médicas para auxiliares
-                    events = events.stream()
-                        .filter(event -> esCitaMedica(event))
-                        .collect(Collectors.toList());
-                    System.out.println("Auxiliar: Filtradas a " + events.size() + " citas médicas");
-                } 
-                else if (rol == com.example.pruebamongodbcss.Data.Usuario.Rol.VETERINARIO) {
-                    // Los veterinarios ven:
-                    // 1. Sus propias citas médicas (donde usuarioAsignado == username)
-                    // 2. Sus propios recordatorios y reuniones
-                    try {
-                        gestorSocketEspecifico.enviarPeticion(Protocolo.DAMETODASLASCITAS + Protocolo.SEPARADOR_CODIGO);
-                        ObjectInputStream ois = gestorSocketEspecifico.getEntrada();
-                        int codigo = ois.readInt();
-                        if (codigo == Protocolo.DAMETODASLASCITAS_RESPONSE) {
-                            List<CalendarEvent> allEvents = (List<CalendarEvent>) ois.readObject();
-                            System.out.println("Veterinario: Recibidas " + allEvents.size() + " citas del servidor");
-                            
-                            for (CalendarEvent event : allEvents) {
-                                boolean isMine = username.equals(event.getUsuario());
-                                boolean isCitaMedica = esCitaMedica(event);
-                                boolean isReunionOrRecordatorio = 
-                                    esReunion(event) || esRecordatorio(event);
-                                
-                                // Si la cita está asignada a este veterinario o es un recordatorio/reunión suyo
-                                if (isMine && (isCitaMedica || isReunionOrRecordatorio)) {
-                                    events.add(event);
-                                }
-                            }
-                        } else if (codigo == Protocolo.ERROR_DAMETODASLASCITAS) {
-                            String errorMsg = ois.readUTF();
-                            System.err.println("Error del servidor: " + errorMsg);
-                            showErrorMessage("Error", "No se pudieron cargar las citas: " + errorMsg);
-                            return;
-                        } else {
-                            System.err.println("Código de respuesta inesperado: " + codigo);
-                            showErrorMessage("Error", "Respuesta inesperada del servidor (código: " + codigo + ")");
-                            return;
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Error de comunicación con el servidor: " + e.getMessage());
-                        e.printStackTrace();
-                        showErrorMessage("Error de Comunicación", "No se pudo conectar con el servidor: " + e.getMessage());
-                        return;
-                    }
-                    System.out.println("Veterinario: Filtradas a " + events.size() + " citas y eventos propios");
-                } 
-                else {
-                    // Otros usuarios solo ven sus propios eventos
-                    try {
-                        gestorSocketEspecifico.enviarPeticion(Protocolo.OBTENER_EVENTOS_POR_USUARIO + Protocolo.SEPARADOR_CODIGO + username);
-                        ObjectInputStream ois = gestorSocketEspecifico.getEntrada();
-                        int codigo = ois.readInt();
-                        if (codigo == Protocolo.OBTENER_EVENTOS_POR_USUARIO_RESPONSE) {
-                            events = (List<CalendarEvent>) ois.readObject();
-                            System.out.println("Usuario estándar: Cargadas " + events.size() + " citas propias");
-                        } else if (codigo == Protocolo.ERROR_OBTENER_EVENTOS_POR_USUARIO) {
-                            String errorMsg = ois.readUTF();
-                            System.err.println("Error del servidor: " + errorMsg);
-                            showErrorMessage("Error", "No se pudieron cargar los eventos del usuario: " + errorMsg);
-                            return;
-                        } else {
-                            System.err.println("Código de respuesta inesperado: " + codigo);
-                            showErrorMessage("Error", "Respuesta inesperada del servidor (código: " + codigo + ")");
-                            return;
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Error de comunicación con el servidor: " + e.getMessage());
-                        e.printStackTrace();
-                        showErrorMessage("Error de Comunicación", "No se pudo conectar con el servidor: " + e.getMessage());
-                        return;
-                    }
-                }
-            } else {
-                // Si no hay usuario, mostrar todas las citas
+        } finally {
+            if (gestorSocketAuto != null) {
                 try {
-                    gestorSocketEspecifico.enviarPeticion(Protocolo.DAMETODASLASCITAS + Protocolo.SEPARADOR_CODIGO);
-                    ObjectInputStream ois = gestorSocketEspecifico.getEntrada();
-                    int codigo = ois.readInt();
-                    if (codigo == Protocolo.DAMETODASLASCITAS_RESPONSE) {
-                        events = (List<CalendarEvent>) ois.readObject();
-                        System.out.println("Sin usuario: Cargadas " + events.size() + " citas");
-                    } else if (codigo == Protocolo.ERROR_DAMETODASLASCITAS) {
-                        String errorMsg = ois.readUTF();
-                        System.err.println("Error del servidor: " + errorMsg);
-                        showErrorMessage("Error", "No se pudieron cargar las citas: " + errorMsg);
-                        return;
-                    } else {
-                        System.err.println("Código de respuesta inesperado: " + codigo);
-                        showErrorMessage("Error", "Respuesta inesperada del servidor (código: " + codigo + ")");
-                        return;
-                    }
+                    gestorSocketAuto.cerrarConexion();
                 } catch (Exception e) {
-                    System.err.println("Error de comunicación con el servidor: " + e.getMessage());
-                    e.printStackTrace();
-                    showErrorMessage("Error de Comunicación", "No se pudo conectar con el servidor: " + e.getMessage());
-                    return;
+                    System.err.println("⚠️ Error al cerrar conexión automática: " + e.getMessage());
                 }
             }
-            
-            System.out.println("Se encontraron " + events.size() + " eventos para mostrar.");
-            
-            // Convertir eventos a entradas del calendario
-            for (CalendarEvent event : events) {
-                try {
-                    Calendar targetCalendar = getTargetCalendar(event);
-                    String motivo = event.getTitle() != null ? event.getTitle().toUpperCase() : "CITA";
-                    String estadoStr = event.getEstado() != null ? event.getEstado().toUpperCase() : "PENDIENTE";
-                    String titulo = motivo + " - " + estadoStr;
-                    Entry<String> entry = new Entry<>(titulo);
-                    entry.setId(event.getId());
-                    entry.setLocation(event.getLocation());
-                    
-                    // Asignar calendar según el estado
-                    entry.setCalendar(targetCalendar);
-                    
-                    // Convertir fechas de String a LocalDateTime
-                    LocalDateTime startDateTime = parseDateTime(event.getStart());
-                    LocalDateTime endDateTime = parseDateTime(event.getEnd());
-                    
-                    if (startDateTime != null && endDateTime != null) {
-                        entry.changeStartDate(startDateTime.toLocalDate());
-                        entry.changeStartTime(startDateTime.toLocalTime());
-                        entry.changeEndDate(endDateTime.toLocalDate());
-                        entry.changeEndTime(endDateTime.toLocalTime());
-                        
-                        // Agregar notas si hay descripción
-                        if (event.getDescription() != null && !event.getDescription().isEmpty()) {
-                            entryDescriptions.put(entry.getId(), event.getDescription());
-                        }
-                        
-                        // Agregar al calendario correspondiente
-                        targetCalendar.addEntry(entry);
-                    }
-                } catch (Exception entryException) {
-                    System.err.println("Error al procesar evento individual: " + entryException.getMessage());
-                    // Continuar con el siguiente evento en lugar de fallar completamente
-                }
-            }
-            
-            System.out.println("Eventos cargados con éxito en el calendario visual.");
-            
-        } catch (Exception e) {
-            System.err.println("Error general al cargar citas con socket específico: " + e.getMessage());
-            e.printStackTrace();
-            showErrorMessage("Error al cargar citas", "Error general: " + e.getMessage());
         }
-    }
-
-    /**
-     * Método público para probar manualmente la verificación automática desde el cliente
-     */
-    public void probarVerificacionAutomaticaManual() {
-        new Thread(() -> {
-            try {
-                System.out.println("🧪 PRUEBA MANUAL: Ejecutando verificación automática desde cliente...");
-                
-                // Crear conexión independiente
-                GestorSocket gestorSocketPrueba = GestorSocket.crearConexionIndependiente();
-                
-                try {
-                    // Enviar petición de prueba
-                    gestorSocketPrueba.enviarPeticion(Protocolo.PROBAR_VERIFICACION_AUTOMATICA + Protocolo.SEPARADOR_CODIGO);
-                    
-                    // Leer respuesta
-                    ObjectInputStream ois = gestorSocketPrueba.getEntrada();
-                    int codigo = ois.readInt();
-                    
-                    if (codigo == Protocolo.PROBAR_VERIFICACION_AUTOMATICA_RESPONSE) {
-                        int citasActualizadas = ois.readInt();
-                        System.out.println("✅ Prueba completada. " + citasActualizadas + " citas actualizadas.");
-                        
-                        // Refrescar el calendario si se actualizaron citas
-                        if (citasActualizadas > 0) {
-                            Platform.runLater(() -> {
-                                refreshCalendarFromDatabase();
-                                System.out.println("🔄 Calendario refrescado después de la prueba");
-                            });
-                        }
-                    } else if (codigo == Protocolo.ERROR_PROBAR_VERIFICACION_AUTOMATICA) {
-                        String errorMsg = ois.readUTF();
-                        System.err.println("❌ Error en prueba: " + errorMsg);
-                    } else {
-                        System.err.println("❌ Código de respuesta inesperado: " + codigo);
-                    }
-                    
-                } finally {
-                    gestorSocketPrueba.cerrarConexion();
-                }
-                
-            } catch (Exception e) {
-                System.err.println("❌ Error en prueba manual: " + e.getMessage());
-                e.printStackTrace();
-            }
-        }).start();
     }
 }

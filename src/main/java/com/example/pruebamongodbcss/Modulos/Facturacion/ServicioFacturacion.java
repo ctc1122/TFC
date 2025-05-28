@@ -56,6 +56,11 @@ public class ServicioFacturacion {
             Document doc = factura.toDocument();
             coleccionFacturas.insertOne(doc);
             
+            // Si la factura no es borrador y tiene cita asociada, cambiar estado de cita a COMPLETADA
+            if (!factura.isEsBorrador() && factura.getCitaId() != null) {
+                cambiarEstadoCitaACompletada(factura.getCitaId());
+            }
+            
             System.out.println("Factura guardada con ID: " + factura.getId() + " y número: " + factura.getNumeroFactura());
             return factura.getId();
             
@@ -87,6 +92,11 @@ public class ServicioFacturacion {
                 Filters.eq("_id", factura.getId()), 
                 doc
             ).getModifiedCount();
+            
+            // Si la factura no es borrador y tiene cita asociada, cambiar estado de cita a COMPLETADA
+            if (resultado > 0 && !factura.isEsBorrador() && factura.getCitaId() != null) {
+                cambiarEstadoCitaACompletada(factura.getCitaId());
+            }
             
             System.out.println("Factura actualizada: " + (resultado > 0));
             return resultado > 0;
@@ -420,6 +430,57 @@ public class ServicioFacturacion {
             
         } catch (Exception e) {
             System.err.println("Error al cambiar estado de cita: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Cambia el estado de una cita a COMPLETADA cuando se finaliza una factura
+     */
+    public boolean cambiarEstadoCitaACompletada(ObjectId citaId) {
+        try {
+            System.out.println("🏥 Cambiando estado de cita " + citaId + " a COMPLETADA automáticamente...");
+            
+            MongoCollection<Document> coleccionCitas = GestorConexion.conectarClinica().getCollection("citas");
+            
+            // Actualizar en la colección de citas
+            long resultado = coleccionCitas.updateOne(
+                Filters.eq("_id", citaId),
+                Updates.set("estado", "COMPLETADA")
+            ).getModifiedCount();
+            
+            if (resultado > 0) {
+                System.out.println("✅ Estado de cita cambiado a COMPLETADA en colección de citas");
+                
+                // También actualizar en la colección de appointments si existe
+                try {
+                    MongoCollection<Document> coleccionAppointments = GestorConexion.conectarClinica().getCollection("appointments");
+                    long resultadoAppointment = coleccionAppointments.updateOne(
+                        Filters.eq("_id", citaId),
+                        Updates.combine(
+                            Updates.set("estado", "COMPLETADA"),
+                            Updates.set("type", "completed")
+                        )
+                    ).getModifiedCount();
+                    
+                    if (resultadoAppointment > 0) {
+                        System.out.println("✅ También actualizado en colección de appointments");
+                    } else {
+                        System.out.println("ℹ️ No se encontró en colección de appointments (normal para citas nuevas)");
+                    }
+                } catch (Exception appointmentException) {
+                    System.out.println("⚠️ Cita actualizada en colección principal, pero error en appointments: " + appointmentException.getMessage());
+                }
+                
+                return true;
+            } else {
+                System.err.println("❌ No se pudo actualizar el estado de la cita");
+                return false;
+            }
+            
+        } catch (Exception e) {
+            System.err.println("❌ Error al cambiar estado de cita a COMPLETADA: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
