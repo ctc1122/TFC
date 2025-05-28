@@ -1118,6 +1118,11 @@ public class FacturaFormController implements Initializable {
                             if (facturaGuardada != null) {
                                 this.factura = facturaGuardada;
                                 actualizarNumeroFacturaEnInterfaz();
+                                
+                                // NUEVO: Actualizar el campo factura_id de la cita asociada
+                                if (citaId != null && facturaGuardada.getId() != null) {
+                                    actualizarFacturaIdEnCita(citaId, facturaGuardada.getId().toString());
+                                }
                             }
                             
                             // Mostrar mensaje de éxito
@@ -1394,5 +1399,39 @@ public class FacturaFormController implements Initializable {
                 System.out.println("✅ Número de factura actualizado en interfaz: " + factura.getNumeroFactura());
             }
         });
+    }
+    
+    /**
+     * Actualiza el campo factura_id de la cita asociada cuando se guarda una factura
+     * @param citaId ID de la cita a actualizar
+     * @param facturaId ID de la factura (como string)
+     */
+    private void actualizarFacturaIdEnCita(ObjectId citaId, String facturaId) {
+        new Thread(() -> {
+            try {
+                System.out.println("🔗 Actualizando factura_id de cita " + citaId + " con valor: " + facturaId);
+                
+                // Usar ServicioClinica directamente
+                com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = 
+                    new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
+                
+                // Actualizar el campo factura_id de la cita
+                boolean exitoso = servicioClinica.actualizarFacturaIdCita(citaId, facturaId);
+                
+                if (exitoso) {
+                    System.out.println("✅ Campo factura_id actualizado exitosamente en cita " + citaId);
+                } else {
+                    System.err.println("❌ No se pudo actualizar el campo factura_id en cita " + citaId);
+                }
+                
+            } catch (Exception e) {
+                System.err.println("❌ Error al actualizar factura_id de cita: " + e.getMessage());
+                e.printStackTrace();
+                Platform.runLater(() -> {
+                    // No mostrar error al usuario, solo logear - esto es un proceso en segundo plano
+                    System.err.println("⚠️ La factura se guardó correctamente, pero no se pudo actualizar la relación con la cita");
+                });
+            }
+        }).start();
     }
 } 

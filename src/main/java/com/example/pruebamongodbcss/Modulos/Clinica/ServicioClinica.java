@@ -1044,4 +1044,169 @@ public class ServicioClinica {
             return new String[] {"No hay razas disponibles para este tipo de animal"};
         }
     }
+
+    /**
+     * Actualiza el campo factura_id de una cita con el ID de la factura
+     * @param citaId ID de la cita a actualizar
+     * @param facturaId ID de la factura (como string)
+     * @return true si se actualizó correctamente, false en caso contrario
+     */
+    public boolean actualizarFacturaIdCita(ObjectId citaId, String facturaId) {
+        try {
+            System.out.println("🔗 Actualizando factura_id de cita " + citaId + " con valor: " + facturaId);
+            
+            // Validar que el facturaId no sea null
+            if (facturaId == null) {
+                facturaId = "null";
+            }
+            
+            // Actualizar en la base de datos
+            long resultado = citasCollection.updateOne(
+                Filters.eq("_id", citaId),
+                Updates.set("factura_id", facturaId)
+            ).getModifiedCount();
+            
+            if (resultado > 0) {
+                System.out.println("✅ Campo factura_id actualizado exitosamente para cita: " + citaId);
+                return true;
+            } else {
+                System.err.println("❌ No se encontró la cita con ID: " + citaId);
+                return false;
+            }
+            
+        } catch (Exception e) {
+            System.err.println("❌ Error al actualizar factura_id de cita: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Limpia el campo factura_id de una cita (lo establece como "null")
+     * @param citaId ID de la cita a limpiar
+     * @return true si se limpió correctamente, false en caso contrario
+     */
+    public boolean limpiarFacturaIdCita(ObjectId citaId) {
+        return actualizarFacturaIdCita(citaId, "null");
+    }
+    
+    /**
+     * Verifica si una cita está disponible para facturar (no tiene factura asociada)
+     * @param citaId ID de la cita a verificar
+     * @return true si está disponible para facturar, false si ya tiene factura asociada
+     */
+    public boolean citaDisponibleParaFacturar(ObjectId citaId) {
+        try {
+            System.out.println("🔍 Verificando disponibilidad para facturar de cita: " + citaId);
+            
+            // Obtener la cita
+            ModeloCita cita = obtenerCitaPorId(citaId);
+            if (cita == null) {
+                System.err.println("❌ No se encontró la cita con ID: " + citaId);
+                return false;
+            }
+            
+            // Verificar el campo factura_id
+            String facturaId = cita.getFacturaId();
+            boolean disponible = facturaId == null || facturaId.equals("null");
+            
+            if (disponible) {
+                System.out.println("✅ Cita disponible para facturar (factura_id: " + facturaId + ")");
+            } else {
+                System.out.println("❌ Cita ya tiene factura asociada (factura_id: " + facturaId + ")");
+            }
+            
+            return disponible;
+            
+        } catch (Exception e) {
+            System.err.println("❌ Error al verificar disponibilidad de cita para facturar: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Obtiene información detallada sobre el estado de facturación de una cita
+     * @param citaId ID de la cita a verificar
+     * @return EstadoFacturacionCita con información detallada
+     */
+    public EstadoFacturacionCita obtenerEstadoFacturacionCita(ObjectId citaId) {
+        try {
+            System.out.println("🔍 Obteniendo estado de facturación para cita: " + citaId);
+            
+            // Obtener la cita
+            ModeloCita cita = obtenerCitaPorId(citaId);
+            if (cita == null) {
+                return new EstadoFacturacionCita(false, false, false, "Cita no encontrada");
+            }
+            
+            String facturaId = cita.getFacturaId();
+            boolean disponible = facturaId == null || facturaId.equals("null");
+            
+            if (disponible) {
+                return new EstadoFacturacionCita(true, false, false, "Cita disponible para facturar");
+            }
+            
+            // Verificar si existe la factura en la base de datos
+            try {
+                // Usar ServicioFacturacion para verificar si existe la factura
+                com.example.pruebamongodbcss.Modulos.Facturacion.ServicioFacturacion servicioFacturacion = 
+                    new com.example.pruebamongodbcss.Modulos.Facturacion.ServicioFacturacion();
+                
+                ObjectId facturaObjectId = new ObjectId(facturaId);
+                com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura factura = 
+                    servicioFacturacion.obtenerFacturaPorId(facturaObjectId);
+                
+                if (factura != null) {
+                    boolean esBorrador = factura.isEsBorrador();
+                    String mensaje = esBorrador ? 
+                        "Cita tiene borrador de factura asociado" : 
+                        "Cita tiene factura finalizada asociada";
+                    return new EstadoFacturacionCita(false, esBorrador, !esBorrador, mensaje);
+                } else {
+                    // La cita tiene un factura_id pero la factura no existe - inconsistencia
+                    System.err.println("⚠️ Inconsistencia: Cita tiene factura_id pero la factura no existe");
+                    return new EstadoFacturacionCita(false, false, false, "Inconsistencia en datos de facturación");
+                }
+                
+            } catch (IllegalArgumentException e) {
+                System.err.println("❌ ID de factura inválido: " + facturaId);
+                return new EstadoFacturacionCita(false, false, false, "ID de factura inválido");
+            }
+            
+        } catch (Exception e) {
+            System.err.println("❌ Error al obtener estado de facturación: " + e.getMessage());
+            e.printStackTrace();
+            return new EstadoFacturacionCita(false, false, false, "Error al verificar estado");
+        }
+    }
+    
+    /**
+     * Clase para encapsular información sobre el estado de facturación de una cita
+     */
+    public static class EstadoFacturacionCita {
+        private final boolean disponibleParaFacturar;
+        private final boolean tieneBorrador;
+        private final boolean tieneFacturaFinalizada;
+        private final String mensaje;
+        
+        public EstadoFacturacionCita(boolean disponibleParaFacturar, boolean tieneBorrador, 
+                                   boolean tieneFacturaFinalizada, String mensaje) {
+            this.disponibleParaFacturar = disponibleParaFacturar;
+            this.tieneBorrador = tieneBorrador;
+            this.tieneFacturaFinalizada = tieneFacturaFinalizada;
+            this.mensaje = mensaje;
+        }
+        
+        public boolean isDisponibleParaFacturar() { return disponibleParaFacturar; }
+        public boolean isTieneBorrador() { return tieneBorrador; }
+        public boolean isTieneFacturaFinalizada() { return tieneFacturaFinalizada; }
+        public String getMensaje() { return mensaje; }
+        
+        @Override
+        public String toString() {
+            return String.format("EstadoFacturacionCita{disponible=%s, borrador=%s, finalizada=%s, mensaje='%s'}", 
+                disponibleParaFacturar, tieneBorrador, tieneFacturaFinalizada, mensaje);
+        }
+    }
 } 
