@@ -1,18 +1,19 @@
 package com.example.pruebamongodbcss.Modulos.Facturacion;
 
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Sorts;
-import com.mongodb.client.model.Updates;
-import org.bson.Document;
-import org.bson.types.ObjectId;
-
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import org.bson.Document;
+import org.bson.types.ObjectId;
+
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Sorts;
+import com.mongodb.client.model.Updates;
 
 import Utilidades.GestorConexion;
 
@@ -41,9 +42,12 @@ public class ServicioFacturacion {
                 factura.setId(new ObjectId());
             }
             
-            // Generar número de factura si no existe
-            if (factura.getNumeroFactura() == null || factura.getNumeroFactura().isEmpty()) {
-                factura.generarNumeroFactura();
+            // Generar número de factura único con formato ChichaVet-AAAAMMNNNN
+            if (factura.getNumeroFactura() == null || factura.getNumeroFactura().isEmpty() || 
+                factura.getNumeroFactura().contains("XXXX")) {
+                String numeroUnico = generarNumeroFacturaUnico();
+                factura.setNumeroFacturaCompleto(numeroUnico);
+                System.out.println("Número de factura asignado: " + numeroUnico);
             }
             
             // Calcular importes antes de guardar
@@ -52,7 +56,7 @@ public class ServicioFacturacion {
             Document doc = factura.toDocument();
             coleccionFacturas.insertOne(doc);
             
-            System.out.println("Factura guardada con ID: " + factura.getId());
+            System.out.println("Factura guardada con ID: " + factura.getId() + " y número: " + factura.getNumeroFactura());
             return factura.getId();
             
         } catch (Exception e) {
@@ -468,5 +472,164 @@ public class ServicioFacturacion {
             e.printStackTrace();
         }
         return facturas;
+    }
+    
+    /**
+     * Obtiene facturas por estado específico
+     */
+    public List<ModeloFactura> obtenerFacturasPorEstado(ModeloFactura.EstadoFactura estado) {
+        List<ModeloFactura> facturas = new ArrayList<>();
+        try {
+            MongoCursor<Document> cursor = coleccionFacturas.find(
+                Filters.eq("estado", estado.name())
+            ).sort(Sorts.descending("fechaEmision")).iterator();
+            
+            while (cursor.hasNext()) {
+                Document doc = cursor.next();
+                facturas.add(new ModeloFactura(doc));
+            }
+            cursor.close();
+            
+            System.out.println("Facturas encontradas con estado " + estado + ": " + facturas.size());
+            
+        } catch (Exception e) {
+            System.err.println("Error al obtener facturas por estado: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return facturas;
+    }
+    
+    /**
+     * Obtiene todas las facturas que NO son borradores (facturas finalizadas)
+     */
+    public List<ModeloFactura> obtenerFacturasFinalizadas() {
+        List<ModeloFactura> facturas = new ArrayList<>();
+        try {
+            MongoCursor<Document> cursor = coleccionFacturas.find(
+                Filters.eq("esBorrador", false)
+            ).sort(Sorts.descending("fechaEmision")).iterator();
+            
+            while (cursor.hasNext()) {
+                Document doc = cursor.next();
+                facturas.add(new ModeloFactura(doc));
+            }
+            cursor.close();
+            
+            System.out.println("Facturas finalizadas encontradas: " + facturas.size());
+            
+        } catch (Exception e) {
+            System.err.println("Error al obtener facturas finalizadas: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return facturas;
+    }
+    
+    /**
+     * Cambia el estado de una factura
+     */
+    public boolean cambiarEstadoFactura(ObjectId facturaId, ModeloFactura.EstadoFactura nuevoEstado) {
+        try {
+            // Obtener la factura actual
+            ModeloFactura factura = obtenerFacturaPorId(facturaId);
+            if (factura == null) {
+                System.err.println("Factura no encontrada: " + facturaId);
+                return false;
+            }
+            
+            // Actualizar el estado
+            factura.setEstado(nuevoEstado);
+            factura.setEsBorrador(false); // Ya no es borrador
+            factura.setFechaModificacion(new Date());
+            
+            // Si se marca como emitida, generar número de factura si no lo tiene
+            if (nuevoEstado == ModeloFactura.EstadoFactura.EMITIDA && 
+                (factura.getNumeroFactura() == null || factura.getNumeroFactura().isEmpty() || 
+                 factura.getNumeroFactura().contains("XXXX"))) {
+                String numeroUnico = generarNumeroFacturaUnico();
+                factura.setNumeroFacturaCompleto(numeroUnico);
+                System.out.println("Número de factura asignado al finalizar: " + numeroUnico);
+            }
+            
+            // Guardar en la base de datos
+            boolean actualizado = actualizarFactura(factura);
+            
+            if (actualizado) {
+                System.out.println("Estado de factura " + facturaId + " cambiado a: " + nuevoEstado);
+            }
+            
+            return actualizado;
+            
+        } catch (Exception e) {
+            System.err.println("Error al cambiar estado de factura: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Genera un número de factura único con formato ChichaVet-AAAAMMNNNN
+     */
+    public String generarNumeroFacturaUnico() {
+        try {
+            LocalDate now = LocalDate.now();
+            String prefijo = String.format("ChichaVet-%04d%02d", 
+                now.getYear(), 
+                now.getMonthValue());
+            
+            // Buscar el último número de factura del mes actual
+            String patron = "^" + prefijo + "\\d{4}$";
+            
+            MongoCursor<Document> cursor = coleccionFacturas.find(
+                Filters.regex("numeroFactura", patron)
+            ).sort(Sorts.descending("numeroFactura")).limit(1).iterator();
+            
+            int siguienteNumero = 1;
+            
+            if (cursor.hasNext()) {
+                Document doc = cursor.next();
+                String ultimoNumero = doc.getString("numeroFactura");
+                if (ultimoNumero != null && ultimoNumero.length() >= 4) {
+                    // Extraer los últimos 4 dígitos
+                    String ultimoIncremental = ultimoNumero.substring(ultimoNumero.length() - 4);
+                    try {
+                        siguienteNumero = Integer.parseInt(ultimoIncremental) + 1;
+                    } catch (NumberFormatException e) {
+                        System.err.println("Error al parsear número incremental: " + ultimoIncremental);
+                        siguienteNumero = 1;
+                    }
+                }
+            }
+            cursor.close();
+            
+            // Formatear el número completo
+            String numeroCompleto = String.format("%s%04d", prefijo, siguienteNumero);
+            
+            System.out.println("Número de factura generado: " + numeroCompleto);
+            return numeroCompleto;
+            
+        } catch (Exception e) {
+            System.err.println("Error al generar número de factura único: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Fallback: usar timestamp
+            LocalDate now = LocalDate.now();
+            String prefijo = String.format("ChichaVet-%04d%02d", 
+                now.getYear(), 
+                now.getMonthValue());
+            long timestamp = System.currentTimeMillis() % 10000;
+            return String.format("%s%04d", prefijo, timestamp);
+        }
+    }
+    
+    /**
+     * Método de prueba para verificar el formato de numeración
+     */
+    public void probarGeneracionNumeros() {
+        System.out.println("=== PRUEBA DE GENERACIÓN DE NÚMEROS DE FACTURA ===");
+        for (int i = 0; i < 5; i++) {
+            String numero = generarNumeroFacturaUnico();
+            System.out.println("Número generado " + (i + 1) + ": " + numero);
+        }
+        System.out.println("=== FIN DE PRUEBA ===");
     }
 } 

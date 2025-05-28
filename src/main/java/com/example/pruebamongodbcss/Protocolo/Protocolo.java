@@ -326,4 +326,19 @@ public interface Protocolo {
     public static final int PROBAR_VERIFICACION_AUTOMATICA_RESPONSE = 1236;
     public static final int ERROR_PROBAR_VERIFICACION_AUTOMATICA = 1237;
 
+    // Códigos para obtener facturas por estado
+    static final int OBTENER_FACTURAS_POR_ESTADO = 1238;
+    static final int OBTENER_FACTURAS_POR_ESTADO_RESPONSE = 1239;
+    static final int ERROR_OBTENER_FACTURAS_POR_ESTADO = 1240;
+
+    // Códigos para cambiar estado de factura
+    static final int CAMBIAR_ESTADO_FACTURA = 1241;
+    static final int CAMBIAR_ESTADO_FACTURA_RESPONSE = 1242;
+    static final int ERROR_CAMBIAR_ESTADO_FACTURA = 1243;
+
+    // Códigos para obtener facturas finalizadas
+    static final int OBTENER_FACTURAS_FINALIZADAS = 1244;
+    static final int OBTENER_FACTURAS_FINALIZADAS_RESPONSE = 1245;
+    static final int ERROR_OBTENER_FACTURAS_FINALIZADAS = 1246;
+
 } 

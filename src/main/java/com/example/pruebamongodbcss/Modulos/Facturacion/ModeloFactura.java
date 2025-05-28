@@ -1,8 +1,5 @@
 package com.example.pruebamongodbcss.Modulos.Facturacion;
 
-import org.bson.Document;
-import org.bson.types.ObjectId;
-
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -10,6 +7,9 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
 /**
  * Modelo de factura para el sistema de facturación veterinaria
@@ -348,16 +348,32 @@ public class ModeloFactura implements Serializable {
     }
     
     /**
-     * Genera el número de factura automáticamente
+     * Genera el número de factura automáticamente con formato ChichaVet-AAAAMMNNNN
      */
     public void generarNumeroFactura() {
         if (this.numeroFactura == null || this.numeroFactura.isEmpty()) {
             LocalDateTime now = LocalDateTime.now();
-            this.numeroFactura = String.format("FAC-%04d-%02d-%06d", 
+            
+            // Formato: ChichaVet-AAAAMMNNNN
+            // AAAA = Año (2025)
+            // MM = Mes (01-12)
+            // NNNN = Número incremental de 4 dígitos (0001, 0002, etc.)
+            
+            String prefijo = String.format("ChichaVet-%04d%02d", 
                 now.getYear(), 
-                now.getMonthValue(), 
-                System.currentTimeMillis() % 1000000);
+                now.getMonthValue());
+            
+            // El número incremental se generará en el servicio para asegurar unicidad
+            // Por ahora usamos un placeholder que será reemplazado
+            this.numeroFactura = prefijo + "XXXX";
         }
+    }
+    
+    /**
+     * Establece el número de factura con el formato completo
+     */
+    public void setNumeroFacturaCompleto(String numeroCompleto) {
+        this.numeroFactura = numeroCompleto;
     }
     
     /**

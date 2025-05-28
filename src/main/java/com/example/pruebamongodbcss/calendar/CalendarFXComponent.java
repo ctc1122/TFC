@@ -1,6 +1,7 @@
 package com.example.pruebamongodbcss.calendar;
 
 import java.io.ObjectInputStream;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -1123,9 +1124,11 @@ public class CalendarFXComponent extends BorderPane {
                         org.bson.types.ObjectId citaId = new org.bson.types.ObjectId(idStr);
                         
                         // Buscar la cita en la base de datos usando el protocolo
+                        GestorSocket gestorSocketCita = null;
                         try {
-                            gestorSocket.enviarPeticion(Protocolo.OBTENER_CITA_POR_ID + Protocolo.SEPARADOR_CODIGO + citaId.toString());
-                            ObjectInputStream ois = gestorSocket.getEntrada();
+                            gestorSocketCita = GestorSocket.crearConexionIndependiente();
+                            gestorSocketCita.enviarPeticion(Protocolo.OBTENER_CITA_POR_ID + Protocolo.SEPARADOR_CODIGO + citaId.toString());
+                            ObjectInputStream ois = gestorSocketCita.getEntrada();
                             int codigo = ois.readInt();
                             
                             if (codigo == Protocolo.OBTENER_CITA_POR_ID_RESPONSE) {
@@ -1147,6 +1150,11 @@ public class CalendarFXComponent extends BorderPane {
                         } catch (Exception dbException) {
                             System.err.println("Error al comunicarse con la base de datos para obtener la cita: " + dbException.getMessage());
                             dbException.printStackTrace();
+                        } finally {
+                            if (gestorSocketCita != null) {
+                                gestorSocketCita.cerrarConexion();
+                                System.out.println("🔒 Conexión de obtener cita cerrada");
+                            }
                         }
                     } else {
                         System.out.println("ID de cita no válido para MongoDB: " + idStr + " (longitud: " + idStr.length() + ")");
@@ -1396,6 +1404,8 @@ public class CalendarFXComponent extends BorderPane {
      * Cambia el estado de una cita en la base de datos
      */
     private void changeAppointmentStatus(Entry<?> entry, String newStatus) {
+        // Usar una conexión independiente para evitar conflictos
+        GestorSocket gestorSocketCambio = null;
         try {
             String entryId = entry.getId();
             if (entryId == null || entryId.isEmpty()) {
@@ -1408,18 +1418,21 @@ public class CalendarFXComponent extends BorderPane {
                 entryId = entryId.substring(1);
             }
             
-            System.out.println("Cambiando estado de cita " + entryId + " a " + newStatus);
+            System.out.println("🔄 Cambiando estado de cita " + entryId + " a " + newStatus);
+            
+            // Crear conexión independiente
+            gestorSocketCambio = GestorSocket.crearConexionIndependiente();
             
             // Enviar petición al servidor para cambiar el estado
-            gestorSocket.enviarPeticion(Protocolo.CAMBIAR_ESTADO_CITA + Protocolo.SEPARADOR_CODIGO + entryId + Protocolo.SEPARADOR_PARAMETROS + newStatus);
-            ObjectInputStream ois = gestorSocket.getEntrada();
+            gestorSocketCambio.enviarPeticion(Protocolo.CAMBIAR_ESTADO_CITA + Protocolo.SEPARADOR_CODIGO + entryId + Protocolo.SEPARADOR_PARAMETROS + newStatus);
+            ObjectInputStream ois = gestorSocketCambio.getEntrada();
             int codigo = ois.readInt();
             
             if (codigo == Protocolo.CAMBIAR_ESTADO_CITA_RESPONSE) {
                 boolean success = ois.readBoolean();
                 if (success) {
                     // Éxito: refrescar el calendario inmediatamente
-                    System.out.println("🔄 Estado cambiado exitosamente, refrescando calendario...");
+                    System.out.println("✅ Estado cambiado exitosamente, refrescando calendario...");
                     refreshCalendarFromDatabase();
                     
                     // Mostrar mensaje de éxito
@@ -1441,6 +1454,12 @@ public class CalendarFXComponent extends BorderPane {
         } catch (Exception e) {
             e.printStackTrace();
             showErrorMessage("Error de Comunicación", "No se pudo comunicar con el servidor: " + e.getMessage());
+        } finally {
+            // Cerrar la conexión independiente
+            if (gestorSocketCambio != null) {
+                gestorSocketCambio.cerrarConexion();
+                System.out.println("🔒 Conexión de cambio de estado cerrada");
+            }
         }
     }
     
@@ -1910,9 +1929,11 @@ public class CalendarFXComponent extends BorderPane {
                 
                 if (!isUUID) {
                     // Solo buscar en la base de datos si NO es UUID
+                    GestorSocket gestorSocketEvento = null;
                     try {
-                        gestorSocket.enviarPeticion(Protocolo.OBTENER_EVENTO_POR_ID+Protocolo.SEPARADOR_CODIGO+entry.getId());
-                        ObjectInputStream ois = gestorSocket.getEntrada();
+                        gestorSocketEvento = GestorSocket.crearConexionIndependiente();
+                        gestorSocketEvento.enviarPeticion(Protocolo.OBTENER_EVENTO_POR_ID+Protocolo.SEPARADOR_CODIGO+entry.getId());
+                        ObjectInputStream ois = gestorSocketEvento.getEntrada();
                         int codigo = ois.readInt();
                         if(codigo == Protocolo.OBTENER_EVENTO_POR_ID_RESPONSE){
                             CalendarEvent calEvent = (CalendarEvent) ois.readObject();
@@ -1923,6 +1944,10 @@ public class CalendarFXComponent extends BorderPane {
                     } catch (Exception e) {
                         // Si hay error al buscar, usar valor por defecto
                         System.out.println("Error al obtener usuario para tooltip: " + e.getMessage());
+                    } finally {
+                        if (gestorSocketEvento != null) {
+                            gestorSocketEvento.cerrarConexion();
+                        }
                     }
                 } else {
                     // Si es UUID, es una entrada nueva, usar valor por defecto

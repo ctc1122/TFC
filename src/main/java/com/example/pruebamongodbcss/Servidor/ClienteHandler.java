@@ -1602,6 +1602,69 @@ public class ClienteHandler implements Runnable {
                             }
                             break;
                             
+                        case Protocolo.OBTENER_FACTURAS_POR_ESTADO:
+                            System.out.println("Procesando solicitud de obtener facturas por estado...");
+                            try {
+                                com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura.EstadoFactura estado = 
+                                    (com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura.EstadoFactura) entrada.readObject();
+                                List<com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura> facturas = 
+                                    servicioFacturacion.obtenerFacturasPorEstado(estado);
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_FACTURAS_POR_ESTADO_RESPONSE);
+                                    salida.writeObject(facturas);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener facturas por estado: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_FACTURAS_POR_ESTADO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_FACTURAS_FINALIZADAS:
+                            System.out.println("Procesando solicitud de obtener facturas finalizadas...");
+                            try {
+                                List<com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura> facturas = 
+                                    servicioFacturacion.obtenerFacturasFinalizadas();
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_FACTURAS_FINALIZADAS_RESPONSE);
+                                    salida.writeObject(facturas);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener facturas finalizadas: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_FACTURAS_FINALIZADAS);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.CAMBIAR_ESTADO_FACTURA:
+                            System.out.println("Procesando solicitud de cambiar estado de factura...");
+                            try {
+                                ObjectId facturaId = (ObjectId) entrada.readObject();
+                                com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura.EstadoFactura nuevoEstado = 
+                                    (com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura.EstadoFactura) entrada.readObject();
+                                
+                                boolean cambiado = servicioFacturacion.cambiarEstadoFactura(facturaId, nuevoEstado);
+                                
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.CAMBIAR_ESTADO_FACTURA_RESPONSE);
+                                    salida.writeBoolean(cambiado);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al cambiar estado de factura: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_CAMBIAR_ESTADO_FACTURA);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
                         default:
                             System.out.println("Mensaje no reconocido: " + codigo);
                     }
