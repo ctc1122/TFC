@@ -1,5 +1,6 @@
 package com.example.pruebamongodbcss.Modulos.Clinica.Citas;
 
+import java.io.ObjectInputStream;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -60,6 +61,7 @@ public class CitasController implements Initializable {
     @FXML private TableColumn<ModeloCita, String> colFecha;
     @FXML private TableColumn<ModeloCita, String> colHora;
     @FXML private TableColumn<ModeloCita, String> colPaciente;
+    @FXML private TableColumn<ModeloCita, String> colPropietario;
     @FXML private TableColumn<ModeloCita, String> colTipoAnimal;
     @FXML private TableColumn<ModeloCita, String> colVeterinario;
     @FXML private TableColumn<ModeloCita, String> colMotivo;
@@ -80,6 +82,9 @@ public class CitasController implements Initializable {
     
     // Servicio de clínica
     private GestorSocket gestorSocket;
+    
+    // Usuario actual logueado
+    private com.example.pruebamongodbcss.Data.Usuario usuarioActual;
     
     // Lista observable para la tabla de citas
     private ObservableList<ModeloCita> citasObservable;
@@ -145,6 +150,26 @@ public class CitasController implements Initializable {
         
         colPaciente.setCellValueFactory(data -> 
             new SimpleStringProperty(data.getValue().getNombrePaciente()));
+        
+        colPropietario.setCellValueFactory(data -> {
+            try {
+                ModeloCita cita = data.getValue();
+                if (cita.getPacienteId() != null) {
+                    // Obtener el paciente para luego obtener el propietario
+                    ModeloPaciente paciente = obtenerPacientePorIdDirecto(cita.getPacienteId());
+                    if (paciente != null && paciente.getPropietarioId() != null) {
+                        ModeloPropietario propietario = obtenerPropietarioPorIdDirecto(paciente.getPropietarioId());
+                        if (propietario != null) {
+                            return new SimpleStringProperty(propietario.getNombreCompleto());
+                        }
+                    }
+                }
+                return new SimpleStringProperty("Sin propietario");
+            } catch (Exception e) {
+                System.err.println("Error al obtener propietario: " + e.getMessage());
+                return new SimpleStringProperty("Error");
+            }
+        });
         
         colTipoAnimal.setCellValueFactory(data -> 
             new SimpleStringProperty(data.getValue().getTipoAnimal()));
@@ -227,19 +252,42 @@ public class CitasController implements Initializable {
         try {
             gestorSocketCitas = GestorSocket.crearConexionIndependiente();
             
-            // Primero intentar obtener todas las citas
-            List<ModeloCita> todasLasCitas = obtenerTodasLasCitas(gestorSocketCitas);
+            List<ModeloCita> todasLasCitas = new ArrayList<>();
+            
+            // Determinar qué citas cargar según el usuario y su rol
+            if (usuarioActual != null) {
+                String username = usuarioActual.getUsuario();
+                com.example.pruebamongodbcss.Data.Usuario.Rol rol = usuarioActual.getRol();
+                
+                System.out.println("👤 Usuario actual: " + username + ", Rol: " + (rol != null ? rol.name() : "null"));
+                
+                if (rol == com.example.pruebamongodbcss.Data.Usuario.Rol.ADMINISTRADOR || 
+                    rol == com.example.pruebamongodbcss.Data.Usuario.Rol.AUXILIAR) {
+                    // Administradores y auxiliares ven todas las citas
+                    System.out.println("🔓 Cargando todas las citas (Admin/Auxiliar)");
+                    todasLasCitas = obtenerTodasLasCitas(gestorSocketCitas);
+                } else {
+                    // Veterinarios y otros usuarios solo ven sus propias citas
+                    System.out.println("🔒 Cargando solo citas del usuario: " + username);
+                    todasLasCitas = obtenerCitasPorUsuario(gestorSocketCitas, username);
+                }
+            } else {
+                // Si no hay usuario, cargar todas las citas (fallback)
+                System.out.println("⚠️ No hay usuario definido, cargando todas las citas");
+                todasLasCitas = obtenerTodasLasCitas(gestorSocketCitas);
+            }
+            
             System.out.println("📋 Total de citas obtenidas: " + todasLasCitas.size());
             
             if (todasLasCitas.isEmpty()) {
-                System.out.println("⚠️ No se encontraron citas en la base de datos");
+                System.out.println("⚠️ No se encontraron citas");
                 return;
             }
             
             List<ModeloCita> citasFiltradas = new ArrayList<>(todasLasCitas);
             
             // Aplicar filtro por rango de fechas si están definidas
-            if (dpFechaInicio.getValue() != null && dpFechaFin.getValue() != null) {
+        if (dpFechaInicio.getValue() != null && dpFechaFin.getValue() != null) {
                 LocalDate fechaInicio = dpFechaInicio.getValue();
                 LocalDate fechaFin = dpFechaFin.getValue();
                 
@@ -277,64 +325,121 @@ public class CitasController implements Initializable {
             System.err.println("❌ Error al cargar citas: " + e.getMessage());
             e.printStackTrace();
             mostrarAlerta("Error", "Error al cargar citas", 
-                "No se pudieron cargar las citas: " + e.getMessage());
+                "Ha ocurrido un error al cargar las citas: " + e.getMessage());
         } finally {
             // Cerrar la conexión independiente
             if (gestorSocketCitas != null) {
                 try {
                     gestorSocketCitas.cerrarConexion();
                     System.out.println("🔌 Conexión de citas cerrada correctamente");
-                } catch (Exception e) {
-                    System.err.println("Error al cerrar conexión de citas: " + e.getMessage());
+                } catch (Exception ex) {
+                    System.err.println("Error al cerrar conexión de citas: " + ex.getMessage());
                 }
             }
         }
     }
     
     /**
-     * Obtiene todas las citas desde el servidor usando una conexión específica
+     * Obtiene todas las citas usando una conexión específica
      */
     private List<ModeloCita> obtenerTodasLasCitas(GestorSocket gestorSocketEspecifico) {
+        List<ModeloCita> citas = new ArrayList<>();
         try {
-            System.out.println("📡 Solicitando todas las citas al servidor...");
+            System.out.println("🔄 Obteniendo todas las citas desde el servidor...");
+            
+            // Enviar petición para obtener todas las citas
             gestorSocketEspecifico.enviarPeticion(Protocolo.DAMETODASLASCITAS + Protocolo.SEPARADOR_CODIGO);
             
-            int codigo = gestorSocketEspecifico.getEntrada().readInt();
+            // Leer respuesta
+            ObjectInputStream ois = gestorSocketEspecifico.getEntrada();
+            int codigo = ois.readInt();
+            
             if (codigo == Protocolo.DAMETODASLASCITAS_RESPONSE) {
-                // El servidor devuelve CalendarEvent, necesitamos convertir a ModeloCita
-                @SuppressWarnings("unchecked")
+                // Leer la lista de eventos del calendario
                 List<com.example.pruebamongodbcss.calendar.CalendarEvent> eventos = 
-                    (List<com.example.pruebamongodbcss.calendar.CalendarEvent>) gestorSocketEspecifico.getEntrada().readObject();
+                    (List<com.example.pruebamongodbcss.calendar.CalendarEvent>) ois.readObject();
                 
-                System.out.println("📦 Eventos recibidos del servidor: " + eventos.size());
+                System.out.println("📋 Eventos recibidos del servidor: " + eventos.size());
                 
-                // Convertir CalendarEvent a ModeloCita solo para citas médicas
-                List<ModeloCita> citas = new ArrayList<>();
+                // Convertir eventos a citas
                 for (com.example.pruebamongodbcss.calendar.CalendarEvent evento : eventos) {
-                    if (evento.getTipoEvento() == com.example.pruebamongodbcss.calendar.CalendarEvent.EventoTipo.CITA_MEDICA) {
-                        ModeloCita cita = convertirEventoACita(evento);
-                        if (cita != null) {
-                            citas.add(cita);
+                    try {
+                        // Solo procesar citas médicas (no reuniones ni recordatorios)
+                        if (evento.getTipoEvento() == com.example.pruebamongodbcss.calendar.CalendarEvent.EventoTipo.CITA_MEDICA) {
+                            ModeloCita cita = convertirEventoACita(evento);
+                            if (cita != null) {
+                                citas.add(cita);
+                            }
                         }
+                    } catch (Exception e) {
+                        System.err.println("❌ Error al convertir evento a cita: " + e.getMessage());
                     }
                 }
                 
-                System.out.println("🏥 Citas médicas convertidas: " + citas.size());
-                return citas;
-                
+                System.out.println("✅ Citas médicas convertidas: " + citas.size());
             } else if (codigo == Protocolo.ERROR_DAMETODASLASCITAS) {
-                String errorMsg = gestorSocketEspecifico.getEntrada().readUTF();
+                String errorMsg = ois.readUTF();
                 System.err.println("❌ Error del servidor: " + errorMsg);
-                throw new RuntimeException("Error del servidor: " + errorMsg);
             } else {
                 System.err.println("❌ Código de respuesta inesperado: " + codigo);
-                throw new RuntimeException("Respuesta inesperada del servidor (código: " + codigo + ")");
             }
+            
         } catch (Exception e) {
             System.err.println("❌ Error al obtener todas las citas: " + e.getMessage());
             e.printStackTrace();
-            throw new RuntimeException("Error de comunicación: " + e.getMessage());
         }
+        
+                return citas;
+    }
+    
+    /**
+     * Obtiene las citas de un usuario específico usando el protocolo OBTENER_CITAS_POR_USUARIO
+     */
+    private List<ModeloCita> obtenerCitasPorUsuario(GestorSocket gestorSocketEspecifico, String nombreUsuario) {
+        List<ModeloCita> citas = new ArrayList<>();
+        try {
+            System.out.println("🔄 Obteniendo citas del usuario: " + nombreUsuario);
+            
+            // Enviar petición para obtener citas del usuario
+            gestorSocketEspecifico.enviarPeticion(Protocolo.OBTENER_CITAS_POR_USUARIO + Protocolo.SEPARADOR_CODIGO + nombreUsuario);
+            
+            // Leer respuesta
+            ObjectInputStream ois = gestorSocketEspecifico.getEntrada();
+            int codigo = ois.readInt();
+            
+            if (codigo == Protocolo.OBTENER_CITAS_POR_USUARIO_RESPONSE) {
+                // Leer la lista de eventos del calendario
+                List<com.example.pruebamongodbcss.calendar.CalendarEvent> eventos = 
+                    (List<com.example.pruebamongodbcss.calendar.CalendarEvent>) ois.readObject();
+                
+                System.out.println("📋 Citas del usuario recibidas: " + eventos.size());
+                
+                // Convertir eventos a citas
+                for (com.example.pruebamongodbcss.calendar.CalendarEvent evento : eventos) {
+                    try {
+                        ModeloCita cita = convertirEventoACita(evento);
+                        if (cita != null) {
+                            citas.add(cita);
+            }
+        } catch (Exception e) {
+                        System.err.println("❌ Error al convertir evento a cita: " + e.getMessage());
+                    }
+                }
+                
+                System.out.println("✅ Citas del usuario convertidas: " + citas.size());
+            } else if (codigo == Protocolo.ERROR_OBTENER_CITAS_POR_USUARIO) {
+                String errorMsg = ois.readUTF();
+                System.err.println("❌ Error del servidor al obtener citas por usuario: " + errorMsg);
+            } else {
+                System.err.println("❌ Código de respuesta inesperado: " + codigo);
+            }
+            
+        } catch (Exception e) {
+            System.err.println("❌ Error al obtener citas por usuario: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return citas;
     }
     
     /**
@@ -491,11 +596,7 @@ public class CitasController implements Initializable {
             int codigo = gestorSocketPaciente.getEntrada().readInt();
             if (codigo == Protocolo.OBTENERPACIENTE_POR_ID_RESPONSE) {
                 ModeloPaciente paciente = (ModeloPaciente) gestorSocketPaciente.getEntrada().readObject();
-                if (paciente != null) {
-                    System.out.println("✅ Paciente encontrado: " + paciente.getNombre() + " (" + paciente.getEspecie() + ")");
-                } else {
-                    System.out.println("⚠️ Paciente es null para ID: " + pacienteId);
-                }
+                System.out.println("✅ Paciente obtenido: " + (paciente != null ? paciente.getNombre() : "null"));
                 return paciente;
             } else if (codigo == Protocolo.ERROROBTENERPACIENTE_POR_ID) {
                 String errorMsg = gestorSocketPaciente.getEntrada().readUTF();
@@ -504,14 +605,48 @@ public class CitasController implements Initializable {
                 System.err.println("❌ Código de respuesta inesperado: " + codigo);
             }
         } catch (Exception e) {
-            System.err.println("❌ Error al obtener paciente " + pacienteId + ": " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("❌ Error al obtener paciente: " + e.getMessage());
         } finally {
             if (gestorSocketPaciente != null) {
                 try {
                     gestorSocketPaciente.cerrarConexion();
-                } catch (Exception e) {
-                    System.err.println("Error al cerrar conexión de paciente: " + e.getMessage());
+                } catch (Exception ex) {
+                    System.err.println("Error al cerrar conexión de paciente: " + ex.getMessage());
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Obtiene un propietario por ID usando una conexión directa
+     */
+    private ModeloPropietario obtenerPropietarioPorIdDirecto(org.bson.types.ObjectId propietarioId) {
+        GestorSocket gestorSocketPropietario = null;
+        try {
+            System.out.println("🔍 Obteniendo propietario con ID: " + propietarioId);
+            gestorSocketPropietario = GestorSocket.crearConexionIndependiente();
+            gestorSocketPropietario.enviarPeticion(Protocolo.OBTENERPROPIETARIO_POR_ID + Protocolo.SEPARADOR_CODIGO + propietarioId.toString());
+            
+            int codigo = gestorSocketPropietario.getEntrada().readInt();
+            if (codigo == Protocolo.OBTENERPROPIETARIO_POR_ID_RESPONSE) {
+                ModeloPropietario propietario = (ModeloPropietario) gestorSocketPropietario.getEntrada().readObject();
+                System.out.println("✅ Propietario obtenido: " + (propietario != null ? propietario.getNombre() : "null"));
+                return propietario;
+            } else if (codigo == Protocolo.ERROROBTENERPROPIETARIO_POR_ID) {
+                String errorMsg = gestorSocketPropietario.getEntrada().readUTF();
+                System.err.println("❌ Error del servidor al obtener propietario: " + errorMsg);
+            } else {
+                System.err.println("❌ Código de respuesta inesperado: " + codigo);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error al obtener propietario: " + e.getMessage());
+        } finally {
+            if (gestorSocketPropietario != null) {
+                try {
+                    gestorSocketPropietario.cerrarConexion();
+                } catch (Exception ex) {
+                    System.err.println("Error al cerrar conexión de propietario: " + ex.getMessage());
                 }
             }
         }
@@ -958,5 +1093,21 @@ public class CitasController implements Initializable {
         Platform.runLater(() -> {
             cargarCitas();
         });
+    }
+    
+    /**
+     * Establece el usuario actual para filtrar las citas
+     * @param usuario Usuario actual logueado
+     */
+    public void setUsuarioActual(com.example.pruebamongodbcss.Data.Usuario usuario) {
+        this.usuarioActual = usuario;
+        if (usuario != null) {
+            System.out.println("👤 Usuario establecido en CitasController: " + usuario.getUsuario() + 
+                               ", Rol: " + (usuario.getRol() != null ? usuario.getRol().name() : "null"));
+            // Recargar las citas con el nuevo filtro de usuario
+            Platform.runLater(() -> {
+                cargarCitas();
+            });
+        }
     }
 } 

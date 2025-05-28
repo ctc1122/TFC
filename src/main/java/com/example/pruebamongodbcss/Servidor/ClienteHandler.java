@@ -766,6 +766,38 @@ public class ClienteHandler implements Runnable {
                                 }
                             }
                             break;
+                        case Protocolo.OBTENER_CITAS_POR_USUARIO:
+                            System.out.println("Procesando solicitud de obtener citas médicas por usuario...");
+                            if (parametros.length >= 1) {
+                                try {
+                                    String nombreUsuarioCitas = parametros[0];
+                                    System.out.println("Obteniendo citas para usuario: " + nombreUsuarioCitas);
+                                    List<com.example.pruebamongodbcss.calendar.CalendarEvent> citasUsuario = 
+                                        calendarService.getsoloCitasporUsuario(nombreUsuarioCitas);
+                                    System.out.println("Se encontraron " + citasUsuario.size() + " citas para el usuario: " + nombreUsuarioCitas);
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.OBTENER_CITAS_POR_USUARIO_RESPONSE);
+                                        salida.writeObject(citasUsuario);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al obtener citas por usuario: " + e.getMessage());
+                                    e.printStackTrace();
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_OBTENER_CITAS_POR_USUARIO);
+                                        salida.writeUTF("Error al obtener citas: " + e.getMessage());
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud OBTENER_CITAS_POR_USUARIO");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_CITAS_POR_USUARIO);
+                                    salida.writeUTF("Faltan parámetros en la solicitud");
+                                    salida.flush();
+                                }
+                            }
+                            break;
                         case Protocolo.OBTENER_RESUMEN_EVENTOS_USUARIO:
                             System.out.println("Procesando solicitud de obtener resumen de eventos por usuario...");
                             if (parametros.length >= 1) {

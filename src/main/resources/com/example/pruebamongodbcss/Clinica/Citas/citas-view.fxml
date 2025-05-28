@@ -97,6 +97,7 @@
                                           <TableColumn fx:id="colFecha" prefWidth="120.0" text="Fecha" />
                                           <TableColumn fx:id="colHora" prefWidth="80.0" text="Hora" />
                                           <TableColumn fx:id="colPaciente" prefWidth="180.0" text="Paciente" />
+                                          <TableColumn fx:id="colPropietario" prefWidth="150.0" text="Propietario" />
                                           <TableColumn fx:id="colTipoAnimal" prefWidth="100.0" text="Animal" />
                                           <TableColumn fx:id="colVeterinario" prefWidth="150.0" text="Veterinario" />
                                           <TableColumn fx:id="colMotivo" prefWidth="220.0" text="Motivo" />

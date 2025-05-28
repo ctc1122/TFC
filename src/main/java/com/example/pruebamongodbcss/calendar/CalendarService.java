@@ -375,15 +375,18 @@ public class CalendarService {
             
             System.out.println("Buscando citas para usuario: '" + usuario + "'");
             
+            // Buscar por el campo veterinario.usuario (estructura anidada)
             FindIterable<Document> citasUsuario2 = citasCollection.find(
-                Filters.eq("usuarioAsignado", usuario)
+                Filters.eq("veterinario.usuario", usuario)
             );
             
             for (Document doc : citasUsuario2) {
-                appointments.add(citaDocumentToCalendarEvent(doc));
+                CalendarEvent event = citaDocumentToCalendarEvent(doc);
+                appointments.add(event);
                 
                 System.out.println("Cita encontrada: " + doc.getObjectId("_id") + 
-                                 ", título: " + doc.getString("title"));
+                                 ", título: " + event.getTitle() + 
+                                 ", veterinario: " + event.getUsuario());
             }
             
             LOGGER.info("Se encontraron " + appointments.size() + " citas para el usuario: " + usuario);

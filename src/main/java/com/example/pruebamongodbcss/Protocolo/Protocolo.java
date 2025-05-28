@@ -316,4 +316,9 @@ public interface Protocolo {
     // Constante para error genérico
     public static final int ERROR_GENERICO = 1209;
 
+    // Constantes para obtener citas médicas por usuario
+    public static final int OBTENER_CITAS_POR_USUARIO = 1232;
+    public static final int OBTENER_CITAS_POR_USUARIO_RESPONSE = 1233;
+    public static final int ERROR_OBTENER_CITAS_POR_USUARIO = 1234;
+
 } 
