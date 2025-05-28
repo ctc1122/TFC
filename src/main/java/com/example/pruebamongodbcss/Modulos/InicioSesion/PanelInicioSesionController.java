@@ -542,6 +542,12 @@ public class PanelInicioSesionController extends Application implements Initiali
         try {
             System.out.println("Cambiando a menú principal con usuario: " + usuario.getNombre());
             
+            // Detener el temporizador de diapositivas si está activo
+            if (slideTimer != null) {
+                slideTimer.stop();
+                System.out.println("Timer de diapositivas detenido");
+            }
+            
             // Cargar el FXML
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/panelInicio.fxml"));
             Parent root = loader.load();
