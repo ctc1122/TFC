@@ -458,6 +458,14 @@ public class ServicioClinica {
             diagnostico.setNombrePaciente(paciente.getNombre());
         }
         
+        // Si hay una cita asociada, verificar que no exista ya un diagnóstico para ella
+        if (diagnostico.getCitaId() != null) {
+            ModeloDiagnostico diagnosticoExistente = obtenerDiagnosticoPorCita(diagnostico.getCitaId());
+            if (diagnosticoExistente != null && !diagnosticoExistente.getId().equals(diagnostico.getId())) {
+                throw new IllegalArgumentException("Ya existe un diagnóstico para esta cita");
+            }
+        }
+        
         Document doc = diagnostico.toDocument();
         
         if (diagnostico.getId() == null) {
@@ -481,6 +489,16 @@ public class ServicioClinica {
      */
     public ModeloDiagnostico obtenerDiagnosticoPorId(ObjectId id) {
         Document doc = diagnosticosCollection.find(Filters.eq("_id", id)).first();
+        return doc != null ? new ModeloDiagnostico(doc) : null;
+    }
+    
+    /**
+     * Obtener un diagnóstico por el ID de la cita.
+     * @param citaId ID de la cita
+     * @return El diagnóstico encontrado o null si no existe
+     */
+    public ModeloDiagnostico obtenerDiagnosticoPorCita(ObjectId citaId) {
+        Document doc = diagnosticosCollection.find(Filters.eq("citaId", citaId)).first();
         return doc != null ? new ModeloDiagnostico(doc) : null;
     }
     

@@ -28,6 +28,7 @@ public class ModeloDiagnostico implements Serializable{
     private String veterinario;
     private Date proximaVisita;
     private List<String> imagenes;  // URLs o referencias a imágenes
+    private ObjectId citaId;  // ID de la cita asociada
     
     public ModeloDiagnostico() {
         this.pruebas = new ArrayList<>();
@@ -81,7 +82,8 @@ public class ModeloDiagnostico implements Serializable{
            .append("observaciones", observaciones)
            .append("veterinario", veterinario)
            .append("proximaVisita", proximaVisita)
-           .append("imagenes", imagenes);
+           .append("imagenes", imagenes)
+           .append("citaId", citaId);
         return doc;
     }
 
@@ -204,5 +206,13 @@ public class ModeloDiagnostico implements Serializable{
 
     public void setImagenes(List<String> imagenes) {
         this.imagenes = imagenes;
+    }
+
+    public ObjectId getCitaId() {
+        return citaId;
+    }
+    
+    public void setCitaId(ObjectId citaId) {
+        this.citaId = citaId;
     }
 } 

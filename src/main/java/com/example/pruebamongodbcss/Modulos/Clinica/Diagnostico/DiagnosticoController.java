@@ -438,6 +438,10 @@ public class DiagnosticoController implements Initializable {
             diagnostico.setVeterinario("Dr. Veterinario");
         }
         
+        if (citaActual != null && citaActual.getId() != null) {
+            diagnostico.setCitaId(citaActual.getId());
+        }
+        
         // Guardar diagnóstico usando protocolo
         try {
             gestorSocket.enviarPeticion(com.example.pruebamongodbcss.Protocolo.Protocolo.GUARDAR_DIAGNOSTICO + com.example.pruebamongodbcss.Protocolo.Protocolo.SEPARADOR_CODIGO);

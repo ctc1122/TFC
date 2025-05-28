@@ -20,6 +20,7 @@ import com.calendarfx.model.Entry;
 import com.calendarfx.view.CalendarView;
 import com.calendarfx.view.DateControl;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
+import com.example.pruebamongodbcss.Modulos.Clinica.ModeloDiagnostico;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 import com.example.pruebamongodbcss.Utils.SplashUtils;
@@ -876,14 +877,27 @@ public class CalendarFXComponent extends BorderPane {
         // 2. Cargar el formulario en un hilo aparte
         new Thread(() -> {
             try {
+                // Primero buscar si ya existe un diagnóstico para esta cita
+                com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = 
+                    new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
+                ModeloDiagnostico diagnosticoExistente = servicioClinica.obtenerDiagnosticoPorCita(
+                    new org.bson.types.ObjectId(event.getId())
+                );
+
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Diagnostico/diagnostico-view.fxml"));
                 Parent root = loader.load();
 
                 // Configura el controlador, paciente, etc.
                 com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico.DiagnosticoController controller = loader.getController();
-                com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
-                com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente paciente = servicioClinica.obtenerPacientePorId(new org.bson.types.ObjectId(event.getPacienteId()));
+                com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente paciente = 
+                    servicioClinica.obtenerPacientePorId(new org.bson.types.ObjectId(event.getPacienteId()));
                 ModeloCita cita = servicioClinica.obtenerCitaPorId(new org.bson.types.ObjectId(event.getId()));
+                
+                // Si existe un diagnóstico, cargarlo
+                if (diagnosticoExistente != null) {
+                    controller.setDiagnostico(diagnosticoExistente);
+                }
+                
                 controller.setPaciente(paciente, cita);
                 
                 // Configurar callback para refrescar inmediatamente el calendario
