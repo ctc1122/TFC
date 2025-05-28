@@ -213,6 +213,16 @@
                   <Button fx:id="btnLimpiarFiltrosAdmin" styleClass="clear-button" text="🗑️ Limpiar" />
                </FlowPane>
                
+               <!-- Botones de Exportación e Informes Administrativos -->
+               <VBox spacing="10.0">
+                  <FlowPane hgap="10.0" vgap="10.0" alignment="CENTER_LEFT" styleClass="admin-export-controls">
+                     <Button fx:id="btnExportarTodosExcel" styleClass="export-button" text="📊 Exportar Excel" />
+                     <Button fx:id="btnExportarTodosPDF" styleClass="export-button" text="📄 Exportar PDF" />
+                     <Button fx:id="btnEstadisticasCompletas" styleClass="stats-button" text="📈 Estadísticas Completas" />
+                     <Button fx:id="btnGenerarInformeAdmin" styleClass="report-button" text="📋 Informe Administrativo" />
+                  </FlowPane>
+               </VBox>
+               
                <!-- Tabla de Todos los Fichajes Responsive -->
                <TableView fx:id="tablaTodosFichajes" styleClass="data-table">
                   <columns>

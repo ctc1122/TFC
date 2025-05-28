@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.ArrayList;
 
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -18,6 +19,8 @@ import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.PanelInicioController;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.Utilidades.GestorSocket;
+import com.example.pruebamongodbcss.Modulos.Fichaje.ExportadorFichajes;
+import com.example.pruebamongodbcss.Modulos.Fichaje.EstadisticasFichaje;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -36,6 +39,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 public class FichajeController implements Initializable {
 
@@ -102,6 +106,10 @@ public class FichajeController implements Initializable {
     @FXML private DatePicker dpFechaFinAdmin;
     @FXML private Button btnFiltrarAdmin;
     @FXML private Button btnLimpiarFiltrosAdmin;
+    @FXML private Button btnExportarTodosExcel;
+    @FXML private Button btnExportarTodosPDF;
+    @FXML private Button btnEstadisticasCompletas;
+    @FXML private Button btnGenerarInformeAdmin;
     @FXML private TableView<ModeloFichaje> tablaTodosFichajes;
     @FXML private TableColumn<ModeloFichaje, String> colEmpleado;
     @FXML private TableColumn<ModeloFichaje, String> colFechaAdmin;
@@ -347,6 +355,18 @@ public class FichajeController implements Initializable {
         }
         if (btnLimpiarFiltrosAdmin != null) {
             btnLimpiarFiltrosAdmin.setOnAction(event -> limpiarFiltrosAdmin());
+        }
+        if (btnExportarTodosExcel != null) {
+            btnExportarTodosExcel.setOnAction(event -> exportarTodosExcel());
+        }
+        if (btnExportarTodosPDF != null) {
+            btnExportarTodosPDF.setOnAction(event -> exportarTodosPDF());
+        }
+        if (btnEstadisticasCompletas != null) {
+            btnEstadisticasCompletas.setOnAction(event -> mostrarEstadisticasCompletas());
+        }
+        if (btnGenerarInformeAdmin != null) {
+            btnGenerarInformeAdmin.setOnAction(event -> generarInformeAdministrativo());
         }
     }
     
@@ -685,13 +705,87 @@ public class FichajeController implements Initializable {
     }
     
     private void exportarHistorial() {
-        // TODO: Implementar exportación a Excel/PDF
-        mostrarInfo("Exportar", "Funcionalidad de exportación en desarrollo.");
+        try {
+            // Obtener datos filtrados o todos los datos
+            List<ModeloFichaje> fichajes = new ArrayList<>(listaFichajes);
+            
+            if (fichajes.isEmpty()) {
+                mostrarInfo("Sin datos", "No hay fichajes para exportar.");
+                return;
+            }
+            
+            // Mostrar diálogo de selección de formato
+            javafx.scene.control.ChoiceDialog<String> dialog = new javafx.scene.control.ChoiceDialog<>("Excel", "Excel", "PDF");
+            dialog.setTitle("Exportar Historial");
+            dialog.setHeaderText("Seleccione el formato de exportación");
+            dialog.setContentText("Formato:");
+            
+            dialog.showAndWait().ifPresent(formato -> {
+                String nombreEmpleado = usuarioActual != null ? usuarioActual.getNombre() : "Todos";
+                LocalDate fechaInicio = dpFechaInicio.getValue();
+                LocalDate fechaFin = dpFechaFin.getValue();
+                
+                Stage stage = (Stage) btnExportarHistorial.getScene().getWindow();
+                
+                if ("Excel".equals(formato)) {
+                    ExportadorFichajes.exportarAExcel(fichajes, nombreEmpleado, fechaInicio, fechaFin, stage);
+                } else if ("PDF".equals(formato)) {
+                    ExportadorFichajes.exportarAPDF(fichajes, nombreEmpleado, fechaInicio, fechaFin, stage);
+                }
+            });
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error al exportar", "No se pudo exportar el historial: " + e.getMessage());
+        }
     }
     
     private void generarInforme() {
-        // TODO: Implementar generación de informes
-        mostrarInfo("Informe", "Funcionalidad de informes en desarrollo.");
+        try {
+            // Obtener datos para el informe
+            List<ModeloFichaje> fichajes = new ArrayList<>(listaFichajes);
+            
+            if (fichajes.isEmpty()) {
+                mostrarInfo("Sin datos", "No hay fichajes para generar el informe.");
+                return;
+            }
+            
+            // Mostrar diálogo de selección de tipo de informe
+            javafx.scene.control.ChoiceDialog<String> dialog = new javafx.scene.control.ChoiceDialog<>(
+                "Resumen Estadístico", 
+                "Resumen Estadístico", 
+                "Informe Detallado Excel", 
+                "Informe Detallado PDF"
+            );
+            dialog.setTitle("Generar Informe");
+            dialog.setHeaderText("Seleccione el tipo de informe");
+            dialog.setContentText("Tipo:");
+            
+            dialog.showAndWait().ifPresent(tipo -> {
+                String nombreEmpleado = usuarioActual != null ? usuarioActual.getNombre() : "Todos los empleados";
+                LocalDate fechaInicio = dpFechaInicio.getValue();
+                LocalDate fechaFin = dpFechaFin.getValue();
+                Stage stage = (Stage) btnGenerarInforme.getScene().getWindow();
+                
+                switch (tipo) {
+                    case "Resumen Estadístico":
+                        // Mostrar estadísticas en ventana modal
+                        EstadisticasFichaje.mostrarEstadisticasCompletas(fichajes, 
+                            "Estadísticas de Fichaje - " + nombreEmpleado);
+                        break;
+                    case "Informe Detallado Excel":
+                        ExportadorFichajes.exportarAExcel(fichajes, nombreEmpleado, fechaInicio, fechaFin, stage);
+                        break;
+                    case "Informe Detallado PDF":
+                        ExportadorFichajes.exportarAPDF(fichajes, nombreEmpleado, fechaInicio, fechaFin, stage);
+                        break;
+                }
+            });
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error al generar informe", "No se pudo generar el informe: " + e.getMessage());
+        }
     }
     
     private void verTodosFichajes() {
@@ -727,8 +821,23 @@ public class FichajeController implements Initializable {
     }
     
     private void mostrarEstadisticas() {
-        // TODO: Implementar ventana de estadísticas detalladas
-        mostrarInfo("Estadísticas", "Ventana de estadísticas detalladas en desarrollo.");
+        try {
+            // Obtener datos para estadísticas
+            List<ModeloFichaje> fichajes = new ArrayList<>(listaTodosFichajes);
+            
+            if (fichajes.isEmpty()) {
+                mostrarInfo("Sin datos", "No hay fichajes para mostrar estadísticas.");
+                return;
+            }
+            
+            // Mostrar ventana de estadísticas completas
+            EstadisticasFichaje.mostrarEstadisticasCompletas(fichajes, 
+                "Estadísticas Generales de Fichaje");
+                
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error al mostrar estadísticas", "No se pudieron cargar las estadísticas: " + e.getMessage());
+        }
     }
     
     private void gestionarIncidencias() {
@@ -1202,5 +1311,277 @@ public class FichajeController implements Initializable {
                 System.err.println("Error al aplicar tema: " + e.getMessage());
             }
         });
+    }
+
+    /**
+     * Exporta todos los fichajes filtrados a Excel (solo administradores)
+     */
+    private void exportarTodosExcel() {
+        if (!usuarioActual.esAdmin()) {
+            mostrarError("Acceso Denegado", "Solo los administradores pueden exportar todos los fichajes.");
+            return;
+        }
+        
+        try {
+            List<ModeloFichaje> fichajes = new ArrayList<>(listaTodosFichajes);
+            
+            if (fichajes.isEmpty()) {
+                mostrarInfo("Sin datos", "No hay fichajes para exportar.");
+                return;
+            }
+            
+            String nombreEmpleado = cmbEmpleados.getValue();
+            if (nombreEmpleado == null || nombreEmpleado.equals("Todos los empleados")) {
+                nombreEmpleado = "Todos_los_empleados";
+            }
+            
+            LocalDate fechaInicio = dpFechaInicioAdmin.getValue();
+            LocalDate fechaFin = dpFechaFinAdmin.getValue();
+            Stage stage = (Stage) btnExportarTodosExcel.getScene().getWindow();
+            
+            ExportadorFichajes.exportarAExcel(fichajes, nombreEmpleado, fechaInicio, fechaFin, stage);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error al exportar", "No se pudo exportar a Excel: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Exporta todos los fichajes filtrados a PDF (solo administradores)
+     */
+    private void exportarTodosPDF() {
+        if (!usuarioActual.esAdmin()) {
+            mostrarError("Acceso Denegado", "Solo los administradores pueden exportar todos los fichajes.");
+            return;
+        }
+        
+        try {
+            List<ModeloFichaje> fichajes = new ArrayList<>(listaTodosFichajes);
+            
+            if (fichajes.isEmpty()) {
+                mostrarInfo("Sin datos", "No hay fichajes para exportar.");
+                return;
+            }
+            
+            String nombreEmpleado = cmbEmpleados.getValue();
+            if (nombreEmpleado == null || nombreEmpleado.equals("Todos los empleados")) {
+                nombreEmpleado = "Todos_los_empleados";
+            }
+            
+            LocalDate fechaInicio = dpFechaInicioAdmin.getValue();
+            LocalDate fechaFin = dpFechaFinAdmin.getValue();
+            Stage stage = (Stage) btnExportarTodosPDF.getScene().getWindow();
+            
+            ExportadorFichajes.exportarAPDF(fichajes, nombreEmpleado, fechaInicio, fechaFin, stage);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error al exportar", "No se pudo exportar a PDF: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Muestra estadísticas completas de todos los empleados (solo administradores)
+     */
+    private void mostrarEstadisticasCompletas() {
+        if (!usuarioActual.esAdmin()) {
+            mostrarError("Acceso Denegado", "Solo los administradores pueden ver estadísticas completas.");
+            return;
+        }
+        
+        try {
+            List<ModeloFichaje> fichajes = new ArrayList<>(listaTodosFichajes);
+            
+            if (fichajes.isEmpty()) {
+                mostrarInfo("Sin datos", "No hay fichajes para mostrar estadísticas.");
+                return;
+            }
+            
+            String titulo = "Estadísticas Administrativas - Todos los Empleados";
+            String empleadoSeleccionado = cmbEmpleados.getValue();
+            
+            if (empleadoSeleccionado != null && !empleadoSeleccionado.equals("Todos los empleados")) {
+                titulo = "Estadísticas Administrativas - " + empleadoSeleccionado;
+            }
+            
+            LocalDate fechaInicio = dpFechaInicioAdmin.getValue();
+            LocalDate fechaFin = dpFechaFinAdmin.getValue();
+            
+            if (fechaInicio != null && fechaFin != null) {
+                titulo += " (" + fechaInicio.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + 
+                         " - " + fechaFin.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + ")";
+            }
+            
+            EstadisticasFichaje.mostrarEstadisticasCompletas(fichajes, titulo);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error al mostrar estadísticas", "No se pudieron cargar las estadísticas: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Genera un informe administrativo completo con opciones avanzadas
+     */
+    private void generarInformeAdministrativo() {
+        if (!usuarioActual.esAdmin()) {
+            mostrarError("Acceso Denegado", "Solo los administradores pueden generar informes administrativos.");
+            return;
+        }
+        
+        try {
+            List<ModeloFichaje> fichajes = new ArrayList<>(listaTodosFichajes);
+            
+            if (fichajes.isEmpty()) {
+                mostrarInfo("Sin datos", "No hay fichajes para generar el informe.");
+                return;
+            }
+            
+            // Mostrar diálogo de selección de tipo de informe administrativo
+            javafx.scene.control.ChoiceDialog<String> dialog = new javafx.scene.control.ChoiceDialog<>(
+                "Informe Completo Excel", 
+                "Informe Completo Excel", 
+                "Informe Completo PDF",
+                "Estadísticas Detalladas",
+                "Resumen Ejecutivo PDF",
+                "Análisis de Productividad"
+            );
+            dialog.setTitle("Generar Informe Administrativo");
+            dialog.setHeaderText("Seleccione el tipo de informe administrativo");
+            dialog.setContentText("Tipo de informe:");
+            
+            dialog.showAndWait().ifPresent(tipo -> {
+                String nombreEmpleado = cmbEmpleados.getValue();
+                if (nombreEmpleado == null || nombreEmpleado.equals("Todos los empleados")) {
+                    nombreEmpleado = "Informe_Administrativo_Completo";
+                } else {
+                    nombreEmpleado = "Informe_Admin_" + nombreEmpleado.replaceAll("\\s+", "_");
+                }
+                
+                LocalDate fechaInicio = dpFechaInicioAdmin.getValue();
+                LocalDate fechaFin = dpFechaFinAdmin.getValue();
+                Stage stage = (Stage) btnGenerarInformeAdmin.getScene().getWindow();
+                
+                switch (tipo) {
+                    case "Informe Completo Excel":
+                        ExportadorFichajes.exportarAExcel(fichajes, nombreEmpleado, fechaInicio, fechaFin, stage);
+                        break;
+                    case "Informe Completo PDF":
+                        ExportadorFichajes.exportarAPDF(fichajes, nombreEmpleado, fechaInicio, fechaFin, stage);
+                        break;
+                    case "Estadísticas Detalladas":
+                        mostrarEstadisticasCompletas();
+                        break;
+                    case "Resumen Ejecutivo PDF":
+                        // Generar un PDF con resumen ejecutivo
+                        generarResumenEjecutivoPDF(fichajes, nombreEmpleado, fechaInicio, fechaFin, stage);
+                        break;
+                    case "Análisis de Productividad":
+                        // Mostrar análisis de productividad
+                        mostrarAnalisisProductividad(fichajes);
+                        break;
+                }
+            });
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error al generar informe", "No se pudo generar el informe administrativo: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Genera un resumen ejecutivo en PDF para administradores
+     */
+    private void generarResumenEjecutivoPDF(List<ModeloFichaje> fichajes, String nombreArchivo, 
+                                          LocalDate fechaInicio, LocalDate fechaFin, Stage stage) {
+        try {
+            // Por ahora, usar el exportador normal de PDF
+            // En el futuro se puede crear un formato específico de resumen ejecutivo
+            ExportadorFichajes.exportarAPDF(fichajes, nombreArchivo + "_Resumen_Ejecutivo", 
+                                          fechaInicio, fechaFin, stage);
+            
+            mostrarInfo("Resumen Ejecutivo", 
+                       "Se ha generado el resumen ejecutivo. En futuras versiones incluirá " +
+                       "gráficos y análisis avanzados específicos para la dirección.");
+                       
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error", "No se pudo generar el resumen ejecutivo: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Muestra un análisis de productividad avanzado
+     */
+    private void mostrarAnalisisProductividad(List<ModeloFichaje> fichajes) {
+        try {
+            // Crear ventana de análisis de productividad
+            Alert analisis = new Alert(Alert.AlertType.INFORMATION);
+            analisis.setTitle("Análisis de Productividad");
+            analisis.setHeaderText("Análisis Avanzado de Productividad");
+            
+            // Calcular métricas básicas
+            long totalFichajes = fichajes.size();
+            long fichajesCompletos = fichajes.stream()
+                .filter(f -> f.getEstado() == ModeloFichaje.EstadoFichaje.CERRADO)
+                .count();
+            long incidencias = fichajes.stream()
+                .filter(f -> f.getTipoEntrada() != ModeloFichaje.TipoFichaje.NORMAL || 
+                           f.getTipoSalida() != ModeloFichaje.TipoFichaje.NORMAL)
+                .count();
+            
+            double porcentajeCompletitud = totalFichajes > 0 ? 
+                (fichajesCompletos * 100.0 / totalFichajes) : 0;
+            double porcentajeIncidencias = totalFichajes > 0 ? 
+                (incidencias * 100.0 / totalFichajes) : 0;
+            
+            StringBuilder contenido = new StringBuilder();
+            contenido.append("📊 MÉTRICAS GENERALES:\n");
+            contenido.append("• Total de fichajes: ").append(totalFichajes).append("\n");
+            contenido.append("• Fichajes completos: ").append(fichajesCompletos)
+                     .append(" (").append(String.format("%.1f", porcentajeCompletitud)).append("%)\n");
+            contenido.append("• Incidencias: ").append(incidencias)
+                     .append(" (").append(String.format("%.1f", porcentajeIncidencias)).append("%)\n\n");
+            
+            contenido.append("📈 INDICADORES DE PRODUCTIVIDAD:\n");
+            if (porcentajeCompletitud >= 95) {
+                contenido.append("✅ Excelente completitud de fichajes\n");
+            } else if (porcentajeCompletitud >= 85) {
+                contenido.append("⚠️ Completitud de fichajes mejorable\n");
+            } else {
+                contenido.append("❌ Completitud de fichajes deficiente\n");
+            }
+            
+            if (porcentajeIncidencias <= 5) {
+                contenido.append("✅ Bajo nivel de incidencias\n");
+            } else if (porcentajeIncidencias <= 15) {
+                contenido.append("⚠️ Nivel moderado de incidencias\n");
+            } else {
+                contenido.append("❌ Alto nivel de incidencias\n");
+            }
+            
+            contenido.append("\n💡 RECOMENDACIONES:\n");
+            if (porcentajeCompletitud < 90) {
+                contenido.append("• Implementar recordatorios automáticos de fichaje\n");
+            }
+            if (porcentajeIncidencias > 10) {
+                contenido.append("• Revisar causas frecuentes de incidencias\n");
+            }
+            contenido.append("• Considerar análisis por departamentos\n");
+            contenido.append("• Evaluar patrones de horarios de trabajo\n");
+            
+            analisis.setContentText(contenido.toString());
+            
+            // Hacer el diálogo más grande para mostrar toda la información
+            analisis.getDialogPane().setPrefWidth(500);
+            analisis.getDialogPane().setPrefHeight(400);
+            
+            analisis.showAndWait();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error", "No se pudo generar el análisis de productividad: " + e.getMessage());
+        }
     }
 } 

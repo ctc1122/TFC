@@ -36,6 +36,11 @@ module com.example.pruebamongodbcss {
     requires transitive java.logging;
     requires itextpdf;
     
+    // Apache POI para exportación a Excel
+    requires org.apache.poi.poi;
+    requires org.apache.xmlbeans;
+
+    
     // Configuración básica del módulo principal
     exports com.example.pruebamongodbcss;
     opens com.example.pruebamongodbcss to javafx.fxml;
