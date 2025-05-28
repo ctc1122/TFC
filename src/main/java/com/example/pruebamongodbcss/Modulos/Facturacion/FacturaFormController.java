@@ -1040,6 +1040,12 @@ public class FacturaFormController implements Initializable {
             // Enviar al servidor
             enviarFacturaAlServidor();
             
+            // Mostrar mensaje de confirmación
+            mostrarInfo("Borrador guardado", "El borrador de la factura se ha guardado correctamente.");
+            
+            // Cerrar el formulario automáticamente
+            cerrarVentana();
+            
         } catch (Exception e) {
             System.err.println("❌ Error al guardar borrador: " + e.getMessage());
             e.printStackTrace();
