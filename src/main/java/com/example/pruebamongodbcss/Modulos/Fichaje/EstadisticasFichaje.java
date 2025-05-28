@@ -26,6 +26,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -40,14 +41,27 @@ public class EstadisticasFichaje {
     private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     
     /**
-     * Muestra una ventana con estadísticas completas y gráficos
+     * Crea un panel con estadísticas completas que se puede integrar en la ventana principal
      */
-    public static void mostrarEstadisticasCompletas(List<ModeloFichaje> fichajes, String tituloVentana) {
-        Stage ventanaEstadisticas = new Stage();
-        ventanaEstadisticas.initModality(Modality.APPLICATION_MODAL);
-        ventanaEstadisticas.setTitle(tituloVentana);
-        ventanaEstadisticas.setWidth(1000);
-        ventanaEstadisticas.setHeight(700);
+    public static VBox crearPanelEstadisticasCompletas(List<ModeloFichaje> fichajes, String titulo) {
+        // Crear panel principal
+        VBox panelPrincipal = new VBox(10);
+        panelPrincipal.setPadding(new Insets(10));
+        panelPrincipal.getStyleClass().add("fichaje-main-panel");
+        
+        // Header con título y botón de volver
+        HBox header = new HBox(10);
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setPadding(new Insets(10));
+        header.getStyleClass().add("header-container");
+        
+        Button btnVolver = new Button("← Volver");
+        btnVolver.getStyleClass().add("back-button");
+        
+        Label lblTitulo = new Label(titulo);
+        lblTitulo.getStyleClass().add("module-title");
+        
+        header.getChildren().addAll(btnVolver, lblTitulo);
         
         // Crear TabPane para organizar las diferentes vistas
         TabPane tabPane = new TabPane();
@@ -74,16 +88,88 @@ public class EstadisticasFichaje {
         
         tabPane.getTabs().addAll(tabKPIs, tabGraficos, tabLineas, tabCirculares);
         
-        // Crear panel principal con filtros
-        VBox panelPrincipal = new VBox(10);
-        panelPrincipal.setPadding(new Insets(10));
-        
         // Panel de filtros
         HBox panelFiltros = crearPanelFiltros(fichajes, tabPane);
         
-        panelPrincipal.getChildren().addAll(panelFiltros, tabPane);
+        panelPrincipal.getChildren().addAll(header, panelFiltros, tabPane);
         
-        Scene scene = new Scene(panelPrincipal);
+        return panelPrincipal;
+    }
+    
+    /**
+     * Método de compatibilidad que detecta el panel activo y setea el contenido
+     */
+    public static void mostrarEstadisticasCompletas(List<ModeloFichaje> fichajes, String tituloVentana) {
+        // Crear el panel de estadísticas
+        VBox panelEstadisticas = crearPanelEstadisticasCompletas(fichajes, tituloVentana);
+        
+        // Intentar encontrar el BorderPane principal de la aplicación
+        try {
+            // Buscar la ventana principal activa
+            javafx.stage.Window ventanaPrincipal = javafx.stage.Stage.getWindows().stream()
+                .filter(w -> w instanceof javafx.stage.Stage)
+                .filter(javafx.stage.Window::isShowing)
+                .findFirst()
+                .orElse(null);
+            
+            if (ventanaPrincipal != null) {
+                javafx.scene.Scene scene = ventanaPrincipal.getScene();
+                if (scene != null && scene.getRoot() instanceof BorderPane) {
+                    BorderPane root = (BorderPane) scene.getRoot();
+                    
+                    // Buscar el BorderPane central (donde se cargan los módulos)
+                    if (root.getCenter() instanceof BorderPane) {
+                        BorderPane centerPane = (BorderPane) root.getCenter();
+                        
+                        // Configurar el botón volver para restaurar la vista anterior
+                        Button btnVolver = (Button) panelEstadisticas.lookup(".back-button");
+                        if (btnVolver != null) {
+                            // Guardar el contenido anterior
+                            javafx.scene.Node contenidoAnterior = centerPane.getCenter();
+                            
+                            btnVolver.setOnAction(e -> {
+                                // Restaurar el contenido anterior
+                                centerPane.setCenter(contenidoAnterior);
+                            });
+                        }
+                        
+                        // Setear el panel de estadísticas en el centro
+                        centerPane.setCenter(panelEstadisticas);
+                        
+                        // Aplicar estilos CSS
+                        if (!scene.getStylesheets().contains("/Estilos/fichaje-styles.css")) {
+                            scene.getStylesheets().add(EstadisticasFichaje.class.getResource("/Estilos/fichaje-styles.css").toExternalForm());
+                        }
+                        
+                        return; // Éxito, salir del método
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al integrar estadísticas en ventana principal: " + e.getMessage());
+        }
+        
+        // Fallback: crear ventana modal si no se puede integrar
+        crearVentanaModalEstadisticas(fichajes, tituloVentana);
+    }
+    
+    /**
+     * Método fallback para crear ventana modal (comportamiento anterior)
+     */
+    private static void crearVentanaModalEstadisticas(List<ModeloFichaje> fichajes, String tituloVentana) {
+        Stage ventanaEstadisticas = new Stage();
+        ventanaEstadisticas.initModality(Modality.APPLICATION_MODAL);
+        ventanaEstadisticas.setTitle(tituloVentana);
+        ventanaEstadisticas.setWidth(1000);
+        ventanaEstadisticas.setHeight(700);
+        
+        VBox panelEstadisticas = crearPanelEstadisticasCompletas(fichajes, tituloVentana);
+        
+        // Remover el botón volver en modo modal
+        HBox header = (HBox) panelEstadisticas.getChildren().get(0);
+        header.getChildren().remove(0); // Remover botón volver
+        
+        Scene scene = new Scene(panelEstadisticas);
         scene.getStylesheets().add(EstadisticasFichaje.class.getResource("/Estilos/fichaje-styles.css").toExternalForm());
         
         ventanaEstadisticas.setScene(scene);
