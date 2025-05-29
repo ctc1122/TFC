@@ -429,4 +429,21 @@ public interface Protocolo {
     static final int OBTENER_TOP_CLIENTES_RESPONSE = 1308;
     static final int ERROR_OBTENER_TOP_CLIENTES = 1309;
 
+    // Códigos para operaciones específicas de reportes de ventas
+    static final int OBTENER_ANALISIS_VENTAS = 1310;
+    static final int OBTENER_ANALISIS_VENTAS_RESPONSE = 1311;
+    static final int ERROR_OBTENER_ANALISIS_VENTAS = 1312;
+
+    static final int OBTENER_EVOLUCION_VENTAS_POR_PERIODO = 1313;
+    static final int OBTENER_EVOLUCION_VENTAS_POR_PERIODO_RESPONSE = 1314;
+    static final int ERROR_OBTENER_EVOLUCION_VENTAS_POR_PERIODO = 1315;
+
+    static final int OBTENER_TOP_SERVICIOS_VENDIDOS = 1316;
+    static final int OBTENER_TOP_SERVICIOS_VENDIDOS_RESPONSE = 1317;
+    static final int ERROR_OBTENER_TOP_SERVICIOS_VENDIDOS = 1318;
+
+    static final int OBTENER_DASHBOARD_VENTAS = 1319;
+    static final int OBTENER_DASHBOARD_VENTAS_RESPONSE = 1320;
+    static final int ERROR_OBTENER_DASHBOARD_VENTAS = 1321;
+
 } 

@@ -4,10 +4,13 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -329,7 +332,7 @@ public class ServicioInformes {
                     Filters.eq("veterinario", nombreEmpleado),
                     Filters.gte("fechaHora", fechaInicio),
                     Filters.lt("fechaHora", fechaFin),
-                    Filters.eq("estado", "COMPLETADA")
+                    Filters.eq("estado", "EMITIDA")
                 ));
                 
                 prod.setCitasAtendidas((int) citasAtendidas);
@@ -1164,5 +1167,292 @@ public class ServicioInformes {
         
         public double getTotal() { return total; }
         public void setTotal(double total) { this.total = total; }
+    }
+    
+    // ================= MÉTODOS PARA REPORTE DE VENTAS =================
+    
+    /**
+     * Obtiene estadísticas de ventas para el reporte específico
+     */
+    public AnalisisVentas obtenerAnalisisVentas(LocalDate fechaInicio, LocalDate fechaFin) {
+        AnalisisVentas analisis = new AnalisisVentas();
+        
+        try {
+            // Convertir LocalDate a Date para MongoDB
+            Date fechaInicioDate = Date.from(fechaInicio.atStartOfDay(ZoneId.systemDefault()).toInstant());
+            Date fechaFinDate = Date.from(fechaFin.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            
+            // Filtro por rango de fechas y estado EMITIDA
+            Bson filtroFechas = Filters.and(
+                Filters.gte("fechaCreacion", fechaInicioDate),
+                Filters.lt("fechaCreacion", fechaFinDate),
+                Filters.eq("estado", "EMITIDA")
+            );
+            
+            // Total de ventas en el período
+            List<Document> facturas = facturasCollection.find(filtroFechas)
+                .into(new ArrayList<>());
+            
+            double totalVentas = 0.0;
+            int numeroFacturas = facturas.size();
+            
+            for (Document factura : facturas) {
+                Double total = factura.getDouble("total");
+                if (total != null) {
+                    totalVentas += total;
+                }
+            }
+            
+            // Promedio por venta
+            double promedioVenta = numeroFacturas > 0 ? totalVentas / numeroFacturas : 0.0;
+            
+            analisis.setTotalVentas(totalVentas);
+            analisis.setNumeroFacturas(numeroFacturas);
+            analisis.setPromedioVenta(promedioVenta);
+            analisis.setFechaInicio(fechaInicio);
+            analisis.setFechaFin(fechaFin);
+            
+        } catch (Exception e) {
+            System.err.println("Error al obtener análisis de ventas: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return analisis;
+    }
+    
+    /**
+     * Obtiene la evolución de ventas mensual para el gráfico
+     */
+    public List<DatoGrafico> obtenerEvolucionVentasPorPeriodo(int meses) {
+        List<DatoGrafico> evolucion = new ArrayList<>();
+        
+        try {
+            LocalDate fechaFin = LocalDate.now();
+            LocalDate fechaInicio = fechaFin.minusMonths(meses - 1).withDayOfMonth(1);
+            
+            // Obtener datos mes por mes
+            LocalDate fechaActual = fechaInicio;
+            String[] nombresMeses = {"Ene", "Feb", "Mar", "Abr", "May", "Jun", 
+                                   "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"};
+            
+            while (!fechaActual.isAfter(fechaFin.withDayOfMonth(1))) {
+                LocalDate inicioMes = fechaActual.withDayOfMonth(1);
+                LocalDate finMes = fechaActual.withDayOfMonth(fechaActual.lengthOfMonth());
+                
+                // Convertir a Date para MongoDB
+                Date inicioMesDate = Date.from(inicioMes.atStartOfDay(ZoneId.systemDefault()).toInstant());
+                Date finMesDate = Date.from(finMes.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+                
+                // Filtro para facturas del mes
+                Bson filtroMes = Filters.and(
+                    Filters.gte("fechaCreacion", inicioMesDate),
+                    Filters.lt("fechaCreacion", finMesDate),
+                    Filters.eq("estado", "EMITIDA")
+                );
+                
+                // Calcular total del mes
+                double totalMes = 0.0;
+                List<Document> facturasMes = facturasCollection.find(filtroMes)
+                    .into(new ArrayList<>());
+                
+                for (Document factura : facturasMes) {
+                    Double total = factura.getDouble("total");
+                    if (total != null) {
+                        totalMes += total;
+                    }
+                }
+                
+                // Agregar punto al gráfico
+                String etiqueta = nombresMeses[fechaActual.getMonthValue() - 1] + " " + fechaActual.getYear();
+                evolucion.add(new DatoGrafico(etiqueta, totalMes));
+                
+                fechaActual = fechaActual.plusMonths(1);
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error al obtener evolución de ventas: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return evolucion;
+    }
+    
+    /**
+     * Obtiene los servicios más vendidos en un período
+     */
+    public List<ServicioVendido> obtenerTopServiciosVendidos(int limite, LocalDate fechaInicio, LocalDate fechaFin) {
+        List<ServicioVendido> topServicios = new ArrayList<>();
+        
+        try {
+            // Convertir LocalDate a Date para MongoDB
+            Date fechaInicioDate = Date.from(fechaInicio.atStartOfDay(ZoneId.systemDefault()).toInstant());
+            Date fechaFinDate = Date.from(fechaFin.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            
+            // Filtro por rango de fechas y estado EMITIDA
+            Bson filtroFechas = Filters.and(
+                Filters.gte("fechaCreacion", fechaInicioDate),
+                Filters.lt("fechaCreacion", fechaFinDate),
+                Filters.eq("estado", "EMITIDA")
+            );
+            
+            // Obtener todas las facturas del período
+            List<Document> facturas = facturasCollection.find(filtroFechas)
+                .into(new ArrayList<>());
+            
+            // Map para acumular servicios (nombre -> [cantidad, total])
+            Map<String, double[]> serviciosMap = new HashMap<>();
+            
+            for (Document factura : facturas) {
+                List<Document> servicios = factura.getList("servicios", Document.class);
+                if (servicios != null) {
+                    for (Document servicio : servicios) {
+                        String nombre = servicio.getString("nombre");
+                        Integer cantidad = servicio.getInteger("cantidad");
+                        Double precio = servicio.getDouble("precio");
+                        
+                        if (nombre != null && cantidad != null && precio != null) {
+                            double totalServicio = cantidad * precio;
+                            
+                            serviciosMap.compute(nombre, (k, v) -> {
+                                if (v == null) {
+                                    return new double[]{cantidad, totalServicio};
+                                } else {
+                                    return new double[]{v[0] + cantidad, v[1] + totalServicio};
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+            
+            // Convertir a lista y ordenar por total facturado
+            for (Map.Entry<String, double[]> entry : serviciosMap.entrySet()) {
+                ServicioVendido servicio = new ServicioVendido();
+                servicio.setNombre(entry.getKey());
+                servicio.setCantidad((int) entry.getValue()[0]);
+                servicio.setTotal(entry.getValue()[1]);
+                topServicios.add(servicio);
+            }
+            
+            // Ordenar por total descendente y limitar
+            topServicios.sort((a, b) -> Double.compare(b.getTotal(), a.getTotal()));
+            
+            if (topServicios.size() > limite) {
+                topServicios = topServicios.subList(0, limite);
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error al obtener top servicios vendidos: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return topServicios;
+    }
+    
+    /**
+     * Obtiene estadísticas de ventas por rango de fechas
+     */
+    public DashboardVentas obtenerDashboardVentas(LocalDate fechaInicio, LocalDate fechaFin) {
+        DashboardVentas dashboard = new DashboardVentas();
+        
+        try {
+            // Convertir LocalDate a Date para MongoDB
+            Date fechaInicioDate = Date.from(fechaInicio.atStartOfDay(ZoneId.systemDefault()).toInstant());
+            Date fechaFinDate = Date.from(fechaFin.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            
+            // Filtro por rango de fechas y estado EMITIDA
+            Bson filtroFechas = Filters.and(
+                Filters.gte("fechaCreacion", fechaInicioDate),
+                Filters.lt("fechaCreacion", fechaFinDate),
+                Filters.eq("estado", "EMITIDA")
+            );
+            
+            List<Document> facturas = facturasCollection.find(filtroFechas)
+                .into(new ArrayList<>());
+            
+            double totalVentas = 0.0;
+            int numeroFacturas = facturas.size();
+            
+            for (Document factura : facturas) {
+                Double total = factura.getDouble("total");
+                if (total != null) {
+                    totalVentas += total;
+                }
+            }
+            
+            // Calcular días en el período
+            long diasPeriodo = ChronoUnit.DAYS.between(fechaInicio, fechaFin) + 1;
+            double promedioVentasDiarias = diasPeriodo > 0 ? totalVentas / diasPeriodo : 0.0;
+            double promedioVenta = numeroFacturas > 0 ? totalVentas / numeroFacturas : 0.0;
+            
+            dashboard.setTotalVentas(totalVentas);
+            dashboard.setNumeroFacturas(numeroFacturas);
+            dashboard.setPromedioVentasDiarias(promedioVentasDiarias);
+            dashboard.setPromedioVenta(promedioVenta);
+            dashboard.setFechaInicio(fechaInicio);
+            dashboard.setFechaFin(fechaFin);
+            
+        } catch (Exception e) {
+            System.err.println("Error al obtener dashboard de ventas: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return dashboard;
+    }
+    
+    // ================= CLASES DE DATOS PARA VENTAS =================
+    
+    public static class AnalisisVentas implements Serializable {
+        private static final long serialVersionUID = 1L;
+        private double totalVentas;
+        private int numeroFacturas;
+        private double promedioVenta;
+        private LocalDate fechaInicio;
+        private LocalDate fechaFin;
+        
+        // Getters y setters
+        public double getTotalVentas() { return totalVentas; }
+        public void setTotalVentas(double totalVentas) { this.totalVentas = totalVentas; }
+        
+        public int getNumeroFacturas() { return numeroFacturas; }
+        public void setNumeroFacturas(int numeroFacturas) { this.numeroFacturas = numeroFacturas; }
+        
+        public double getPromedioVenta() { return promedioVenta; }
+        public void setPromedioVenta(double promedioVenta) { this.promedioVenta = promedioVenta; }
+        
+        public LocalDate getFechaInicio() { return fechaInicio; }
+        public void setFechaInicio(LocalDate fechaInicio) { this.fechaInicio = fechaInicio; }
+        
+        public LocalDate getFechaFin() { return fechaFin; }
+        public void setFechaFin(LocalDate fechaFin) { this.fechaFin = fechaFin; }
+    }
+    
+    public static class DashboardVentas implements Serializable {
+        private static final long serialVersionUID = 1L;
+        private double totalVentas;
+        private int numeroFacturas;
+        private double promedioVentasDiarias;
+        private double promedioVenta;
+        private LocalDate fechaInicio;
+        private LocalDate fechaFin;
+        
+        // Getters y setters
+        public double getTotalVentas() { return totalVentas; }
+        public void setTotalVentas(double totalVentas) { this.totalVentas = totalVentas; }
+        
+        public int getNumeroFacturas() { return numeroFacturas; }
+        public void setNumeroFacturas(int numeroFacturas) { this.numeroFacturas = numeroFacturas; }
+        
+        public double getPromedioVentasDiarias() { return promedioVentasDiarias; }
+        public void setPromedioVentasDiarias(double promedioVentasDiarias) { this.promedioVentasDiarias = promedioVentasDiarias; }
+        
+        public double getPromedioVenta() { return promedioVenta; }
+        public void setPromedioVenta(double promedioVenta) { this.promedioVenta = promedioVenta; }
+        
+        public LocalDate getFechaInicio() { return fechaInicio; }
+        public void setFechaInicio(LocalDate fechaInicio) { this.fechaInicio = fechaInicio; }
+        
+        public LocalDate getFechaFin() { return fechaFin; }
+        public void setFechaFin(LocalDate fechaFin) { this.fechaFin = fechaFin; }
     }
 } 

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -2200,6 +2201,169 @@ public class ClienteHandler implements Runnable {
                                 System.err.println("Error al obtener top clientes: " + e.getMessage());
                                 synchronized (salida) {
                                     salida.writeInt(Protocolo.ERROR_OBTENER_TOP_CLIENTES);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        // ================= CASOS PARA REPORTE DE VENTAS =================
+                        
+                        case Protocolo.OBTENER_ANALISIS_VENTAS:
+                            System.out.println("Procesando solicitud de obtener análisis de ventas...");
+                            try {
+                                if (parametros.length >= 2) {
+                                    LocalDate fechaInicioVentas = LocalDate.parse(parametros[0]);
+                                    LocalDate fechaFinVentas = LocalDate.parse(parametros[1]);
+                                    
+                                    com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes = 
+                                        new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
+                                    com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.AnalisisVentas analisis = 
+                                        servicioInformes.obtenerAnalisisVentas(fechaInicioVentas, fechaFinVentas);
+                                        
+                                    // Crear objeto de datos simplificado para transmisión
+                                    com.example.pruebamongodbcss.Modulos.Informes.ReporteVentasController.AnalisisVentasData data = 
+                                        new com.example.pruebamongodbcss.Modulos.Informes.ReporteVentasController.AnalisisVentasData();
+                                    data.setTotalVentas(analisis.getTotalVentas());
+                                    data.setNumeroFacturas(analisis.getNumeroFacturas());
+                                    data.setPromedioVenta(analisis.getPromedioVenta());
+                                    data.setFechaInicio(analisis.getFechaInicio());
+                                    data.setFechaFin(analisis.getFechaFin());
+                                    
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.OBTENER_ANALISIS_VENTAS_RESPONSE);
+                                        salida.writeObject(data);
+                                        salida.flush();
+                                    }
+                                } else {
+                                    System.err.println("Error: Faltan parámetros para análisis de ventas");
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_OBTENER_ANALISIS_VENTAS);
+                                        salida.flush();
+                                    }
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener análisis de ventas: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_ANALISIS_VENTAS);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_EVOLUCION_VENTAS_POR_PERIODO:
+                            System.out.println("Procesando solicitud de obtener evolución de ventas por período...");
+                            try {
+                                int meses = Integer.parseInt(parametros[0]);
+                                com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes = 
+                                    new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
+                                List<com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.DatoGrafico> datos = 
+                                    servicioInformes.obtenerEvolucionVentasPorPeriodo(meses);
+                                    
+                                // Convertir a objetos de datos simplificados
+                                List<com.example.pruebamongodbcss.Modulos.Informes.ReporteVentasController.DatoGraficoData> datosSimplificados = 
+                                    new ArrayList<>();
+                                for (com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.DatoGrafico dato : datos) {
+                                    datosSimplificados.add(new com.example.pruebamongodbcss.Modulos.Informes.ReporteVentasController.DatoGraficoData(
+                                        dato.getEtiqueta(), dato.getValor()));
+                                }
+                                
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_EVOLUCION_VENTAS_POR_PERIODO_RESPONSE);
+                                    salida.writeObject(datosSimplificados);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener evolución de ventas por período: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_EVOLUCION_VENTAS_POR_PERIODO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_TOP_SERVICIOS_VENDIDOS:
+                            System.out.println("Procesando solicitud de obtener top servicios vendidos...");
+                            try {
+                                if (parametros.length >= 3) {
+                                    int limite = Integer.parseInt(parametros[0]);
+                                    LocalDate fechaInicioServicios = LocalDate.parse(parametros[1]);
+                                    LocalDate fechaFinServicios = LocalDate.parse(parametros[2]);
+                                    
+                                    com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes = 
+                                        new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
+                                    List<com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.ServicioVendido> topServicios = 
+                                        servicioInformes.obtenerTopServiciosVendidos(limite, fechaInicioServicios, fechaFinServicios);
+                                        
+                                    // Convertir a objetos de datos simplificados
+                                    List<com.example.pruebamongodbcss.Modulos.Informes.ReporteVentasController.ServicioVendidoData> serviciosSimplificados = 
+                                        new ArrayList<>();
+                                    for (com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.ServicioVendido servicio : topServicios) {
+                                        com.example.pruebamongodbcss.Modulos.Informes.ReporteVentasController.ServicioVendidoData servicioData = 
+                                            new com.example.pruebamongodbcss.Modulos.Informes.ReporteVentasController.ServicioVendidoData();
+                                        servicioData.setNombre(servicio.getNombre());
+                                        servicioData.setCantidad(servicio.getCantidad());
+                                        servicioData.setTotal(servicio.getTotal());
+                                        serviciosSimplificados.add(servicioData);
+                                    }
+                                    
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.OBTENER_TOP_SERVICIOS_VENDIDOS_RESPONSE);
+                                        salida.writeObject(serviciosSimplificados);
+                                        salida.flush();
+                                    }
+                                } else {
+                                    System.err.println("Error: Faltan parámetros para top servicios vendidos");
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_OBTENER_TOP_SERVICIOS_VENDIDOS);
+                                        salida.flush();
+                                    }
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener top servicios vendidos: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_TOP_SERVICIOS_VENDIDOS);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_DASHBOARD_VENTAS:
+                            System.out.println("Procesando solicitud de obtener dashboard de ventas...");
+                            try {
+                                if (parametros.length >= 2) {
+                                    LocalDate fechaInicioDashboard = LocalDate.parse(parametros[0]);
+                                    LocalDate fechaFinDashboard = LocalDate.parse(parametros[1]);
+                                    
+                                    com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes = 
+                                        new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
+                                    com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.DashboardVentas dashboard = 
+                                        servicioInformes.obtenerDashboardVentas(fechaInicioDashboard, fechaFinDashboard);
+                                        
+                                    // Crear objeto de datos simplificado para transmisión
+                                    com.example.pruebamongodbcss.Modulos.Informes.ReporteVentasController.AnalisisVentasData data = 
+                                        new com.example.pruebamongodbcss.Modulos.Informes.ReporteVentasController.AnalisisVentasData();
+                                    data.setTotalVentas(dashboard.getTotalVentas());
+                                    data.setNumeroFacturas(dashboard.getNumeroFacturas());
+                                    data.setPromedioVenta(dashboard.getPromedioVenta());
+                                    data.setFechaInicio(dashboard.getFechaInicio());
+                                    data.setFechaFin(dashboard.getFechaFin());
+                                    
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.OBTENER_DASHBOARD_VENTAS_RESPONSE);
+                                        salida.writeObject(data);
+                                        salida.flush();
+                                    }
+                                } else {
+                                    System.err.println("Error: Faltan parámetros para dashboard de ventas");
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_OBTENER_DASHBOARD_VENTAS);
+                                        salida.flush();
+                                    }
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener dashboard de ventas: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_DASHBOARD_VENTAS);
                                     salida.flush();
                                 }
                             }
