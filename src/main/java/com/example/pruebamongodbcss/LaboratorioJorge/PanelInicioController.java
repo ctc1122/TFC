@@ -267,8 +267,7 @@ public class PanelInicioController implements Initializable {
             BorderPane centerPane = (BorderPane) root.getCenter();
             centerPane.setCenter(contenido);
             
-            // Seleccionar la pestaña de citas (índice 3 en el TabPane)
-            controller.seleccionarTabCitas();
+            
             
             // Actualizar el título
             lblClinica.setText("Gestión de Citas");

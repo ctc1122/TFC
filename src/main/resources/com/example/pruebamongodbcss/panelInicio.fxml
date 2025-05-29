@@ -39,8 +39,8 @@
                         <!-- <ThemeToggleSwitch fx:id="themeToggle" /> -->
                      </HBox>
                      <JFXButton fx:id="btnMenuPrincipal" styleClass="itemMenu" prefWidth="200" text="Inicio" alignment="BASELINE_LEFT" />
-                     <JFXButton fx:id="btnAnimales" styleClass="itemMenu" prefWidth="200" text="Módulo Clínica" alignment="BASELINE_LEFT" />
-                     <JFXButton fx:id="but_clientes" styleClass="itemMenu" prefWidth="200" text="Clientes" alignment="BASELINE_LEFT" />
+                     <JFXButton fx:id="btnAnimales" styleClass="itemMenu" prefWidth="200" text="Pacientes y propietarios" alignment="BASELINE_LEFT" />
+                     <JFXButton fx:id="but_clientes" styleClass="itemMenu" prefWidth="200" text="Citas" alignment="BASELINE_LEFT" />
                      <JFXButton fx:id="btnFichaje" styleClass="itemMenu" prefWidth="200" text="Fichaje" alignment="BASELINE_LEFT" />
                      <JFXButton fx:id="btnEmpresa" styleClass="itemMenu" prefWidth="200" text="Empresa" alignment="BASELINE_LEFT" />
                      <JFXButton fx:id="btnChat" text="Chat" styleClass="itemMenu" alignment="BASELINE_LEFT" prefWidth="200"/>

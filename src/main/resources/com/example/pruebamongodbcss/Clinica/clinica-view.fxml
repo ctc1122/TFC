@@ -234,17 +234,6 @@
                      </VBox>
                   </content>
                </Tab>
-               <Tab fx:id="tabCitas" closable="false" text="Citas">
-                  <content>
-                     <StackPane VBox.vgrow="ALWAYS">
-                        <children>
-                           <BorderPane fx:id="citasContainer" VBox.vgrow="ALWAYS">
-                              
-                           </BorderPane>
-                        </children>
-                     </StackPane>
-                  </content>
-               </Tab>
             </tabs>
          </TabPane>
       </VBox>

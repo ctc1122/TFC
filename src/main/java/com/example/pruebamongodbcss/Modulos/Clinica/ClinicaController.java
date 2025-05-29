@@ -19,7 +19,6 @@ import java.util.ArrayList;
 
 import org.bson.types.ObjectId;
 
-import com.example.pruebamongodbcss.Modulos.Clinica.Citas.CitasController;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 
@@ -124,10 +123,6 @@ public class ClinicaController implements Initializable {
     @FXML private Button btnExportarPDF;
     @FXML private Button btnExportarCSV;
     
-    // Tab de Citas
-    @FXML private Tab tabCitas;
-    @FXML private BorderPane citasContainer;
-    
     // Servicio clínico
     //private ServicioClinica servicioClinica;
     
@@ -140,7 +135,7 @@ public class ClinicaController implements Initializable {
     private final SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy");
     
     // Controlador de citas
-    private CitasController citasController;
+    //private CitasController citasController;
 
     //Lanza peticiones al servidor
     private GestorSocket gestorPeticiones;
@@ -228,7 +223,7 @@ public class ClinicaController implements Initializable {
         // Configurar eventos de búsqueda
         configurarEventosBusqueda();
         
-        // Cargar la vista de citas de forma proactiva
+        /*// Cargar la vista de citas de forma proactiva
         // Esto asegura que esté listo antes de que el usuario haga clic en la pestaña
         cargarVistaCitas();
         
@@ -238,7 +233,7 @@ public class ClinicaController implements Initializable {
                 // Asegurarse de que la vista de citas esté cargada cuando se selecciona la pestaña
                 cargarVistaCitas();
             }
-        });
+        });*/
     }
     
     /**
@@ -265,13 +260,13 @@ public class ClinicaController implements Initializable {
     /**
      * Carga la vista de citas
      */
-    private void cargarVistaCitas() {
+    /*private void cargarVistaCitas() {
         try {
             // Solo cargar si no está ya cargada
             if (citasContainer.getCenter() == null) {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Citas/citas-view.fxml"));
                 Parent root = loader.load();
-                citasController = loader.getController();
+                //citasController = loader.getController();
                 
                 citasContainer.setCenter(root);
             }
@@ -280,7 +275,7 @@ public class ClinicaController implements Initializable {
             mostrarAlerta("Error", "Error al cargar vista de citas", 
                     "Ha ocurrido un error al intentar cargar la vista de citas: " + e.getMessage());
         }
-    }
+    }*/
     
     // ********** CONFIGURACIÓN DE TABLAS **********
     
@@ -2739,10 +2734,10 @@ public class ClinicaController implements Initializable {
     /**
      * Selecciona la pestaña de citas programáticamente
      */
-    public void seleccionarTabCitas() {
+    /*public void seleccionarTabCitas() {
         // Seleccionar la pestaña de citas (índice 3 - es la cuarta pestaña)
         tabPane.getSelectionModel().select(tabCitas);
-    }
+    }*/
     
     private void mostrarAlerta(String titulo, String encabezado, String contenido) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -2976,16 +2971,12 @@ public class ClinicaController implements Initializable {
     private void verCitasPaciente(ModeloPaciente paciente) {
         if (paciente != null) {
             // Navegar a la pestaña de citas
-            tabPane.getSelectionModel().select(tabCitas);
+            //tabPane.getSelectionModel().select(tabCitas);
             
             // Filtrar citas por paciente (implementar esta función en CitasController)
-            if (citasController != null) {
-                citasController.filtrarPorPaciente(paciente.getId());
-            } else {
-                // Mostrar mensaje si el controlador no está disponible
-                mostrarMensaje("Citas del paciente", "Filtrar citas", 
-                        "Mostrando citas para el paciente: " + paciente.getNombre());
-            }
+            // Mostrar mensaje si el controlador no está disponible
+            mostrarMensaje("Citas del paciente", "Filtrar citas", 
+                    "Mostrando citas para el paciente: " + paciente.getNombre());
         }
     }
 
