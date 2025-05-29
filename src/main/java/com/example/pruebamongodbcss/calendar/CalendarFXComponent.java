@@ -2360,11 +2360,16 @@ public class CalendarFXComponent extends BorderPane {
             com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente paciente = servicioClinica.obtenerPacientePorId(cita.getPacienteId());
             com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario propietario = servicioClinica.obtenerPropietarioPorId(paciente.getPropietarioId());
 
-            // Cargar el formulario de facturación
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Facturacion/factura-form.fxml"));
+            // Cargar el módulo de facturación completo
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Facturacion/facturacion-view.fxml"));
             Parent root = loader.load();
-            com.example.pruebamongodbcss.Modulos.Facturacion.FacturaFormController controller = loader.getController();
-            controller.cargarDatosDesdeCita(cita, paciente, propietario);
+            com.example.pruebamongodbcss.Modulos.Facturacion.FacturacionController facturacionController = loader.getController();
+            
+            // Configurar el usuario actual en el módulo de facturación
+            facturacionController.setUsuarioActual(usuarioActual);
+            
+            // Crear nueva factura desde la cita
+            facturacionController.crearFacturaDesdeCita(cita, paciente, propietario);
 
             Stage stage = new Stage();
             stage.setTitle("Facturación - Cita: " + cita.getNombrePaciente());
@@ -2426,71 +2431,100 @@ public class CalendarFXComponent extends BorderPane {
      * Abre la factura existente asociada a una cita para ver/editar
      */
     private void abrirFacturaExistente(CalendarEvent event) {
-        try {
-            // Obtener el ID de la factura asociada a la cita
-            CalendarService calendarService = new CalendarService();
-            org.bson.types.ObjectId facturaId = calendarService.obtenerFacturaAsociadaACita(event.getId());
-            
-            if (facturaId == null) {
-                showErrorMessage("Error", "No se encontró una factura asociada a esta cita.");
-                return;
-            }
-            
-            System.out.println("🔍 Cargando factura existente: " + facturaId.toString());
-            
-            // Obtener la factura desde el servidor
-            String peticion = com.example.pruebamongodbcss.Protocolo.Protocolo.OBTENER_FACTURA_POR_ID + "|" + facturaId.toString();
-            gestorSocket.enviarPeticion(peticion);
-            
-            int codigoRespuesta = gestorSocket.getEntrada().readInt();
-            if (codigoRespuesta == com.example.pruebamongodbcss.Protocolo.Protocolo.OBTENER_FACTURA_POR_ID_RESPONSE) {
-                com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura factura = 
-                    (com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura) gestorSocket.getEntrada().readObject();
+        new Thread(() -> {
+            try {
+                System.out.println("🔍 Buscando factura asociada a cita: " + event.getId());
                 
-                if (factura != null) {
-                    // Obtener datos de la cita, paciente y propietario
-                    com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = 
-                        new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
-                    org.bson.types.ObjectId citaId = new org.bson.types.ObjectId(event.getId());
-                    com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = servicioClinica.obtenerCitaPorId(citaId);
-                    com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente paciente = servicioClinica.obtenerPacientePorId(cita.getPacienteId());
-                    com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario propietario = servicioClinica.obtenerPropietarioPorId(paciente.getPropietarioId());
+                // Buscar factura asociada a la cita
+                String peticion = com.example.pruebamongodbcss.Protocolo.Protocolo.OBTENER_FACTURA_ASOCIADA_A_CITA + "|" + event.getId();
+                gestorSocket.enviarPeticion(peticion);
+                
+                int codigoRespuesta = gestorSocket.getEntrada().readInt();
+                if (codigoRespuesta == com.example.pruebamongodbcss.Protocolo.Protocolo.OBTENER_FACTURA_ASOCIADA_A_CITA_RESPONSE) {
+                    org.bson.types.ObjectId facturaId = (org.bson.types.ObjectId) gestorSocket.getEntrada().readObject();
                     
-                    // Cargar el formulario de facturación
-                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Facturacion/factura-form.fxml"));
-                    Parent root = loader.load();
-                    com.example.pruebamongodbcss.Modulos.Facturacion.FacturaFormController controller = loader.getController();
+                    if (facturaId == null) {
+                        Platform.runLater(() -> {
+                            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                            alert.setTitle("Sin facturas");
+                            alert.setHeaderText("No hay facturas asociadas");
+                            alert.setContentText("Esta cita no tiene facturas asociadas.");
+                            alert.showAndWait();
+                        });
+                        return;
+                    }
                     
-                    // Configurar el controlador
-                    controller.setUsuarioActual(usuarioActual);
+                    // Obtener los detalles de la factura
+                    String peticionFactura = com.example.pruebamongodbcss.Protocolo.Protocolo.OBTENER_FACTURA_POR_ID + "|" + facturaId.toString();
+                    gestorSocket.enviarPeticion(peticionFactura);
                     
-                    // Cargar la factura existente (modo edición si es borrador, solo lectura si está finalizada)
-                    controller.cargarFacturaExistente(factura, cita, paciente, propietario);
-                    
-                    // Configurar la ventana
-                    Stage stage = new Stage();
-                    boolean esBorrador = factura.isEsBorrador();
-                    String titulo = esBorrador ? 
-                        "Editar Borrador - Cita: " + cita.getNombrePaciente() : 
-                        "Ver Factura - Cita: " + cita.getNombrePaciente();
-                    stage.setTitle(titulo);
-                    stage.initModality(Modality.APPLICATION_MODAL);
-                    stage.setScene(new Scene(root));
-                    stage.setResizable(true);
-                    stage.showAndWait();
-                    
-                    // Refrescar el calendario después de cerrar
-                    refreshCalendarFromDatabase();
+                    int codigoRespuestaFactura = gestorSocket.getEntrada().readInt();
+                    if (codigoRespuestaFactura == com.example.pruebamongodbcss.Protocolo.Protocolo.OBTENER_FACTURA_POR_ID_RESPONSE) {
+                        com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura factura = 
+                            (com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura) gestorSocket.getEntrada().readObject();
+                        
+                        if (factura != null) {
+                            Platform.runLater(() -> {
+                                try {
+                                    // Obtener datos de la cita, paciente y propietario
+                                    com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = 
+                                        new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
+                                    org.bson.types.ObjectId citaId = new org.bson.types.ObjectId(event.getId());
+                                    com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = servicioClinica.obtenerCitaPorId(citaId);
+                                    com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente paciente = servicioClinica.obtenerPacientePorId(cita.getPacienteId());
+                                    com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario propietario = servicioClinica.obtenerPropietarioPorId(paciente.getPropietarioId());
+                                    
+                                    // Cargar el formulario de facturación
+                                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Facturacion/factura-form.fxml"));
+                                    Parent root = loader.load();
+                                    com.example.pruebamongodbcss.Modulos.Facturacion.FacturaFormController controller = loader.getController();
+                                    
+                                    // Configurar el controlador
+                                    controller.setUsuarioActual(usuarioActual);
+                                    
+                                    // Crear y configurar un FacturacionController dummy para las actualizaciones
+                                    try {
+                                        FXMLLoader facturacionLoader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Facturacion/facturacion-view.fxml"));
+                                        Parent facturacionRoot = facturacionLoader.load();
+                                        com.example.pruebamongodbcss.Modulos.Facturacion.FacturacionController facturacionController = facturacionLoader.getController();
+                                        facturacionController.setUsuarioActual(usuarioActual);
+                                        controller.setFacturacionController(facturacionController);
+                                    } catch (Exception e) {
+                                        System.err.println("No se pudo cargar FacturacionController: " + e.getMessage());
+                                    }
+                                    
+                                    // Cargar la factura existente (modo edición si es borrador, solo lectura si está finalizada)
+                                    controller.cargarFacturaExistente(factura, cita, paciente, propietario);
+                                    
+                                    Stage stage = new Stage();
+                                    String titulo = factura.isEsBorrador() ? "Editar Borrador - " : "Ver Factura - ";
+                                    stage.setTitle(titulo + factura.getNumeroFactura());
+                                    stage.initModality(Modality.APPLICATION_MODAL);
+                                    stage.setScene(new Scene(root));
+                                    stage.setResizable(true);
+                                    stage.showAndWait();
+                                    
+                                    // Refrescar el calendario después de cerrar
+                                    refreshCalendarFromDatabase();
+                                    
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                    showErrorMessage("Error", "No se pudo abrir la factura: " + e.getMessage());
+                                }
+                            });
+                        } else {
+                            Platform.runLater(() -> showErrorMessage("Error", "No se pudo cargar la factura"));
+                        }
+                    } else {
+                        Platform.runLater(() -> showErrorMessage("Error", "Error al obtener los detalles de la factura"));
+                    }
                 } else {
-                    showErrorMessage("Error", "No se pudo cargar la factura.");
+                    Platform.runLater(() -> showErrorMessage("Error", "Error al buscar facturas asociadas"));
                 }
-            } else {
-                showErrorMessage("Error", "Error al obtener la factura del servidor.");
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> showErrorMessage("Error", "Error de comunicación: " + e.getMessage()));
             }
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            showErrorMessage("Error", "No se pudo abrir la factura: " + e.getMessage());
-        }
+        }).start();
     }
 }

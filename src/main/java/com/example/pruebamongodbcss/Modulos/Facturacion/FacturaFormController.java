@@ -125,11 +125,20 @@ public class FacturaFormController implements Initializable {
     private ObjectId pacienteId;
     private ObjectId citaId;
     
+    // Servicio para operaciones de calendario
+    private com.example.pruebamongodbcss.calendar.CalendarService calendarService;
+    
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         try {
-            gestorSocket = GestorSocket.getInstance();
-            formatoMoneda = new DecimalFormat("#,##0.00 €");
+            // Inicializar el gestor de socket
+            this.gestorSocket = GestorSocket.getInstance();
+            
+            // Inicializar el servicio de calendario
+            this.calendarService = new com.example.pruebamongodbcss.calendar.CalendarService();
+            
+            // Configurar formateo de moneda
+            this.formatoMoneda = new DecimalFormat("#,##0.00 €");
             
             // Inicializar listas
             listaServicios = FXCollections.observableArrayList();
@@ -147,7 +156,7 @@ public class FacturaFormController implements Initializable {
             // Inicializar factura nueva si no existe
             if (factura == null) {
                 factura = new ModeloFactura();
-                factura.setId(new org.bson.types.ObjectId()); // Generar ID automáticamente
+                // NO asignar ID - debe ser asignado por el servidor al crear
                 factura.setFechaEmision(new Date());
                 factura.setFechaCreacion(new Date());
                 factura.setEsBorrador(true);
@@ -155,7 +164,7 @@ public class FacturaFormController implements Initializable {
                 // El número de factura se generará cuando se guarde en el servidor
                 LocalDate vencimiento = LocalDate.now().plusDays(30);
                 factura.setFechaVencimiento(Date.from(vencimiento.atStartOfDay(ZoneId.systemDefault()).toInstant()));
-                System.out.println("🆔 Nueva factura creada con ID: " + factura.getId());
+                System.out.println("🆕 Nueva factura creada sin ID (se asignará al guardar)");
                 System.out.println("📄 El número de factura se asignará al guardar");
             }
             
@@ -179,7 +188,7 @@ public class FacturaFormController implements Initializable {
             public String toString(Usuario usuario) {
                 if (usuario == null) return "";
                 return usuario.getNombre() + " " + usuario.getApellido() + 
-                       (usuario.getEspecialidad() != null ? " - " + usuario.getEspecialidad() : "");
+                        (usuario.getEspecialidad() != null ? " - " + usuario.getEspecialidad() : "");
             }
             
             @Override
@@ -202,85 +211,84 @@ public class FacturaFormController implements Initializable {
      */
     private void cargarVeterinarios() {
         new Thread(() -> {
+            GestorSocket gestorSocketVet = null;
             try {
-                // Verificar conexión antes de enviar petición
-                if (!gestorSocket.isConectado()) {
+                // Crear una conexión independiente para evitar conflictos
+                gestorSocketVet = GestorSocket.crearConexionIndependiente();
+                
+                if (!gestorSocketVet.isConectado()) {
                     Platform.runLater(() -> mostrarError("Error de conexión", "No hay conexión con el servidor"));
                     return;
                 }
                 
-                String peticion = String.valueOf(Protocolo.GETALLVETERINARIOS);
-                System.out.println("Enviando petición de veterinarios: " + peticion);
+                System.out.println("🔄 Cargando veterinarios...");
                 
-                // Usar sincronización para evitar conflictos
-                synchronized (gestorSocket) {
-                    gestorSocket.enviarPeticion(peticion);
+                // Enviar petición usando el protocolo correcto
+                String peticion = Protocolo.GETALLVETERINARIOS + "|" + "VETERINARIO";
+                gestorSocketVet.enviarPeticion(peticion);
+                
+                // El servidor espera el objeto Rol después de la petición
+                gestorSocketVet.getSalida().writeObject(Usuario.Rol.VETERINARIO);
+                gestorSocketVet.getSalida().flush();
+                
+                // Leer respuesta
+                ObjectInputStream entrada = gestorSocketVet.getEntrada();
+                int codigoRespuesta = entrada.readInt();
+                System.out.println("📋 Código de respuesta veterinarios: " + codigoRespuesta);
+                
+                if (codigoRespuesta == Protocolo.GETALLVETERINARIOS_RESPONSE) {
+                    @SuppressWarnings("unchecked")
+                    List<Usuario> veterinarios = (List<Usuario>) entrada.readObject();
                     
-                    // El servidor espera recibir un objeto Rol después del código
-                    gestorSocket.getSalida().writeObject(Usuario.Rol.VETERINARIO);
-                    gestorSocket.getSalida().flush();
-                    
-                    ObjectInputStream entrada = gestorSocket.getEntrada();
-                    if (entrada == null) {
-                        System.err.println("No se pudo obtener el stream de entrada");
-                        Platform.runLater(() -> mostrarError("Error", "No se pudo obtener el stream de entrada"));
-                        return;
-                    }
-                    
-                    System.out.println("Esperando respuesta del servidor...");
-                    
-                    try {
-                        int codigoRespuesta = entrada.readInt();
-                        System.out.println("Código de respuesta recibido: " + codigoRespuesta);
-                        
-                        if (codigoRespuesta == Protocolo.GETALLVETERINARIOS_RESPONSE) {
-                            @SuppressWarnings("unchecked")
-                            List<Usuario> veterinarios = (List<Usuario>) entrada.readObject();
+                    Platform.runLater(() -> {
+                        listaVeterinarios.clear();
+                        if (veterinarios != null && !veterinarios.isEmpty()) {
+                            listaVeterinarios.addAll(veterinarios);
+                            System.out.println("✅ Veterinarios cargados exitosamente: " + veterinarios.size());
                             
-                            Platform.runLater(() -> {
-                                listaVeterinarios.clear();
-                                if (veterinarios != null && !veterinarios.isEmpty()) {
-                                    listaVeterinarios.addAll(veterinarios);
-                                    System.out.println("Veterinarios cargados exitosamente: " + veterinarios.size());
-                                    
-                                    // Auto-seleccionar el usuario actual si es veterinario
-                                    if (usuarioActual != null && usuarioActual.getRol() == Usuario.Rol.VETERINARIO) {
-                                        for (Usuario vet : listaVeterinarios) {
-                                            if (vet.getId().equals(usuarioActual.getId())) {
-                                                cmbVeterinario.setValue(vet);
-                                                System.out.println("Auto-seleccionado veterinario actual: " + vet.getNombre());
-                                                break;
-                                            }
-                                        }
+                            // Auto-seleccionar el usuario actual si es veterinario
+                            if (usuarioActual != null && usuarioActual.getRol() == Usuario.Rol.VETERINARIO) {
+                                for (Usuario vet : listaVeterinarios) {
+                                    if (vet.getId().equals(usuarioActual.getId())) {
+                                        cmbVeterinario.setValue(vet);
+                                        System.out.println("🎯 Auto-seleccionado veterinario actual: " + vet.getNombre());
+                                        break;
                                     }
-                                } else {
-                                    System.out.println("No se encontraron veterinarios en la respuesta");
                                 }
-                            });
-                        } else if (codigoRespuesta == Protocolo.ERRORGETALLVETERINARIOS) {
-                            System.err.println("Error del servidor al obtener veterinarios");
-                            Platform.runLater(() -> mostrarError("Error", "Error del servidor al obtener los veterinarios"));
+                            }
                         } else {
-                            System.err.println("Respuesta inesperada del servidor: " + codigoRespuesta);
-                            Platform.runLater(() -> mostrarError("Error", "Respuesta inesperada del servidor: " + codigoRespuesta));
+                            System.out.println("⚠️ No se encontraron veterinarios en la respuesta");
                         }
-                    } catch (java.net.SocketTimeoutException e) {
-                        System.err.println("Timeout al esperar respuesta del servidor");
-                        Platform.runLater(() -> mostrarError("Error de timeout", "El servidor tardó demasiado en responder. Intente más tarde."));
-                    } catch (java.io.EOFException e) {
-                        System.err.println("Error de EOF - conexión cerrada inesperadamente");
-                        Platform.runLater(() -> mostrarError("Error de conexión", "La conexión se cerró inesperadamente. Verifique el servidor."));
-                    }
+                    });
+                } else if (codigoRespuesta == Protocolo.ERRORGETALLVETERINARIOS) {
+                    System.err.println("❌ Error del servidor al obtener veterinarios");
+                    Platform.runLater(() -> mostrarAdvertencia("Advertencia", 
+                        "No se pudieron cargar los veterinarios. Puede continuar sin seleccionar uno."));
+                } else {
+                    System.err.println("❌ Respuesta inesperada del servidor: " + codigoRespuesta);
+                    Platform.runLater(() -> mostrarAdvertencia("Advertencia", 
+                        "Respuesta inesperada del servidor. Puede continuar sin veterinarios."));
                 }
                 
             } catch (Exception e) {
-                System.err.println("Error al cargar veterinarios: " + e.getMessage());
+                System.err.println("❌ Error al cargar veterinarios: " + e.getMessage());
                 e.printStackTrace();
                 Platform.runLater(() -> {
-                    // Si hay error, al menos permitir continuar sin veterinarios
-                    System.out.println("Continuando sin cargar veterinarios debido a error de conexión");
-                    mostrarError("Error de comunicación", "No se pudieron cargar los veterinarios. Puede continuar sin seleccionar veterinario.");
+                    System.out.println("⚠️ Continuando sin cargar veterinarios debido a error de conexión");
+                    mostrarAdvertencia("Conexión", 
+                        "No se pudieron cargar los veterinarios debido a un error de conexión. " +
+                        "Puede continuar y seleccionar veterinario manualmente más tarde.");
                 });
+            } finally {
+                // Cerrar la conexión independiente
+                if (gestorSocketVet != null) {
+                    try {
+                        gestorSocketVet.cerrarConexion();
+                        System.out.println("🔌 Conexión independiente para veterinarios cerrada");
+                    } catch (Exception e) {
+                        System.err.println("⚠️ Error al cerrar conexión de veterinarios: " + e.getMessage());
+                    }
+                }
             }
         }).start();
     }
@@ -1040,12 +1048,6 @@ public class FacturaFormController implements Initializable {
             // Enviar al servidor
             enviarFacturaAlServidor();
             
-            // Mostrar mensaje de confirmación
-            mostrarInfo("Borrador guardado", "El borrador de la factura se ha guardado correctamente.");
-            
-            // Cerrar el formulario automáticamente
-            cerrarVentana();
-            
         } catch (Exception e) {
             System.err.println("❌ Error al guardar borrador: " + e.getMessage());
             e.printStackTrace();
@@ -1085,17 +1087,24 @@ public class FacturaFormController implements Initializable {
      */
     private void enviarFacturaAlServidor() {
         new Thread(() -> {
+            GestorSocket gestorSocketFactura = null;
             try {
                 System.out.println("📤 Enviando factura al servidor...");
                 System.out.println("📋 Estado: " + factura.getEstado());
                 System.out.println("📋 Es borrador: " + factura.isEsBorrador());
                 System.out.println("📋 ID de factura: " + (factura.getId() != null ? factura.getId().toString() : "null"));
                 
+                // Crear conexión independiente para evitar conflictos
+                gestorSocketFactura = GestorSocket.crearConexionIndependiente();
+                
                 // Verificar conexión
-                if (!gestorSocket.isConectado()) {
+                if (!gestorSocketFactura.isConectado()) {
                     Platform.runLater(() -> mostrarError("Error de conexión", "No hay conexión con el servidor"));
                     return;
                 }
+                
+                // Actualizar datos desde formulario
+                actualizarFacturaDesdeFormulario();
                 
                 // Determinar si es una factura nueva o una actualización
                 final boolean esFacturaNueva = (factura.getId() == null);
@@ -1103,135 +1112,152 @@ public class FacturaFormController implements Initializable {
                 
                 if (esFacturaNueva) {
                     peticion = String.valueOf(Protocolo.CREAR_FACTURA);
-                    System.out.println("🆕 Creando factura nueva");
+                    System.out.println("🆕 Creando nueva factura (sin ID)...");
                 } else {
                     peticion = String.valueOf(Protocolo.ACTUALIZAR_FACTURA);
-                    System.out.println("🔄 Actualizando factura existente con ID: " + factura.getId());
+                    System.out.println("📝 Actualizando factura existente: " + factura.getId());
                 }
                 
-                synchronized (gestorSocket) {
-                    gestorSocket.enviarPeticion(peticion);
-                    gestorSocket.getSalida().writeObject(factura);
-                    gestorSocket.getSalida().flush();
-                    
-                    // Leer respuesta
-                    ObjectInputStream entrada = gestorSocket.getEntrada();
-                    int codigoRespuesta = entrada.readInt();
-                    
-                    final boolean operacionExitosa;
-                    final ModeloFactura facturaGuardada;
-                    
-                    if (esFacturaNueva && codigoRespuesta == Protocolo.CREAR_FACTURA_RESPONSE) {
-                        facturaGuardada = (ModeloFactura) entrada.readObject();
-                        operacionExitosa = true;
-                        System.out.println("✅ Factura nueva creada exitosamente");
-                    } else if (!esFacturaNueva && codigoRespuesta == Protocolo.ACTUALIZAR_FACTURA_RESPONSE) {
-                        boolean actualizada = entrada.readBoolean();
-                        operacionExitosa = actualizada;
-                        facturaGuardada = factura; // La factura ya tiene los datos actualizados
-                        System.out.println("✅ Factura actualizada exitosamente: " + actualizada);
-                    } else if (codigoRespuesta == Protocolo.ERROR_CREAR_FACTURA || codigoRespuesta == Protocolo.ERROR_ACTUALIZAR_FACTURA) {
-                        Platform.runLater(() -> mostrarError("Error", "Error del servidor al guardar la factura"));
-                        return;
-                    } else {
-                        Platform.runLater(() -> mostrarError("Error", "Respuesta inesperada del servidor: " + codigoRespuesta));
-                        return;
-                    }
-                    
-                    if (operacionExitosa) {
-                        Platform.runLater(() -> {
-                            // Actualizar la factura con los datos del servidor
-                            if (facturaGuardada != null && esFacturaNueva) {
-                                this.factura = facturaGuardada;
-                                actualizarNumeroFacturaEnInterfaz();
+                System.out.println("🔗 Enviando petición: " + peticion);
+                
+                // Enviar petición
+                gestorSocketFactura.enviarPeticion(peticion);
+                gestorSocketFactura.getSalida().writeObject(factura);
+                gestorSocketFactura.getSalida().flush();
+                
+                System.out.println("📤 Petición enviada, esperando respuesta...");
+                
+                // Leer respuesta
+                ObjectInputStream entrada = gestorSocketFactura.getEntrada();
+                int codigoRespuesta = entrada.readInt();
+                
+                System.out.println("📥 Código de respuesta recibido: " + codigoRespuesta);
+                
+                final boolean operacionExitosa;
+                final ModeloFactura facturaGuardada;
+                
+                if (esFacturaNueva && codigoRespuesta == Protocolo.CREAR_FACTURA_RESPONSE) {
+                    facturaGuardada = (ModeloFactura) entrada.readObject();
+                    operacionExitosa = true;
+                    System.out.println("✅ Factura nueva creada exitosamente con ID: " + facturaGuardada.getId());
+                } else if (!esFacturaNueva && codigoRespuesta == Protocolo.ACTUALIZAR_FACTURA_RESPONSE) {
+                    boolean actualizada = entrada.readBoolean();
+                    facturaGuardada = factura; // Para facturas actualizadas, conservamos la instancia actual
+                    operacionExitosa = actualizada;
+                    System.out.println("✅ Factura actualizada exitosamente: " + actualizada);
+                } else {
+                    operacionExitosa = false;
+                    facturaGuardada = null;
+                    System.err.println("❌ Error en respuesta del servidor.");
+                    System.err.println("   - Esperaba factura nueva: " + esFacturaNueva);
+                    System.err.println("   - Código recibido: " + codigoRespuesta);
+                    System.err.println("   - Código esperado CREAR: " + Protocolo.CREAR_FACTURA_RESPONSE);
+                    System.err.println("   - Código esperado ACTUALIZAR: " + Protocolo.ACTUALIZAR_FACTURA_RESPONSE);
+                }
+                
+                // Solo continuar si la operación fue exitosa
+                if (!operacionExitosa || facturaGuardada == null) {
+                    Platform.runLater(() -> mostrarError("Error", "No se pudo guardar la factura en el servidor"));
+                    return;
+                }
+                
+                // Actualizar la referencia local
+                factura = facturaGuardada;
+                
+                // Solo para facturas nuevas: asociar a cita y actualizar contador
+                if (esFacturaNueva && citaId != null && facturaGuardada.getId() != null) {
+                    try {
+                        // Asociar factura a cita usando la misma conexión
+                        String mensajeAsociacion = Protocolo.ASOCIAR_FACTURA_A_CITA + "|" + citaId.toString() + ":" + facturaGuardada.getId().toString();
+                        gestorSocketFactura.enviarPeticion(mensajeAsociacion);
+                        
+                        int respuestaAsociacion = gestorSocketFactura.getEntrada().readInt();
+                        if (respuestaAsociacion == Protocolo.ASOCIAR_FACTURA_A_CITA_RESPONSE) {
+                            boolean asociada = gestorSocketFactura.getEntrada().readBoolean();
+                            if (asociada) {
+                                System.out.println("✅ Factura asociada correctamente a la cita");
                                 
-                                // NUEVO: Actualizar el campo factura_id de la cita asociada
-                                if (citaId != null && facturaGuardada.getId() != null) {
-                                    actualizarFacturaIdEnCita(citaId, facturaGuardada.getId().toString());
-                                }
-                            }
-                            
-                            // Solo asociar la factura a la cita si es nueva (los borradores ya están asociados)
-                            if (citaId != null && facturaGuardada != null && facturaGuardada.getId() != null && esFacturaNueva) {
-                                try {
-                                    // Asociar factura a cita usando el nuevo sistema
-                                    String mensajeAsociacion = Protocolo.ASOCIAR_FACTURA_A_CITA + "|" + citaId.toString() + ":" + facturaGuardada.getId().toString();
-                                    gestorSocket.enviarPeticion(mensajeAsociacion);
-                                    
-                                    int respuestaAsociacion = gestorSocket.getEntrada().readInt();
-                                    if (respuestaAsociacion == Protocolo.ASOCIAR_FACTURA_A_CITA_RESPONSE) {
-                                        boolean asociado = gestorSocket.getEntrada().readBoolean();
-                                        if (asociado) {
-                                            System.out.println("✅ Factura asociada correctamente a la cita");
-                                            
-                                            // Actualizar contador de facturas en el calendario (solo para facturas nuevas)
-                                            try {
-                                                String mensajeContador = Protocolo.ACTUALIZAR_CONTADOR_FACTURAS + "|" + citaId.toString() + ":" + "true";
-                                                gestorSocket.enviarPeticion(mensajeContador);
-                                                
-                                                int respuestaContador = gestorSocket.getEntrada().readInt();
-                                                if (respuestaContador == Protocolo.ACTUALIZAR_CONTADOR_FACTURAS_RESPONSE) {
-                                                    boolean contadorActualizado = gestorSocket.getEntrada().readBoolean();
-                                                    if (contadorActualizado) {
-                                                        System.out.println("✅ Contador de facturas actualizado en el calendario");
-                                                    } else {
-                                                        System.out.println("⚠️ No se pudo actualizar el contador de facturas");
-                                                    }
-                                                } else {
-                                                    System.out.println("❌ Error al actualizar contador de facturas");
-                                                }
-                                            } catch (Exception e) {
-                                                System.err.println("Error al actualizar contador de facturas: " + e.getMessage());
-                                            }
-                                        } else {
-                                            System.out.println("⚠️ No se pudo asociar la factura a la cita");
-                                        }
-                                    } else {
-                                        System.out.println("❌ Error al asociar factura a cita");
+                                // Actualizar contador de facturas solo para facturas nuevas
+                                String mensajeContador = Protocolo.ACTUALIZAR_CONTADOR_FACTURAS + "|" + citaId.toString() + ":" + "true";
+                                gestorSocketFactura.enviarPeticion(mensajeContador);
+                                
+                                int respuestaContador = gestorSocketFactura.getEntrada().readInt();
+                                if (respuestaContador == Protocolo.ACTUALIZAR_CONTADOR_FACTURAS_RESPONSE) {
+                                    boolean contadorActualizado = gestorSocketFactura.getEntrada().readBoolean();
+                                    if (contadorActualizado) {
+                                        System.out.println("✅ Contador de facturas actualizado");
                                     }
-                                } catch (Exception e) {
-                                    System.err.println("Error al asociar factura a cita: " + e.getMessage());
                                 }
+                            } else {
+                                System.err.println("⚠️ No se pudo asociar la factura a la cita");
                             }
-                            
-                            // Si la factura se finalizó (no es borrador), cambiar el estado de la cita a COMPLETADA
-                            if (!factura.isEsBorrador() && citaId != null) {
-                                try {
-                                    String mensajeEstadoCita = Protocolo.CAMBIAR_ESTADO_CITA + "|" + citaId.toString() + ":" + "COMPLETADA";
-                                    gestorSocket.enviarPeticion(mensajeEstadoCita);
-                                    
-                                    int respuestaEstado = gestorSocket.getEntrada().readInt();
-                                    if (respuestaEstado == Protocolo.CAMBIAR_ESTADO_CITA_RESPONSE) {
-                                        boolean estadoCambiado = gestorSocket.getEntrada().readBoolean();
-                                        if (estadoCambiado) {
-                                            System.out.println("✅ Estado de la cita cambiado a COMPLETADA");
-                                        } else {
-                                            System.out.println("⚠️ No se pudo cambiar el estado de la cita");
-                                        }
-                                    }
-                                } catch (Exception e) {
-                                    System.err.println("Error al cambiar estado de la cita: " + e.getMessage());
-                                }
-                            }
-                            
-                            // Actualizar las tablas en el controlador padre
-                            if (facturacionController != null) {
-                                facturacionController.actualizarListas();
-                                System.out.println("🔄 Tablas actualizadas en FacturacionController");
-                            }
-                            
-                            String mensaje = factura.isEsBorrador() ? "Borrador guardado correctamente" : "Factura finalizada correctamente";
-                            mostrarInfo("Éxito", mensaje);
-                            cerrarVentana();
-                        });
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error al asociar factura a cita: " + e.getMessage());
                     }
                 }
+                
+                // Si la factura se finalizó (no es borrador), cambiar el estado de la cita a COMPLETADA
+                if (!factura.isEsBorrador() && citaId != null) {
+                    try {
+                        String mensajeEstadoCita = Protocolo.CAMBIAR_ESTADO_CITA + "|" + citaId.toString() + ":" + "COMPLETADA";
+                        gestorSocketFactura.enviarPeticion(mensajeEstadoCita);
+                        
+                        int respuestaEstado = gestorSocketFactura.getEntrada().readInt();
+                        if (respuestaEstado == Protocolo.CAMBIAR_ESTADO_CITA_RESPONSE) {
+                            boolean estadoCambiado = gestorSocketFactura.getEntrada().readBoolean();
+                            if (estadoCambiado) {
+                                System.out.println("✅ Estado de la cita cambiado a COMPLETADA");
+                            } else {
+                                System.out.println("⚠️ No se pudo cambiar el estado de la cita");
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error al cambiar estado de la cita: " + e.getMessage());
+                    }
+                }
+                
+                // Actualizar la interfaz en el hilo principal
+                Platform.runLater(() -> {
+                    // Actualizar las tablas en el controlador padre
+                    if (facturacionController != null) {
+                        System.out.println("🔄 Actualizando tablas en FacturacionController...");
+                        facturacionController.actualizarListas();
+                        
+                        // Forzar actualización específica según el tipo de factura
+                        if (factura.isEsBorrador()) {
+                            facturacionController.cargarBorradores();
+                            System.out.println("🔄 Lista de borradores actualizada");
+                        } else {
+                            facturacionController.cargarFacturas();
+                            System.out.println("🔄 Lista de facturas finalizadas actualizada");
+                        }
+                    } else {
+                        System.out.println("⚠️ FacturacionController es null, no se pueden actualizar las listas");
+                    }
+                    
+                    String mensaje = factura.isEsBorrador() ? 
+                        "Borrador guardado correctamente" : 
+                        "Factura finalizada correctamente";
+                    mostrarInfo("Éxito", mensaje);
+                    cerrarVentana();
+                });
                 
             } catch (Exception e) {
                 System.err.println("❌ Error al comunicar con el servidor: " + e.getMessage());
                 e.printStackTrace();
                 Platform.runLater(() -> mostrarError("Error de comunicación", 
                     "Error de comunicación con el servidor: " + e.getMessage()));
+            } finally {
+                // Cerrar la conexión independiente
+                if (gestorSocketFactura != null) {
+                    try {
+                        gestorSocketFactura.cerrarConexion();
+                        System.out.println("🔌 Conexión independiente para factura cerrada");
+                    } catch (Exception e) {
+                        System.err.println("⚠️ Error al cerrar conexión de factura: " + e.getMessage());
+                    }
+                }
             }
         }).start();
     }
@@ -1326,11 +1352,8 @@ public class FacturaFormController implements Initializable {
     public void setFactura(ModeloFactura factura) {
         this.factura = factura;
         if (factura != null) {
-            // Generar ID si no existe
-            if (factura.getId() == null) {
-                factura.setId(new org.bson.types.ObjectId());
-                System.out.println("🆔 ID generado para factura existente: " + factura.getId());
-            }
+            // NO generar ID automáticamente - debe ser asignado por el servidor al crear
+            System.out.println("📋 Factura configurada. ID actual: " + (factura.getId() != null ? factura.getId().toString() : "null (nueva factura)"));
             Platform.runLater(this::cargarDatosEnFormulario);
         }
     }
@@ -1347,7 +1370,7 @@ public class FacturaFormController implements Initializable {
                     for (Usuario vet : listaVeterinarios) {
                         if (vet.getId().equals(usuario.getId())) {
                             cmbVeterinario.setValue(vet);
-                            System.out.println("Veterinario auto-seleccionado inmediatamente: " + vet.getNombre());
+                            System.out.println("🎯 Auto-seleccionado veterinario actual: " + vet.getNombre());
                             break;
                         }
                     }
@@ -1359,6 +1382,7 @@ public class FacturaFormController implements Initializable {
     
     public void setFacturacionController(FacturacionController controller) {
         this.facturacionController = controller;
+        System.out.println("✅ FacturacionController configurado en FacturaFormController");
     }
     
     public void cargarDatosDesdeCita(ModeloCita cita, ModeloPaciente paciente, ModeloPropietario propietario) {
@@ -1394,6 +1418,7 @@ public class FacturaFormController implements Initializable {
         }
         
         // Si llegamos aquí, se puede crear la factura
+        // Solo configurar los datos, NO tocar el ID de la factura
         if (cita != null) {
             this.citaId = cita.getId();
             dpFechaEmision.setValue(LocalDate.now());
@@ -1406,107 +1431,103 @@ public class FacturaFormController implements Initializable {
         
         if (propietario != null) {
             this.propietarioId = propietario.getId();
-            txtCliente.setText(propietario.getNombre());
+            txtCliente.setText(propietario.getNombre() + " " + propietario.getApellidos());
             txtDNI.setText(propietario.getDni());
             txtTelefono.setText(propietario.getTelefono());
             txtDireccion.setText(propietario.getDireccion());
         }
+        
+        System.out.println("📋 Datos de cita cargados. Factura ID: " + (factura.getId() != null ? factura.getId().toString() : "null (nueva)"));
     }
     
     /**
-     * Carga una factura existente en el formulario
-     * Si es borrador será editable, si está finalizada será de solo lectura
+     * Carga una factura existente en el formulario (modo edición para borradores, solo lectura para finalizadas)
      */
     public void cargarFacturaExistente(ModeloFactura facturaExistente, ModeloCita cita, ModeloPaciente paciente, ModeloPropietario propietario) {
-        try {
-            System.out.println("📋 Cargando factura existente: " + facturaExistente.getId());
-            System.out.println("📋 Estado: " + facturaExistente.getEstado());
-            System.out.println("📋 Es borrador: " + facturaExistente.isEsBorrador());
-            
-            // Establecer la factura actual
-            this.factura = facturaExistente;
-            this.citaId = cita.getId();
-            this.pacienteId = paciente.getId();
-            this.propietarioId = propietario.getId();
-            
-            // Determinar si es editable (borrador) o solo lectura (finalizada)
-            boolean esEditable = facturaExistente.isEsBorrador();
-            
-            Platform.runLater(() -> {
-                try {
-                    // Configurar modo de solo lectura si está finalizada
-                    configurarModoSoloLectura(!esEditable);
-                    
-                    // Cargar datos en la interfaz
-                    cargarDatosEnFormulario();
-                    
-                    // Actualizar título
-                    if (lblTitulo != null) {
-                        lblTitulo.setText(esEditable ? "Editar Borrador de Factura" : "Ver Factura (Solo Lectura)");
-                    }
-                    
-                    System.out.println("✅ Factura cargada correctamente en modo: " + (esEditable ? "Editable" : "Solo Lectura"));
-                    
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    mostrarError("Error", "Error al cargar la factura en la interfaz: " + e.getMessage());
-                }
-            });
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            mostrarError("Error", "Error al cargar la factura existente: " + e.getMessage());
+        this.factura = facturaExistente;
+        this.citaId = cita.getId();
+        this.pacienteId = paciente.getId();
+        this.propietarioId = propietario.getId();
+        
+        // Determinar si es editable (solo los borradores se pueden editar)
+        boolean soloLectura = !facturaExistente.isEsBorrador();
+        
+        // Configurar el título de la ventana
+        String titulo = soloLectura ? "Ver Factura" : "Editar Borrador";
+        lblTitulo.setText(titulo);
+        
+        // Cargar datos de la factura en el formulario
+        cargarDatosEnFormulario();
+        
+        // Cargar datos del cliente y paciente
+        if (propietario != null) {
+            txtCliente.setText(propietario.getNombre() + " " + propietario.getApellidos());
+            txtDNI.setText(propietario.getDni());
+            txtTelefono.setText(propietario.getTelefono());
+            txtDireccion.setText(propietario.getDireccion());
         }
+        
+        if (paciente != null) {
+            txtPaciente.setText(paciente.getNombre() + " (" + paciente.getEspecie() + " - " + paciente.getRaza() + ")");
+        }
+        
+        // Configurar el formulario según el modo
+        configurarModoSoloLectura(soloLectura);
+        
+        System.out.println("✅ Factura existente cargada: " + (soloLectura ? "Modo solo lectura" : "Modo edición"));
     }
     
     /**
-     * Configura el formulario en modo de solo lectura o editable
+     * Configura el formulario en modo solo lectura o editable
      */
     private void configurarModoSoloLectura(boolean soloLectura) {
-        // Deshabilitar/habilitar campos de entrada
-        if (txtNumeroFactura != null) txtNumeroFactura.setDisable(soloLectura);
-        if (dpFechaEmision != null) dpFechaEmision.setDisable(soloLectura);
-        if (cmbEstado != null) cmbEstado.setDisable(soloLectura);
+        // Controles de datos básicos
+        txtNumeroFactura.setEditable(!soloLectura);
+        dpFechaEmision.setDisable(soloLectura);
+        cmbEstado.setDisable(soloLectura);
         
-        // Campos del cliente
-        if (txtCliente != null) txtCliente.setDisable(soloLectura);
-        if (txtDNI != null) txtDNI.setDisable(soloLectura);
-        if (txtTelefono != null) txtTelefono.setDisable(soloLectura);
-        if (txtDireccion != null) txtDireccion.setDisable(soloLectura);
-        if (btnSeleccionarCliente != null) btnSeleccionarCliente.setDisable(soloLectura);
+        // Controles de cliente
+        txtCliente.setEditable(!soloLectura);
+        txtDNI.setEditable(!soloLectura);
+        txtTelefono.setEditable(!soloLectura);
+        txtDireccion.setEditable(!soloLectura);
+        btnSeleccionarCliente.setDisable(soloLectura);
         
-        // Campo del paciente
-        if (txtPaciente != null) txtPaciente.setDisable(soloLectura);
-        if (btnSeleccionarPaciente != null) btnSeleccionarPaciente.setDisable(soloLectura);
+        // Controles de paciente
+        txtPaciente.setEditable(!soloLectura);
+        btnSeleccionarPaciente.setDisable(soloLectura);
         
-        // Campo del veterinario
-        if (cmbVeterinario != null) cmbVeterinario.setDisable(soloLectura);
-        if (txtNumeroColegiado != null) txtNumeroColegiado.setDisable(soloLectura);
+        // Controles de veterinario
+        cmbVeterinario.setDisable(soloLectura);
+        txtNumeroColegiado.setEditable(!soloLectura);
         
-        // Tablas y botones de agregar
-        if (tablaServicios != null) tablaServicios.setDisable(soloLectura);
-        if (tablaMedicamentos != null) tablaMedicamentos.setDisable(soloLectura);
-        if (btnAgregarServicio != null) btnAgregarServicio.setDisable(soloLectura);
-        if (btnAgregarMedicamento != null) btnAgregarMedicamento.setDisable(soloLectura);
+        // Tablas y botones de servicios/medicamentos
+        btnAgregarServicio.setDisable(soloLectura);
+        btnAgregarMedicamento.setDisable(soloLectura);
         
-        // Campo de observaciones
-        if (txtObservaciones != null) txtObservaciones.setDisable(soloLectura);
+        // Observaciones
+        txtObservaciones.setEditable(!soloLectura);
         
         // Botones de acción
-        if (btnGuardarBorrador != null) btnGuardarBorrador.setDisable(soloLectura);
-        if (btnGuardar != null) btnGuardar.setDisable(soloLectura);
-        if (btnFinalizar != null) {
-            // Solo mostrar finalizar si es borrador
-            btnFinalizar.setDisable(soloLectura || !factura.isEsBorrador());
-            btnFinalizar.setVisible(!soloLectura && factura.isEsBorrador());
+        if (soloLectura) {
+            // Solo mostrar botón de cancelar/cerrar en modo solo lectura
+            btnGuardarBorrador.setVisible(false);
+            btnGuardar.setVisible(false);
+            btnFinalizar.setVisible(false);
+            btnCancelar.setText("Cerrar");
+        } else {
+            // Mostrar todos los botones en modo edición
+            btnGuardarBorrador.setVisible(true);
+            btnGuardar.setVisible(true);
+            btnFinalizar.setVisible(true);
+            btnCancelar.setText("Cancelar");
         }
         
-        // El botón cancelar siempre disponible (se convierte en "Cerrar" en modo solo lectura)
-        if (btnCancelar != null) {
-            btnCancelar.setText(soloLectura ? "Cerrar" : "Cancelar");
+        // Configurar estilo visual
+        if (soloLectura) {
+            mainPane.setStyle("-fx-background-color: #f8f9fa;");
+            lblTitulo.setStyle("-fx-text-fill: #6c757d;");
         }
-        
-        System.out.println("🔒 Formulario configurado en modo: " + (soloLectura ? "Solo Lectura" : "Editable"));
     }
     
     private void mostrarError(String titulo, String mensaje) {
