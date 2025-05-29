@@ -1408,6 +1408,102 @@ public class FacturaFormController implements Initializable {
         }
     }
     
+    /**
+     * Carga una factura existente en el formulario
+     * Si es borrador será editable, si está finalizada será de solo lectura
+     */
+    public void cargarFacturaExistente(ModeloFactura facturaExistente, ModeloCita cita, ModeloPaciente paciente, ModeloPropietario propietario) {
+        try {
+            System.out.println("📋 Cargando factura existente: " + facturaExistente.getId());
+            System.out.println("📋 Estado: " + facturaExistente.getEstado());
+            System.out.println("📋 Es borrador: " + facturaExistente.isEsBorrador());
+            
+            // Establecer la factura actual
+            this.factura = facturaExistente;
+            this.citaId = cita.getId();
+            this.pacienteId = paciente.getId();
+            this.propietarioId = propietario.getId();
+            
+            // Determinar si es editable (borrador) o solo lectura (finalizada)
+            boolean esEditable = facturaExistente.isEsBorrador();
+            
+            Platform.runLater(() -> {
+                try {
+                    // Configurar modo de solo lectura si está finalizada
+                    configurarModoSoloLectura(!esEditable);
+                    
+                    // Cargar datos en la interfaz
+                    cargarDatosEnFormulario();
+                    
+                    // Actualizar título
+                    if (lblTitulo != null) {
+                        lblTitulo.setText(esEditable ? "Editar Borrador de Factura" : "Ver Factura (Solo Lectura)");
+                    }
+                    
+                    System.out.println("✅ Factura cargada correctamente en modo: " + (esEditable ? "Editable" : "Solo Lectura"));
+                    
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    mostrarError("Error", "Error al cargar la factura en la interfaz: " + e.getMessage());
+                }
+            });
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error", "Error al cargar la factura existente: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Configura el formulario en modo de solo lectura o editable
+     */
+    private void configurarModoSoloLectura(boolean soloLectura) {
+        // Deshabilitar/habilitar campos de entrada
+        if (txtNumeroFactura != null) txtNumeroFactura.setDisable(soloLectura);
+        if (dpFechaEmision != null) dpFechaEmision.setDisable(soloLectura);
+        if (cmbEstado != null) cmbEstado.setDisable(soloLectura);
+        
+        // Campos del cliente
+        if (txtCliente != null) txtCliente.setDisable(soloLectura);
+        if (txtDNI != null) txtDNI.setDisable(soloLectura);
+        if (txtTelefono != null) txtTelefono.setDisable(soloLectura);
+        if (txtDireccion != null) txtDireccion.setDisable(soloLectura);
+        if (btnSeleccionarCliente != null) btnSeleccionarCliente.setDisable(soloLectura);
+        
+        // Campo del paciente
+        if (txtPaciente != null) txtPaciente.setDisable(soloLectura);
+        if (btnSeleccionarPaciente != null) btnSeleccionarPaciente.setDisable(soloLectura);
+        
+        // Campo del veterinario
+        if (cmbVeterinario != null) cmbVeterinario.setDisable(soloLectura);
+        if (txtNumeroColegiado != null) txtNumeroColegiado.setDisable(soloLectura);
+        
+        // Tablas y botones de agregar
+        if (tablaServicios != null) tablaServicios.setDisable(soloLectura);
+        if (tablaMedicamentos != null) tablaMedicamentos.setDisable(soloLectura);
+        if (btnAgregarServicio != null) btnAgregarServicio.setDisable(soloLectura);
+        if (btnAgregarMedicamento != null) btnAgregarMedicamento.setDisable(soloLectura);
+        
+        // Campo de observaciones
+        if (txtObservaciones != null) txtObservaciones.setDisable(soloLectura);
+        
+        // Botones de acción
+        if (btnGuardarBorrador != null) btnGuardarBorrador.setDisable(soloLectura);
+        if (btnGuardar != null) btnGuardar.setDisable(soloLectura);
+        if (btnFinalizar != null) {
+            // Solo mostrar finalizar si es borrador
+            btnFinalizar.setDisable(soloLectura || !factura.isEsBorrador());
+            btnFinalizar.setVisible(!soloLectura && factura.isEsBorrador());
+        }
+        
+        // El botón cancelar siempre disponible (se convierte en "Cerrar" en modo solo lectura)
+        if (btnCancelar != null) {
+            btnCancelar.setText(soloLectura ? "Cerrar" : "Cancelar");
+        }
+        
+        System.out.println("🔒 Formulario configurado en modo: " + (soloLectura ? "Solo Lectura" : "Editable"));
+    }
+    
     private void mostrarError(String titulo, String mensaje) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");
