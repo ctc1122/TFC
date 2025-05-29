@@ -149,7 +149,27 @@ public class ClinicaController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         // Inicializar el servicio clínico
         //servicioClinica = new ServicioClinica();
-        gestorPeticiones = GestorSocket.getInstance();
+        try {
+            gestorPeticiones = GestorSocket.getInstance();
+            
+            // Verificar que la conexión esté establecida
+            if (gestorPeticiones == null || !gestorPeticiones.isConectado()) {
+                System.err.println("⚠️ Advertencia: No se pudo establecer conexión inicial con el servidor");
+                Platform.runLater(() -> {
+                    mostrarAlerta("Advertencia de conexión", "Conexión no disponible",
+                            "No se pudo establecer conexión con el servidor al inicializar.\n" +
+                            "Puede intentar recargar los datos usando los botones de la interfaz.");
+                });
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error al inicializar gestor de peticiones: " + e.getMessage());
+            e.printStackTrace();
+            Platform.runLater(() -> {
+                mostrarAlerta("Error de inicialización", "Error al conectar con servidor",
+                        "Error al establecer conexión con el servidor: " + e.getMessage() + 
+                        "\n\nAlgunas funciones pueden no estar disponibles.");
+            });
+        }
         
         // Configurar las listas observables
         pacientesObservable = FXCollections.observableArrayList();
@@ -200,17 +220,10 @@ public class ClinicaController implements Initializable {
             }
         });
         
-        // Cargar datos iniciales
-        cargarPacientes();
-        cargarPropietarios();
-        
-        // Inicializar fechas de búsqueda de diagnósticos
-        LocalDate hoy = LocalDate.now();
-        dpFechaFin.setValue(hoy);
-        dpFechaInicio.setValue(hoy.minusDays(30));
-        
-        // Buscar diagnósticos iniciales
-        buscarDiagnosticos();
+        // Cargar datos iniciales de forma asíncrona para no bloquear la UI
+        Platform.runLater(() -> {
+            cargarDatosIniciales();
+        });
         
         // Configurar eventos de búsqueda
         configurarEventosBusqueda();
@@ -226,6 +239,27 @@ public class ClinicaController implements Initializable {
                 cargarVistaCitas();
             }
         });
+    }
+    
+    /**
+     * Carga los datos iniciales de forma controlada
+     */
+    private void cargarDatosIniciales() {
+        // Cargar datos iniciales solo si hay conexión
+        if (gestorPeticiones != null && gestorPeticiones.isConectado()) {
+            cargarPacientes();
+            cargarPropietarios();
+            
+            // Inicializar fechas de búsqueda de diagnósticos
+            LocalDate hoy = LocalDate.now();
+            dpFechaFin.setValue(hoy);
+            dpFechaInicio.setValue(hoy.minusDays(30));
+            
+            // Buscar diagnósticos iniciales
+            buscarDiagnosticos();
+        } else {
+            System.out.println("⚠️ Saltando carga de datos iniciales por falta de conexión");
+        }
     }
     
     /**
@@ -2082,24 +2116,94 @@ public class ClinicaController implements Initializable {
     private void cargarPacientes() {
         pacientesObservable.clear();
         try {
+            // Verificar la conexión primero
+            if (gestorPeticiones == null) {
+                mostrarAlerta("Error de conexión", "Sin conexión al servidor",
+                        "No se ha establecido conexión con el servidor. Inténtelo más tarde.");
+                return;
+            }
+            
+            // Verificar que el gestor esté conectado
+            if (!gestorPeticiones.isConectado()) {
+                mostrarAlerta("Error de conexión", "Conexión perdida",
+                        "Se ha perdido la conexión con el servidor. Verificando reconexión...");
+                
+                // Intentar reconectar
+                try {
+                    gestorPeticiones = GestorSocket.getInstance();
+                    Thread.sleep(1000); // Esperar un poco para la reconexión
+                    
+                    if (!gestorPeticiones.isConectado()) {
+                        mostrarAlerta("Error de conexión", "No se pudo reconectar",
+                                "No se pudo reestablecer la conexión con el servidor.");
+                        return;
+                    }
+                } catch (Exception reconectEx) {
+                    mostrarAlerta("Error de reconexión", "Error al intentar reconectar",
+                            "Error al intentar reconectar: " + reconectEx.getMessage());
+                    return;
+                }
+            }
+            
             //Hacemos una peticion al servidor para obtener todos los pacientes
             gestorPeticiones.enviarPeticion(Protocolo.OBTENER_TODOS_PACIENTES + Protocolo.SEPARADOR_CODIGO);
 
             ObjectInputStream entrada = gestorPeticiones.getEntrada();
-            if (entrada.readInt() == Protocolo.OBTENER_TODOS_PACIENTES_RESPONSE) {
+            if (entrada == null) {
+                mostrarAlerta("Error de comunicación", "Stream de entrada nulo",
+                        "No se pudo obtener el stream de entrada del servidor.");
+                return;
+            }
+            
+            int codigoRespuesta = entrada.readInt();
+            if (codigoRespuesta == Protocolo.OBTENER_TODOS_PACIENTES_RESPONSE) {
                 List<ModeloPaciente> pacientes = (List<ModeloPaciente>) entrada.readObject();
-                pacientesObservable.addAll(pacientes);
+                if (pacientes != null) {
+                    pacientesObservable.addAll(pacientes);
+                    System.out.println("✅ Pacientes cargados exitosamente: " + pacientes.size());
+                } else {
+                    mostrarAlerta("Advertencia", "Lista de pacientes vacía",
+                            "El servidor devolvió una lista vacía de pacientes.");
+                }
             } else {
                 mostrarAlerta("Error", "Error al obtener los pacientes",
-                        "No se pudo obtener los pacientes. Inténtelo de nuevo.");
+                        "El servidor respondió con código de error: " + codigoRespuesta + 
+                        ". No se pudieron obtener los pacientes. Inténtelo de nuevo.");
             }
 
+        } catch (java.net.SocketTimeoutException e) {
+            System.err.println("❌ Timeout al cargar pacientes: " + e.getMessage());
+            mostrarAlerta("Error de timeout", "El servidor tardó demasiado en responder",
+                    "La solicitud de pacientes excedió el tiempo límite. Verifique la conexión de red.");
+        } catch (java.net.ConnectException e) {
+            System.err.println("❌ Error de conexión al cargar pacientes: " + e.getMessage());
+            mostrarAlerta("Error de conexión", "No se pudo conectar al servidor",
+                    "No se pudo establecer conexión con el servidor de la clínica.\n" +
+                    "Verifique que el servidor esté ejecutándose.");
+        } catch (java.io.EOFException e) {
+            System.err.println("❌ Error EOF al cargar pacientes: " + e.getMessage());
+            mostrarAlerta("Error de comunicación", "Conexión cerrada inesperadamente",
+                    "La conexión con el servidor se cerró inesperadamente.\n" +
+                    "Intente recargar la página o verificar el estado del servidor.");
         } catch (IOException ex) {
+            System.err.println("❌ Error IO al cargar pacientes: " + ex.getMessage());
+            ex.printStackTrace();
+            mostrarAlerta("Error de comunicación", "Error de entrada/salida",
+                    "Error de comunicación con el servidor: " + ex.getMessage() + 
+                    "\n\nVerifique su conexión de red y el estado del servidor.");
         } catch (ClassNotFoundException e) {
-            // TODO Auto-generated catch block
+            System.err.println("❌ Error de deserialización al cargar pacientes: " + e.getMessage());
             e.printStackTrace();
+            mostrarAlerta("Error de datos", "Error al procesar respuesta del servidor",
+                    "Error al procesar la respuesta del servidor. Puede haber un problema de compatibilidad.\n" +
+                    "Contacte con el administrador del sistema.");
+        } catch (Exception e) {
+            System.err.println("❌ Error general al cargar pacientes: " + e.getMessage());
+            e.printStackTrace();
+            mostrarAlerta("Error inesperado", "Error al cargar pacientes",
+                    "Error inesperado al cargar pacientes: " + e.getMessage() + 
+                    "\n\nIntente de nuevo o contacte con soporte técnico.");
         }
- 
     }
     
     private void cargarPropietarios() {
@@ -3338,5 +3442,59 @@ public class ClinicaController implements Initializable {
             mostrarAlerta("Error", "Error al mostrar alergias", 
                     "Ha ocurrido un error al intentar mostrar las alergias: " + e.getMessage());
         }
+    }
+
+    /**
+     * Método público para recargar todos los datos desde la interfaz
+     */
+    @FXML
+    public void recargarDatos() {
+        System.out.println("🔄 Recargando datos manualmente...");
+        
+        // Reinicializar conexión si es necesario
+        try {
+            if (gestorPeticiones == null || !gestorPeticiones.isConectado()) {
+                System.out.println("🔄 Reinicializando conexión...");
+                gestorPeticiones = GestorSocket.getInstance();
+                
+                // Esperar un momento para que se establezca la conexión
+                Thread.sleep(1000);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error al reinicializar conexión: " + e.getMessage());
+            mostrarAlerta("Error de conexión", "No se pudo reestablecer la conexión",
+                    "Error al intentar reconectar con el servidor: " + e.getMessage());
+            return;
+        }
+        
+        // Limpiar listas
+        Platform.runLater(() -> {
+            pacientesObservable.clear();
+            propietariosObservable.clear();
+            diagnosticosObservable.clear();
+        });
+        
+        // Recargar datos
+        cargarDatosIniciales();
+        
+        System.out.println("✅ Recarga manual completada");
+    }
+    
+    /**
+     * Método específico para recargar solo pacientes
+     */
+    @FXML 
+    public void recargarPacientes() {
+        System.out.println("🔄 Recargando pacientes...");
+        cargarPacientes();
+    }
+    
+    /**
+     * Método específico para recargar solo propietarios
+     */
+    @FXML
+    public void recargarPropietarios() {
+        System.out.println("🔄 Recargando propietarios...");
+        cargarPropietarios();
     }
 } 

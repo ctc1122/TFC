@@ -576,6 +576,13 @@ public class FacturacionController implements Initializable {
                         if (borradores != null) {
                             listaBorradores.addAll(borradores);
                             System.out.println("✅ Borradores cargados exitosamente: " + borradores.size());
+                            
+                            // Forzar actualización de la tabla
+                            tablaBorradores.refresh();
+                            tablaBorradores.requestFocus();
+                            
+                            // Log de debug para verificar el estado
+                            System.out.println("📊 Lista observable contiene: " + listaBorradores.size() + " elementos");
                         } else {
                             System.out.println("⚠️ Lista de borradores es null");
                         }
@@ -826,18 +833,25 @@ public class FacturacionController implements Initializable {
     }
     
     /**
-     * Elimina un borrador
+     * Elimina un borrador y restablece el inventario de sus medicamentos
      */
     private void eliminarBorrador(ModeloFactura factura) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Confirmar eliminación");
         alert.setHeaderText("¿Eliminar borrador?");
-        alert.setContentText("Esta acción no se puede deshacer.");
+        alert.setContentText("Esta acción eliminará el borrador y restablecerá el inventario de todos sus medicamentos.\n" +
+                            "Esta acción no se puede deshacer.");
         
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             new Thread(() -> {
                 try {
+                    // PASO 1: Restablecer inventario de medicamentos antes de eliminar
+                    System.out.println("🔄 Restableciendo inventario de medicamentos del borrador...");
+                    restablecerInventarioFactura(factura);
+                    
+                    // PASO 2: Eliminar la factura del servidor principal
+                    System.out.println("🗑️ Eliminando factura del servidor...");
                     String peticion = Protocolo.ELIMINAR_FACTURA + Protocolo.SEPARADOR_CODIGO + factura.getId().toString();
                     gestorSocket.enviarPeticion(peticion);
                     
@@ -846,7 +860,11 @@ public class FacturacionController implements Initializable {
                     
                     if (codigoRespuesta == Protocolo.ELIMINAR_FACTURA_RESPONSE) {
                         Platform.runLater(() -> {
-                            // Desasociar factura de la cita si hay cita asociada
+                            // PASO 3A: Actualizar la lista local inmediatamente
+                            System.out.println("🔄 Actualizando lista local de borradores...");
+                            listaBorradores.remove(factura);
+                            
+                            // PASO 3B: Desasociar factura de la cita si hay cita asociada
                             if (factura.getCitaId() != null) {
                                 try {
                                     // Desasociar factura de cita usando el nuevo sistema
@@ -869,8 +887,20 @@ public class FacturacionController implements Initializable {
                                 }
                             }
                             
-                            mostrarInfo("Éxito", "Borrador eliminado correctamente");
-                            cargarBorradores();
+                            mostrarInfo("Éxito", "Borrador eliminado correctamente y inventario restablecido");
+                            
+                            // PASO 3C: Recargar desde el servidor para asegurar consistencia
+                            System.out.println("🔄 Recargando borradores desde el servidor...");
+                            new Thread(() -> {
+                                try {
+                                    // Esperar un momento para que el servidor procese completamente
+                                    Thread.sleep(500);
+                                    cargarBorradoresSync();
+                                } catch (Exception e) {
+                                    System.err.println("Error al recargar borradores: " + e.getMessage());
+                                    // Si falla la recarga, al menos ya actualizamos la lista local
+                                }
+                            }).start();
                         });
                     } else {
                         Platform.runLater(() -> mostrarError("Error", "No se pudo eliminar el borrador"));
@@ -1141,7 +1171,43 @@ public class FacturacionController implements Initializable {
     @FXML
     private void recargarBorradores() {
         System.out.println("🔄 Recarga manual de borradores solicitada por el usuario");
-        cargarBorradoresConReintentos(1); // Solo un intento para recarga manual
+        
+        // Forzar limpieza y actualización inmediata
+        Platform.runLater(() -> {
+            System.out.println("🧹 Limpiando lista de borradores...");
+            listaBorradores.clear();
+            tablaBorradores.refresh();
+            
+            // Cargar nuevamente
+            cargarBorradoresConReintentos(1); // Solo un intento para recarga manual
+        });
+    }
+
+    /**
+     * Método de debug para verificar el estado de la tabla
+     */
+    @FXML
+    private void verificarEstadoTabla() {
+        System.out.println("🔍 === DEBUG TABLA BORRADORES ===");
+        System.out.println("📊 Elementos en lista observable: " + listaBorradores.size());
+        System.out.println("🏢 Tabla visible: " + tablaBorradores.isVisible());
+        System.out.println("📋 Items en tabla: " + tablaBorradores.getItems().size());
+        System.out.println("🔗 Lista vinculada: " + (tablaBorradores.getItems() == listaBorradores));
+        
+        // Mostrar detalles de cada borrador
+        for (int i = 0; i < listaBorradores.size(); i++) {
+            ModeloFactura borrador = listaBorradores.get(i);
+            System.out.println("  " + i + ": " + borrador.getNombreCliente() + " - " + 
+                             (borrador.getId() != null ? borrador.getId().toString() : "Sin ID"));
+        }
+        
+        // Forzar refresh completo
+        Platform.runLater(() -> {
+            tablaBorradores.refresh();
+            tablaBorradores.requestLayout();
+        });
+        
+        System.out.println("🔍 === FIN DEBUG ===");
     }
 
     /**
@@ -1234,5 +1300,142 @@ public class FacturacionController implements Initializable {
         alert.setHeaderText("Información del Sistema de Facturación");
         alert.setContentText(estado.toString());
         alert.showAndWait();
+    }
+
+    /**
+     * Restablece el inventario de todos los medicamentos de una factura en el servidor de inventario
+     * @param factura La factura cuyos medicamentos se van a restablecer
+     */
+    private void restablecerInventarioFactura(ModeloFactura factura) {
+        if (factura.getMedicamentos() == null || factura.getMedicamentos().isEmpty()) {
+            System.out.println("ℹ️ La factura no tiene medicamentos para restablecer");
+            return;
+        }
+        
+        System.out.println("🔄 Restableciendo inventario de " + factura.getMedicamentos().size() + " medicamentos...");
+        
+        try {
+            // Obtener instancia del gestor de inventario
+            com.example.pruebamongodbcss.Utilidades.GestorSocketInventario gestorInventario = 
+                com.example.pruebamongodbcss.Utilidades.GestorSocketInventario.getInstance();
+            
+            // Verificar conexión al servidor de inventario
+            if (!gestorInventario.isConectado()) {
+                System.out.println("🔗 Conectando al servidor de inventario para restablecimiento...");
+                boolean conectado = gestorInventario.conectarAlServidorInventario().get();
+                if (!conectado) {
+                    System.err.println("❌ No se pudo conectar al servidor de inventario");
+                    Platform.runLater(() -> {
+                        mostrarError("Error de conexión", 
+                            "No se pudo conectar al servidor de inventario (puerto 50005).\n" +
+                            "El borrador se eliminará, pero el inventario debe restablecerse manualmente.");
+                    });
+                    return;
+                }
+            }
+            
+            // Restablecer cada medicamento
+            for (ModeloFactura.ConceptoFactura medicamento : factura.getMedicamentos()) {
+                String codigoProducto = extraerCodigoProducto(medicamento.getDescripcion());
+                
+                if (codigoProducto != null && !codigoProducto.isEmpty()) {
+                    // Construir mensaje de restablecimiento
+                    String idMensaje = "MSG_RESTORE_DELETE_" + System.currentTimeMillis();
+                    String facturaId = factura.getId() != null ? factura.getId().toString() : "UNKNOWN";
+                    
+                    String mensajeRestablecimiento = com.example.pruebamongodbcss.Utilidades.ProtocoloInventarioVeterinaria.construirMensaje(
+                        com.example.pruebamongodbcss.Utilidades.ProtocoloInventarioVeterinaria.RESTABLECER_INVENTARIO,
+                        facturaId,
+                        codigoProducto,
+                        String.valueOf(medicamento.getCantidad()),
+                        idMensaje
+                    );
+                    
+                    System.out.println("📤 Restableciendo: " + medicamento.getDescripcion() + 
+                                     " (Código: " + codigoProducto + ", Cantidad: " + medicamento.getCantidad() + ")");
+                    
+                    // Enviar petición
+                    gestorInventario.enviarPeticion(mensajeRestablecimiento);
+                    
+                    // Leer respuesta
+                    String respuesta = gestorInventario.leerRespuesta();
+                    System.out.println("📥 Respuesta: " + respuesta);
+                    
+                    // Parsear respuesta
+                    String[] partesRespuesta = com.example.pruebamongodbcss.Utilidades.ProtocoloInventarioVeterinaria.parsearMensaje(respuesta);
+                    
+                    if (partesRespuesta.length >= 3) {
+                        int codigoRespuesta = Integer.parseInt(partesRespuesta[0]);
+                        if (codigoRespuesta == com.example.pruebamongodbcss.Utilidades.ProtocoloInventarioVeterinaria.RESTABLECER_INVENTARIO_RESPONSE) {
+                            System.out.println("✅ Inventario restablecido para: " + medicamento.getDescripcion());
+                        } else {
+                            System.out.println("⚠️ Error al restablecer inventario para: " + medicamento.getDescripcion());
+                        }
+                    }
+                    
+                    // Pequeña pausa entre medicamentos para no saturar el servidor
+                    Thread.sleep(100);
+                    
+                } else {
+                    System.out.println("⚠️ No se pudo extraer código de producto para: " + medicamento.getDescripcion());
+                }
+            }
+            
+            System.out.println("✅ Proceso de restablecimiento de inventario completado");
+            
+        } catch (Exception e) {
+            System.err.println("❌ Error al restablecer inventario: " + e.getMessage());
+            e.printStackTrace();
+            Platform.runLater(() -> {
+                mostrarError("Error de inventario", 
+                    "Error al restablecer el inventario:\n" + e.getMessage() + 
+                    "\n\nEl borrador se eliminará, pero verifique el inventario manualmente.");
+            });
+        }
+    }
+    
+    /**
+     * Extrae el código del producto desde la descripción del medicamento
+     * Busca patrones comunes de códigos de producto
+     */
+    private String extraerCodigoProducto(String descripcion) {
+        if (descripcion == null || descripcion.trim().isEmpty()) {
+            return null;
+        }
+        
+        // Buscar códigos entre corchetes al inicio [CODIGO]
+        if (descripcion.startsWith("[") && descripcion.contains("]")) {
+            int finCorchete = descripcion.indexOf("]");
+            if (finCorchete > 1) {
+                String codigo = descripcion.substring(1, finCorchete);
+                if (codigo.matches("\\d+")) {
+                    return codigo;
+                }
+            }
+        }
+        
+        // Buscar patrones comunes de códigos de producto (números al inicio)
+        if (descripcion.matches("^\\d+.*")) {
+            String codigo = descripcion.replaceAll("^(\\d+).*", "$1");
+            return codigo;
+        }
+        
+        // Buscar códigos entre paréntesis
+        if (descripcion.contains("(") && descripcion.contains(")")) {
+            String codigo = descripcion.replaceAll(".*\\((\\d+)\\).*", "$1");
+            if (!codigo.equals(descripcion)) {
+                return codigo;
+            }
+        }
+        
+        // Si no se encuentra un patrón, intentar extraer cualquier secuencia de números larga
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\d{6,}");
+        java.util.regex.Matcher matcher = pattern.matcher(descripcion);
+        if (matcher.find()) {
+            return matcher.group();
+        }
+        
+        System.out.println("⚠️ No se pudo determinar el código de producto de: " + descripcion);
+        return null;
     }
 } 

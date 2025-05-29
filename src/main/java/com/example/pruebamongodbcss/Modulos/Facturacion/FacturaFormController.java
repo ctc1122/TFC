@@ -46,6 +46,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.ArrayList;
 
 /**
  * Controlador del formulario de factura
@@ -122,6 +123,9 @@ public class FacturaFormController implements Initializable {
     private ObservableList<ModeloFactura.ConceptoFactura> listaMedicamentos;
     private ObservableList<Usuario> listaVeterinarios;
     
+    // Lista para medicamentos agregados solo en esta sesión (para restablecimiento)
+    private List<ModeloFactura.ConceptoFactura> medicamentosAgregadosEnSesion;
+    
     // IDs seleccionados
     private ObjectId propietarioId;
     private ObjectId pacienteId;
@@ -146,6 +150,7 @@ public class FacturaFormController implements Initializable {
             listaServicios = FXCollections.observableArrayList();
             listaMedicamentos = FXCollections.observableArrayList();
             listaVeterinarios = FXCollections.observableArrayList();
+            medicamentosAgregadosEnSesion = new ArrayList<>();
             
             // Configurar interfaz
             configurarCombos();
@@ -389,12 +394,28 @@ public class FacturaFormController implements Initializable {
                             
                             Optional<ButtonType> result = confirmAlert.showAndWait();
                             if (result.isPresent() && result.get() == ButtonType.OK) {
-                                // Eliminar de la lista
+                                // Verificar si el medicamento fue agregado en esta sesión
+                                boolean fueAgregadoEnSesion = medicamentosAgregadosEnSesion.contains(concepto);
+                                
+                                // Eliminar de la lista principal
                                 listaMedicamentos.remove(concepto);
+                                
+                                // Si fue agregado en esta sesión, también quitarlo de esa lista
+                                if (fueAgregadoEnSesion) {
+                                    medicamentosAgregadosEnSesion.remove(concepto);
+                                }
+                                
                                 calcularTotales();
                                 
-                                // Restablecer inventario
-                                restablecerInventarioMedicamento(concepto);
+                                // Solo restablecer inventario si fue agregado en esta sesión
+                                if (fueAgregadoEnSesion) {
+                                    restablecerInventarioMedicamento(concepto);
+                                } else {
+                                    mostrarInfo("Medicamento eliminado", 
+                                        "El medicamento " + concepto.getDescripcion() + 
+                                        " se eliminó de la factura.\n\n" +
+                                        "Como ya estaba en el borrador original, no se restablece el inventario.");
+                                }
                             }
                         });
                     }
@@ -649,6 +670,10 @@ public class FacturaFormController implements Initializable {
                 if (medicamentoInventario.haySuficienteStock(concepto.getCantidad())) {
                     // Agregar a la lista
                     listaMedicamentos.add(concepto);
+                    
+                    // IMPORTANTE: Registrar en la lista de medicamentos agregados en esta sesión
+                    medicamentosAgregadosEnSesion.add(concepto);
+                    
                     calcularTotales();
                     
                     // Opcional: Actualizar stock en el inventario
@@ -836,6 +861,8 @@ public class FacturaFormController implements Initializable {
     
     /**
      * Método tradicional para agregar medicamentos manualmente
+     * NOTA: Los medicamentos agregados manualmente NO se agregan a medicamentosAgregadosEnSesion
+     * porque no reducen inventario automáticamente, por lo tanto no necesitan restablecimiento
      */
     private void agregarMedicamentoManual() {
         ModeloFactura.ConceptoFactura concepto = new ModeloFactura.ConceptoFactura();
@@ -843,6 +870,7 @@ public class FacturaFormController implements Initializable {
         
         if (editarConcepto(concepto, false)) {
             listaMedicamentos.add(concepto);
+            // NO agregar a medicamentosAgregadosEnSesion porque no reduce inventario automáticamente
             calcularTotales();
         }
     }
@@ -1808,32 +1836,42 @@ public class FacturaFormController implements Initializable {
     }
     
     /**
-     * Restablece el inventario de todos los medicamentos agregados a la factura
+     * Restablece el inventario de todos los medicamentos agregados a la factura EN ESTA SESIÓN
      * Esto se ejecuta cuando se cancela la factura para devolver el stock
      */
     private void restablecerInventarioMedicamentos() {
-        if (listaMedicamentos.isEmpty()) {
-            System.out.println("ℹ️ No hay medicamentos para restablecer en el inventario");
+        if (medicamentosAgregadosEnSesion.isEmpty()) {
+            System.out.println("ℹ️ No hay medicamentos agregados en esta sesión para restablecer en el inventario");
             return;
         }
         
-        System.out.println("🔄 Restableciendo inventario de " + listaMedicamentos.size() + " medicamentos...");
+        System.out.println("🔄 Restableciendo inventario de " + medicamentosAgregadosEnSesion.size() + 
+                          " medicamentos agregados en esta sesión...");
+        System.out.println("ℹ️ Medicamentos que ya estaban en el borrador NO se restablecerán");
         
         // Obtener ID de factura si existe
         String facturaId = (factura != null && factura.getId() != null) ? 
             factura.getId().toString() : "TEMP_" + System.currentTimeMillis();
         
-        // Restablecer inventario para cada medicamento
-        for (ModeloFactura.ConceptoFactura medicamento : listaMedicamentos) {
+        // Restablecer inventario solo para medicamentos agregados en esta sesión
+        for (ModeloFactura.ConceptoFactura medicamento : medicamentosAgregadosEnSesion) {
             // Extraer código del producto del nombre/descripción del medicamento
-            // Nota: Esto asume que el código está al principio de la descripción o necesitarás una forma de obtenerlo
             String codigoProducto = extraerCodigoProducto(medicamento.getDescripcion());
             if (codigoProducto != null && !codigoProducto.isEmpty()) {
                 restablecerInventarioEnServidor(facturaId, codigoProducto, medicamento.getCantidad());
+                System.out.println("🔄 Restableciendo: " + medicamento.getDescripcion() + " (" + medicamento.getCantidad() + " unidades)");
             } else {
                 System.out.println("⚠️ No se pudo extraer código de producto para: " + medicamento.getDescripcion());
             }
         }
+        
+        // Mostrar resumen
+        Platform.runLater(() -> {
+            mostrarInfo("Inventario restablecido", 
+                "Se han restablecido " + medicamentosAgregadosEnSesion.size() + 
+                " medicamentos agregados en esta sesión.\n\n" +
+                "Los medicamentos que ya estaban en el borrador original no se modificaron.");
+        });
     }
     
     /**
