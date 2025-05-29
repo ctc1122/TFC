@@ -102,7 +102,6 @@ public class ClinicaController implements Initializable {
     @FXML private Button btnNuevoPropietario;
     @FXML private Button btnEditarPropietario;
     @FXML private Button btnEliminarPropietario;
-    @FXML private Button btnVerMascotas;
     
     // Tab de Diagnósticos
     @FXML private Tab tabDiagnosticos;
