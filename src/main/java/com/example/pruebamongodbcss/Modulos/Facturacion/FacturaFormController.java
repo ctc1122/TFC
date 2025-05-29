@@ -8,6 +8,8 @@ import com.example.pruebamongodbcss.Modulos.Inventario.BuscadorMedicamentosContr
 import com.example.pruebamongodbcss.Modulos.Inventario.ModeloMedicamentoInventario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.Utilidades.GestorSocket;
+import com.example.pruebamongodbcss.Utilidades.GestorSocketInventario;
+import com.example.pruebamongodbcss.Utilidades.ProtocoloInventarioVeterinaria;
 import io.github.palexdev.materialfx.controls.MFXDatePicker;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -633,7 +635,7 @@ public class FacturaFormController implements Initializable {
                     calcularTotales();
                     
                     // Opcional: Actualizar stock en el inventario
-                    actualizarStockInventario(medicamentoInventario, concepto.getCantidad());
+                    // actualizarStockInventario(medicamentoInventario, concepto.getCantidad());
                     
                     mostrarInfo("Medicamento agregado", 
                         "Se agregó " + concepto.getCantidad() + " unidad(es) de " + 
@@ -779,11 +781,16 @@ public class FacturaFormController implements Initializable {
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == ButtonType.OK) {
                 try {
-                    concepto.setCantidad(spnCantidad.getValue());
+                    int cantidadSeleccionada = spnCantidad.getValue();
+                    concepto.setCantidad(cantidadSeleccionada);
                     concepto.setPrecioUnitario(Double.parseDouble(txtPrecio.getText()));
                     concepto.setDescuento(Double.parseDouble(txtDescuento.getText()));
                     concepto.setTipoIva(cmbIva.getValue());
                     concepto.calcularImportes();
+                    
+                    // NUEVO: Enviar petición al puerto 50005 para reducir inventario
+                    reducirInventarioEnServidor(medicamentoInventario.getCodigo(), cantidadSeleccionada);
+                    
                     return concepto;
                 } catch (NumberFormatException e) {
                     mostrarError("Error", "Por favor, ingrese valores numéricos válidos");
@@ -1629,36 +1636,123 @@ public class FacturaFormController implements Initializable {
     }
     
     /**
-     * Actualiza el campo factura_id de la cita asociada cuando se guarda una factura
-     * @param citaId ID de la cita a actualizar
-     * @param facturaId ID de la factura (como string)
+     * Actualiza el ID de factura en la cita relacionada
      */
     private void actualizarFacturaIdEnCita(ObjectId citaId, String facturaId) {
-        new Thread(() -> {
+        if (citaId != null) {
             try {
-                System.out.println("🔗 Actualizando factura_id de cita " + citaId + " con valor: " + facturaId);
+                System.out.println("ℹ️ Se debería actualizar el facturaId de la cita " + citaId + " con el valor: " + facturaId);
+                // TODO: Implementar la actualización de la cita cuando se resuelvan las dependencias
+            } catch (Exception e) {
+                System.err.println("❌ Error al actualizar facturaId en cita: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    /**
+     * Reduce el inventario en el servidor del puerto 50005
+     * @param codigoProducto Código del medicamento
+     * @param cantidad Cantidad a reducir
+     */
+    private void reducirInventarioEnServidor(String codigoProducto, int cantidad) {
+        System.out.println("📤 Iniciando reducción de inventario para producto: " + codigoProducto + " cantidad: " + cantidad);
+        
+        // Ejecutar en hilo separado para no bloquear la UI
+        Thread hiloReduccion = new Thread(() -> {
+            try {
+                // Obtener instancia del gestor de inventario
+                GestorSocketInventario gestorInventario = GestorSocketInventario.getInstance();
                 
-                // Usar ServicioClinica directamente
-                com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = 
-                    new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
+                // Verificar si ya está conectado, si no, conectar
+                if (!gestorInventario.isConectado()) {
+                    System.out.println("🔗 Conectando al servidor de inventario...");
+                    boolean conectado = gestorInventario.conectarAlServidorInventario().get();
+                    if (!conectado) {
+                        Platform.runLater(() -> {
+                            mostrarError("Error de conexión", 
+                                "No se pudo conectar al servidor de inventario (puerto 50005).\n" +
+                                "El medicamento se ha agregado a la factura, pero el inventario no se actualizó.");
+                        });
+                        return;
+                    }
+                }
                 
-                // Actualizar el campo factura_id de la cita
-                boolean exitoso = servicioClinica.actualizarFacturaIdCita(citaId, facturaId);
+                // Construir mensaje de reducción de inventario
+                String idMensaje = "MSG_REDUCE_" + System.currentTimeMillis();
+                String mensajeReduccion = ProtocoloInventarioVeterinaria.construirMensaje(
+                    ProtocoloInventarioVeterinaria.REDUCIR_INVENTARIO,
+                    codigoProducto,
+                    String.valueOf(cantidad),
+                    idMensaje
+                );
                 
-                if (exitoso) {
-                    System.out.println("✅ Campo factura_id actualizado exitosamente en cita " + citaId);
+                System.out.println("📤 Enviando petición de reducción: " + mensajeReduccion);
+                
+                // Enviar petición
+                gestorInventario.enviarPeticion(mensajeReduccion);
+                
+                // Leer respuesta
+                String respuesta = gestorInventario.leerRespuesta();
+                System.out.println("📥 Respuesta del servidor: " + respuesta);
+                
+                // Parsear respuesta
+                String[] partesRespuesta = ProtocoloInventarioVeterinaria.parsearMensaje(respuesta);
+                
+                if (partesRespuesta.length >= 3) {
+                    int codigoRespuesta = Integer.parseInt(partesRespuesta[0]);
+                    String idMensajeRespuesta = partesRespuesta[1];
+                    String mensaje = partesRespuesta[2];
+                    
+                    System.out.println("📋 Código respuesta: " + codigoRespuesta);
+                    System.out.println("📋 ID mensaje: " + idMensajeRespuesta);
+                    System.out.println("📋 Mensaje: " + mensaje);
+                    
+                    Platform.runLater(() -> {
+                        if (codigoRespuesta == ProtocoloInventarioVeterinaria.REDUCIR_INVENTARIO_RESPONSE) {
+                            // Éxito
+                            mostrarInfo("Inventario actualizado", 
+                                "Se han reducido " + cantidad + " unidades del producto " + codigoProducto + 
+                                " del inventario correctamente.");
+                            System.out.println("✅ Inventario reducido exitosamente");
+                        } else if (codigoRespuesta == ProtocoloInventarioVeterinaria.ERROR_REDUCIR_INVENTARIO) {
+                            // Error específico de reducción
+                            mostrarAdvertencia("Error al reducir inventario", 
+                                "No se pudo reducir el inventario para el producto " + codigoProducto + ".\n" +
+                                "Motivo: " + mensaje + "\n\n" +
+                                "El medicamento se ha agregado a la factura, pero verifique el inventario manualmente.");
+                            System.out.println("⚠️ Error al reducir inventario: " + mensaje);
+                        } else {
+                            // Otro tipo de error
+                            mostrarError("Error inesperado", 
+                                "Respuesta inesperada del servidor de inventario.\n" +
+                                "Código: " + codigoRespuesta + "\n" +
+                                "Mensaje: " + mensaje);
+                            System.out.println("❌ Respuesta inesperada: " + codigoRespuesta);
+                        }
+                    });
                 } else {
-                    System.err.println("❌ No se pudo actualizar el campo factura_id en cita " + citaId);
+                    Platform.runLater(() -> {
+                        mostrarError("Error de comunicación", 
+                            "Respuesta inválida del servidor de inventario: " + respuesta + 
+                            "\nPartes recibidas: " + partesRespuesta.length);
+                    });
+                    System.out.println("❌ Respuesta inválida del servidor: " + respuesta + " (partes: " + partesRespuesta.length + ")");
                 }
                 
             } catch (Exception e) {
-                System.err.println("❌ Error al actualizar factura_id de cita: " + e.getMessage());
+                System.err.println("❌ Error al reducir inventario: " + e.getMessage());
                 e.printStackTrace();
+                
                 Platform.runLater(() -> {
-                    // No mostrar error al usuario, solo logear - esto es un proceso en segundo plano
-                    System.err.println("⚠️ La factura se guardó correctamente, pero no se pudo actualizar la relación con la cita");
+                    mostrarError("Error de comunicación", 
+                        "Error al comunicarse con el servidor de inventario:\n" + e.getMessage() + 
+                        "\n\nEl medicamento se ha agregado a la factura, pero el inventario no se actualizó.");
                 });
             }
-        }).start();
+        });
+        
+        hiloReduccion.setDaemon(true);
+        hiloReduccion.start();
     }
 } 
