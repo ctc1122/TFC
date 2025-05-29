@@ -98,7 +98,7 @@
                      </children>
                   </HBox>
                   
-                  <TextField fx:id="txtMotivo" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                  <ComboBox fx:id="txtMotivo" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="7" />
                   
                   <ComboBox fx:id="cmbEstado" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="8" />
                   

@@ -838,8 +838,8 @@ public class CalendarService {
         int citasActualizadas = 0;
         try {
             LocalDateTime ahora = LocalDateTime.now();
-            System.out.println("🔄 Verificando estados automáticos de citas...");
-            System.out.println("⏰ Hora actual del servidor: " + ahora.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+            // System.out.println("🔄 Verificando estados automáticos de citas...");
+            // System.out.println("⏰ Hora actual del servidor: " + ahora.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
             
             // Obtener todas las citas médicas de la colección de citas
             FindIterable<Document> citas = citasCollection.find(
@@ -857,7 +857,7 @@ public class CalendarService {
                     ObjectId citaId = citaDoc.getObjectId("_id");
                     
                     if (estadoActual == null || fechaHoraCitaDate == null) {
-                        System.out.println("⚠️ Cita " + citaId + " sin estado o fecha válida, saltando...");
+                        // System.out.println("⚠️ Cita " + citaId + " sin estado o fecha válida, saltando...");
                         continue;
                     }
                     
@@ -868,19 +868,8 @@ public class CalendarService {
                     
                     LocalDateTime fechaFinCita = fechaHoraCita.plusMinutes(duracionMinutos);
                     
-                    // Log detallado para cada cita
-                    System.out.println("📋 Revisando cita " + citaId + ":");
-                    System.out.println("   📅 Fecha/hora cita: " + fechaHoraCita.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
-                    System.out.println("   🏁 Fecha/hora fin: " + fechaFinCita.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
-                    System.out.println("   📊 Estado actual: " + estadoActual);
-                    System.out.println("   ⏱️ Duración: " + duracionMinutos + " minutos");
-                    
-                    // Calcular diferencias de tiempo
-                    long minutosHastaInicio = java.time.Duration.between(ahora, fechaHoraCita).toMinutes();
-                    long minutosHastaFin = java.time.Duration.between(ahora, fechaFinCita).toMinutes();
-                    
-                    System.out.println("   🕐 Minutos hasta inicio: " + minutosHastaInicio + " (negativo = ya pasó)");
-                    System.out.println("   🕑 Minutos hasta fin: " + minutosHastaFin + " (negativo = ya pasó)");
+                    // Solo log básico para debug (comentado en producción)
+                    // System.out.println("📋 Revisando cita " + citaId + ":");
                     
                     String nuevoEstado = null;
                     
@@ -888,30 +877,22 @@ public class CalendarService {
                     if ("PENDIENTE".equals(estadoActual)) {
                         if (ahora.isAfter(fechaHoraCita) && ahora.isBefore(fechaFinCita.plusMinutes(15))) {
                             nuevoEstado = "EN_CURSO";
-                            System.out.println("🕐 ✅ REGLA 1 APLICADA: Cita " + citaId + " puesta EN_CURSO automáticamente (hora de inicio alcanzada)");
+                            System.out.println("🕐 Cita " + citaId + " -> EN_CURSO (inicio alcanzado)");
                         } else if (ahora.isAfter(fechaFinCita.plusMinutes(15))) {
                             nuevoEstado = "ABSENTISMO";
-                            System.out.println("📅 ✅ REGLA 1B APLICADA: Cita " + citaId + " marcada como ABSENTISMO (pasó más de 15 min después del fin)");
-                        } else {
-                            System.out.println("   ⏳ Cita PENDIENTE aún no ha llegado su hora");
+                            System.out.println("📅 Cita " + citaId + " -> ABSENTISMO (más de 15 min después del fin)");
                         }
                     }
                     // REGLA 2: Citas EN_CURSO que han pasado su hora de fin + 15 min -> ABSENTISMO
                     else if ("EN_CURSO".equals(estadoActual)) {
                         if (ahora.isAfter(fechaFinCita.plusMinutes(15))) {
                             nuevoEstado = "ABSENTISMO";
-                            System.out.println("📅 ✅ REGLA 2 APLICADA: Cita " + citaId + " marcada como ABSENTISMO (pasó 15 min después del fin)");
-                        } else {
-                            System.out.println("   ⏳ Cita EN_CURSO aún dentro del tiempo permitido");
+                            System.out.println("📅 Cita " + citaId + " -> ABSENTISMO (15 min después del fin)");
                         }
-                    } else {
-                        System.out.println("   ℹ️ Estado " + estadoActual + " no requiere cambio automático");
                     }
                     
                     // Actualizar estado si es necesario
                     if (nuevoEstado != null) {
-                        System.out.println("🔄 Actualizando estado de " + estadoActual + " a " + nuevoEstado + "...");
-                        
                         // Actualizar en la colección de citas
                         UpdateResult resultCita = citasCollection.updateOne(
                             Filters.eq("_id", citaId),
@@ -919,53 +900,35 @@ public class CalendarService {
                         );
                         
                         if (resultCita.getModifiedCount() > 0) {
-                            System.out.println("✅ Actualizado en colección de citas");
-                            
                             // También actualizar en la colección de appointments si existe
                             try {
-                                UpdateResult resultAppointment = appointmentsCollection.updateOne(
+                                appointmentsCollection.updateOne(
                                     Filters.eq("_id", citaId),
                                     Updates.combine(
                                         Updates.set("estado", nuevoEstado),
                                         Updates.set("type", getTypeFromEstado(nuevoEstado))
                                     )
                                 );
-                                
-                                if (resultAppointment.getModifiedCount() > 0) {
-                                    System.out.println("✅ También actualizado en colección de appointments");
-                                } else {
-                                    System.out.println("ℹ️ No se encontró en colección de appointments (normal para citas nuevas)");
-                                }
-                                
                                 citasActualizadas++;
-                                System.out.println("🎉 Estado actualizado exitosamente: " + citaId + " -> " + nuevoEstado);
                                 
                             } catch (Exception appointmentException) {
-                                System.out.println("⚠️ Cita actualizada en colección principal, pero error en appointments: " + appointmentException.getMessage());
                                 citasActualizadas++; // Contar como exitosa de todos modos
                             }
-                        } else {
-                            System.err.println("❌ No se pudo actualizar la cita en la base de datos");
                         }
                     }
                     
-                    System.out.println("   ─────────────────────────────────────");
-                    
                 } catch (Exception citaException) {
-                    System.err.println("❌ Error al procesar cita individual: " + citaException.getMessage());
-                    citaException.printStackTrace();
+                    System.err.println("❌ Error al procesar cita: " + citaException.getMessage());
                     // Continuar con la siguiente cita
                 }
             }
             
-            System.out.println("✅ Verificación automática completada.");
-            System.out.println("📊 Estadísticas:");
-            System.out.println("   📋 Citas revisadas: " + citasRevisadas);
-            System.out.println("   🔄 Citas actualizadas: " + citasActualizadas);
+            if (citasActualizadas > 0) {
+                System.out.println("✅ Verificación automática: " + citasActualizadas + " citas actualizadas de " + citasRevisadas + " revisadas");
+            }
             
         } catch (Exception e) {
-            System.err.println("❌ Error general en verificación automática de estados: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("❌ Error en verificación automática: " + e.getMessage());
             LOGGER.log(Level.SEVERE, "Error en verificación automática de estados", e);
         }
         

@@ -1819,7 +1819,6 @@ public class CalendarFXComponent extends BorderPane {
             }
             
             if (existingTooltip != null) {
-                // Ya tiene tooltip, no hacer nada
                 return;
             }
             
@@ -1892,9 +1891,6 @@ public class CalendarFXComponent extends BorderPane {
             content.append("⏰ ").append(entry.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm")))
                   .append(" - ").append(entry.getEndTime().format(DateTimeFormatter.ofPattern("HH:mm"))).append("\n");
             
-            if (entry.getLocation() != null && !entry.getLocation().isEmpty()) {
-                content.append("📍 ").append(entry.getLocation()).append("\n");
-            }
             
             content.append("👤 ").append(usuario).append("\n");
             

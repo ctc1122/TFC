@@ -69,7 +69,7 @@ public class Servidor {
                             }
                             
                             // Esperar 2 minutos antes de la siguiente verificación
-                            Thread.sleep(60000); // 2 minutos
+                            Thread.sleep(600000); // 10 minutos
                         } catch (InterruptedException e) {
                             System.out.println("Hilo de gestión automática de estados interrumpido");
                             break;

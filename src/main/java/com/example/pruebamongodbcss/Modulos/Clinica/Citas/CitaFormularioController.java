@@ -52,7 +52,7 @@ public class CitaFormularioController implements Initializable {
     @FXML private DatePicker dpFechaFin;
     @FXML private ComboBox<String> cmbHoraFin;
     @FXML private ComboBox<String> cmbMinutoFin;
-    @FXML private TextField txtMotivo;
+    @FXML private ComboBox<String> txtMotivo;
     @FXML private ComboBox<EstadoCita> cmbEstado;
     @FXML private TextArea txtObservaciones;
     @FXML private Label lblError;
@@ -86,6 +86,7 @@ public class CitaFormularioController implements Initializable {
         configurarComboEstado();
         configurarComboPaciente();
         configurarComboDuracion();
+        configurarComboMotivo();
         configurarEventosDuracionManual();
         
         // Valores predeterminados
@@ -123,7 +124,7 @@ public class CitaFormularioController implements Initializable {
      * Configura el combo box de duración
      */
     private void configurarComboDuracion() {
-        List<Integer> duraciones = Arrays.asList(15, 30, 45, 60, 90, 120, 180, 240);
+        List<Integer> duraciones = Arrays.asList(15, 20, 30, 40, 45, 60, 70, 90, 120, 180, 240);
         cmbDuracion.setItems(FXCollections.observableArrayList(duraciones));
         cmbDuracion.setConverter(new StringConverter<Integer>() {
             @Override
@@ -141,6 +142,65 @@ public class CitaFormularioController implements Initializable {
                 }
             }
         });
+    }
+    
+    /**
+     * Configura el combo box de motivo
+     */
+    private void configurarComboMotivo() {
+        // Configurar las opciones del ComboBox
+        List<String> motivos = Arrays.asList(
+            "Consulta", 
+            "Revision", 
+            "Cirugia básica", 
+            "Cirugia compleja", 
+            "Limpieza y uñas"
+        );
+        txtMotivo.setItems(FXCollections.observableArrayList(motivos));
+        
+        // Listener para cambiar la duración automáticamente según el motivo
+        txtMotivo.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                Integer nuevaDuracion = obtenerDuracionPorMotivo(newVal);
+                if (nuevaDuracion != null) {
+                    System.out.println("🔄 Motivo cambiado a: " + newVal + " -> Duración: " + nuevaDuracion + " minutos");
+                    
+                    // Siempre actualizar la duración (incluso en modo manual)
+                    cmbDuracion.getSelectionModel().select(nuevaDuracion);
+                    
+                    // Solo actualizar fecha fin automáticamente si no está en modo manual
+                    if (!chkDuracionManual.isSelected()) {
+                        actualizarFechaFinAutomatica();
+                    }
+                    
+                    System.out.println("✅ Duración actualizada correctamente");
+                }
+            }
+        });
+    }
+    
+    /**
+     * Obtiene la duración en minutos según el motivo seleccionado
+     * @param motivo El motivo de la cita
+     * @return La duración en minutos
+     */
+    private Integer obtenerDuracionPorMotivo(String motivo) {
+        if (motivo == null) return null;
+        
+        switch (motivo) {
+            case "Consulta":
+                return 40;
+            case "Revision":
+                return 30;
+            case "Cirugia básica":
+                return 70;
+            case "Cirugia compleja":
+                return 90;
+            case "Limpieza y uñas":
+                return 20;
+            default:
+                return 30; // Duración por defecto
+        }
     }
     
     /**
@@ -579,7 +639,7 @@ public class CitaFormularioController implements Initializable {
                 
                 // Establecer motivo
                 if (cita.getMotivo() != null) {
-                    txtMotivo.setText(cita.getMotivo());
+                    txtMotivo.getSelectionModel().select(cita.getMotivo());
                 }
                 
                 // Seleccionar estado
@@ -593,6 +653,9 @@ public class CitaFormularioController implements Initializable {
                 if (cita.getObservaciones() != null) {
                     txtObservaciones.setText(cita.getObservaciones());
                 }
+                
+                // Verificar y corregir duración según el motivo (para citas existentes)
+                verificarYCorregirDuracion();
                 
             } catch (Exception e) {
                 System.err.println("Error al cargar datos de la cita: " + e.getMessage());
@@ -648,7 +711,7 @@ public class CitaFormularioController implements Initializable {
             }
         }
         
-        if (txtMotivo.getText().trim().isEmpty()) {
+        if (txtMotivo.getSelectionModel().isEmpty()) {
             mostrarError("Debe especificar el motivo de la cita.");
             return false;
         }
@@ -838,7 +901,18 @@ public class CitaFormularioController implements Initializable {
                 cita.getFechaHora(), fechaHoraFin).toMinutes();
             cita.setDuracionMinutos(duracionMinutos);
             
-            cita.setMotivo(txtMotivo.getText().trim());
+            // Agregar logs para debuggear
+            String motivoSeleccionado = txtMotivo.getSelectionModel().getSelectedItem();
+            Integer duracionSeleccionada = cmbDuracion.getValue();
+            
+            System.out.println("📝 DATOS DE GUARDADO:");
+            System.out.println("   Motivo: " + motivoSeleccionado);
+            System.out.println("   Duración del ComboBox: " + duracionSeleccionada + " min");
+            System.out.println("   Fecha inicio: " + cita.getFechaHora());
+            System.out.println("   Fecha fin: " + fechaHoraFin);
+            System.out.println("   Duración calculada: " + duracionMinutos + " min");
+            
+            cita.setMotivo(motivoSeleccionado);
             cita.setEstado(cmbEstado.getValue());
             cita.setObservaciones(txtObservaciones.getText().trim());
             
@@ -1039,6 +1113,28 @@ public class CitaFormularioController implements Initializable {
         } catch (Exception e) {
             e.printStackTrace();
             mostrarError("No se pudo abrir el formulario de nuevo paciente: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Verifica y corrige la duración de una cita según su motivo
+     * Útil para citas existentes que no tienen la duración correcta
+     */
+    private void verificarYCorregirDuracion() {
+        String motivo = txtMotivo.getSelectionModel().getSelectedItem();
+        if (motivo != null) {
+            Integer duracionEsperada = obtenerDuracionPorMotivo(motivo);
+            Integer duracionActual = cmbDuracion.getValue();
+            
+            if (duracionEsperada != null && !duracionEsperada.equals(duracionActual)) {
+                System.out.println("⚠️ Corrigiendo duración: " + duracionActual + " -> " + duracionEsperada + " min para motivo: " + motivo);
+                cmbDuracion.getSelectionModel().select(duracionEsperada);
+                
+                // Actualizar fecha fin si no está en modo manual
+                if (!chkDuracionManual.isSelected()) {
+                    actualizarFechaFinAutomatica();
+                }
+            }
         }
     }
 } 

@@ -2145,7 +2145,7 @@ public class ClienteHandler implements Runnable {
                                 com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes = 
                                     new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
                                 List<com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.DatoGrafico> datos = 
-                                    servicioInformes.obtenerPropietariosPorMes(meses);
+                                    servicioInformes.obtenerClientesPorMes(meses);
                                     
                                 // Convertir a objetos de datos simplificados
                                 List<com.example.pruebamongodbcss.Modulos.Informes.ReporteClientesController.DatoGraficoData> datosSimplificados = 
