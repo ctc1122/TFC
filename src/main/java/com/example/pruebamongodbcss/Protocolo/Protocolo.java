@@ -375,4 +375,45 @@ public interface Protocolo {
     static final int OBTENER_FACTURA_ASOCIADA_A_CITA_RESPONSE = 1269;
     static final int ERROR_OBTENER_FACTURA_ASOCIADA_A_CITA = 1270;
 
+    // Códigos para operaciones de informes
+    static final int CALCULAR_VENTAS_MES_ACTUAL = 1271;
+    static final int CALCULAR_VENTAS_MES_ACTUAL_RESPONSE = 1272;
+    static final int ERROR_CALCULAR_VENTAS_MES_ACTUAL = 1273;
+
+    static final int CALCULAR_VENTAS_POR_ANO = 1274;
+    static final int CALCULAR_VENTAS_POR_ANO_RESPONSE = 1275;
+    static final int ERROR_CALCULAR_VENTAS_POR_ANO = 1276;
+
+    static final int CALCULAR_VENTAS_POR_MES_ANO = 1277;
+    static final int CALCULAR_VENTAS_POR_MES_ANO_RESPONSE = 1278;
+    static final int ERROR_CALCULAR_VENTAS_POR_MES_ANO = 1279;
+
+    static final int CONTAR_PACIENTES_POR_ANO = 1280;
+    static final int CONTAR_PACIENTES_POR_ANO_RESPONSE = 1281;
+    static final int ERROR_CONTAR_PACIENTES_POR_ANO = 1282;
+
+    static final int CONTAR_PACIENTES_POR_MES_ANO = 1283;
+    static final int CONTAR_PACIENTES_POR_MES_ANO_RESPONSE = 1284;
+    static final int ERROR_CONTAR_PACIENTES_POR_MES_ANO = 1285;
+
+    static final int CONTAR_FICHAJES_POR_ANO = 1286;
+    static final int CONTAR_FICHAJES_POR_ANO_RESPONSE = 1287;
+    static final int ERROR_CONTAR_FICHAJES_POR_ANO = 1288;
+
+    static final int CONTAR_FICHAJES_POR_MES_ANO = 1289;
+    static final int CONTAR_FICHAJES_POR_MES_ANO_RESPONSE = 1290;
+    static final int ERROR_CONTAR_FICHAJES_POR_MES_ANO = 1291;
+
+    static final int OBTENER_EVOLUCION_VENTAS_CON_FILTRO = 1292;
+    static final int OBTENER_EVOLUCION_VENTAS_CON_FILTRO_RESPONSE = 1293;
+    static final int ERROR_OBTENER_EVOLUCION_VENTAS_CON_FILTRO = 1294;
+
+    static final int OBTENER_USUARIOS_POR_ROL = 1295;
+    static final int OBTENER_USUARIOS_POR_ROL_RESPONSE = 1296;
+    static final int ERROR_OBTENER_USUARIOS_POR_ROL = 1297;
+
+    static final int CONTAR_CITAS_POR_FECHA = 1298;
+    static final int CONTAR_CITAS_POR_FECHA_RESPONSE = 1299;
+    static final int ERROR_CONTAR_CITAS_POR_FECHA = 1300;
+
 } 

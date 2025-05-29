@@ -1,5 +1,6 @@
 package com.example.pruebamongodbcss.Modulos.Informes;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -27,13 +28,15 @@ public class ServicioInformes {
     private MongoCollection<Document> fichajesCollection;
     private MongoCollection<Document> citasCollection;
     private MongoCollection<Document> pacientesCollection;
+    private MongoCollection<Document> usuariosCollection;
     
     public ServicioInformes() {
-        this.facturasCollection = GestorConexion.conectarEmpresa().getCollection("facturas");
-        this.propietariosCollection = GestorConexion.conectarEmpresa().getCollection("propietarios");
+        this.facturasCollection = GestorConexion.conectarClinica().getCollection("facturas");
+        this.propietariosCollection = GestorConexion.conectarClinica().getCollection("propietarios");
         this.fichajesCollection = GestorConexion.conectarEmpresa().getCollection("fichajes");
-        this.citasCollection = GestorConexion.conectarEmpresa().getCollection("citas");
-        this.pacientesCollection = GestorConexion.conectarEmpresa().getCollection("pacientes");
+        this.citasCollection = GestorConexion.conectarClinica().getCollection("citas");
+        this.pacientesCollection = GestorConexion.conectarClinica().getCollection("pacientes");
+        this.usuariosCollection = GestorConexion.conectarEmpresa().getCollection("usuarios");
     }
     
     /**
@@ -212,8 +215,6 @@ public class ServicioInformes {
         List<DatoGrafico> datos = new ArrayList<>();
         
         try {
-            MongoCollection<Document> usuariosCollection = GestorConexion.conectarEmpresa().getCollection("usuarios");
-            
             List<Bson> pipeline = Arrays.asList(
                 Aggregates.group("$rol", Accumulators.sum("count", 1)),
                 Aggregates.sort(Sorts.descending("count"))
@@ -452,6 +453,241 @@ public class ServicioInformes {
         return topClientes;
     }
     
+    /**
+     * Calcula las ventas del mes actual basado en facturas emitidas
+     */
+    public double calcularVentasMesActual() {
+        LocalDate hoy = LocalDate.now();
+        LocalDate inicioMes = hoy.withDayOfMonth(1);
+        
+        try {
+            Date fechaInicio = Date.from(inicioMes.atStartOfDay(ZoneId.systemDefault()).toInstant());
+            Date fechaFin = Date.from(hoy.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            
+            List<Bson> pipeline = Arrays.asList(
+                Aggregates.match(Filters.and(
+                    Filters.gte("fechaEmision", fechaInicio),
+                    Filters.lt("fechaEmision", fechaFin),
+                    Filters.eq("estado", "EMITIDA")
+                )),
+                Aggregates.group(null, Accumulators.sum("total", "$total"))
+            );
+            
+            MongoCursor<Document> cursor = facturasCollection.aggregate(pipeline).iterator();
+            if (cursor.hasNext()) {
+                Document result = cursor.next();
+                cursor.close();
+                return result.getDouble("total") != null ? result.getDouble("total") : 0.0;
+            }
+            cursor.close();
+        } catch (Exception e) {
+            System.err.println("Error al calcular ventas del mes actual: " + e.getMessage());
+        }
+        return 0.0;
+    }
+    
+    /**
+     * Calcula las ventas por año
+     */
+    public double calcularVentasPorAno(int ano) {
+        LocalDate inicioAno = LocalDate.of(ano, 1, 1);
+        LocalDate finAno = LocalDate.of(ano, 12, 31);
+        
+        try {
+            Date fechaInicio = Date.from(inicioAno.atStartOfDay(ZoneId.systemDefault()).toInstant());
+            Date fechaFin = Date.from(finAno.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            
+            List<Bson> pipeline = Arrays.asList(
+                Aggregates.match(Filters.and(
+                    Filters.gte("fechaEmision", fechaInicio),
+                    Filters.lt("fechaEmision", fechaFin),
+                    Filters.eq("estado", "EMITIDA")
+                )),
+                Aggregates.group(null, Accumulators.sum("total", "$total"))
+            );
+            
+            MongoCursor<Document> cursor = facturasCollection.aggregate(pipeline).iterator();
+            if (cursor.hasNext()) {
+                Document result = cursor.next();
+                cursor.close();
+                return result.getDouble("total") != null ? result.getDouble("total") : 0.0;
+            }
+            cursor.close();
+        } catch (Exception e) {
+            System.err.println("Error al calcular ventas por año: " + e.getMessage());
+        }
+        return 0.0;
+    }
+    
+    /**
+     * Calcula las ventas por mes y año específico
+     */
+    public double calcularVentasPorMesAno(int mes, int ano) {
+        LocalDate inicioMes = LocalDate.of(ano, mes, 1);
+        LocalDate finMes = inicioMes.withDayOfMonth(inicioMes.lengthOfMonth());
+        
+        try {
+            Date fechaInicio = Date.from(inicioMes.atStartOfDay(ZoneId.systemDefault()).toInstant());
+            Date fechaFin = Date.from(finMes.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            
+            List<Bson> pipeline = Arrays.asList(
+                Aggregates.match(Filters.and(
+                    Filters.gte("fechaEmision", fechaInicio),
+                    Filters.lt("fechaEmision", fechaFin),
+                    Filters.eq("estado", "EMITIDA")
+                )),
+                Aggregates.group(null, Accumulators.sum("total", "$total"))
+            );
+            
+            MongoCursor<Document> cursor = facturasCollection.aggregate(pipeline).iterator();
+            if (cursor.hasNext()) {
+                Document result = cursor.next();
+                cursor.close();
+                return result.getDouble("total") != null ? result.getDouble("total") : 0.0;
+            }
+            cursor.close();
+        } catch (Exception e) {
+            System.err.println("Error al calcular ventas por mes y año: " + e.getMessage());
+        }
+        return 0.0;
+    }
+    
+    /**
+     * Cuenta pacientes registrados en un año específico
+     */
+    public int contarPacientesPorAno(int ano) {
+        LocalDate inicioAno = LocalDate.of(ano, 1, 1);
+        LocalDate finAno = LocalDate.of(ano, 12, 31);
+        
+        try {
+            Date fechaInicio = Date.from(inicioAno.atStartOfDay(ZoneId.systemDefault()).toInstant());
+            Date fechaFin = Date.from(finAno.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            
+            long count = pacientesCollection.countDocuments(Filters.and(
+                Filters.gte("fechaCreacion", fechaInicio),
+                Filters.lt("fechaCreacion", fechaFin)
+            ));
+            
+            return (int) count;
+        } catch (Exception e) {
+            System.err.println("Error al contar pacientes por año: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Cuenta pacientes registrados en un mes y año específico
+     */
+    public int contarPacientesPorMesAno(int mes, int ano) {
+        LocalDate inicioMes = LocalDate.of(ano, mes, 1);
+        LocalDate finMes = inicioMes.withDayOfMonth(inicioMes.lengthOfMonth());
+        
+        try {
+            Date fechaInicio = Date.from(inicioMes.atStartOfDay(ZoneId.systemDefault()).toInstant());
+            Date fechaFin = Date.from(finMes.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            
+            long count = pacientesCollection.countDocuments(Filters.and(
+                Filters.gte("fechaCreacion", fechaInicio),
+                Filters.lt("fechaCreacion", fechaFin)
+            ));
+            
+            return (int) count;
+        } catch (Exception e) {
+            System.err.println("Error al contar pacientes por mes y año: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Cuenta fichajes totales
+     */
+    public int contarFichajesTotales() {
+        try {
+            long count = fichajesCollection.countDocuments();
+            return (int) count;
+        } catch (Exception e) {
+            System.err.println("Error al contar fichajes totales: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Cuenta fichajes por año
+     */
+    public int contarFichajesPorAno(int ano) {
+        LocalDate inicioAno = LocalDate.of(ano, 1, 1);
+        LocalDate finAno = LocalDate.of(ano, 12, 31);
+        
+        try {
+            Date fechaInicio = Date.from(inicioAno.atStartOfDay(ZoneId.systemDefault()).toInstant());
+            Date fechaFin = Date.from(finAno.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            
+            long count = fichajesCollection.countDocuments(Filters.and(
+                Filters.gte("fechaHoraEntrada", fechaInicio),
+                Filters.lt("fechaHoraEntrada", fechaFin)
+            ));
+            
+            return (int) count;
+        } catch (Exception e) {
+            System.err.println("Error al contar fichajes por año: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Cuenta fichajes por mes y año
+     */
+    public int contarFichajesPorMesAno(int mes, int ano) {
+        LocalDate inicioMes = LocalDate.of(ano, mes, 1);
+        LocalDate finMes = inicioMes.withDayOfMonth(inicioMes.lengthOfMonth());
+        
+        try {
+            Date fechaInicio = Date.from(inicioMes.atStartOfDay(ZoneId.systemDefault()).toInstant());
+            Date fechaFin = Date.from(finMes.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            
+            long count = fichajesCollection.countDocuments(Filters.and(
+                Filters.gte("fechaHoraEntrada", fechaInicio),
+                Filters.lt("fechaHoraEntrada", fechaFin)
+            ));
+            
+            return (int) count;
+        } catch (Exception e) {
+            System.err.println("Error al contar fichajes por mes y año: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Obtiene datos para gráfico de evolución de ventas según filtro
+     */
+    public List<DatoGrafico> obtenerEvolucionVentasConFiltro(String tipoFiltro, int ano, Integer mes) {
+        List<DatoGrafico> datos = new ArrayList<>();
+        
+        if ("ANUAL".equals(tipoFiltro)) {
+            // Mostrar los últimos 12 meses hasta el año seleccionado
+            for (int i = 11; i >= 0; i--) {
+                LocalDate fechaMes = LocalDate.of(ano, 12, 1).minusMonths(i);
+                if (fechaMes.getYear() <= ano) {
+                    double ventas = calcularVentasPorMesAno(fechaMes.getMonthValue(), fechaMes.getYear());
+                    String etiqueta = fechaMes.format(DateTimeFormatter.ofPattern("MMM yyyy"));
+                    datos.add(new DatoGrafico(etiqueta, ventas));
+                }
+            }
+        } else if ("MENSUAL".equals(tipoFiltro) && mes != null) {
+            // Mostrar los días del mes seleccionado
+            LocalDate inicioMes = LocalDate.of(ano, mes, 1);
+            LocalDate finMes = inicioMes.withDayOfMonth(inicioMes.lengthOfMonth());
+            
+            for (LocalDate fecha = inicioMes; !fecha.isAfter(finMes); fecha = fecha.plusDays(1)) {
+                double ventas = calcularVentasPorFecha(fecha, fecha);
+                String etiqueta = String.valueOf(fecha.getDayOfMonth());
+                datos.add(new DatoGrafico(etiqueta, ventas));
+            }
+        }
+        
+        return datos;
+    }
+    
     // Métodos auxiliares privados adicionales
     
     private List<DatoGrafico> obtenerVentasPorMeses(int ano) {
@@ -607,9 +843,9 @@ public class ServicioInformes {
             
             List<Bson> pipeline = Arrays.asList(
                 Aggregates.match(Filters.and(
-                    Filters.gte("fechaCreacion", fechaInicio),
-                    Filters.lt("fechaCreacion", fechaFin),
-                    Filters.eq("estado", "FINALIZADA")
+                    Filters.gte("fechaEmision", fechaInicio),
+                    Filters.lt("fechaEmision", fechaFin),
+                    Filters.eq("estado", "EMITIDA")
                 )),
                 Aggregates.group(null, Accumulators.sum("total", "$total"))
             );
@@ -633,9 +869,9 @@ public class ServicioInformes {
             Date fechaFin = Date.from(fin.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
             
             long count = facturasCollection.countDocuments(Filters.and(
-                Filters.gte("fechaCreacion", fechaInicio),
-                Filters.lt("fechaCreacion", fechaFin),
-                Filters.eq("estado", "FINALIZADA")
+                Filters.gte("fechaEmision", fechaInicio),
+                Filters.lt("fechaEmision", fechaFin),
+                Filters.eq("estado", "EMITIDA")
             ));
             
             return (int) count;
@@ -666,7 +902,7 @@ public class ServicioInformes {
         return contarClientesPorAno(inicio, fin);
     }
     
-    private int contarCitasPorFecha(LocalDate inicio, LocalDate fin) {
+    public int contarCitasPorFecha(LocalDate inicio, LocalDate fin) {
         try {
             Date fechaInicio = Date.from(inicio.atStartOfDay(ZoneId.systemDefault()).toInstant());
             Date fechaFin = Date.from(fin.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
@@ -783,7 +1019,8 @@ public class ServicioInformes {
         public void setPromedioVentasDiarias(double promedioVentasDiarias) { this.promedioVentasDiarias = promedioVentasDiarias; }
     }
     
-    public static class DatoGrafico {
+    public static class DatoGrafico implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String etiqueta;
         private double valor;
         

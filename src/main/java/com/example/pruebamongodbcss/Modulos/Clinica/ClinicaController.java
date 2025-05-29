@@ -2171,39 +2171,12 @@ public class ClinicaController implements Initializable {
                         ". No se pudieron obtener los pacientes. Inténtelo de nuevo.");
             }
 
-        } catch (java.net.SocketTimeoutException e) {
-            System.err.println("❌ Timeout al cargar pacientes: " + e.getMessage());
-            mostrarAlerta("Error de timeout", "El servidor tardó demasiado en responder",
-                    "La solicitud de pacientes excedió el tiempo límite. Verifique la conexión de red.");
-        } catch (java.net.ConnectException e) {
-            System.err.println("❌ Error de conexión al cargar pacientes: " + e.getMessage());
-            mostrarAlerta("Error de conexión", "No se pudo conectar al servidor",
-                    "No se pudo establecer conexión con el servidor de la clínica.\n" +
-                    "Verifique que el servidor esté ejecutándose.");
-        } catch (java.io.EOFException e) {
-            System.err.println("❌ Error EOF al cargar pacientes: " + e.getMessage());
-            mostrarAlerta("Error de comunicación", "Conexión cerrada inesperadamente",
-                    "La conexión con el servidor se cerró inesperadamente.\n" +
-                    "Intente recargar la página o verificar el estado del servidor.");
         } catch (IOException ex) {
-            System.err.println("❌ Error IO al cargar pacientes: " + ex.getMessage());
-            ex.printStackTrace();
-            mostrarAlerta("Error de comunicación", "Error de entrada/salida",
-                    "Error de comunicación con el servidor: " + ex.getMessage() + 
-                    "\n\nVerifique su conexión de red y el estado del servidor.");
         } catch (ClassNotFoundException e) {
-            System.err.println("❌ Error de deserialización al cargar pacientes: " + e.getMessage());
+            // TODO Auto-generated catch block
             e.printStackTrace();
-            mostrarAlerta("Error de datos", "Error al procesar respuesta del servidor",
-                    "Error al procesar la respuesta del servidor. Puede haber un problema de compatibilidad.\n" +
-                    "Contacte con el administrador del sistema.");
-        } catch (Exception e) {
-            System.err.println("❌ Error general al cargar pacientes: " + e.getMessage());
-            e.printStackTrace();
-            mostrarAlerta("Error inesperado", "Error al cargar pacientes",
-                    "Error inesperado al cargar pacientes: " + e.getMessage() + 
-                    "\n\nIntente de nuevo o contacte con soporte técnico.");
         }
+ 
     }
     
     private void cargarPropietarios() {

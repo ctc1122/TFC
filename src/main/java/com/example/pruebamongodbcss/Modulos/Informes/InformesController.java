@@ -1,37 +1,38 @@
 package com.example.pruebamongodbcss.Modulos.Informes;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.URL;
 import java.text.DecimalFormat;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.ResourceBundle;
 
 import com.example.pruebamongodbcss.Data.Usuario;
+import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 import com.example.pruebamongodbcss.theme.ThemeUtil;
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
+import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.Button;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -62,14 +63,32 @@ public class InformesController implements Initializable {
     
     @FXML
     private JFXButton btnRefresh;
-    private ServicioInformes servicioInformes;
+    
+    @FXML
+    private JFXComboBox<String> comboFiltroTipo;
+    
+    @FXML
+    private JFXComboBox<Integer> comboAno;
+    
+    @FXML
+    private JFXComboBox<String> comboMes;
+    
+    @FXML
+    private Label lblFiltroActual;
+    
+    private GestorSocket gestorSocket;
     private Usuario usuarioActual;
     private DecimalFormat formatoMoneda = new DecimalFormat("€#,##0.00");
     private DecimalFormat formatoPorcentaje = new DecimalFormat("#0.0%");
     
+    // Variables para el filtro actual
+    private String filtroActual = "ANUAL";
+    private int anoActual = LocalDate.now().getYear();
+    private Integer mesActual = null;
+    
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        servicioInformes = new ServicioInformes();
+        gestorSocket = GestorSocket.getInstance();
         
         // Aplicar clases específicas para el módulo de informes
         mainContainer.getStyleClass().add("informes-view");
@@ -100,14 +119,98 @@ public class InformesController implements Initializable {
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         
-        // Configurar el botón de actualizar
-        configurarBotonRefresh();
+        // Configurar controles
+        configurarControles();
         
         // Cargar el dashboard inicial
         cargarDashboard();
         
         // Configurar actualización automática cada 5 minutos
         configurarActualizacionAutomatica();
+    }
+    
+    private void configurarControles() {
+        // Configurar el botón de actualizar
+        configurarBotonRefresh();
+        
+        // Configurar filtros
+        configurarFiltros();
+    }
+    
+    private void configurarFiltros() {
+        // Configurar combo tipo de filtro
+        if (comboFiltroTipo != null) {
+            comboFiltroTipo.getItems().addAll("ANUAL", "MENSUAL");
+            comboFiltroTipo.setValue("ANUAL");
+            comboFiltroTipo.setOnAction(e -> cambiarTipoFiltro());
+        }
+        
+        // Configurar combo años (últimos 5 años)
+        if (comboAno != null) {
+            int anoActualTmp = LocalDate.now().getYear();
+            for (int i = 0; i < 5; i++) {
+                comboAno.getItems().add(anoActualTmp - i);
+            }
+            comboAno.setValue(anoActualTmp);
+            comboAno.setOnAction(e -> cambiarAno());
+        }
+        
+        // Configurar combo meses
+        if (comboMes != null) {
+            String[] meses = {"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+                            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
+            comboMes.getItems().addAll(meses);
+            comboMes.setValue(meses[LocalDate.now().getMonthValue() - 1]);
+            comboMes.setOnAction(e -> cambiarMes());
+            comboMes.setVisible(false); // Oculto por defecto
+        }
+        
+        // Actualizar label del filtro
+        actualizarLabelFiltro();
+    }
+    
+    private void cambiarTipoFiltro() {
+        if (comboFiltroTipo != null) {
+            filtroActual = comboFiltroTipo.getValue();
+            if ("MENSUAL".equals(filtroActual)) {
+                comboMes.setVisible(true);
+                mesActual = comboMes.getSelectionModel().getSelectedIndex() + 1;
+            } else {
+                comboMes.setVisible(false);
+                mesActual = null;
+            }
+            actualizarLabelFiltro();
+            cargarDashboard();
+        }
+    }
+    
+    private void cambiarAno() {
+        if (comboAno != null) {
+            anoActual = comboAno.getValue();
+            actualizarLabelFiltro();
+            cargarDashboard();
+        }
+    }
+    
+    private void cambiarMes() {
+        if (comboMes != null && "MENSUAL".equals(filtroActual)) {
+            mesActual = comboMes.getSelectionModel().getSelectedIndex() + 1;
+            actualizarLabelFiltro();
+            cargarDashboard();
+        }
+    }
+    
+    private void actualizarLabelFiltro() {
+        if (lblFiltroActual != null) {
+            String textoFiltro;
+            if ("ANUAL".equals(filtroActual)) {
+                textoFiltro = "Filtrando por año: " + anoActual;
+            } else {
+                String nombreMes = comboMes.getValue();
+                textoFiltro = "Filtrando por: " + nombreMes + " " + anoActual;
+            }
+            lblFiltroActual.setText(textoFiltro);
+        }
     }
     
     private void aplicarTransparenciaForzada() {
@@ -167,11 +270,11 @@ public class InformesController implements Initializable {
                 chartsContainer.getChildren().clear();
                 reportsGrid.getChildren().clear();
                 
-                // Cargar métricas principales
-                cargarMetricasPrincipales();
+                // Cargar métricas principales con filtros
+                cargarMetricasPrincipalesConFiltros();
                 
-                // Cargar gráficos
-                cargarGraficos();
+                // Cargar gráficos con filtros
+                cargarGraficosConFiltros();
                 
                 // Cargar tarjetas de reportes
                 cargarTarjetasReportes();
@@ -186,33 +289,74 @@ public class InformesController implements Initializable {
         });
     }
     
-    private void cargarMetricasPrincipales() {
-        ServicioInformes.DashboardMetricas metricas = servicioInformes.obtenerMetricasDashboard();
+    private void cargarMetricasPrincipalesConFiltros() {
+        // Calcular avance del mes (porcentaje)
+        LocalDate hoy = LocalDate.now();
+        int diaActual = hoy.getDayOfMonth();
+        int diasTotalesMes = hoy.lengthOfMonth();
+        double porcentajeAvance = ((double) diaActual / diasTotalesMes) * 100.0;
         
-        // Crear tarjetas de métricas
-        VBox ventasHoy = crearTarjetaMetrica("Ventas Hoy", formatoMoneda.format(metricas.getVentasHoy()), "💰", "#4CAF50", null);
-            
-        VBox ventasMes = crearTarjetaMetrica("Ventas del Mes", 
-            formatoMoneda.format(metricas.getVentasMesActual()), 
-            "📈", "#2196F3",
-            formatoPorcentaje.format(metricas.getPorcentajeCambioVentas() / 100.0));
-            
-        VBox clientesAno = crearTarjetaMetrica("Clientes Este Año", 
-            String.valueOf(metricas.getClientesAnoActual()), 
-            "👥", "#FF9800",
-            formatoPorcentaje.format(metricas.getPorcentajeCambioClientes() / 100.0));
-            
-        VBox citasHoy = crearTarjetaMetrica("Citas Hoy", 
-            String.valueOf(metricas.getCitasHoy()), 
-            "📅", "#9C27B0", null);
-            
-        VBox promedioVentas = crearTarjetaMetrica("Promedio Diario", 
-            formatoMoneda.format(metricas.getPromedioVentasDiarias()), 
-            "📊", "#607D8B", null);
+        VBox avanceMes = crearTarjetaMetrica("Avance del Mes", 
+            formatoPorcentaje.format(porcentajeAvance / 100.0), 
+            "📅", "#4CAF50");
+        
+        // Ventas según filtro
+        double ventas;
+        String tituloVentas;
+        if ("ANUAL".equals(filtroActual)) {
+            ventas = calcularVentasPorAno(anoActual);
+            tituloVentas = "Ventas " + anoActual;
+        } else {
+            ventas = calcularVentasPorMesAno(mesActual, anoActual);
+            String nombreMes = comboMes.getValue();
+            tituloVentas = "Ventas " + nombreMes + " " + anoActual;
+        }
+        
+        VBox ventasCard = crearTarjetaMetrica(tituloVentas, 
+            formatoMoneda.format(ventas), 
+            "💰", "#2196F3");
+        
+        // Pacientes según filtro
+        int pacientes;
+        String tituloPacientes;
+        if ("ANUAL".equals(filtroActual)) {
+            pacientes = contarPacientesPorAno(anoActual);
+            tituloPacientes = "Pacientes " + anoActual;
+        } else {
+            pacientes = contarPacientesPorMesAno(mesActual, anoActual);
+            String nombreMes = comboMes.getValue();
+            tituloPacientes = "Pacientes " + nombreMes + " " + anoActual;
+        }
+        
+        VBox pacientesCard = crearTarjetaMetrica(tituloPacientes, 
+            String.valueOf(pacientes), 
+            "🐕", "#FF9800");
+        
+        // Citas hoy (este no cambia)
+        int citasHoy = contarCitasPorFecha(hoy, hoy);
+        VBox citasCard = crearTarjetaMetrica("Citas Hoy", 
+            String.valueOf(citasHoy), 
+            "📋", "#9C27B0");
+        
+        // Fichajes según filtro
+        int fichajes;
+        String tituloFichajes;
+        if ("ANUAL".equals(filtroActual)) {
+            fichajes = contarFichajesPorAno(anoActual);
+            tituloFichajes = "Fichajes " + anoActual;
+        } else {
+            fichajes = contarFichajesPorMesAno(mesActual, anoActual);
+            String nombreMes = comboMes.getValue();
+            tituloFichajes = "Fichajes " + nombreMes + " " + anoActual;
+        }
+        
+        VBox fichajesCard = crearTarjetaMetrica(tituloFichajes, 
+            String.valueOf(fichajes), 
+            "🕒", "#607D8B");
         
         // Limpiar y configurar el contenedor
         metricsContainer.getChildren().clear();
-        metricsContainer.getChildren().addAll(ventasHoy, ventasMes, clientesAno, citasHoy, promedioVentas);
+        metricsContainer.getChildren().addAll(avanceMes, ventasCard, pacientesCard, citasCard, fichajesCard);
         metricsContainer.setSpacing(15);
         metricsContainer.setAlignment(Pos.CENTER);
         metricsContainer.setPadding(new Insets(20));
@@ -221,12 +365,141 @@ public class InformesController implements Initializable {
         metricsContainer.setStyle("-fx-background-color: transparent;");
     }
     
-    // Método sobrecargado para métricas sin cambio porcentual
-    private VBox crearTarjetaMetrica(String titulo, String valor, String icono, String color) {
-        return crearTarjetaMetrica(titulo, valor, icono, color, null);
+    private void cargarGraficosConFiltros() {
+        // Gráfico de evolución de ventas con filtros
+        LineChart<String, Number> ventasChart = crearGraficoVentasConFiltros();
+        
+        // Gráfico de barras de usuarios por rol
+        BarChart<String, Number> usuariosChart = crearGraficoUsuariosPorRol();
+        
+        // Contenedores para los gráficos
+        VBox ventasContainer = new VBox();
+        
+        String tituloVentas = "ANUAL".equals(filtroActual) ? 
+            "Evolución Ventas " + anoActual : 
+            "Ventas Diarias " + comboMes.getValue() + " " + anoActual;
+        
+        Label ventasTitle = new Label(tituloVentas);
+        ventasTitle.getStyleClass().addAll("informes-section-title", "subtitle-label");
+        
+        ventasContainer.getChildren().addAll(ventasTitle, ventasChart);
+        ventasContainer.setSpacing(10);
+        ventasContainer.setPrefWidth(400);
+        ventasContainer.getStyleClass().add("chart-container");
+        
+        VBox usuariosContainer = new VBox();
+        
+        Label usuariosTitle = new Label("Distribución de Usuarios");
+        usuariosTitle.getStyleClass().addAll("informes-section-title", "subtitle-label");
+        
+        usuariosContainer.getChildren().addAll(usuariosTitle, usuariosChart);
+        usuariosContainer.setSpacing(10);
+        usuariosContainer.setPrefWidth(400);
+        usuariosContainer.getStyleClass().add("chart-container");
+        
+        chartsContainer.getChildren().clear();
+        chartsContainer.getChildren().addAll(ventasContainer, usuariosContainer);
+        chartsContainer.setSpacing(30);
+        chartsContainer.setAlignment(Pos.CENTER);
+        chartsContainer.setStyle("-fx-background-color: transparent;");
     }
     
-    private VBox crearTarjetaMetrica(String titulo, String valor, String icono, String color, String cambio) {
+    private LineChart<String, Number> crearGraficoVentasConFiltros() {
+        CategoryAxis xAxis = new CategoryAxis();
+        NumberAxis yAxis = new NumberAxis();
+        
+        if ("ANUAL".equals(filtroActual)) {
+            xAxis.setLabel("Mes");
+        } else {
+            xAxis.setLabel("Día");
+        }
+        yAxis.setLabel("Ventas (€)");
+        
+        LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
+        chart.setTitle("Evolución de Ventas");
+        chart.setPrefHeight(300);
+        chart.setLegendVisible(false);
+        
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Ventas");
+        
+        // Por ahora datos de prueba - implementaremos la petición al servidor después
+        if ("ANUAL".equals(filtroActual)) {
+            String[] meses = {"Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"};
+            for (int i = 0; i < meses.length; i++) {
+                double ventas = calcularVentasPorMesAno(i + 1, anoActual);
+                series.getData().add(new XYChart.Data<>(meses[i], ventas));
+            }
+        } else {
+            // Datos diarios del mes actual - usar datos de cada día del mes
+            LocalDate inicioMes = LocalDate.of(anoActual, mesActual, 1);
+            LocalDate finMes = inicioMes.withDayOfMonth(inicioMes.lengthOfMonth());
+            
+            for (LocalDate fecha = inicioMes; !fecha.isAfter(finMes); fecha = fecha.plusDays(1)) {
+                // Para datos diarios usamos la misma petición mensual dividida por días
+                // (Los datos diarios requerirían otra petición específica al servidor)
+                double ventasDia = calcularVentasPorMesAno(mesActual, anoActual) / finMes.getDayOfMonth();
+                String dia = String.valueOf(fecha.getDayOfMonth());
+                series.getData().add(new XYChart.Data<>(dia, ventasDia));
+            }
+        }
+        
+        chart.getData().add(series);
+        return chart;
+    }
+    
+    private BarChart<String, Number> crearGraficoUsuariosPorRol() {
+        CategoryAxis xAxis = new CategoryAxis();
+        NumberAxis yAxis = new NumberAxis();
+        xAxis.setLabel("Rol");
+        yAxis.setLabel("Cantidad");
+        
+        BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
+        chart.setTitle("Distribución por Roles");
+        chart.setPrefHeight(300);
+        chart.setLegendVisible(false);
+        
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Usuarios");
+        
+        // Obtener datos reales del servidor
+        try {
+            String peticion = Protocolo.OBTENER_USUARIOS_POR_ROL + Protocolo.SEPARADOR_CODIGO;
+            gestorSocket.enviarPeticion(peticion);
+            
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.OBTENER_USUARIOS_POR_ROL_RESPONSE) {
+                @SuppressWarnings("unchecked")
+                List<ServicioInformes.DatoGrafico> datos = (List<ServicioInformes.DatoGrafico>) entrada.readObject();
+                
+                for (ServicioInformes.DatoGrafico dato : datos) {
+                    series.getData().add(new XYChart.Data<>(dato.getEtiqueta(), dato.getValor()));
+                }
+            } else {
+                System.err.println("Error al obtener usuarios por rol, usando datos de prueba");
+                // Fallback a datos de prueba
+                series.getData().add(new XYChart.Data<>("Veterinario", 5));
+                series.getData().add(new XYChart.Data<>("Auxiliar", 3)); 
+                series.getData().add(new XYChart.Data<>("Recepcionista", 2));
+                series.getData().add(new XYChart.Data<>("Administrador", 1));
+            }
+        } catch (Exception e) {
+            System.err.println("Error en petición obtenerUsuariosPorRol: " + e.getMessage());
+            // Fallback a datos de prueba
+            series.getData().add(new XYChart.Data<>("Veterinario", 5));
+            series.getData().add(new XYChart.Data<>("Auxiliar", 3)); 
+            series.getData().add(new XYChart.Data<>("Recepcionista", 2));
+            series.getData().add(new XYChart.Data<>("Administrador", 1));
+        }
+        
+        chart.getData().add(series);
+        return chart;
+    }
+    
+    // Método simplificado para crear tarjetas de métricas
+    private VBox crearTarjetaMetrica(String titulo, String valor, String icono, String color) {
         VBox tarjeta = new VBox();
         tarjeta.getStyleClass().addAll("metric-card", "module-card");
         tarjeta.setAlignment(Pos.CENTER);
@@ -236,9 +509,6 @@ public class InformesController implements Initializable {
         tarjeta.setPrefHeight(120);
         tarjeta.setMaxWidth(200);
         tarjeta.setMinWidth(200);
-        
-        // NO aplicar transparencia - dejar que el CSS maneje el estilo
-        // tarjeta.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
         
         // Icono y título en la misma línea
         HBox header = new HBox();
@@ -268,98 +538,7 @@ public class InformesController implements Initializable {
         
         tarjeta.getChildren().addAll(header, valueLabel);
         
-        // Cambio porcentual si se proporciona
-        if (cambio != null && !cambio.trim().isEmpty()) {
-            Label changeLabel = new Label(cambio);
-            changeLabel.getStyleClass().add("metric-change");
-            changeLabel.setStyle("-fx-font-size: 11px; -fx-text-alignment: center;");
-            changeLabel.setAlignment(Pos.CENTER);
-            changeLabel.setMaxWidth(Double.MAX_VALUE);
-            if (cambio.startsWith("-")) {
-                changeLabel.setStyle(changeLabel.getStyle() + "; -fx-text-fill: #e74c3c;");
-            } else {
-                changeLabel.setStyle(changeLabel.getStyle() + "; -fx-text-fill: #2ecc71;");
-            }
-            tarjeta.getChildren().add(changeLabel);
-        }
-        
         return tarjeta;
-    }
-    
-    private void cargarGraficos() {
-        // Gráfico de ventas mensuales
-        LineChart<String, Number> ventasChart = crearGraficoVentas();
-        
-        // Gráfico de citas por estado
-        PieChart citasChart = crearGraficoCitas();
-        
-        // Contenedores para los gráficos
-        VBox ventasContainer = new VBox();
-        
-        Label ventasTitle = new Label("Ventas Mensuales");
-        ventasTitle.getStyleClass().addAll("informes-section-title", "subtitle-label");
-        
-        ventasContainer.getChildren().addAll(ventasTitle, ventasChart);
-        ventasContainer.setSpacing(10);
-        ventasContainer.setPrefWidth(400);
-        ventasContainer.getStyleClass().add("chart-container");
-        // NO aplicar transparencia - dejar que el CSS maneje el estilo
-        // ventasContainer.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
-        
-        VBox citasContainer = new VBox();
-        
-        Label citasTitle = new Label("Distribución de Citas");
-        citasTitle.getStyleClass().addAll("informes-section-title", "subtitle-label");
-        
-        citasContainer.getChildren().addAll(citasTitle, citasChart);
-        citasContainer.setSpacing(10);
-        citasContainer.setPrefWidth(400);
-        citasContainer.getStyleClass().add("chart-container");
-        // NO aplicar transparencia - dejar que el CSS maneje el estilo
-        // citasContainer.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
-        
-        chartsContainer.getChildren().clear();
-        chartsContainer.getChildren().addAll(ventasContainer, citasContainer);
-        chartsContainer.setSpacing(30);
-        chartsContainer.setAlignment(Pos.CENTER);
-        chartsContainer.setStyle("-fx-background-color: transparent;");
-    }
-    
-    private LineChart<String, Number> crearGraficoVentas() {
-        CategoryAxis xAxis = new CategoryAxis();
-        NumberAxis yAxis = new NumberAxis();
-        xAxis.setLabel("Mes");
-        yAxis.setLabel("Ventas (€)");
-        
-        LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
-        chart.setTitle("Evolución de Ventas");
-        chart.setPrefHeight(300);
-        chart.setLegendVisible(false);
-        
-        XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Ventas");
-        
-        List<ServicioInformes.DatoGrafico> datos = servicioInformes.obtenerVentasMensuales(6);
-        for (ServicioInformes.DatoGrafico dato : datos) {
-            series.getData().add(new XYChart.Data<>(dato.getEtiqueta(), dato.getValor()));
-        }
-        
-        chart.getData().add(series);
-        return chart;
-    }
-    
-    private PieChart crearGraficoCitas() {
-        PieChart chart = new PieChart();
-        chart.setTitle("Estados de Citas");
-        chart.setPrefHeight(300);
-        
-        List<ServicioInformes.DatoGrafico> datos = servicioInformes.obtenerCitasPorEstado();
-        for (ServicioInformes.DatoGrafico dato : datos) {
-            PieChart.Data slice = new PieChart.Data(dato.getEtiqueta(), dato.getValor());
-            chart.getData().add(slice);
-        }
-        
-        return chart;
     }
     
     private void cargarTarjetasReportes() {
@@ -521,10 +700,15 @@ public class InformesController implements Initializable {
     
     private void abrirReporteCitas() {
         // Mostrar análisis comparativo anual
-        mostrarAnalisisComparativo();
+        mostrarAlert("Información", "Funcionalidad en desarrollo", "Esta función se implementará próximamente.");
+        // mostrarAnalisisComparativo();
     }
     
     private void mostrarAnalisisComparativo() {
+        // Temporalmente deshabilitado hasta simplificar la comunicación
+        mostrarAlert("Información", "Funcionalidad en desarrollo", "Esta función se implementará próximamente.");
+        
+        /* Temporalmente comentado hasta implementar en servidor
         try {
             // Crear una vista de análisis comparativo
             VBox comparativoContainer = new VBox();
@@ -549,7 +733,7 @@ public class InformesController implements Initializable {
             header.getChildren().addAll(titulo, btnVolver);
             
             // Obtener datos comparativos
-            ServicioInformes.ComparativaAnual comparativa = servicioInformes.obtenerComparativaAnual();
+            Protocolo.ComparativaAnual comparativa = obtenerComparativaAnual();
             
             // Métricas comparativas
             HBox metricas = new HBox();
@@ -613,14 +797,6 @@ public class InformesController implements Initializable {
             XYChart.Series<String, Number> serieAnterior = new XYChart.Series<>();
             serieAnterior.setName("Año Anterior");
             
-            for (ServicioInformes.DatoGrafico dato : comparativa.getVentasAnoActual()) {
-                serieActual.getData().add(new XYChart.Data<>(dato.getEtiqueta(), dato.getValor()));
-            }
-            
-            for (ServicioInformes.DatoGrafico dato : comparativa.getVentasAnoAnterior()) {
-                serieAnterior.getData().add(new XYChart.Data<>(dato.getEtiqueta(), dato.getValor()));
-            }
-            
             chart.getData().addAll(serieActual, serieAnterior);
             
             VBox chartContainer = new VBox();
@@ -636,6 +812,7 @@ public class InformesController implements Initializable {
         } catch (Exception e) {
             System.err.println("Error al mostrar análisis comparativo: " + e.getMessage());
         }
+        */
     }
     
     private void abrirReporteFinanciero() {
@@ -646,10 +823,12 @@ public class InformesController implements Initializable {
     private void abrirReporteInventario() {
         // Implementar reporte de inventario/servicios
         System.out.println("Abriendo análisis de servicios más demandados...");
-        mostrarAnalisisServicios();
+        mostrarAlert("Información", "Funcionalidad en desarrollo", "Esta función se implementará próximamente.");
+        // mostrarAnalisisServicios();
     }
     
     private void mostrarAnalisisServicios() {
+        /* Temporalmente comentado hasta implementar en servidor
         try {
             // Crear una vista rápida de análisis de servicios
             VBox analisisContainer = new VBox();
@@ -674,22 +853,22 @@ public class InformesController implements Initializable {
             header.getChildren().addAll(titulo, btnVolver);
             
             // Obtener datos de servicios
-            List<ServicioInformes.ServicioVendido> topServicios = servicioInformes.obtenerTopServicios(10);
+            List<Protocolo.ServicioVendido> topServicios = obtenerTopServicios(10);
             
             // Crear tabla de servicios
-            TableView<ServicioInformes.ServicioVendido> tablaServicios = new TableView<>();
+            TableView<Protocolo.ServicioVendido> tablaServicios = new TableView<>();
             tablaServicios.getStyleClass().addAll("module-card");
             ThemeUtil.applyCardTheme(tablaServicios);
             
-            TableColumn<ServicioInformes.ServicioVendido, String> colNombre = new TableColumn<>("Servicio");
+            TableColumn<Protocolo.ServicioVendido, String> colNombre = new TableColumn<>("Servicio");
             colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
             colNombre.setPrefWidth(300);
             
-            TableColumn<ServicioInformes.ServicioVendido, Integer> colCantidad = new TableColumn<>("Cantidad");
+            TableColumn<Protocolo.ServicioVendido, Integer> colCantidad = new TableColumn<>("Cantidad");
             colCantidad.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
             colCantidad.setPrefWidth(150);
             
-            TableColumn<ServicioInformes.ServicioVendido, String> colTotal = new TableColumn<>("Total Facturado");
+            TableColumn<Protocolo.ServicioVendido, String> colTotal = new TableColumn<>("Total Facturado");
             colTotal.setCellValueFactory(cellData -> {
                 double total = cellData.getValue().getTotal();
                 return new SimpleStringProperty(formatoMoneda.format(total));
@@ -706,6 +885,15 @@ public class InformesController implements Initializable {
         } catch (Exception e) {
             System.err.println("Error al mostrar análisis de servicios: " + e.getMessage());
         }
+        */
+    }
+    
+    private void mostrarAlert(String titulo, String header, String mensaje) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(titulo);
+        alert.setHeaderText(header);
+        alert.setContentText(mensaje);
+        alert.showAndWait();
     }
     
     @FXML
@@ -732,4 +920,200 @@ public class InformesController implements Initializable {
             contentContainer.getStyleClass().add("informes-container");
         });
     }
+    
+    // Métodos para realizar peticiones al servidor
+    
+    private double calcularVentasPorAno(int ano) {
+        try {
+            String peticion = Protocolo.CALCULAR_VENTAS_POR_ANO + Protocolo.SEPARADOR_CODIGO + ano;
+            gestorSocket.enviarPeticion(peticion);
+            
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.CALCULAR_VENTAS_POR_ANO_RESPONSE) {
+                return entrada.readDouble();
+            } else {
+                System.err.println("Error al calcular ventas por año");
+                return 0.0;
+            }
+        } catch (Exception e) {
+            System.err.println("Error en petición calcularVentasPorAno: " + e.getMessage());
+            return 0.0;
+        }
+    }
+    
+    private double calcularVentasPorMesAno(int mes, int ano) {
+        try {
+            String peticion = Protocolo.CALCULAR_VENTAS_POR_MES_ANO + Protocolo.SEPARADOR_CODIGO + 
+                             mes + Protocolo.SEPARADOR_PARAMETROS + ano;
+            gestorSocket.enviarPeticion(peticion);
+            
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.CALCULAR_VENTAS_POR_MES_ANO_RESPONSE) {
+                return entrada.readDouble();
+            } else {
+                System.err.println("Error al calcular ventas por mes y año");
+                return 0.0;
+            }
+        } catch (Exception e) {
+            System.err.println("Error en petición calcularVentasPorMesAno: " + e.getMessage());
+            return 0.0;
+        }
+    }
+    
+    private int contarPacientesPorAno(int ano) {
+        try {
+            String peticion = Protocolo.CONTAR_PACIENTES_POR_ANO + Protocolo.SEPARADOR_CODIGO + ano;
+            gestorSocket.enviarPeticion(peticion);
+            
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.CONTAR_PACIENTES_POR_ANO_RESPONSE) {
+                return entrada.readInt();
+            } else {
+                System.err.println("Error al contar pacientes por año");
+                return 0;
+            }
+        } catch (Exception e) {
+            System.err.println("Error en petición contarPacientesPorAno: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    private int contarPacientesPorMesAno(int mes, int ano) {
+        try {
+            String peticion = Protocolo.CONTAR_PACIENTES_POR_MES_ANO + Protocolo.SEPARADOR_CODIGO + 
+                             mes + Protocolo.SEPARADOR_PARAMETROS + ano;
+            gestorSocket.enviarPeticion(peticion);
+            
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.CONTAR_PACIENTES_POR_MES_ANO_RESPONSE) {
+                return entrada.readInt();
+            } else {
+                System.err.println("Error al contar pacientes por mes y año");
+                return 0;
+            }
+        } catch (Exception e) {
+            System.err.println("Error en petición contarPacientesPorMesAno: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    private int contarCitasPorFecha(LocalDate inicio, LocalDate fin) {
+        try {
+            String peticion = Protocolo.CONTAR_CITAS_POR_FECHA + Protocolo.SEPARADOR_CODIGO + 
+                             inicio.toString() + Protocolo.SEPARADOR_PARAMETROS + fin.toString();
+            gestorSocket.enviarPeticion(peticion);
+            
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.CONTAR_CITAS_POR_FECHA_RESPONSE) {
+                return entrada.readInt();
+            } else {
+                System.err.println("Error al contar citas por fecha");
+                return 0;
+            }
+        } catch (Exception e) {
+            System.err.println("Error en petición contarCitasPorFecha: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    private int contarFichajesPorAno(int ano) {
+        try {
+            String peticion = Protocolo.CONTAR_FICHAJES_POR_ANO + Protocolo.SEPARADOR_CODIGO + ano;
+            gestorSocket.enviarPeticion(peticion);
+            
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.CONTAR_FICHAJES_POR_ANO_RESPONSE) {
+                return entrada.readInt();
+            } else {
+                System.err.println("Error al contar fichajes por año");
+                return 0;
+            }
+        } catch (Exception e) {
+            System.err.println("Error en petición contarFichajesPorAno: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    private int contarFichajesPorMesAno(int mes, int ano) {
+        try {
+            String peticion = Protocolo.CONTAR_FICHAJES_POR_MES_ANO + Protocolo.SEPARADOR_CODIGO + 
+                             mes + Protocolo.SEPARADOR_PARAMETROS + ano;
+            gestorSocket.enviarPeticion(peticion);
+            
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.CONTAR_FICHAJES_POR_MES_ANO_RESPONSE) {
+                return entrada.readInt();
+            } else {
+                System.err.println("Error al contar fichajes por mes y año");
+                return 0;
+            }
+        } catch (Exception e) {
+            System.err.println("Error en petición contarFichajesPorMesAno: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    // Métodos temporalmente comentados hasta simplificar la comunicación con el servidor
+    /*
+    @SuppressWarnings("unchecked")
+    private List<Protocolo.DatoGrafico> obtenerEvolucionVentasConFiltro(String tipoFiltro, int ano, Integer mes) {
+        try {
+            String peticion = Protocolo.OBTENER_EVOLUCION_VENTAS_CON_FILTRO + Protocolo.SEPARADOR_CODIGO + 
+                             tipoFiltro + Protocolo.SEPARADOR_PARAMETROS + ano;
+            if (mes != null) {
+                peticion += Protocolo.SEPARADOR_PARAMETROS + mes;
+            }
+            
+            gestorSocket.enviarPeticion(peticion);
+            
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.OBTENER_EVOLUCION_VENTAS_CON_FILTRO_RESPONSE) {
+                return (List<Protocolo.DatoGrafico>) entrada.readObject();
+            } else {
+                System.err.println("Error al obtener evolución de ventas");
+                return new ArrayList<>();
+            }
+        } catch (Exception e) {
+            System.err.println("Error en petición obtenerEvolucionVentasConFiltro: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+    
+    @SuppressWarnings("unchecked")
+    private List<Protocolo.DatoGrafico> obtenerUsuariosPorRol() {
+        try {
+            String peticion = Protocolo.OBTENER_USUARIOS_POR_ROL + Protocolo.SEPARADOR_CODIGO;
+            gestorSocket.enviarPeticion(peticion);
+            
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.OBTENER_USUARIOS_POR_ROL_RESPONSE) {
+                return (List<Protocolo.DatoGrafico>) entrada.readObject();
+            } else {
+                System.err.println("Error al obtener usuarios por rol");
+                return new ArrayList<>();
+            }
+        } catch (Exception e) {
+            System.err.println("Error en petición obtenerUsuariosPorRol: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+    */
 } 

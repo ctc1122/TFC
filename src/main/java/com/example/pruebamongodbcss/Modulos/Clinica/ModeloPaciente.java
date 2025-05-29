@@ -12,7 +12,7 @@ import org.bson.types.ObjectId;
  * Modelo que representa a un paciente (animal) en la clínica veterinaria.
  */
 public class ModeloPaciente implements Serializable{
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
     
     private ObjectId id;
     private String nombre;
@@ -31,6 +31,7 @@ public class ModeloPaciente implements Serializable{
     private String observaciones;
     private Date ultimaVisita;
     private String estadoPaciente;
+    private Date fechaCreacion;
     
     // Propiedad para control de edición en la UI (transient)
     private transient boolean editando;
@@ -40,6 +41,7 @@ public class ModeloPaciente implements Serializable{
         this.vacunas = new ArrayList<>();
         this.estadoPaciente = "Activo";
         this.editando = false;
+        this.fechaCreacion = new Date(); // Asignar fecha actual automáticamente
     }
     
     // Constructor a partir de un documento de MongoDB
@@ -66,10 +68,16 @@ public class ModeloPaciente implements Serializable{
         this.observaciones = doc.getString("observaciones");
         this.ultimaVisita = doc.getDate("ultimaVisita");
         this.estadoPaciente = doc.getString("estadoPaciente");
+        this.fechaCreacion = doc.getDate("fechaCreacion");
         
         // Si no hay estado, asignar "Activo" por defecto
         if (this.estadoPaciente == null) {
             this.estadoPaciente = "Activo";
+        }
+        
+        // Si no hay fechaCreacion, usar fecha actual
+        if (this.fechaCreacion == null) {
+            this.fechaCreacion = new Date();
         }
         
         // La propiedad editando es transient, no se carga de la BD
@@ -97,7 +105,8 @@ public class ModeloPaciente implements Serializable{
            .append("vacunas", vacunas)
            .append("observaciones", observaciones)
            .append("ultimaVisita", ultimaVisita)
-           .append("estadoPaciente", estadoPaciente);
+           .append("estadoPaciente", estadoPaciente)
+           .append("fechaCreacion", fechaCreacion);
         return doc;
     }
 
@@ -245,5 +254,13 @@ public class ModeloPaciente implements Serializable{
     
     public void setEditando(boolean editando) {
         this.editando = editando;
+    }
+    
+    public Date getFechaCreacion() {
+        return fechaCreacion;
+    }
+    
+    public void setFechaCreacion(Date fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
     }
 } 
