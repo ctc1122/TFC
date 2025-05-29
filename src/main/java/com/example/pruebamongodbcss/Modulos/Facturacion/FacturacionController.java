@@ -846,66 +846,89 @@ public class FacturacionController implements Initializable {
         if (result.isPresent() && result.get() == ButtonType.OK) {
             new Thread(() -> {
                 try {
+                    System.out.println("🗑️ Iniciando eliminación de borrador: " + factura.getId());
+                    
                     // PASO 1: Restablecer inventario de medicamentos antes de eliminar
                     System.out.println("🔄 Restableciendo inventario de medicamentos del borrador...");
                     restablecerInventarioFactura(factura);
                     
-                    // PASO 2: Eliminar la factura del servidor principal
-                    System.out.println("🗑️ Eliminando factura del servidor...");
-                    String peticion = Protocolo.ELIMINAR_FACTURA + Protocolo.SEPARADOR_CODIGO + factura.getId().toString();
-                    gestorSocket.enviarPeticion(peticion);
-                    
-                    ObjectInputStream entrada = gestorSocket.getEntrada();
-                    int codigoRespuesta = entrada.readInt();
-                    
-                    if (codigoRespuesta == Protocolo.ELIMINAR_FACTURA_RESPONSE) {
-                        Platform.runLater(() -> {
-                            // PASO 3A: Actualizar la lista local inmediatamente
-                            System.out.println("🔄 Actualizando lista local de borradores...");
-                            listaBorradores.remove(factura);
-                            
-                            // PASO 3B: Desasociar factura de la cita si hay cita asociada
-                            if (factura.getCitaId() != null) {
-                                try {
-                                    // Desasociar factura de cita usando el nuevo sistema
+                    // PASO 2: Crear una conexión independiente para las operaciones de servidor
+                    GestorSocket gestorSocketEliminar = null;
+                    try {
+                        gestorSocketEliminar = GestorSocket.crearConexionIndependiente();
+                        
+                        // PASO 2A: Eliminar la factura del servidor principal
+                        System.out.println("🗑️ Eliminando factura del servidor...");
+                        String peticion = Protocolo.ELIMINAR_FACTURA + Protocolo.SEPARADOR_CODIGO + factura.getId().toString();
+                        gestorSocketEliminar.enviarPeticion(peticion);
+                        
+                        ObjectInputStream entrada = gestorSocketEliminar.getEntrada();
+                        int codigoRespuesta = entrada.readInt();
+                        
+                        if (codigoRespuesta == Protocolo.ELIMINAR_FACTURA_RESPONSE) {
+                            boolean eliminada = entrada.readBoolean();
+                            if (eliminada) {
+                                System.out.println("✅ Factura eliminada correctamente del servidor");
+                                
+                                // PASO 2B: Desasociar factura de la cita si hay cita asociada
+                                if (factura.getCitaId() != null) {
+                                    System.out.println("🔗 Desasociando factura de la cita...");
                                     String mensajeDesasociacion = Protocolo.DESASOCIAR_FACTURA_DE_CITA + "|" + factura.getCitaId().toString();
-                                    gestorSocket.enviarPeticion(mensajeDesasociacion);
+                                    gestorSocketEliminar.enviarPeticion(mensajeDesasociacion);
                                     
-                                    int respuestaDesasociacion = gestorSocket.getEntrada().readInt();
+                                    int respuestaDesasociacion = gestorSocketEliminar.getEntrada().readInt();
                                     if (respuestaDesasociacion == Protocolo.DESASOCIAR_FACTURA_DE_CITA_RESPONSE) {
-                                        boolean desasociado = gestorSocket.getEntrada().readBoolean();
+                                        boolean desasociado = gestorSocketEliminar.getEntrada().readBoolean();
                                         if (desasociado) {
                                             System.out.println("✅ Factura desasociada correctamente de la cita");
                                         } else {
                                             System.out.println("⚠️ No se pudo desasociar la factura de la cita");
                                         }
                                     } else {
-                                        System.out.println("❌ Error al desasociar factura de cita");
+                                        System.out.println("❌ Error al desasociar factura de cita, código: " + respuestaDesasociacion);
                                     }
-                                } catch (Exception e) {
-                                    System.err.println("Error al desasociar factura de cita: " + e.getMessage());
                                 }
+                                
+                                // PASO 3: Actualizar UI en el hilo principal
+                                Platform.runLater(() -> {
+                                    System.out.println("🔄 Actualizando lista local de borradores...");
+                                    listaBorradores.remove(factura);
+                                    tablaBorradores.refresh();
+                                    
+                                    mostrarInfo("Éxito", "Borrador eliminado correctamente y inventario restablecido");
+                                });
+                                
+                                // PASO 4: Recargar desde el servidor para asegurar consistencia
+                                System.out.println("🔄 Recargando borradores desde el servidor...");
+                                Thread.sleep(500); // Esperar un poco para que el servidor procese completamente
+                                cargarBorradoresSync();
+                                
+                            } else {
+                                System.err.println("❌ El servidor indicó que no se pudo eliminar la factura");
+                                Platform.runLater(() -> mostrarError("Error", "No se pudo eliminar el borrador en el servidor"));
                             }
-                            
-                            mostrarInfo("Éxito", "Borrador eliminado correctamente y inventario restablecido");
-                            
-                            // PASO 3C: Recargar desde el servidor para asegurar consistencia
-                            System.out.println("🔄 Recargando borradores desde el servidor...");
-                            new Thread(() -> {
-                                try {
-                                    // Esperar un momento para que el servidor procese completamente
-                                    Thread.sleep(500);
-                                    cargarBorradoresSync();
-                                } catch (Exception e) {
-                                    System.err.println("Error al recargar borradores: " + e.getMessage());
-                                    // Si falla la recarga, al menos ya actualizamos la lista local
-                                }
-                            }).start();
-                        });
-                    } else {
-                        Platform.runLater(() -> mostrarError("Error", "No se pudo eliminar el borrador"));
+                        } else {
+                            System.err.println("❌ Código de respuesta inesperado del servidor: " + codigoRespuesta);
+                            Platform.runLater(() -> mostrarError("Error", "Respuesta inesperada del servidor: " + codigoRespuesta));
+                        }
+                        
+                    } finally {
+                        // Cerrar la conexión independiente
+                        if (gestorSocketEliminar != null) {
+                            try {
+                                gestorSocketEliminar.cerrarConexion();
+                                System.out.println("🔌 Conexión independiente para eliminación cerrada correctamente");
+                            } catch (Exception e) {
+                                System.err.println("Error al cerrar conexión independiente: " + e.getMessage());
+                            }
+                        }
                     }
+                    
+                } catch (InterruptedException e) {
+                    System.err.println("❌ Operación de eliminación interrumpida: " + e.getMessage());
+                    Platform.runLater(() -> mostrarError("Error", "Operación interrumpida"));
                 } catch (Exception e) {
+                    System.err.println("❌ Error general en eliminación de borrador: " + e.getMessage());
                     e.printStackTrace();
                     Platform.runLater(() -> mostrarError("Error", "Error de comunicación: " + e.getMessage()));
                 }

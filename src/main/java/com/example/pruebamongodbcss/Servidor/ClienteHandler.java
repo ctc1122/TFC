@@ -2120,18 +2120,40 @@ public class ClienteHandler implements Runnable {
                         System.out.println("Conexión cerrada por el cliente");
                         break;
                     }
+                    if (e instanceof java.net.SocketException && e.getMessage().contains("Connection reset")) {
+                        System.out.println("Conexión reiniciada por el cliente - cerrando hilo del cliente");
+                        break;
+                    }
+                    
                     System.err.println("Error al procesar mensaje: " + e.getMessage());
                     e.printStackTrace();
                     
                     // Intentar enviar un mensaje de error al cliente antes de cerrar
                     try {
-                        synchronized (salida) {
-                            salida.writeInt(Protocolo.ERROR_GENERICO);
-                            salida.writeUTF("Error interno del servidor: " + e.getMessage());
-                            salida.flush();
+                        if (salida != null && !clientSocket.isClosed()) {
+                            synchronized (salida) {
+                                salida.writeInt(Protocolo.ERROR_GENERICO);
+                                salida.writeUTF("Error interno del servidor: " + e.getMessage());
+                                salida.flush();
+                            }
                         }
                     } catch (IOException ex) {
                         System.err.println("No se pudo enviar mensaje de error al cliente: " + ex.getMessage());
+                    }
+                    break;
+                } catch (ClassNotFoundException e) {
+                    System.err.println("Error: Clase no encontrada al deserializar objeto: " + e.getMessage());
+                    e.printStackTrace();
+                    try {
+                        if (salida != null && !clientSocket.isClosed()) {
+                            synchronized (salida) {
+                                salida.writeInt(Protocolo.ERROR_GENERICO);
+                                salida.writeUTF("Error de serialización: " + e.getMessage());
+                                salida.flush();
+                            }
+                        }
+                    } catch (IOException ex) {
+                        System.err.println("No se pudo enviar mensaje de error de serialización al cliente: " + ex.getMessage());
                     }
                     break;
                 } catch (NumberFormatException e) {
@@ -2140,6 +2162,20 @@ public class ClienteHandler implements Runnable {
                 } catch (Exception e) {
                     System.err.println("Error inesperado: " + e.getMessage());
                     e.printStackTrace();
+                    
+                    // Intentar notificar al cliente del error
+                    try {
+                        if (salida != null && !clientSocket.isClosed()) {
+                            synchronized (salida) {
+                                salida.writeInt(Protocolo.ERROR_GENERICO);
+                                salida.writeUTF("Error inesperado del servidor: " + e.getMessage());
+                                salida.flush();
+                            }
+                        }
+                    } catch (IOException ex) {
+                        System.err.println("No se pudo enviar mensaje de error inesperado al cliente: " + ex.getMessage());
+                    }
+                    break;
                 }
             }
         } catch (IOException e) {
