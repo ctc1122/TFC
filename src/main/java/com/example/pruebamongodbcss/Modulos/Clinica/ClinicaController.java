@@ -56,6 +56,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.SVGPath;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.stage.FileChooser;
@@ -649,6 +650,17 @@ public class ClinicaController implements Initializable {
                 textField.setEditable(false);
                 btnSeleccionar.setMinWidth(30);
                 btnSeleccionar.getStyleClass().add("btn-secondary");
+                
+                // Crear y añadir icono SVG blanco de "más"
+                SVGPath iconoMas = new SVGPath();
+                iconoMas.setContent("M12 5v6m0 0v6m0-6h6m-6 0H6");
+                iconoMas.setFill(javafx.scene.paint.Color.WHITE);
+                iconoMas.setStroke(javafx.scene.paint.Color.WHITE);
+                iconoMas.setStrokeWidth(2);
+                iconoMas.setScaleX(0.6);
+                iconoMas.setScaleY(0.6);
+                btnSeleccionar.setGraphic(iconoMas);
+                btnSeleccionar.setText(""); // Quitar el texto y solo mostrar el icono
                 
                 btnSeleccionar.setOnAction(e -> {
                     ModeloPaciente paciente = getTableView().getItems().get(getIndex());
