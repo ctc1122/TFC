@@ -10,23 +10,23 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Informes.ReporteEmpleadosController">
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Informes.ReporteEmpleadosController" styleClass="reporte-container">
    <top>
-      <VBox spacing="20.0" style="-fx-background-color: #f8f9fa;">
+      <VBox spacing="20.0" styleClass="reporte-header">
          <children>
             <!-- Título y controles -->
             <HBox alignment="CENTER_LEFT" spacing="20.0">
                <children>
-                  <Label style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Reporte de Empleados" />
-                  <Button onAction="#volverAlDashboard" style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-background-radius: 5;" text="← Volver al Dashboard" />
+                  <Label styleClass="reporte-title" text="Reporte de Empleados" />
+                  <Button onAction="#volverAlDashboard" styleClass="btn-secondary" text="← Volver al Dashboard" />
                </children>
             </HBox>
             
             <!-- Controles -->
             <HBox alignment="CENTER_LEFT" spacing="20.0">
                <children>
-                  <Button fx:id="btnGenerar" style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-background-radius: 5;" text="Actualizar Reporte" />
-                  <Button fx:id="btnExportar" style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-background-radius: 5;" text="Exportar PDF" />
+                  <Button fx:id="btnGenerar" styleClass="btn-primary" text="Actualizar Reporte" />
+                  <Button fx:id="btnExportar" styleClass="btn-success" text="Exportar PDF" />
                </children>
             </HBox>
          </children>
@@ -36,32 +36,32 @@
       </VBox>
    </top>
    <center>
-      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: #f8f9fa;">
+      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="reporte-scroll">
          <content>
-            <VBox spacing="30.0" style="-fx-background-color: #f8f9fa;">
+            <VBox spacing="30.0" styleClass="reporte-content">
                <children>
                   <!-- Métricas resumen -->
                   <VBox spacing="15.0">
                      <children>
-                        <Label style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Estadísticas Generales" />
+                        <Label styleClass="reporte-section-title" text="Estadísticas Generales" />
                         <HBox alignment="CENTER" spacing="40.0">
                            <children>
-                              <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;">
+                              <VBox alignment="CENTER" spacing="10.0" styleClass="metric-card">
                                  <children>
-                                    <Label style="-fx-font-size: 14px; -fx-text-fill: #666;" text="Total Empleados" />
-                                    <Label fx:id="lblTotalEmpleados" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #007bff;" text="0" />
+                                    <Label styleClass="metric-title" text="Total Empleados" />
+                                    <Label fx:id="lblTotalEmpleados" styleClass="metric-value" text="0" />
                                  </children>
                               </VBox>
-                              <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;">
+                              <VBox alignment="CENTER" spacing="10.0" styleClass="metric-card">
                                  <children>
-                                    <Label style="-fx-font-size: 14px; -fx-text-fill: #666;" text="Empleados Activos" />
-                                    <Label fx:id="lblEmpleadosActivos" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #28a745;" text="0" />
+                                    <Label styleClass="metric-title" text="Empleados Activos" />
+                                    <Label fx:id="lblEmpleadosActivos" styleClass="metric-value-success" text="0" />
                                  </children>
                               </VBox>
-                              <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;">
+                              <VBox alignment="CENTER" spacing="10.0" styleClass="metric-card">
                                  <children>
-                                    <Label style="-fx-font-size: 14px; -fx-text-fill: #666;" text="Promedio Horas/Mes" />
-                                    <Label fx:id="lblPromedioHoras" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #ff6b35;" text="0.0 h" />
+                                    <Label styleClass="metric-title" text="Promedio Horas/Mes" />
+                                    <Label fx:id="lblPromedioHoras" styleClass="metric-value-purple" text="0.0 h" />
                                  </children>
                               </VBox>
                            </children>
@@ -75,8 +75,8 @@
                   <!-- Gráfico de distribución por roles -->
                   <VBox spacing="15.0">
                      <children>
-                        <Label style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Distribución por Roles" />
-                        <VBox fx:id="chartContainer" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;" />
+                        <Label styleClass="reporte-section-title" text="Distribución por Roles" />
+                        <VBox fx:id="chartContainer" styleClass="chart-container" />
                      </children>
                      <padding>
                         <Insets left="20.0" right="20.0" />
@@ -86,8 +86,8 @@
                   <!-- Tabla de productividad -->
                   <VBox spacing="15.0">
                      <children>
-                        <Label style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Productividad de Veterinarios" />
-                        <TableView fx:id="tableProductividad" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);">
+                        <Label styleClass="reporte-section-title" text="Productividad de Veterinarios" />
+                        <TableView fx:id="tableProductividad" styleClass="reporte-table">
                           <columns>
                             <TableColumn fx:id="colEmpleado" prefWidth="200.0" text="Empleado" />
                             <TableColumn fx:id="colCitas" prefWidth="120.0" text="Citas Atendidas" />

@@ -11,15 +11,15 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Informes.ReporteVentasController">
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Informes.ReporteVentasController" styleClass="reporte-container">
    <top>
-      <VBox spacing="20.0" style="-fx-background-color: #f8f9fa;">
+      <VBox spacing="20.0" styleClass="reporte-header">
          <children>
             <!-- Título y controles -->
             <HBox alignment="CENTER_LEFT" spacing="20.0">
                <children>
-                  <Label style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Reporte de Ventas" />
-                  <Button onAction="#volverAlDashboard" style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-background-radius: 5;" text="← Volver al Dashboard" />
+                  <Label styleClass="reporte-title" text="Reporte de Ventas" />
+                  <Button onAction="#volverAlDashboard" styleClass="btn-secondary" text="← Volver al Dashboard" />
                </children>
             </HBox>
             
@@ -30,8 +30,8 @@
                   <DatePicker fx:id="fechaInicio" />
                   <Label text="Hasta:" />
                   <DatePicker fx:id="fechaFin" />
-                  <Button fx:id="btnGenerar" style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-background-radius: 5;" text="Generar Reporte" />
-                  <Button fx:id="btnExportar" style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-background-radius: 5;" text="Exportar PDF" />
+                  <Button fx:id="btnGenerar" styleClass="btn-primary" text="Generar Reporte" />
+                  <Button fx:id="btnExportar" styleClass="btn-success" text="Exportar PDF" />
                </children>
             </HBox>
          </children>
@@ -41,32 +41,32 @@
       </VBox>
    </top>
    <center>
-      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: #f8f9fa;">
+      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="reporte-scroll">
          <content>
-            <VBox spacing="30.0" style="-fx-background-color: #f8f9fa;">
+            <VBox spacing="30.0" styleClass="reporte-content">
                <children>
                   <!-- Métricas resumen -->
                   <VBox spacing="15.0">
                      <children>
-                        <Label style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Resumen del Período" />
+                        <Label styleClass="reporte-section-title" text="Resumen del Período" />
                         <HBox alignment="CENTER" spacing="40.0">
                            <children>
-                              <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;">
+                              <VBox alignment="CENTER" spacing="10.0" styleClass="metric-card">
                                  <children>
-                                    <Label style="-fx-font-size: 14px; -fx-text-fill: #666;" text="Total de Ventas" />
-                                    <Label fx:id="lblTotalVentas" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #28a745;" text="€0.00" />
+                                    <Label styleClass="metric-title" text="Total de Ventas" />
+                                    <Label fx:id="lblTotalVentas" styleClass="metric-value-success" text="€0.00" />
                                  </children>
                               </VBox>
-                              <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;">
+                              <VBox alignment="CENTER" spacing="10.0" styleClass="metric-card">
                                  <children>
-                                    <Label style="-fx-font-size: 14px; -fx-text-fill: #666;" text="Número de Facturas" />
-                                    <Label fx:id="lblNumeroFacturas" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #007bff;" text="0" />
+                                    <Label styleClass="metric-title" text="Número de Facturas" />
+                                    <Label fx:id="lblNumeroFacturas" styleClass="metric-value" text="0" />
                                  </children>
                               </VBox>
-                              <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;">
+                              <VBox alignment="CENTER" spacing="10.0" styleClass="metric-card">
                                  <children>
-                                    <Label style="-fx-font-size: 14px; -fx-text-fill: #666;" text="Promedio por Venta" />
-                                    <Label fx:id="lblPromedioVenta" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #ff6b35;" text="€0.00" />
+                                    <Label styleClass="metric-title" text="Promedio por Venta" />
+                                    <Label fx:id="lblPromedioVenta" styleClass="metric-value-purple" text="€0.00" />
                                  </children>
                               </VBox>
                            </children>
@@ -80,8 +80,8 @@
                   <!-- Gráfico de evolución -->
                   <VBox spacing="15.0">
                      <children>
-                        <Label style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Evolución de Ventas" />
-                        <VBox fx:id="chartContainer" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;" />
+                        <Label styleClass="reporte-section-title" text="Evolución de Ventas" />
+                        <VBox fx:id="chartContainer" styleClass="chart-container" />
                      </children>
                      <padding>
                         <Insets left="20.0" right="20.0" />
@@ -91,8 +91,8 @@
                   <!-- Tabla de servicios más vendidos -->
                   <VBox spacing="15.0">
                      <children>
-                        <Label style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Servicios Más Vendidos" />
-                        <TableView fx:id="tableServicios" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);">
+                        <Label styleClass="reporte-section-title" text="Servicios Más Vendidos" />
+                        <TableView fx:id="tableServicios" styleClass="reporte-table">
                           <columns>
                             <TableColumn fx:id="colServicio" prefWidth="300.0" text="Servicio" />
                             <TableColumn fx:id="colCantidad" prefWidth="150.0" text="Cantidad Vendida" />

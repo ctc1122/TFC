@@ -756,49 +756,157 @@ public class InformesController implements Initializable {
     // Métodos para abrir diferentes reportes
     private void abrirReporteVentas() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Informes/reporte-ventas.fxml"));
-            Parent reporteView = ThemeUtil.loadWithTheme(loader);
-            
-            ReporteVentasController controller = loader.getController();
-            if (controller != null) {
-                controller.setUsuarioActual(usuarioActual);
+            // Buscar la ventana principal y obtener la escena
+            javafx.stage.Window ventanaPrincipal = btnRefresh.getScene().getWindow();
+            if (ventanaPrincipal != null) {
+                javafx.scene.Scene scene = ventanaPrincipal.getScene();
+                if (scene != null) {
+                    javafx.scene.Node root = scene.getRoot();
+                    
+                    if (root instanceof BorderPane) {
+                        BorderPane mainRoot = (BorderPane) root;
+                        
+                        // Cargar la vista del reporte de ventas
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Informes/reporte-ventas.fxml"));
+                        Parent reporteView = ThemeUtil.loadWithTheme(loader);
+                        
+                        // Establecer el usuario en el controlador
+                        ReporteVentasController controller = loader.getController();
+                        if (controller != null && usuarioActual != null) {
+                            controller.setUsuarioActual(usuarioActual);
+                        }
+                        
+                        // Buscar el BorderPane central (donde se cargan los módulos)
+                        if (mainRoot.getCenter() instanceof BorderPane) {
+                            BorderPane centerPane = (BorderPane) mainRoot.getCenter();
+                            // IMPORTANTE: Reemplazar todo el contenido, no solo el center
+                            centerPane.setTop(null);     // Quitar filtros
+                            centerPane.setBottom(null);  // Quitar cualquier footer
+                            centerPane.setLeft(null);    // Quitar lateral
+                            centerPane.setRight(null);   // Quitar lateral
+                            centerPane.setCenter(reporteView); // Poner el reporte completo
+                        } else {
+                            // Fallback: reemplazar directamente en el centro
+                            mainRoot.setCenter(reporteView);
+                        }
+                        
+                        // Aplicar temas para asegurar consistencia
+                        javafx.application.Platform.runLater(() -> {
+                            ThemeUtil.applyThemeToAllOpenWindows();
+                        });
+                    }
+                }
             }
             
-            mainContainer.setCenter(reporteView);
         } catch (IOException e) {
             System.err.println("Error al cargar reporte de ventas: " + e.getMessage());
+            e.printStackTrace();
+            mostrarAlert("Error", "Error al cargar reporte", 
+                        "Ha ocurrido un error al cargar el reporte de ventas: " + e.getMessage());
         }
     }
     
     private void abrirReporteClientes() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Informes/reporte-clientes.fxml"));
-            Parent reporteView = ThemeUtil.loadWithTheme(loader);
-            
-            ReporteClientesController controller = loader.getController();
-            if (controller != null) {
-                controller.setUsuarioActual(usuarioActual);
+            // Buscar la ventana principal y obtener la escena
+            javafx.stage.Window ventanaPrincipal = btnRefresh.getScene().getWindow();
+            if (ventanaPrincipal != null) {
+                javafx.scene.Scene scene = ventanaPrincipal.getScene();
+                if (scene != null) {
+                    javafx.scene.Node root = scene.getRoot();
+                    
+                    if (root instanceof BorderPane) {
+                        BorderPane mainRoot = (BorderPane) root;
+                        
+                        // Cargar la vista del reporte de clientes
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Informes/reporte-clientes.fxml"));
+                        Parent reporteView = ThemeUtil.loadWithTheme(loader);
+                        
+                        // Establecer el usuario en el controlador
+                        ReporteClientesController controller = loader.getController();
+                        if (controller != null && usuarioActual != null) {
+                            controller.setUsuarioActual(usuarioActual);
+                        }
+                        
+                        // Buscar el BorderPane central (donde se cargan los módulos)
+                        if (mainRoot.getCenter() instanceof BorderPane) {
+                            BorderPane centerPane = (BorderPane) mainRoot.getCenter();
+                            // IMPORTANTE: Reemplazar todo el contenido, no solo el center
+                            centerPane.setTop(null);     // Quitar filtros
+                            centerPane.setBottom(null);  // Quitar cualquier footer
+                            centerPane.setLeft(null);    // Quitar lateral
+                            centerPane.setRight(null);   // Quitar lateral
+                            centerPane.setCenter(reporteView); // Poner el reporte completo
+                        } else {
+                            // Fallback: reemplazar directamente en el centro
+                            mainRoot.setCenter(reporteView);
+                        }
+                        
+                        // Aplicar temas para asegurar consistencia
+                        javafx.application.Platform.runLater(() -> {
+                            ThemeUtil.applyThemeToAllOpenWindows();
+                        });
+                    }
+                }
             }
             
-            mainContainer.setCenter(reporteView);
         } catch (IOException e) {
             System.err.println("Error al cargar reporte de clientes: " + e.getMessage());
+            e.printStackTrace();
+            mostrarAlert("Error", "Error al cargar reporte", 
+                        "Ha ocurrido un error al cargar el reporte de clientes: " + e.getMessage());
         }
     }
     
     private void abrirReporteFichajes() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Informes/reporte-empleados.fxml"));
-            Parent reporteView = ThemeUtil.loadWithTheme(loader);
-            
-            ReporteEmpleadosController controller = loader.getController();
-            if (controller != null) {
-                controller.setUsuarioActual(usuarioActual);
+            // Buscar la ventana principal y obtener la escena
+            javafx.stage.Window ventanaPrincipal = btnRefresh.getScene().getWindow();
+            if (ventanaPrincipal != null) {
+                javafx.scene.Scene scene = ventanaPrincipal.getScene();
+                if (scene != null) {
+                    javafx.scene.Node root = scene.getRoot();
+                    
+                    if (root instanceof BorderPane) {
+                        BorderPane mainRoot = (BorderPane) root;
+                        
+                        // Cargar la vista del reporte de empleados/fichajes
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Informes/reporte-empleados.fxml"));
+                        Parent reporteView = ThemeUtil.loadWithTheme(loader);
+                        
+                        // Establecer el usuario en el controlador
+                        ReporteEmpleadosController controller = loader.getController();
+                        if (controller != null && usuarioActual != null) {
+                            controller.setUsuarioActual(usuarioActual);
+                        }
+                        
+                        // Buscar el BorderPane central (donde se cargan los módulos)
+                        if (mainRoot.getCenter() instanceof BorderPane) {
+                            BorderPane centerPane = (BorderPane) mainRoot.getCenter();
+                            // IMPORTANTE: Reemplazar todo el contenido, no solo el center
+                            centerPane.setTop(null);     // Quitar filtros
+                            centerPane.setBottom(null);  // Quitar cualquier footer
+                            centerPane.setLeft(null);    // Quitar lateral
+                            centerPane.setRight(null);   // Quitar lateral
+                            centerPane.setCenter(reporteView); // Poner el reporte completo
+                        } else {
+                            // Fallback: reemplazar directamente en el centro
+                            mainRoot.setCenter(reporteView);
+                        }
+                        
+                        // Aplicar temas para asegurar consistencia
+                        javafx.application.Platform.runLater(() -> {
+                            ThemeUtil.applyThemeToAllOpenWindows();
+                        });
+                    }
+                }
             }
             
-            mainContainer.setCenter(reporteView);
         } catch (IOException e) {
             System.err.println("Error al cargar reporte de empleados: " + e.getMessage());
+            e.printStackTrace();
+            mostrarAlert("Error", "Error al cargar reporte", 
+                        "Ha ocurrido un error al cargar el reporte de empleados: " + e.getMessage());
         }
     }
     

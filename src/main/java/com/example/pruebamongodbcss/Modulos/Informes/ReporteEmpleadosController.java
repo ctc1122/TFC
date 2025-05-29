@@ -72,6 +72,9 @@ public class ReporteEmpleadosController implements Initializable {
         btnGenerar.setOnAction(e -> generarReporte());
         btnExportar.setOnAction(e -> exportarReporte());
         
+        // IMPORTANTE: Aplicar tema correcto desde el inicio
+        aplicarTemaCorreecto();
+        
         // Generar reporte inicial
         generarReporte();
     }
@@ -164,7 +167,7 @@ public class ReporteEmpleadosController implements Initializable {
                     if (root instanceof BorderPane) {
                         BorderPane mainRoot = (BorderPane) root;
                         
-                        // Cargar directamente la vista de informes
+                        // Cargar la vista completa de informes (con filtros)
                         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Informes/informes-view.fxml"));
                         Parent informesView = com.example.pruebamongodbcss.theme.ThemeUtil.loadWithTheme(loader);
                         
@@ -177,7 +180,12 @@ public class ReporteEmpleadosController implements Initializable {
                         // Buscar el BorderPane central (donde se cargan los módulos)
                         if (mainRoot.getCenter() instanceof BorderPane) {
                             BorderPane centerPane = (BorderPane) mainRoot.getCenter();
-                            centerPane.setCenter(informesView);
+                            // IMPORTANTE: Restaurar la vista completa del dashboard
+                            centerPane.setTop(null);     // Limpiar primero
+                            centerPane.setBottom(null);  
+                            centerPane.setLeft(null);    
+                            centerPane.setRight(null);   
+                            centerPane.setCenter(informesView); // Restaurar vista completa con filtros
                         } else {
                             // Fallback: reemplazar directamente en el centro
                             mainRoot.setCenter(informesView);
@@ -215,6 +223,38 @@ public class ReporteEmpleadosController implements Initializable {
         alert.setHeaderText(header);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+    
+    /**
+     * Aplica el tema correcto al reporte basado en el estado actual del ThemeManager
+     */
+    private void aplicarTemaCorreecto() {
+        javafx.application.Platform.runLater(() -> {
+            try {
+                // Obtener la escena actual
+                if (btnGenerar != null && btnGenerar.getScene() != null) {
+                    javafx.scene.Scene scene = btnGenerar.getScene();
+                    javafx.scene.Parent root = scene.getRoot();
+                    
+                    // Verificar si el tema oscuro está activo
+                    boolean temaOscuroActivo = com.example.pruebamongodbcss.theme.ThemeManager.getInstance().isDarkTheme();
+                    
+                    // Aplicar o quitar la clase dark-theme del root
+                    if (temaOscuroActivo) {
+                        if (!root.getStyleClass().contains("dark-theme")) {
+                            root.getStyleClass().add("dark-theme");
+                        }
+                    } else {
+                        root.getStyleClass().remove("dark-theme");
+                    }
+                    
+                    // Asegurar que los temas estén aplicados correctamente
+                    com.example.pruebamongodbcss.theme.ThemeUtil.applyThemeToAllOpenWindows();
+                }
+            } catch (Exception e) {
+                System.err.println("Error al aplicar tema al reporte de empleados: " + e.getMessage());
+            }
+        });
     }
     
     // Clase para las filas de la tabla
