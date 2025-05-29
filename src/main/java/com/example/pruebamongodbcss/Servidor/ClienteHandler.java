@@ -1886,6 +1886,228 @@ public class ClienteHandler implements Runnable {
                             }
                             break;
                             
+                        // Casos para operaciones de informes
+                        case Protocolo.CALCULAR_VENTAS_POR_ANO:
+                            System.out.println("Procesando solicitud de calcular ventas por año...");
+                            if (parametros.length >= 1) {
+                                try {
+                                    int ano = Integer.parseInt(parametros[0]);
+                                    com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes = 
+                                        new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
+                                    double ventas = servicioInformes.calcularVentasPorAno(ano);
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.CALCULAR_VENTAS_POR_ANO_RESPONSE);
+                                        salida.writeDouble(ventas);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al calcular ventas por año: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_CALCULAR_VENTAS_POR_ANO);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_CALCULAR_VENTAS_POR_ANO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.CALCULAR_VENTAS_POR_MES_ANO:
+                            System.out.println("Procesando solicitud de calcular ventas por mes y año...");
+                            if (parametros.length >= 2) {
+                                try {
+                                    int mes = Integer.parseInt(parametros[0]);
+                                    int ano = Integer.parseInt(parametros[1]);
+                                    com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes = 
+                                        new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
+                                    double ventas = servicioInformes.calcularVentasPorMesAno(mes, ano);
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.CALCULAR_VENTAS_POR_MES_ANO_RESPONSE);
+                                        salida.writeDouble(ventas);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al calcular ventas por mes y año: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_CALCULAR_VENTAS_POR_MES_ANO);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_CALCULAR_VENTAS_POR_MES_ANO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.CONTAR_PACIENTES_POR_ANO:
+                            System.out.println("Procesando solicitud de contar pacientes por año...");
+                            if (parametros.length >= 1) {
+                                try {
+                                    int ano = Integer.parseInt(parametros[0]);
+                                    com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes = 
+                                        new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
+                                    int pacientesAno = servicioInformes.contarPacientesPorAno(ano);
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.CONTAR_PACIENTES_POR_ANO_RESPONSE);
+                                        salida.writeInt(pacientesAno);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al contar pacientes por año: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_CONTAR_PACIENTES_POR_ANO);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_CONTAR_PACIENTES_POR_ANO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.CONTAR_PACIENTES_POR_MES_ANO:
+                            System.out.println("Procesando solicitud de contar pacientes por mes y año...");
+                            if (parametros.length >= 2) {
+                                try {
+                                    int mes = Integer.parseInt(parametros[0]);
+                                    int ano = Integer.parseInt(parametros[1]);
+                                    com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes = 
+                                        new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
+                                    int pacientesMesAno = servicioInformes.contarPacientesPorMesAno(mes, ano);
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.CONTAR_PACIENTES_POR_MES_ANO_RESPONSE);
+                                        salida.writeInt(pacientesMesAno);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al contar pacientes por mes y año: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_CONTAR_PACIENTES_POR_MES_ANO);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_CONTAR_PACIENTES_POR_MES_ANO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.CONTAR_CITAS_POR_FECHA:
+                            System.out.println("Procesando solicitud de contar citas por fecha...");
+                            if (parametros.length >= 2) {
+                                try {
+                                    java.time.LocalDate inicio = java.time.LocalDate.parse(parametros[0]);
+                                    java.time.LocalDate fin = java.time.LocalDate.parse(parametros[1]);
+                                    com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes = 
+                                        new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
+                                    int citasFecha = servicioInformes.contarCitasPorFecha(inicio, fin);
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.CONTAR_CITAS_POR_FECHA_RESPONSE);
+                                        salida.writeInt(citasFecha);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al contar citas por fecha: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_CONTAR_CITAS_POR_FECHA);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_CONTAR_CITAS_POR_FECHA);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.CONTAR_FICHAJES_POR_ANO:
+                            System.out.println("Procesando solicitud de contar fichajes por año...");
+                            if (parametros.length >= 1) {
+                                try {
+                                    int ano = Integer.parseInt(parametros[0]);
+                                    com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes = 
+                                        new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
+                                    int fichajes = servicioInformes.contarFichajesPorAno(ano);
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.CONTAR_FICHAJES_POR_ANO_RESPONSE);
+                                        salida.writeInt(fichajes);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al contar fichajes por año: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_CONTAR_FICHAJES_POR_ANO);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_CONTAR_FICHAJES_POR_ANO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.CONTAR_FICHAJES_POR_MES_ANO:
+                            System.out.println("Procesando solicitud de contar fichajes por mes y año...");
+                            if (parametros.length >= 2) {
+                                try {
+                                    int mes = Integer.parseInt(parametros[0]);
+                                    int ano = Integer.parseInt(parametros[1]);
+                                    com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes = 
+                                        new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
+                                    int fichajes = servicioInformes.contarFichajesPorMesAno(mes, ano);
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.CONTAR_FICHAJES_POR_MES_ANO_RESPONSE);
+                                        salida.writeInt(fichajes);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al contar fichajes por mes y año: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_CONTAR_FICHAJES_POR_MES_ANO);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_CONTAR_FICHAJES_POR_MES_ANO);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_USUARIOS_POR_ROL:
+                            System.out.println("Procesando solicitud de obtener usuarios por rol...");
+                            try {
+                                com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes = 
+                                    new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
+                                List<com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.DatoGrafico> datos = 
+                                    servicioInformes.obtenerUsuariosPorRol();
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_USUARIOS_POR_ROL_RESPONSE);
+                                    salida.writeObject(datos);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener usuarios por rol: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_USUARIOS_POR_ROL);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
                         default:
                             System.out.println("Mensaje no reconocido: " + codigo);
                     }

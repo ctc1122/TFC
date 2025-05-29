@@ -2094,12 +2094,17 @@ public class ClinicaController implements Initializable {
                         "No se pudo obtener los pacientes. Inténtelo de nuevo.");
             }
 
+        } catch (ClassCastException e) {
+            // Problema de compatibilidad de serialización - servidor con estructura anterior
+            System.err.println("Error de compatibilidad de ModeloPaciente. Reinicie el servidor.");
+            mostrarAlerta("Compatibilidad", "Estructura de datos incompatible", 
+                    "Hay una incompatibilidad en la estructura de datos. Reinicie el servidor.");
         } catch (IOException ex) {
+            System.err.println("Error de IO en cargarPacientes: " + ex.getMessage());
         } catch (ClassNotFoundException e) {
-            // TODO Auto-generated catch block
+            System.err.println("Clase no encontrada en cargarPacientes: " + e.getMessage());
             e.printStackTrace();
         }
- 
     }
     
     private void cargarPropietarios() {
