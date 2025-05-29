@@ -85,6 +85,10 @@ public class PanelInicioController implements Initializable {
 
     private Pane zonaAnclaje;
     private boolean zonaAnclajeCreada = false;
+    
+    // Variables para controlar arrastre vs doble clic
+    private boolean isDragging = false;
+    private long lastPressTime = 0;
 
     private GestorSocket gestorSocket;
 
@@ -158,7 +162,12 @@ public class PanelInicioController implements Initializable {
             btnInformesCarousel.setTooltip(new Tooltip("Informes"));
 
             // Configurar eventos del carrusel
-            btnChicha.setOnAction(e -> toggleMenuRadial());
+            // Doble clic para desplegar menú (solo si no se está arrastrando)
+            btnChicha.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !isDragging) {
+                    toggleMenuRadial();
+                }
+            });
             btnMenuPrincipalCarousel.setOnAction(event -> {
                 restaurarVistaPrincipal();
                 mantenerCarruselVisible(); // Mantener el carrusel visible después de la acción
@@ -544,11 +553,16 @@ public class PanelInicioController implements Initializable {
      */
     private void configurarArrastreBoton(JFXButton boton) {
         boton.setOnMousePressed(event -> {
+            isDragging = false;
+            lastPressTime = System.currentTimeMillis();
             xOffset = event.getSceneX() - boton.getLayoutX();
             yOffset = event.getSceneY() - boton.getLayoutY();
         });
 
         boton.setOnMouseDragged(event -> {
+            // Marcar que se está arrastrando
+            isDragging = true;
+            
             // Al arrastrar, si no estamos en modo carrusel, lo activamos
             if (!isCarouselMode) {
                 activarModoCarrusel();
@@ -557,11 +571,6 @@ public class PanelInicioController implements Initializable {
             // Actualizar posición del botón
             boton.setLayoutX(event.getSceneX() - xOffset);
             boton.setLayoutY(event.getSceneY() - yOffset);
-            
-            // Despliega el menú radial si no está visible
-            if (!menuVisible) {
-                toggleMenuRadial();
-            }
             
             // Crear o actualizar la zona de anclaje (siempre al arrastrar)
             crearZonaAnclaje();
