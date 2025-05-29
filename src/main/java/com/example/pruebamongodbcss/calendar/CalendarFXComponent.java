@@ -2360,19 +2360,30 @@ public class CalendarFXComponent extends BorderPane {
             com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente paciente = servicioClinica.obtenerPacientePorId(cita.getPacienteId());
             com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario propietario = servicioClinica.obtenerPropietarioPorId(paciente.getPropietarioId());
 
-            // Cargar el módulo de facturación completo
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Facturacion/facturacion-view.fxml"));
+            // Cargar directamente el formulario de factura (no el módulo completo)
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Facturacion/factura-form.fxml"));
             Parent root = loader.load();
-            com.example.pruebamongodbcss.Modulos.Facturacion.FacturacionController facturacionController = loader.getController();
+            com.example.pruebamongodbcss.Modulos.Facturacion.FacturaFormController controller = loader.getController();
             
-            // Configurar el usuario actual en el módulo de facturación
-            facturacionController.setUsuarioActual(usuarioActual);
+            // Configurar el controlador
+            controller.setUsuarioActual(usuarioActual);
             
-            // Crear nueva factura desde la cita
-            facturacionController.crearFacturaDesdeCita(cita, paciente, propietario);
+            // Crear y configurar un FacturacionController dummy para las actualizaciones (sin mostrar UI)
+            try {
+                FXMLLoader facturacionLoader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Facturacion/facturacion-view.fxml"));
+                Parent facturacionRoot = facturacionLoader.load();
+                com.example.pruebamongodbcss.Modulos.Facturacion.FacturacionController facturacionController = facturacionLoader.getController();
+                facturacionController.setUsuarioActual(usuarioActual);
+                controller.setFacturacionController(facturacionController);
+            } catch (Exception e) {
+                System.err.println("No se pudo cargar FacturacionController para actualizaciones: " + e.getMessage());
+            }
+            
+            // Cargar datos desde la cita
+            controller.cargarDatosDesdeCita(cita, paciente, propietario);
 
             Stage stage = new Stage();
-            stage.setTitle("Facturación - Cita: " + cita.getNombrePaciente());
+            stage.setTitle("Nueva Factura - Cita: " + cita.getNombrePaciente());
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setScene(new Scene(root));
             stage.setResizable(true);
