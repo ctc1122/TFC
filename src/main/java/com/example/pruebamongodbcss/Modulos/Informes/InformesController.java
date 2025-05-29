@@ -91,6 +91,67 @@ public class InformesController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         gestorSocket = GestorSocket.getInstance();
         
+        // Reinicializar el módulo completo
+        reinicializarModulo();
+    }
+    
+    /**
+     * Reinicializa completamente el módulo de informes
+     * Útil cuando se vuelve de otros reportes para evitar conflictos de estilos
+     */
+    public void reinicializarModulo() {
+        // Limpiar cualquier estilo previo
+        limpiarEstilosPrevios();
+        
+        // Aplicar clases específicas para el módulo de informes
+        aplicarEstilosModulo();
+        
+        // Configurar controles
+        configurarControles();
+        
+        // Cargar el dashboard inicial
+        cargarDashboard();
+        
+        // Configurar actualización automática cada 5 minutos
+        configurarActualizacionAutomatica();
+    }
+    
+    /**
+     * Limpia estilos previos que puedan interferir
+     */
+    private void limpiarEstilosPrevios() {
+        try {
+            // Limpiar estilos en línea problemáticos
+            mainContainer.setStyle("");
+            scrollPane.setStyle("");
+            contentContainer.setStyle("");
+            
+            if (metricsContainer != null) {
+                metricsContainer.setStyle("");
+            }
+            if (chartsContainer != null) {
+                chartsContainer.setStyle("");
+            }
+            if (reportsGrid != null) {
+                reportsGrid.setStyle("");
+            }
+            
+            // Limpiar clases CSS problemáticas
+            Platform.runLater(() -> {
+                mainContainer.getStyleClass().removeAll("reporte-container", "reporte-content");
+                scrollPane.getStyleClass().removeAll("reporte-container", "reporte-content");
+                contentContainer.getStyleClass().removeAll("reporte-container", "reporte-content");
+            });
+            
+        } catch (Exception e) {
+            System.err.println("Error al limpiar estilos previos: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Aplica los estilos específicos del módulo de informes
+     */
+    private void aplicarEstilosModulo() {
         // Aplicar clases específicas para el módulo de informes
         mainContainer.getStyleClass().add("informes-view");
         scrollPane.getStyleClass().add("informes-container");
@@ -119,15 +180,6 @@ public class InformesController implements Initializable {
         scrollPane.setFitToWidth(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        
-        // Configurar controles
-        configurarControles();
-        
-        // Cargar el dashboard inicial
-        cargarDashboard();
-        
-        // Configurar actualización automática cada 5 minutos
-        configurarActualizacionAutomatica();
     }
     
     private void configurarControles() {

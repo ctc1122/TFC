@@ -421,25 +421,64 @@ public class ReporteClientesController implements Initializable {
     
     private void volverAlDashboard() {
         try {
-            // Obtener el BorderPane principal
-            BorderPane mainContainer = (BorderPane) btnVolver.getScene().getRoot();
+            // En lugar de buscar y reemplazar el BorderPane, vamos a disparar
+            // una acción para que el controlador principal maneje la navegación
             
-            // Cargar la vista principal de informes
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Informes/informes-view.fxml"));
-            Parent informesView = loader.load();
-            
-            // Establecer el usuario en el controlador
-            InformesController controller = loader.getController();
-            if (controller != null && usuarioActual != null) {
-                controller.setUsuarioActual(usuarioActual);
+            // Buscar la ventana principal y obtener la escena
+            javafx.stage.Window ventanaPrincipal = btnVolver.getScene().getWindow();
+            if (ventanaPrincipal != null) {
+                javafx.scene.Scene scene = ventanaPrincipal.getScene();
+                if (scene != null) {
+                    javafx.scene.Node root = scene.getRoot();
+                    
+                    // Buscar el PanelInicioController a través de la jerarquía
+                    // En lugar de hacer un cast directo, buscar el método correcto
+                    if (root instanceof BorderPane) {
+                        BorderPane mainRoot = (BorderPane) root;
+                        
+                        // El método más seguro es cargar directamente la vista de informes
+                        // sin hacer suposiciones sobre la estructura de navegación
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Informes/informes-view.fxml"));
+                        Parent informesView = com.example.pruebamongodbcss.theme.ThemeUtil.loadWithTheme(loader);
+                        
+                        // Establecer el usuario en el controlador
+                        InformesController controller = loader.getController();
+                        if (controller != null && usuarioActual != null) {
+                            controller.setUsuarioActual(usuarioActual);
+                        }
+                        
+                        // Buscar el BorderPane central (donde se cargan los módulos)
+                        if (mainRoot.getCenter() instanceof BorderPane) {
+                            BorderPane centerPane = (BorderPane) mainRoot.getCenter();
+                            centerPane.setCenter(informesView);
+                        } else {
+                            // Fallback: reemplazar directamente en el centro
+                            mainRoot.setCenter(informesView);
+                        }
+                        
+                        // Aplicar temas para asegurar consistencia
+                        javafx.application.Platform.runLater(() -> {
+                            com.example.pruebamongodbcss.theme.ThemeUtil.applyThemeToAllOpenWindows();
+                        });
+                        
+                    } else {
+                        System.err.println("Root no es BorderPane: " + root.getClass().getSimpleName());
+                        mostrarAlert("Error", "Error de navegación", 
+                                    "No se pudo identificar la estructura de navegación.");
+                    }
+                }
             }
             
-            // Cambiar el contenido central
-            mainContainer.setCenter(informesView);
-            
         } catch (IOException e) {
-            System.err.println("Error al volver al dashboard: " + e.getMessage());
+            System.err.println("Error al cargar la vista de informes: " + e.getMessage());
             e.printStackTrace();
+            mostrarAlert("Error", "Error al cargar dashboard", 
+                        "Ha ocurrido un error al volver al dashboard: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Error inesperado al volver al dashboard: " + e.getMessage());
+            e.printStackTrace();
+            mostrarAlert("Error", "Error inesperado", 
+                        "Ha ocurrido un error inesperado: " + e.getMessage());
         }
     }
     

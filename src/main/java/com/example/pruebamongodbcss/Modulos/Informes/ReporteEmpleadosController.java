@@ -1,5 +1,6 @@
 package com.example.pruebamongodbcss.Modulos.Informes;
 
+import java.io.IOException;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.List;
@@ -8,13 +9,16 @@ import java.util.ResourceBundle;
 import com.example.pruebamongodbcss.Data.Usuario;
 
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
 import javafx.scene.chart.PieChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 
 public class ReporteEmpleadosController implements Initializable {
@@ -149,7 +153,68 @@ public class ReporteEmpleadosController implements Initializable {
     
     @FXML
     private void volverAlDashboard() {
-        // Este método será llamado desde el FXML
+        try {
+            // Buscar la ventana principal y obtener la escena
+            javafx.stage.Window ventanaPrincipal = btnExportar.getScene().getWindow();
+            if (ventanaPrincipal != null) {
+                javafx.scene.Scene scene = ventanaPrincipal.getScene();
+                if (scene != null) {
+                    javafx.scene.Node root = scene.getRoot();
+                    
+                    if (root instanceof BorderPane) {
+                        BorderPane mainRoot = (BorderPane) root;
+                        
+                        // Cargar directamente la vista de informes
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Informes/informes-view.fxml"));
+                        Parent informesView = com.example.pruebamongodbcss.theme.ThemeUtil.loadWithTheme(loader);
+                        
+                        // Establecer el usuario en el controlador
+                        InformesController controller = loader.getController();
+                        if (controller != null && usuarioActual != null) {
+                            controller.setUsuarioActual(usuarioActual);
+                        }
+                        
+                        // Buscar el BorderPane central (donde se cargan los módulos)
+                        if (mainRoot.getCenter() instanceof BorderPane) {
+                            BorderPane centerPane = (BorderPane) mainRoot.getCenter();
+                            centerPane.setCenter(informesView);
+                        } else {
+                            // Fallback: reemplazar directamente en el centro
+                            mainRoot.setCenter(informesView);
+                        }
+                        
+                        // Aplicar temas para asegurar consistencia
+                        javafx.application.Platform.runLater(() -> {
+                            com.example.pruebamongodbcss.theme.ThemeUtil.applyThemeToAllOpenWindows();
+                        });
+                        
+                    } else {
+                        System.err.println("Root no es BorderPane: " + root.getClass().getSimpleName());
+                        mostrarAlert("Error", "Error de navegación", 
+                                    "No se pudo identificar la estructura de navegación.");
+                    }
+                }
+            }
+            
+        } catch (IOException e) {
+            System.err.println("Error al cargar la vista de informes: " + e.getMessage());
+            e.printStackTrace();
+            mostrarAlert("Error", "Error al cargar dashboard", 
+                        "Ha ocurrido un error al volver al dashboard: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Error inesperado al volver al dashboard: " + e.getMessage());
+            e.printStackTrace();
+            mostrarAlert("Error", "Error inesperado", 
+                        "Ha ocurrido un error inesperado: " + e.getMessage());
+        }
+    }
+    
+    private void mostrarAlert(String titulo, String header, String mensaje) {
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+        alert.setTitle(titulo);
+        alert.setHeaderText(header);
+        alert.setContentText(mensaje);
+        alert.showAndWait();
     }
     
     // Clase para las filas de la tabla
