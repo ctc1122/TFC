@@ -341,4 +341,38 @@ public interface Protocolo {
     static final int OBTENER_FACTURAS_FINALIZADAS_RESPONSE = 1245;
     static final int ERROR_OBTENER_FACTURAS_FINALIZADAS = 1246;
 
+    // Códigos para contadores de diagnósticos y facturas en el calendario
+    static final int ACTUALIZAR_CONTADOR_DIAGNOSTICOS = 1247;
+    static final int ACTUALIZAR_CONTADOR_DIAGNOSTICOS_RESPONSE = 1248;
+    static final int ERROR_ACTUALIZAR_CONTADOR_DIAGNOSTICOS = 1249;
+
+    static final int ACTUALIZAR_CONTADOR_FACTURAS = 1250;
+    static final int ACTUALIZAR_CONTADOR_FACTURAS_RESPONSE = 1251;
+    static final int ERROR_ACTUALIZAR_CONTADOR_FACTURAS = 1252;
+
+    static final int PUEDE_AGREGAR_FACTURA = 1253;
+    static final int PUEDE_AGREGAR_FACTURA_RESPONSE = 1254;
+    static final int ERROR_PUEDE_AGREGAR_FACTURA = 1255;
+
+    static final int OBTENER_CONTADOR_FACTURAS = 1256;
+    static final int OBTENER_CONTADOR_FACTURAS_RESPONSE = 1257;
+    static final int ERROR_OBTENER_CONTADOR_FACTURAS = 1258;
+
+    static final int OBTENER_CONTADOR_DIAGNOSTICOS = 1259;
+    static final int OBTENER_CONTADOR_DIAGNOSTICOS_RESPONSE = 1260;
+    static final int ERROR_OBTENER_CONTADOR_DIAGNOSTICOS = 1261;
+
+    // Códigos para asociar/desasociar facturas de citas
+    static final int ASOCIAR_FACTURA_A_CITA = 1262;
+    static final int ASOCIAR_FACTURA_A_CITA_RESPONSE = 1263;
+    static final int ERROR_ASOCIAR_FACTURA_A_CITA = 1264;
+
+    static final int DESASOCIAR_FACTURA_DE_CITA = 1265;
+    static final int DESASOCIAR_FACTURA_DE_CITA_RESPONSE = 1266;
+    static final int ERROR_DESASOCIAR_FACTURA_DE_CITA = 1267;
+
+    static final int OBTENER_FACTURA_ASOCIADA_A_CITA = 1268;
+    static final int OBTENER_FACTURA_ASOCIADA_A_CITA_RESPONSE = 1269;
+    static final int ERROR_OBTENER_FACTURA_ASOCIADA_A_CITA = 1270;
+
 } 

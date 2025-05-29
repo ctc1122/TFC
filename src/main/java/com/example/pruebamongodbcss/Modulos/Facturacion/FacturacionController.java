@@ -846,8 +846,31 @@ public class FacturacionController implements Initializable {
                     
                     if (codigoRespuesta == Protocolo.ELIMINAR_FACTURA_RESPONSE) {
                         Platform.runLater(() -> {
-                            listaBorradores.remove(factura);
+                            // Desasociar factura de la cita si hay cita asociada
+                            if (factura.getCitaId() != null) {
+                                try {
+                                    // Desasociar factura de cita usando el nuevo sistema
+                                    String mensajeDesasociacion = Protocolo.DESASOCIAR_FACTURA_DE_CITA + "|" + factura.getCitaId().toString();
+                                    gestorSocket.enviarPeticion(mensajeDesasociacion);
+                                    
+                                    int respuestaDesasociacion = gestorSocket.getEntrada().readInt();
+                                    if (respuestaDesasociacion == Protocolo.DESASOCIAR_FACTURA_DE_CITA_RESPONSE) {
+                                        boolean desasociado = gestorSocket.getEntrada().readBoolean();
+                                        if (desasociado) {
+                                            System.out.println("✅ Factura desasociada correctamente de la cita");
+                                        } else {
+                                            System.out.println("⚠️ No se pudo desasociar la factura de la cita");
+                                        }
+                                    } else {
+                                        System.out.println("❌ Error al desasociar factura de cita");
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al desasociar factura de cita: " + e.getMessage());
+                                }
+                            }
+                            
                             mostrarInfo("Éxito", "Borrador eliminado correctamente");
+                            cargarBorradores();
                         });
                     } else {
                         Platform.runLater(() -> mostrarError("Error", "No se pudo eliminar el borrador"));

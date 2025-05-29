@@ -34,6 +34,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Control;
@@ -2328,6 +2329,30 @@ public class CalendarFXComponent extends BorderPane {
     // Agrego el método para abrir el formulario de facturación desde una cita
     private void abrirFormularioFacturacionDesdeCita(CalendarEvent event) {
         try {
+            // Verificar si la cita puede tener más facturas (sistema de semáforo)
+            CalendarService calendarService = new CalendarService();
+            boolean puedeAgregarFactura = calendarService.puedeAgregarFactura(event.getId());
+            
+            if (!puedeAgregarFactura) {
+                // Mostrar mensaje de advertencia
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Límite de facturas alcanzado");
+                alert.setHeaderText("Esta cita ya tiene una factura asociada");
+                alert.setContentText("Cada cita solo puede tener máximo 1 factura (incluyendo borradores). " +
+                    "Si necesita crear una nueva factura, primero debe eliminar la existente.");
+                
+                ButtonType btnVerFacturas = new ButtonType("Ver facturas existentes");
+                ButtonType btnCancelar = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
+                alert.getButtonTypes().setAll(btnVerFacturas, btnCancelar);
+                
+                Optional<ButtonType> resultado = alert.showAndWait();
+                if (resultado.isPresent() && resultado.get() == btnVerFacturas) {
+                    // Implementar vista de facturas existentes
+                    abrirFacturaExistente(event);
+                }
+                return;
+            }
+            
             // Obtener la cita, paciente y propietario
             com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
             org.bson.types.ObjectId citaId = new org.bson.types.ObjectId(event.getId());
@@ -2394,6 +2419,78 @@ public class CalendarFXComponent extends BorderPane {
                     System.err.println("⚠️ Error al cerrar conexión automática: " + e.getMessage());
                 }
             }
+        }
+    }
+    
+    /**
+     * Abre la factura existente asociada a una cita para ver/editar
+     */
+    private void abrirFacturaExistente(CalendarEvent event) {
+        try {
+            // Obtener el ID de la factura asociada a la cita
+            CalendarService calendarService = new CalendarService();
+            org.bson.types.ObjectId facturaId = calendarService.obtenerFacturaAsociadaACita(event.getId());
+            
+            if (facturaId == null) {
+                showErrorMessage("Error", "No se encontró una factura asociada a esta cita.");
+                return;
+            }
+            
+            System.out.println("🔍 Cargando factura existente: " + facturaId.toString());
+            
+            // Obtener la factura desde el servidor
+            String peticion = com.example.pruebamongodbcss.Protocolo.Protocolo.OBTENER_FACTURA_POR_ID + "|" + facturaId.toString();
+            gestorSocket.enviarPeticion(peticion);
+            
+            int codigoRespuesta = gestorSocket.getEntrada().readInt();
+            if (codigoRespuesta == com.example.pruebamongodbcss.Protocolo.Protocolo.OBTENER_FACTURA_POR_ID_RESPONSE) {
+                com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura factura = 
+                    (com.example.pruebamongodbcss.Modulos.Facturacion.ModeloFactura) gestorSocket.getEntrada().readObject();
+                
+                if (factura != null) {
+                    // Obtener datos de la cita, paciente y propietario
+                    com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = 
+                        new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
+                    org.bson.types.ObjectId citaId = new org.bson.types.ObjectId(event.getId());
+                    com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita cita = servicioClinica.obtenerCitaPorId(citaId);
+                    com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente paciente = servicioClinica.obtenerPacientePorId(cita.getPacienteId());
+                    com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario propietario = servicioClinica.obtenerPropietarioPorId(paciente.getPropietarioId());
+                    
+                    // Cargar el formulario de facturación
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Facturacion/factura-form.fxml"));
+                    Parent root = loader.load();
+                    com.example.pruebamongodbcss.Modulos.Facturacion.FacturaFormController controller = loader.getController();
+                    
+                    // Configurar el controlador
+                    controller.setUsuarioActual(usuarioActual);
+                    
+                    // Cargar la factura existente (modo edición si es borrador, solo lectura si está finalizada)
+                    controller.cargarFacturaExistente(factura, cita, paciente, propietario);
+                    
+                    // Configurar la ventana
+                    Stage stage = new Stage();
+                    boolean esBorrador = factura.isEsBorrador();
+                    String titulo = esBorrador ? 
+                        "Editar Borrador - Cita: " + cita.getNombrePaciente() : 
+                        "Ver Factura - Cita: " + cita.getNombrePaciente();
+                    stage.setTitle(titulo);
+                    stage.initModality(Modality.APPLICATION_MODAL);
+                    stage.setScene(new Scene(root));
+                    stage.setResizable(true);
+                    stage.showAndWait();
+                    
+                    // Refrescar el calendario después de cerrar
+                    refreshCalendarFromDatabase();
+                } else {
+                    showErrorMessage("Error", "No se pudo cargar la factura.");
+                }
+            } else {
+                showErrorMessage("Error", "Error al obtener la factura del servidor.");
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            showErrorMessage("Error", "No se pudo abrir la factura: " + e.getMessage());
         }
     }
 }

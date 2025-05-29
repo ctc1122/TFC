@@ -63,6 +63,10 @@ public class CalendarEvent implements Serializable {
     private EventoTipo tipoEvento; // Nuevo campo para utilizar el enumerado
     private String pacienteId; // ID del paciente asociado a la cita
 
+    // NUEVOS CAMPOS: Contadores para control de asociaciones
+    private int contadorDiagnosticos = 0; // Contador de diagnósticos asociados
+    private int contadorFacturas = 0; // Contador de facturas asociadas (incluye borradores)
+
     /**
      * Constructor por defecto
      */
@@ -272,6 +276,82 @@ public class CalendarEvent implements Serializable {
         this.pacienteId = pacienteId;
     }
 
+    /**
+     * Obtiene el contador de diagnósticos asociados a esta cita
+     * @return número de diagnósticos asociados
+     */
+    public int getContadorDiagnosticos() {
+        return contadorDiagnosticos;
+    }
+
+    /**
+     * Establece el contador de diagnósticos asociados a esta cita
+     * @param contadorDiagnosticos número de diagnósticos asociados
+     */
+    public void setContadorDiagnosticos(int contadorDiagnosticos) {
+        this.contadorDiagnosticos = Math.max(0, contadorDiagnosticos); // No permitir valores negativos
+    }
+
+    /**
+     * Incrementa el contador de diagnósticos en 1
+     */
+    public void incrementarContadorDiagnosticos() {
+        this.contadorDiagnosticos++;
+    }
+
+    /**
+     * Decrementa el contador de diagnósticos en 1 (mínimo 0)
+     */
+    public void decrementarContadorDiagnosticos() {
+        this.contadorDiagnosticos = Math.max(0, this.contadorDiagnosticos - 1);
+    }
+
+    /**
+     * Obtiene el contador de facturas asociadas a esta cita
+     * @return número de facturas asociadas (incluye borradores)
+     */
+    public int getContadorFacturas() {
+        return contadorFacturas;
+    }
+
+    /**
+     * Establece el contador de facturas asociadas a esta cita
+     * @param contadorFacturas número de facturas asociadas
+     */
+    public void setContadorFacturas(int contadorFacturas) {
+        this.contadorFacturas = Math.max(0, contadorFacturas); // No permitir valores negativos
+    }
+
+    /**
+     * Incrementa el contador de facturas en 1
+     */
+    public void incrementarContadorFacturas() {
+        this.contadorFacturas++;
+    }
+
+    /**
+     * Decrementa el contador de facturas en 1 (mínimo 0)
+     */
+    public void decrementarContadorFacturas() {
+        this.contadorFacturas = Math.max(0, this.contadorFacturas - 1);
+    }
+
+    /**
+     * Verifica si la cita puede tener más facturas asociadas
+     * @return true si puede tener más facturas (contador < 1), false si ya tiene el máximo
+     */
+    public boolean puedeAgregarFactura() {
+        return this.contadorFacturas < 1;
+    }
+
+    /**
+     * Verifica si la cita ya tiene facturas asociadas
+     * @return true si tiene al menos una factura asociada
+     */
+    public boolean tieneFacturasAsociadas() {
+        return this.contadorFacturas > 0;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -303,6 +383,8 @@ public class CalendarEvent implements Serializable {
                 ", eventType='" + eventType + '\'' +
                 ", tipoEvento=" + tipoEvento +
                 ", pacienteId='" + pacienteId + '\'' +
+                ", contadorDiagnosticos=" + contadorDiagnosticos +
+                ", contadorFacturas=" + contadorFacturas +
                 '}';
     }
 } 

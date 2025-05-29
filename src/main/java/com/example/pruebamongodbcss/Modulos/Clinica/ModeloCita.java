@@ -30,7 +30,9 @@ public class ModeloCita implements Serializable{
     private String usuarioAsignado; // ID del usuario asignado a la cita
     private boolean recordatorio;
     private boolean confirmada;
-    private String facturaId; // Campo para relacionar con facturas
+
+
+
 
     /**
      * Constructor vacío
@@ -43,7 +45,7 @@ public class ModeloCita implements Serializable{
         this.fechaHoraFin = this.fechaHora.plusMinutes(this.duracionMinutos);
         this.recordatorio = false;
         this.confirmada = false;
-        this.facturaId = "null"; // Inicializar como string "null"
+      
     }
 
     /**
@@ -97,14 +99,7 @@ public class ModeloCita implements Serializable{
         // Campos adicionales
         this.recordatorio = document.getBoolean("recordatorio", false);
         this.confirmada = document.getBoolean("confirmada", false);
-        
-        // Campo factura_id - con compatibilidad para documentos existentes
-        if (document.containsKey("factura_id")) {
-            this.facturaId = document.getString("factura_id");
-        } else {
-            // Si no existe, inicializar como "null" para compatibilidad
-            this.facturaId = "null";
-        }
+
     }
 
     /**
@@ -136,13 +131,16 @@ public class ModeloCita implements Serializable{
            .append("estado", estado.name())
            .append("observaciones", observaciones)
            .append("recordatorio", recordatorio)
-           .append("confirmada", confirmada)
-           .append("factura_id", facturaId != null ? facturaId : "null"); // Asegurar que siempre se guarde el campo
+           .append("confirmada", confirmada);
+            // Asegurar que siempre se guarde el campo
         
         // Añadir el campo usuarioAsignado si existe
         if (usuarioAsignado != null && !usuarioAsignado.isEmpty()) {
             doc.append("usuarioAsignado", usuarioAsignado);
         }
+        
+        // Añadir el campo facturaId si existe
+
         
         return doc;
     }
@@ -321,11 +319,5 @@ public class ModeloCita implements Serializable{
         this.confirmada = confirmada;
     }
 
-    public String getFacturaId() {
-        return facturaId;
-    }
 
-    public void setFacturaId(String facturaId) {
-        this.facturaId = facturaId;
-    }
 } 
