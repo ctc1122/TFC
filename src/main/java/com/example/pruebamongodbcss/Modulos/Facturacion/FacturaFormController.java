@@ -1089,6 +1089,7 @@ public class FacturaFormController implements Initializable {
                 System.out.println("📤 Enviando factura al servidor...");
                 System.out.println("📋 Estado: " + factura.getEstado());
                 System.out.println("📋 Es borrador: " + factura.isEsBorrador());
+                System.out.println("📋 ID de factura: " + (factura.getId() != null ? factura.getId().toString() : "null"));
                 
                 // Verificar conexión
                 if (!gestorSocket.isConectado()) {
@@ -1096,8 +1097,17 @@ public class FacturaFormController implements Initializable {
                     return;
                 }
                 
-                // Enviar petición
-                String peticion = String.valueOf(Protocolo.CREAR_FACTURA);
+                // Determinar si es una factura nueva o una actualización
+                final boolean esFacturaNueva = (factura.getId() == null);
+                String peticion;
+                
+                if (esFacturaNueva) {
+                    peticion = String.valueOf(Protocolo.CREAR_FACTURA);
+                    System.out.println("🆕 Creando factura nueva");
+                } else {
+                    peticion = String.valueOf(Protocolo.ACTUALIZAR_FACTURA);
+                    System.out.println("🔄 Actualizando factura existente con ID: " + factura.getId());
+                }
                 
                 synchronized (gestorSocket) {
                     gestorSocket.enviarPeticion(peticion);
@@ -1108,20 +1118,36 @@ public class FacturaFormController implements Initializable {
                     ObjectInputStream entrada = gestorSocket.getEntrada();
                     int codigoRespuesta = entrada.readInt();
                     
-                    if (codigoRespuesta == Protocolo.CREAR_FACTURA_RESPONSE) {
-                        ModeloFactura facturaGuardada = (ModeloFactura) entrada.readObject();
-                        
+                    final boolean operacionExitosa;
+                    final ModeloFactura facturaGuardada;
+                    
+                    if (esFacturaNueva && codigoRespuesta == Protocolo.CREAR_FACTURA_RESPONSE) {
+                        facturaGuardada = (ModeloFactura) entrada.readObject();
+                        operacionExitosa = true;
+                        System.out.println("✅ Factura nueva creada exitosamente");
+                    } else if (!esFacturaNueva && codigoRespuesta == Protocolo.ACTUALIZAR_FACTURA_RESPONSE) {
+                        boolean actualizada = entrada.readBoolean();
+                        operacionExitosa = actualizada;
+                        facturaGuardada = factura; // La factura ya tiene los datos actualizados
+                        System.out.println("✅ Factura actualizada exitosamente: " + actualizada);
+                    } else if (codigoRespuesta == Protocolo.ERROR_CREAR_FACTURA || codigoRespuesta == Protocolo.ERROR_ACTUALIZAR_FACTURA) {
+                        Platform.runLater(() -> mostrarError("Error", "Error del servidor al guardar la factura"));
+                        return;
+                    } else {
+                        Platform.runLater(() -> mostrarError("Error", "Respuesta inesperada del servidor: " + codigoRespuesta));
+                        return;
+                    }
+                    
+                    if (operacionExitosa) {
                         Platform.runLater(() -> {
-                            System.out.println("✅ Factura guardada exitosamente");
-                            
                             // Actualizar la factura con los datos del servidor
-                            if (facturaGuardada != null) {
+                            if (facturaGuardada != null && esFacturaNueva) {
                                 this.factura = facturaGuardada;
                                 actualizarNumeroFacturaEnInterfaz();
                             }
                             
-                            // Asociar la factura a la cita si hay cita asociada
-                            if (citaId != null && facturaGuardada != null && facturaGuardada.getId() != null) {
+                            // Solo asociar la factura a la cita si es nueva (los borradores ya están asociados)
+                            if (citaId != null && facturaGuardada != null && facturaGuardada.getId() != null && esFacturaNueva) {
                                 try {
                                     // Asociar factura a cita usando el nuevo sistema
                                     String mensajeAsociacion = Protocolo.ASOCIAR_FACTURA_A_CITA + "|" + citaId.toString() + ":" + facturaGuardada.getId().toString();
@@ -1133,7 +1159,7 @@ public class FacturaFormController implements Initializable {
                                         if (asociado) {
                                             System.out.println("✅ Factura asociada correctamente a la cita");
                                             
-                                            // Actualizar contador de facturas en el calendario
+                                            // Actualizar contador de facturas en el calendario (solo para facturas nuevas)
                                             try {
                                                 String mensajeContador = Protocolo.ACTUALIZAR_CONTADOR_FACTURAS + "|" + citaId.toString() + ":" + "true";
                                                 gestorSocket.enviarPeticion(mensajeContador);
@@ -1163,14 +1189,36 @@ public class FacturaFormController implements Initializable {
                                 }
                             }
                             
-                            mostrarInfo("Éxito", "Factura guardada correctamente");
-                                cerrarVentana();
+                            // Si la factura se finalizó (no es borrador), cambiar el estado de la cita a COMPLETADA
+                            if (!factura.isEsBorrador() && citaId != null) {
+                                try {
+                                    String mensajeEstadoCita = Protocolo.CAMBIAR_ESTADO_CITA + "|" + citaId.toString() + ":" + "COMPLETADA";
+                                    gestorSocket.enviarPeticion(mensajeEstadoCita);
+                                    
+                                    int respuestaEstado = gestorSocket.getEntrada().readInt();
+                                    if (respuestaEstado == Protocolo.CAMBIAR_ESTADO_CITA_RESPONSE) {
+                                        boolean estadoCambiado = gestorSocket.getEntrada().readBoolean();
+                                        if (estadoCambiado) {
+                                            System.out.println("✅ Estado de la cita cambiado a COMPLETADA");
+                                        } else {
+                                            System.out.println("⚠️ No se pudo cambiar el estado de la cita");
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al cambiar estado de la cita: " + e.getMessage());
+                                }
+                            }
+                            
+                            // Actualizar las tablas en el controlador padre
+                            if (facturacionController != null) {
+                                facturacionController.actualizarListas();
+                                System.out.println("🔄 Tablas actualizadas en FacturacionController");
+                            }
+                            
+                            String mensaje = factura.isEsBorrador() ? "Borrador guardado correctamente" : "Factura finalizada correctamente";
+                            mostrarInfo("Éxito", mensaje);
+                            cerrarVentana();
                         });
-                        
-                    } else if (codigoRespuesta == Protocolo.ERROR_CREAR_FACTURA) {
-                        Platform.runLater(() -> mostrarError("Error", "Error del servidor al guardar la factura"));
-                    } else {
-                        Platform.runLater(() -> mostrarError("Error", "Respuesta inesperada del servidor: " + codigoRespuesta));
                     }
                 }
                 
