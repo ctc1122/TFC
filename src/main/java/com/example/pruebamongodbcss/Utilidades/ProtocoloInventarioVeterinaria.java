@@ -42,6 +42,9 @@ public class ProtocoloInventarioVeterinaria {
     public static final int REDUCIR_INVENTARIO = 9005;
     public static final int REDUCIR_INVENTARIO_RESPONSE = 9006;
     public static final int ERROR_REDUCIR_INVENTARIO = 9007;
+    public static final int RESTABLECER_INVENTARIO = 9008;
+    public static final int RESTABLECER_INVENTARIO_RESPONSE = 9009;
+    public static final int ERROR_RESTABLECER_INVENTARIO = 9010;
     
     /**
      * Construye un mensaje siguiendo el protocolo del servidor

@@ -379,8 +379,23 @@ public class FacturaFormController implements Initializable {
                         
                         btnEliminar.setOnAction(e -> {
                             ModeloFactura.ConceptoFactura concepto = getTableView().getItems().get(getIndex());
-                            listaMedicamentos.remove(concepto);
-                            calcularTotales();
+                            
+                            // Confirmar eliminación
+                            Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                            confirmAlert.setTitle("Confirmar eliminación");
+                            confirmAlert.setHeaderText("¿Eliminar medicamento de la factura?");
+                            confirmAlert.setContentText("Se eliminará " + concepto.getDescripcion() + 
+                                                       " y se restablecerá el inventario (" + concepto.getCantidad() + " unidades).");
+                            
+                            Optional<ButtonType> result = confirmAlert.showAndWait();
+                            if (result.isPresent() && result.get() == ButtonType.OK) {
+                                // Eliminar de la lista
+                                listaMedicamentos.remove(concepto);
+                                calcularTotales();
+                                
+                                // Restablecer inventario
+                                restablecerInventarioMedicamento(concepto);
+                            }
                         });
                     }
                     
@@ -620,7 +635,9 @@ public class FacturaFormController implements Initializable {
             ModeloFactura.ConceptoFactura concepto = new ModeloFactura.ConceptoFactura();
             
             // Mapear datos del medicamento del inventario
-            concepto.setDescripcion(medicamentoInventario.getNombreCompleto());
+            // Incluir código del producto en la descripción para poder extraerlo después
+            String descripcionConCodigo = "[" + medicamentoInventario.getCodigo() + "] " + medicamentoInventario.getNombreCompleto();
+            concepto.setDescripcion(descripcionConCodigo);
             concepto.setCantidad(1); // Cantidad inicial
             concepto.setPrecioUnitario(medicamentoInventario.getPrecioUnitario());
             concepto.setTipoIva(10.0); // IVA reducido para medicamentos
@@ -1342,10 +1359,12 @@ public class FacturaFormController implements Initializable {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Confirmar");
         alert.setHeaderText("¿Cancelar edición?");
-        alert.setContentText("Se perderán los cambios no guardados.");
+        alert.setContentText("Se perderán los cambios no guardados y se restablecerá el inventario de los medicamentos agregados.");
         
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
+            // Restablecer inventario antes de cerrar
+            restablecerInventarioMedicamentos();
             cerrarVentana();
         }
     }
@@ -1754,5 +1773,197 @@ public class FacturaFormController implements Initializable {
         
         hiloReduccion.setDaemon(true);
         hiloReduccion.start();
+    }
+    
+    /**
+     * Restablece el inventario de un medicamento específico cuando se elimina de la factura
+     */
+    private void restablecerInventarioMedicamento(ModeloFactura.ConceptoFactura medicamento) {
+        System.out.println("🔄 Restableciendo inventario individual para: " + medicamento.getDescripcion());
+        
+        // Obtener ID de factura si existe
+        String facturaId = (factura != null && factura.getId() != null) ? 
+            factura.getId().toString() : "TEMP_" + System.currentTimeMillis();
+        
+        // Extraer código del producto
+        String codigoProducto = extraerCodigoProducto(medicamento.getDescripcion());
+        
+        if (codigoProducto != null && !codigoProducto.isEmpty()) {
+            restablecerInventarioEnServidor(facturaId, codigoProducto, medicamento.getCantidad());
+            
+            // Mostrar notificación de éxito
+            Platform.runLater(() -> {
+                mostrarInfo("Inventario restablecido", 
+                    "Se han restablecido " + medicamento.getCantidad() + 
+                    " unidades del producto " + codigoProducto + " en el inventario.");
+            });
+        } else {
+            System.out.println("⚠️ No se pudo extraer código de producto para: " + medicamento.getDescripcion());
+            Platform.runLater(() -> {
+                mostrarAdvertencia("Código no encontrado", 
+                    "No se pudo extraer el código del producto de '" + medicamento.getDescripcion() + "'.\n" +
+                    "El medicamento se eliminó de la factura, pero el inventario debe actualizarse manualmente.");
+            });
+        }
+    }
+    
+    /**
+     * Restablece el inventario de todos los medicamentos agregados a la factura
+     * Esto se ejecuta cuando se cancela la factura para devolver el stock
+     */
+    private void restablecerInventarioMedicamentos() {
+        if (listaMedicamentos.isEmpty()) {
+            System.out.println("ℹ️ No hay medicamentos para restablecer en el inventario");
+            return;
+        }
+        
+        System.out.println("🔄 Restableciendo inventario de " + listaMedicamentos.size() + " medicamentos...");
+        
+        // Obtener ID de factura si existe
+        String facturaId = (factura != null && factura.getId() != null) ? 
+            factura.getId().toString() : "TEMP_" + System.currentTimeMillis();
+        
+        // Restablecer inventario para cada medicamento
+        for (ModeloFactura.ConceptoFactura medicamento : listaMedicamentos) {
+            // Extraer código del producto del nombre/descripción del medicamento
+            // Nota: Esto asume que el código está al principio de la descripción o necesitarás una forma de obtenerlo
+            String codigoProducto = extraerCodigoProducto(medicamento.getDescripcion());
+            if (codigoProducto != null && !codigoProducto.isEmpty()) {
+                restablecerInventarioEnServidor(facturaId, codigoProducto, medicamento.getCantidad());
+            } else {
+                System.out.println("⚠️ No se pudo extraer código de producto para: " + medicamento.getDescripcion());
+            }
+        }
+    }
+    
+    /**
+     * Extrae el código del producto desde la descripción del medicamento
+     * Busca primero el formato [CODIGO] agregado por el sistema, luego otros patrones
+     */
+    private String extraerCodigoProducto(String descripcion) {
+        if (descripcion == null || descripcion.trim().isEmpty()) {
+            return null;
+        }
+        
+        // Buscar códigos entre corchetes al inicio [CODIGO]
+        if (descripcion.startsWith("[") && descripcion.contains("]")) {
+            int finCorchete = descripcion.indexOf("]");
+            if (finCorchete > 1) {
+                String codigo = descripcion.substring(1, finCorchete);
+                if (codigo.matches("\\d+")) {
+                    System.out.println("✅ Código extraído de corchetes: " + codigo);
+                    return codigo;
+                }
+            }
+        }
+        
+        // Buscar patrones comunes de códigos de producto (números al inicio)
+        if (descripcion.matches("^\\d+.*")) {
+            // Si empieza con números, extraer esos números
+            String codigo = descripcion.replaceAll("^(\\d+).*", "$1");
+            System.out.println("✅ Código extraído del inicio: " + codigo);
+            return codigo;
+        }
+        
+        // Buscar códigos entre paréntesis
+        if (descripcion.contains("(") && descripcion.contains(")")) {
+            String codigo = descripcion.replaceAll(".*\\((\\d+)\\).*", "$1");
+            if (!codigo.equals(descripcion)) {
+                System.out.println("✅ Código extraído de paréntesis: " + codigo);
+                return codigo;
+            }
+        }
+        
+        // Si no se encuentra un patrón, intentar extraer cualquier secuencia de números larga
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\d{6,}");
+        java.util.regex.Matcher matcher = pattern.matcher(descripcion);
+        if (matcher.find()) {
+            String codigo = matcher.group();
+            System.out.println("✅ Código extraído por patrón numérico: " + codigo);
+            return codigo;
+        }
+        
+        System.out.println("⚠️ No se pudo determinar el código de producto de: " + descripcion);
+        return null;
+    }
+    
+    /**
+     * Restablece el inventario en el servidor del puerto 50005
+     * @param facturaId ID de la factura
+     * @param codigoProducto Código del medicamento  
+     * @param cantidad Cantidad a restablecer
+     */
+    private void restablecerInventarioEnServidor(String facturaId, String codigoProducto, int cantidad) {
+        System.out.println("📤 Iniciando restablecimiento de inventario para producto: " + codigoProducto + " cantidad: " + cantidad);
+        
+        // Ejecutar en hilo separado para no bloquear la UI
+        Thread hiloRestablecimiento = new Thread(() -> {
+            try {
+                // Obtener instancia del gestor de inventario
+                GestorSocketInventario gestorInventario = GestorSocketInventario.getInstance();
+                
+                // Verificar si ya está conectado, si no, conectar
+                if (!gestorInventario.isConectado()) {
+                    System.out.println("🔗 Conectando al servidor de inventario para restablecimiento...");
+                    boolean conectado = gestorInventario.conectarAlServidorInventario().get();
+                    if (!conectado) {
+                        System.out.println("❌ No se pudo conectar al servidor de inventario para restablecimiento");
+                        return;
+                    }
+                }
+                
+                // Construir mensaje de restablecimiento de inventario
+                String idMensaje = "MSG_RESTORE_" + System.currentTimeMillis();
+                String mensajeRestablecimiento = ProtocoloInventarioVeterinaria.construirMensaje(
+                    ProtocoloInventarioVeterinaria.RESTABLECER_INVENTARIO,
+                    facturaId,
+                    codigoProducto,
+                    String.valueOf(cantidad),
+                    idMensaje
+                );
+                
+                System.out.println("📤 Enviando petición de restablecimiento: " + mensajeRestablecimiento);
+                
+                // Enviar petición
+                gestorInventario.enviarPeticion(mensajeRestablecimiento);
+                
+                // Leer respuesta
+                String respuesta = gestorInventario.leerRespuesta();
+                System.out.println("📥 Respuesta del servidor: " + respuesta);
+                
+                // Parsear respuesta
+                String[] partesRespuesta = ProtocoloInventarioVeterinaria.parsearMensaje(respuesta);
+                
+                if (partesRespuesta.length >= 3) {
+                    int codigoRespuesta = Integer.parseInt(partesRespuesta[0]);
+                    String idMensajeRespuesta = partesRespuesta[1];
+                    String mensaje = partesRespuesta[2];
+                    
+                    System.out.println("📋 Código respuesta restablecimiento: " + codigoRespuesta);
+                    System.out.println("📋 ID mensaje: " + idMensajeRespuesta);
+                    System.out.println("📋 Mensaje: " + mensaje);
+                    
+                    if (codigoRespuesta == ProtocoloInventarioVeterinaria.RESTABLECER_INVENTARIO_RESPONSE) {
+                        // Éxito
+                        System.out.println("✅ Inventario restablecido exitosamente para producto " + codigoProducto);
+                    } else if (codigoRespuesta == ProtocoloInventarioVeterinaria.ERROR_RESTABLECER_INVENTARIO) {
+                        // Error específico de restablecimiento
+                        System.out.println("⚠️ Error al restablecer inventario: " + mensaje);
+                    } else {
+                        // Otro tipo de error
+                        System.out.println("❌ Respuesta inesperada al restablecer: " + codigoRespuesta);
+                    }
+                } else {
+                    System.out.println("❌ Respuesta inválida del servidor para restablecimiento: " + respuesta);
+                }
+                
+            } catch (Exception e) {
+                System.err.println("❌ Error al restablecer inventario: " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
+        
+        hiloRestablecimiento.setDaemon(true);
+        hiloRestablecimiento.start();
     }
 } 
