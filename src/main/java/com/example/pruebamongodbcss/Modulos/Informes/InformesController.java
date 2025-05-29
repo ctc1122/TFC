@@ -33,6 +33,7 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -419,6 +420,7 @@ public class InformesController implements Initializable {
         chart.setTitle("Evolución de Ventas");
         chart.setPrefHeight(300);
         chart.setLegendVisible(false);
+        chart.setCreateSymbols(true); // Asegurar que se muestren los símbolos/puntos
         
         XYChart.Series<String, Number> series = new XYChart.Series<>();
         series.setName("Ventas");
@@ -428,7 +430,8 @@ public class InformesController implements Initializable {
             String[] meses = {"Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"};
             for (int i = 0; i < meses.length; i++) {
                 double ventas = calcularVentasPorMesAno(i + 1, anoActual);
-                series.getData().add(new XYChart.Data<>(meses[i], ventas));
+                XYChart.Data<String, Number> dataPoint = new XYChart.Data<>(meses[i], ventas);
+                series.getData().add(dataPoint);
             }
         } else {
             // Datos diarios del mes actual - usar datos de cada día del mes
@@ -440,12 +443,61 @@ public class InformesController implements Initializable {
                 // (Los datos diarios requerirían otra petición específica al servidor)
                 double ventasDia = calcularVentasPorMesAno(mesActual, anoActual) / finMes.getDayOfMonth();
                 String dia = String.valueOf(fecha.getDayOfMonth());
-                series.getData().add(new XYChart.Data<>(dia, ventasDia));
+                XYChart.Data<String, Number> dataPoint = new XYChart.Data<>(dia, ventasDia);
+                series.getData().add(dataPoint);
             }
         }
         
         chart.getData().add(series);
+        
+        // Configurar tooltips dinámicos después de que el gráfico se haya renderizado
+        Platform.runLater(() -> {
+            configurarTooltipsGrafico(chart, series);
+        });
+        
         return chart;
+    }
+    
+    /**
+     * Configura tooltips dinámicos para el gráfico de ventas
+     */
+    private void configurarTooltipsGrafico(LineChart<String, Number> chart, XYChart.Series<String, Number> series) {
+        for (XYChart.Data<String, Number> data : series.getData()) {
+            if (data.getNode() != null) {
+                // Crear tooltip personalizado
+                Tooltip tooltip = new Tooltip();
+                
+                String periodo = "ANUAL".equals(filtroActual) ? 
+                    data.getXValue() + " " + anoActual : 
+                    "Día " + data.getXValue() + " de " + comboMes.getValue() + " " + anoActual;
+                
+                double valor = data.getYValue().doubleValue();
+                String valorFormateado = formatoMoneda.format(valor);
+                
+                tooltip.setText(periodo + "\nVentas: " + valorFormateado);
+                tooltip.setStyle("-fx-background-color: rgba(0,0,0,0.8); " +
+                               "-fx-text-fill: white; " +
+                               "-fx-background-radius: 6px; " +
+                               "-fx-padding: 8px; " +
+                               "-fx-font-size: 12px;");
+                
+                // Instalar el tooltip en el nodo
+                Tooltip.install(data.getNode(), tooltip);
+                
+                // Efectos visuales al pasar el mouse
+                data.getNode().setOnMouseEntered(e -> {
+                    data.getNode().setStyle("-fx-background-color: #FF6B6B; -fx-background-radius: 6px;");
+                    data.getNode().setScaleX(1.3);
+                    data.getNode().setScaleY(1.3);
+                });
+                
+                data.getNode().setOnMouseExited(e -> {
+                    data.getNode().setStyle("-fx-background-color: #2196F3; -fx-background-radius: 4px;");
+                    data.getNode().setScaleX(1.0);
+                    data.getNode().setScaleY(1.0);
+                });
+            }
+        }
     }
     
     private BarChart<String, Number> crearGraficoUsuariosPorRol() {

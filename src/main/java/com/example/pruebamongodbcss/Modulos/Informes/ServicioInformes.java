@@ -422,7 +422,7 @@ public class ServicioInformes {
         
         try {
             List<Bson> pipeline = Arrays.asList(
-                Aggregates.match(Filters.eq("estado", "FINALIZADA")),
+                Aggregates.match(Filters.eq("estado", "EMITIDA")),
                 Aggregates.group("$clienteId", 
                     Accumulators.sum("totalFacturado", "$total"),
                     Accumulators.sum("numeroFacturas", 1),
@@ -497,11 +497,14 @@ public class ServicioInformes {
             Date fechaInicio = Date.from(inicioAno.atStartOfDay(ZoneId.systemDefault()).toInstant());
             Date fechaFin = Date.from(finAno.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
             
+            System.out.println("DEBUG: Calculando ventas por año " + ano + 
+                             ", desde " + fechaInicio + " hasta " + fechaFin);
+            
             List<Bson> pipeline = Arrays.asList(
                 Aggregates.match(Filters.and(
                     Filters.gte("fechaEmision", fechaInicio),
                     Filters.lt("fechaEmision", fechaFin),
-                    Filters.eq("estado", "EMITIDA")
+                    Filters.eq("estado", "EMITIDA") // Revertido a EMITIDA
                 )),
                 Aggregates.group(null, Accumulators.sum("total", "$total"))
             );
@@ -510,12 +513,15 @@ public class ServicioInformes {
             if (cursor.hasNext()) {
                 Document result = cursor.next();
                 cursor.close();
-                return result.getDouble("total") != null ? result.getDouble("total") : 0.0;
+                double total = result.getDouble("total") != null ? result.getDouble("total") : 0.0;
+                System.out.println("DEBUG: Ventas año " + ano + " = " + total);
+                return total;
             }
             cursor.close();
         } catch (Exception e) {
             System.err.println("Error al calcular ventas por año: " + e.getMessage());
         }
+        System.out.println("DEBUG: Ventas año " + ano + " = 0.0 (sin resultados)");
         return 0.0;
     }
     
@@ -530,11 +536,14 @@ public class ServicioInformes {
             Date fechaInicio = Date.from(inicioMes.atStartOfDay(ZoneId.systemDefault()).toInstant());
             Date fechaFin = Date.from(finMes.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
             
+            System.out.println("DEBUG: Calculando ventas mes " + mes + "/" + ano + 
+                             ", desde " + fechaInicio + " hasta " + fechaFin);
+            
             List<Bson> pipeline = Arrays.asList(
                 Aggregates.match(Filters.and(
                     Filters.gte("fechaEmision", fechaInicio),
                     Filters.lt("fechaEmision", fechaFin),
-                    Filters.eq("estado", "EMITIDA")
+                    Filters.eq("estado", "EMITIDA") // Revertido a EMITIDA
                 )),
                 Aggregates.group(null, Accumulators.sum("total", "$total"))
             );
@@ -543,12 +552,15 @@ public class ServicioInformes {
             if (cursor.hasNext()) {
                 Document result = cursor.next();
                 cursor.close();
-                return result.getDouble("total") != null ? result.getDouble("total") : 0.0;
+                double total = result.getDouble("total") != null ? result.getDouble("total") : 0.0;
+                System.out.println("DEBUG: Ventas mes " + mes + "/" + ano + " = " + total);
+                return total;
             }
             cursor.close();
         } catch (Exception e) {
             System.err.println("Error al calcular ventas por mes y año: " + e.getMessage());
         }
+        System.out.println("DEBUG: Ventas mes " + mes + "/" + ano + " = 0.0 (sin resultados)");
         return 0.0;
     }
     
@@ -615,17 +627,13 @@ public class ServicioInformes {
      * Cuenta fichajes por año
      */
     public int contarFichajesPorAno(int ano) {
-        LocalDate inicioAno = LocalDate.of(ano, 1, 1);
-        LocalDate finAno = LocalDate.of(ano, 12, 31);
-        
         try {
-            Date fechaInicio = Date.from(inicioAno.atStartOfDay(ZoneId.systemDefault()).toInstant());
-            Date fechaFin = Date.from(finAno.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            // Crear patrones regex para buscar fechas que comiencen con el año específico
+            String patronAno = "^" + ano + "-.*";
             
-            long count = fichajesCollection.countDocuments(Filters.and(
-                Filters.gte("fechaHoraEntrada", fechaInicio),
-                Filters.lt("fechaHoraEntrada", fechaFin)
-            ));
+            long count = fichajesCollection.countDocuments(
+                Filters.regex("fechaHoraEntrada", patronAno)
+            );
             
             return (int) count;
         } catch (Exception e) {
@@ -638,17 +646,13 @@ public class ServicioInformes {
      * Cuenta fichajes por mes y año
      */
     public int contarFichajesPorMesAno(int mes, int ano) {
-        LocalDate inicioMes = LocalDate.of(ano, mes, 1);
-        LocalDate finMes = inicioMes.withDayOfMonth(inicioMes.lengthOfMonth());
-        
         try {
-            Date fechaInicio = Date.from(inicioMes.atStartOfDay(ZoneId.systemDefault()).toInstant());
-            Date fechaFin = Date.from(finMes.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            // Crear patrón regex para buscar fechas que comiencen con YYYY-MM
+            String patronMesAno = "^" + ano + "-" + String.format("%02d", mes) + "-.*";
             
-            long count = fichajesCollection.countDocuments(Filters.and(
-                Filters.gte("fechaHoraEntrada", fechaInicio),
-                Filters.lt("fechaHoraEntrada", fechaFin)
-            ));
+            long count = fichajesCollection.countDocuments(
+                Filters.regex("fechaHoraEntrada", patronMesAno)
+            );
             
             return (int) count;
         } catch (Exception e) {
