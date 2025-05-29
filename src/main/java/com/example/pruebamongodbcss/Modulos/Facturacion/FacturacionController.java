@@ -846,27 +846,31 @@ public class FacturacionController implements Initializable {
                     
                     if (codigoRespuesta == Protocolo.ELIMINAR_FACTURA_RESPONSE) {
                         Platform.runLater(() -> {
-                            // Decrementar contador de facturas en el calendario si hay cita asociada
+                            // Desasociar factura de la cita si hay cita asociada
                             if (factura.getCitaId() != null) {
                                 try {
-                                    // Decrementar contador de facturas en el calendario
-                                    com.example.pruebamongodbcss.calendar.CalendarService calendarService = 
-                                        new com.example.pruebamongodbcss.calendar.CalendarService();
-                                    boolean contadorActualizado = calendarService.actualizarContadorFacturas(
-                                        factura.getCitaId().toString(), false);
+                                    // Desasociar factura de cita usando el nuevo sistema
+                                    String mensajeDesasociacion = Protocolo.DESASOCIAR_FACTURA_DE_CITA + "|" + factura.getCitaId().toString();
+                                    gestorSocket.enviarPeticion(mensajeDesasociacion);
                                     
-                                    if (contadorActualizado) {
-                                        System.out.println("✅ Contador de facturas decrementado en el calendario");
+                                    int respuestaDesasociacion = gestorSocket.getEntrada().readInt();
+                                    if (respuestaDesasociacion == Protocolo.DESASOCIAR_FACTURA_DE_CITA_RESPONSE) {
+                                        boolean desasociado = gestorSocket.getEntrada().readBoolean();
+                                        if (desasociado) {
+                                            System.out.println("✅ Factura desasociada correctamente de la cita");
+                                        } else {
+                                            System.out.println("⚠️ No se pudo desasociar la factura de la cita");
+                                        }
                                     } else {
-                                        System.out.println("⚠️ No se pudo decrementar el contador de facturas en el calendario");
+                                        System.out.println("❌ Error al desasociar factura de cita");
                                     }
                                 } catch (Exception e) {
-                                    System.err.println("Error al decrementar contador de facturas: " + e.getMessage());
+                                    System.err.println("Error al desasociar factura de cita: " + e.getMessage());
                                 }
                             }
                             
-                            listaBorradores.remove(factura);
                             mostrarInfo("Éxito", "Borrador eliminado correctamente");
+                            cargarBorradores();
                         });
                     } else {
                         Platform.runLater(() -> mostrarError("Error", "No se pudo eliminar el borrador"));

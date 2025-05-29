@@ -1120,40 +1120,51 @@ public class FacturaFormController implements Initializable {
                                 actualizarNumeroFacturaEnInterfaz();
                             }
                             
-                            // Actualizar contador de facturas en el calendario si hay cita asociada
-                            if (citaId != null) {
+                            // Asociar la factura a la cita si hay cita asociada
+                            if (citaId != null && facturaGuardada != null && facturaGuardada.getId() != null) {
                                 try {
-                                    // Incrementar contador de facturas en el calendario
-                                    com.example.pruebamongodbcss.calendar.CalendarService calendarService = 
-                                        new com.example.pruebamongodbcss.calendar.CalendarService();
-                                    boolean contadorActualizado = calendarService.actualizarContadorFacturas(
-                                        citaId.toString(), true);
+                                    // Asociar factura a cita usando el nuevo sistema
+                                    String mensajeAsociacion = Protocolo.ASOCIAR_FACTURA_A_CITA + "|" + citaId.toString() + ":" + facturaGuardada.getId().toString();
+                                    gestorSocket.enviarPeticion(mensajeAsociacion);
                                     
-                                    if (contadorActualizado) {
-                                        System.out.println("✅ Contador de facturas actualizado en el calendario");
+                                    int respuestaAsociacion = gestorSocket.getEntrada().readInt();
+                                    if (respuestaAsociacion == Protocolo.ASOCIAR_FACTURA_A_CITA_RESPONSE) {
+                                        boolean asociado = gestorSocket.getEntrada().readBoolean();
+                                        if (asociado) {
+                                            System.out.println("✅ Factura asociada correctamente a la cita");
+                                            
+                                            // Actualizar contador de facturas en el calendario
+                                            try {
+                                                String mensajeContador = Protocolo.ACTUALIZAR_CONTADOR_FACTURAS + "|" + citaId.toString() + ":" + "true";
+                                                gestorSocket.enviarPeticion(mensajeContador);
+                                                
+                                                int respuestaContador = gestorSocket.getEntrada().readInt();
+                                                if (respuestaContador == Protocolo.ACTUALIZAR_CONTADOR_FACTURAS_RESPONSE) {
+                                                    boolean contadorActualizado = gestorSocket.getEntrada().readBoolean();
+                                                    if (contadorActualizado) {
+                                                        System.out.println("✅ Contador de facturas actualizado en el calendario");
+                                                    } else {
+                                                        System.out.println("⚠️ No se pudo actualizar el contador de facturas");
+                                                    }
+                                                } else {
+                                                    System.out.println("❌ Error al actualizar contador de facturas");
+                                                }
+                                            } catch (Exception e) {
+                                                System.err.println("Error al actualizar contador de facturas: " + e.getMessage());
+                                            }
+                                        } else {
+                                            System.out.println("⚠️ No se pudo asociar la factura a la cita");
+                                        }
                                     } else {
-                                        System.out.println("⚠️ No se pudo actualizar el contador de facturas en el calendario");
+                                        System.out.println("❌ Error al asociar factura a cita");
                                     }
                                 } catch (Exception e) {
-                                    System.err.println("Error al actualizar contador de facturas: " + e.getMessage());
+                                    System.err.println("Error al asociar factura a cita: " + e.getMessage());
                                 }
                             }
                             
-                            // Mostrar mensaje de éxito
-                            String mensaje = factura.isEsBorrador() ? 
-                                "Borrador guardado correctamente" : 
-                                "Factura finalizada y guardada correctamente";
-                            mostrarInfo("Éxito", mensaje);
-                            
-                            // Actualizar listas en el controlador principal
-                            if (facturacionController != null) {
-                                facturacionController.actualizarListas();
-                            }
-                            
-                            // Cerrar ventana si la factura está finalizada
-                            if (!factura.isEsBorrador()) {
+                            mostrarInfo("Éxito", "Factura guardada correctamente");
                                 cerrarVentana();
-                            }
                         });
                         
                     } else if (codigoRespuesta == Protocolo.ERROR_CREAR_FACTURA) {
@@ -1298,6 +1309,38 @@ public class FacturaFormController implements Initializable {
     }
     
     public void cargarDatosDesdeCita(ModeloCita cita, ModeloPaciente paciente, ModeloPropietario propietario) {
+        // Verificar si la cita puede tener más facturas antes de proceder
+        if (cita != null && cita.getId() != null) {
+            try {
+                // Verificar si se puede agregar una factura a esta cita
+                String peticionVerificar = Protocolo.PUEDE_AGREGAR_FACTURA + "|" + cita.getId().toString();
+                gestorSocket.enviarPeticion(peticionVerificar);
+                
+                int codigoRespuesta = gestorSocket.getEntrada().readInt();
+                if (codigoRespuesta == Protocolo.PUEDE_AGREGAR_FACTURA_RESPONSE) {
+                    boolean puedeAgregar = gestorSocket.getEntrada().readBoolean();
+                    
+                    if (!puedeAgregar) {
+                        // La cita ya tiene una factura asociada
+                        Platform.runLater(() -> {
+                            mostrarAdvertencia("Factura ya existe", 
+                                "Esta cita ya tiene una factura asociada. " +
+                                "En una clínica real, cada cita solo puede tener una factura. " +
+                                "Si necesita modificar la factura existente, búsquela en el listado de facturas.");
+                            cerrarVentana();
+                        });
+                        return;
+                    }
+                } else {
+                    System.err.println("Error al verificar si se puede agregar factura");
+                }
+            } catch (Exception e) {
+                System.err.println("Error al verificar contador de facturas: " + e.getMessage());
+                // Continuar con la creación de la factura en caso de error de comunicación
+            }
+        }
+        
+        // Si llegamos aquí, se puede crear la factura
         if (cita != null) {
             this.citaId = cita.getId();
             dpFechaEmision.setValue(LocalDate.now());

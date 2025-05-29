@@ -62,7 +62,7 @@ public class CalendarEvent implements Serializable {
     private String eventType; // Para compatibilidad con código existente
     private EventoTipo tipoEvento; // Nuevo campo para utilizar el enumerado
     private String pacienteId; // ID del paciente asociado a la cita
-    
+
     // NUEVOS CAMPOS: Contadores para control de asociaciones
     private int contadorDiagnosticos = 0; // Contador de diagnósticos asociados
     private int contadorFacturas = 0; // Contador de facturas asociadas (incluye borradores)

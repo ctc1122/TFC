@@ -1803,6 +1803,89 @@ public class ClienteHandler implements Runnable {
                             }
                             break;
                             
+                        // Casos para asociar/desasociar facturas de citas
+                        case Protocolo.ASOCIAR_FACTURA_A_CITA:
+                            System.out.println("Procesando solicitud de asociar factura a cita...");
+                            if (parametros.length >= 2) {
+                                try {
+                                    String citaId = parametros[0];
+                                    ObjectId facturaId = new ObjectId(parametros[1]);
+                                    boolean asociado = calendarService.asociarFacturaACita(citaId, facturaId);
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ASOCIAR_FACTURA_A_CITA_RESPONSE);
+                                        salida.writeBoolean(asociado);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al asociar factura a cita: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_ASOCIAR_FACTURA_A_CITA);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud ASOCIAR_FACTURA_A_CITA");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_ASOCIAR_FACTURA_A_CITA);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.DESASOCIAR_FACTURA_DE_CITA:
+                            System.out.println("Procesando solicitud de desasociar factura de cita...");
+                            if (parametros.length >= 1) {
+                                try {
+                                    String citaId = parametros[0];
+                                    boolean desasociado = calendarService.desasociarFacturaDeCita(citaId);
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.DESASOCIAR_FACTURA_DE_CITA_RESPONSE);
+                                        salida.writeBoolean(desasociado);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al desasociar factura de cita: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_DESASOCIAR_FACTURA_DE_CITA);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud DESASOCIAR_FACTURA_DE_CITA");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_DESASOCIAR_FACTURA_DE_CITA);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_FACTURA_ASOCIADA_A_CITA:
+                            System.out.println("Procesando solicitud de obtener factura asociada a cita...");
+                            if (parametros.length >= 1) {
+                                try {
+                                    String citaId = parametros[0];
+                                    ObjectId facturaId = calendarService.obtenerFacturaAsociadaACita(citaId);
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.OBTENER_FACTURA_ASOCIADA_A_CITA_RESPONSE);
+                                        salida.writeObject(facturaId);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al obtener factura asociada a cita: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_OBTENER_FACTURA_ASOCIADA_A_CITA);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud OBTENER_FACTURA_ASOCIADA_A_CITA");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_FACTURA_ASOCIADA_A_CITA);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
                         default:
                             System.out.println("Mensaje no reconocido: " + codigo);
                     }

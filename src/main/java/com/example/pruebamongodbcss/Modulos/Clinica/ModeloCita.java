@@ -30,6 +30,7 @@ public class ModeloCita implements Serializable{
     private String usuarioAsignado; // ID del usuario asignado a la cita
     private boolean recordatorio;
     private boolean confirmada;
+    private ObjectId facturaId; // ID de la factura asociada a esta cita
 
     /**
      * Constructor vacío
@@ -95,6 +96,7 @@ public class ModeloCita implements Serializable{
         // Campos adicionales
         this.recordatorio = document.getBoolean("recordatorio", false);
         this.confirmada = document.getBoolean("confirmada", false);
+        this.facturaId = document.getObjectId("facturaId"); // Puede ser null
     }
 
     /**
@@ -131,6 +133,11 @@ public class ModeloCita implements Serializable{
         // Añadir el campo usuarioAsignado si existe
         if (usuarioAsignado != null && !usuarioAsignado.isEmpty()) {
             doc.append("usuarioAsignado", usuarioAsignado);
+        }
+        
+        // Añadir el campo facturaId si existe
+        if (facturaId != null) {
+            doc.append("facturaId", facturaId);
         }
         
         return doc;
@@ -308,5 +315,13 @@ public class ModeloCita implements Serializable{
 
     public void setConfirmada(boolean confirmada) {
         this.confirmada = confirmada;
+    }
+
+    public ObjectId getFacturaId() {
+        return facturaId;
+    }
+
+    public void setFacturaId(ObjectId facturaId) {
+        this.facturaId = facturaId;
     }
 } 

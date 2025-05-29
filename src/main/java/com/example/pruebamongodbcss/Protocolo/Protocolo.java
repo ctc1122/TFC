@@ -362,4 +362,17 @@ public interface Protocolo {
     static final int OBTENER_CONTADOR_DIAGNOSTICOS_RESPONSE = 1260;
     static final int ERROR_OBTENER_CONTADOR_DIAGNOSTICOS = 1261;
 
+    // Códigos para asociar/desasociar facturas de citas
+    static final int ASOCIAR_FACTURA_A_CITA = 1262;
+    static final int ASOCIAR_FACTURA_A_CITA_RESPONSE = 1263;
+    static final int ERROR_ASOCIAR_FACTURA_A_CITA = 1264;
+
+    static final int DESASOCIAR_FACTURA_DE_CITA = 1265;
+    static final int DESASOCIAR_FACTURA_DE_CITA_RESPONSE = 1266;
+    static final int ERROR_DESASOCIAR_FACTURA_DE_CITA = 1267;
+
+    static final int OBTENER_FACTURA_ASOCIADA_A_CITA = 1268;
+    static final int OBTENER_FACTURA_ASOCIADA_A_CITA_RESPONSE = 1269;
+    static final int ERROR_OBTENER_FACTURA_ASOCIADA_A_CITA = 1270;
+
 } 
