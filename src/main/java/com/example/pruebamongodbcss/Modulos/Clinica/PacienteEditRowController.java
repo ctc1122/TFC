@@ -51,7 +51,6 @@ public class PacienteEditRowController implements Initializable {
     private Runnable onCancelarCallback;
     private boolean esNuevo;
     private GestorSocket gestorServidor;
-    private ServicioClinica servicio;
     
     // =========================
     // 2. INICIALIZACIÓN Y CONFIGURACIÓN
@@ -186,8 +185,6 @@ public class PacienteEditRowController implements Initializable {
                 actualizarLabelPropietario();
             });
             
-            controller.setServicio(this.servicio);
-            
             Stage stage = new Stage();
             stage.setTitle("Seleccionar Propietario");
             stage.setScene(new Scene(root));
@@ -197,7 +194,7 @@ public class PacienteEditRowController implements Initializable {
         } catch (IOException e) {
             e.printStackTrace();
             mostrarAlerta("Error", "Error al abrir selector", 
-                "Ha ocurrido un error al intentar abrir el selector de propietarios: " + e.getMessage());
+                    "Ha ocurrido un error al intentar abrir el selector de propietarios: " + e.getMessage());
         }
     }
     
@@ -357,10 +354,10 @@ public class PacienteEditRowController implements Initializable {
 
     private void cerrarVentana() {
         Stage stage = (Stage) rowContainer.getScene().getWindow();
-        stage.close();
+        if (stage != null) {
+            stage.close();
+        }
     }
 
-    public void setServicio(ServicioClinica servicio) {
-        this.servicio = servicio;
-    }
+
 } 

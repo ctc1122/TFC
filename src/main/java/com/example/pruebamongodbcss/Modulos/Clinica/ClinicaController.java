@@ -3023,8 +3023,8 @@ public class ClinicaController implements Initializable {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/propietario-selector.fxml"));
             Parent root = loader.load();
             PropietarioSelectorController controller = loader.getController();
-            // TODO: Implementar setServicio con gestorPeticiones en lugar de servicioClinica
-            // controller.setServicio(servicioClinica);
+            
+            // Ya no es necesario setServicio porque el controller usa GestorSocket directamente
 
             controller.setPropietarioSeleccionadoCallback(propietario -> {
                 // Asignar el propietario al paciente

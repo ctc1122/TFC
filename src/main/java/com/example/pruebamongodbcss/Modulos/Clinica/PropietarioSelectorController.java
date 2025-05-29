@@ -1,10 +1,14 @@
 package com.example.pruebamongodbcss.Modulos.Clinica;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
+
+import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 
 import io.github.palexdev.materialfx.controls.MFXButton;
 import io.github.palexdev.materialfx.controls.MFXTextField;
@@ -38,12 +42,14 @@ public class PropietarioSelectorController implements Initializable {
     @FXML private MFXButton btnNuevoPropietario;
     @FXML private MFXButton btnCancelar;
     
-    private ServicioClinica servicio;
+    private GestorSocket gestorSocket;
     private ObservableList<ModeloPropietario> propietariosObservable = FXCollections.observableArrayList();
     private Consumer<ModeloPropietario> propietarioSeleccionadoCallback;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        gestorSocket = GestorSocket.getInstance();
+        
         // Configurar la tabla
         configurarTabla();
         
@@ -56,6 +62,9 @@ public class PropietarioSelectorController implements Initializable {
         txtBuscar.textProperty().addListener((obs, oldVal, newVal) -> {
             filtrarPropietarios(newVal);
         });
+        
+        // Cargar propietarios iniciales
+        cargarPropietarios();
     }
     
     /**
@@ -78,20 +87,38 @@ public class PropietarioSelectorController implements Initializable {
     }
     
     /**
-     * Establece el servicio y carga los propietarios
-     */
-    public void setServicio(ServicioClinica servicio) {
-        this.servicio = servicio;
-        cargarPropietarios();
-    }
-    
-    /**
-     * Carga la lista de propietarios desde el servicio
+     * Carga la lista de propietarios desde el servidor
      */
     private void cargarPropietarios() {
-        propietariosObservable.clear();
-        List<ModeloPropietario> propietarios = servicio.obtenerTodosPropietarios();
-        propietariosObservable.addAll(propietarios);
+        try {
+            propietariosObservable.clear();
+            
+            // Hacer petición al servidor para obtener todos los propietarios
+            gestorSocket.enviarPeticion(Protocolo.OBTENER_TODOS_PROPIETARIOS + Protocolo.SEPARADOR_CODIGO);
+            
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.OBTENER_TODOS_PROPIETARIOS_RESPONSE) {
+                @SuppressWarnings("unchecked")
+                List<ModeloPropietario> propietarios = (List<ModeloPropietario>) entrada.readObject();
+                if (propietarios != null) {
+                    propietariosObservable.addAll(propietarios);
+                    System.out.println("✅ Propietarios cargados: " + propietarios.size());
+                } else {
+                    System.out.println("⚠️ Lista de propietarios vacía recibida del servidor");
+                }
+            } else {
+                System.err.println("❌ Error al obtener propietarios del servidor. Código: " + codigoRespuesta);
+                mostrarAlerta("Error", "Error al cargar propietarios", 
+                        "No se pudieron cargar los propietarios desde el servidor.");
+            }
+            
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("❌ Error de comunicación al cargar propietarios: " + e.getMessage());
+            mostrarAlerta("Error de conexión", "Error al conectar con el servidor", 
+                    "No se pudo establecer comunicación con el servidor: " + e.getMessage());
+        }
     }
     
     /**
@@ -103,17 +130,31 @@ public class PropietarioSelectorController implements Initializable {
             return;
         }
         
-        String busqueda = texto.toLowerCase().trim();
-        propietariosObservable.clear();
-        
-        List<ModeloPropietario> propietariosFiltrados = servicio.obtenerTodosPropietarios().stream()
-                .filter(p -> p.getNombre().toLowerCase().contains(busqueda) || 
-                             p.getApellidos().toLowerCase().contains(busqueda) ||
-                             p.getDni().toLowerCase().contains(busqueda) ||
-                             p.getTelefono().toLowerCase().contains(busqueda))
-                .toList();
-        
-        propietariosObservable.addAll(propietariosFiltrados);
+        try {
+            propietariosObservable.clear();
+            
+            // Hacer petición al servidor para buscar propietarios por nombre
+            gestorSocket.enviarPeticion(Protocolo.BUSCAR_PROPIETARIOS_POR_NOMBRE + Protocolo.SEPARADOR_CODIGO + texto.trim());
+            
+            ObjectInputStream entrada = gestorSocket.getEntrada();
+            int codigoRespuesta = entrada.readInt();
+            
+            if (codigoRespuesta == Protocolo.BUSCAR_PROPIETARIOS_POR_NOMBRE_RESPONSE) {
+                @SuppressWarnings("unchecked")
+                List<ModeloPropietario> propietarios = (List<ModeloPropietario>) entrada.readObject();
+                if (propietarios != null) {
+                    propietariosObservable.addAll(propietarios);
+                    System.out.println("✅ Propietarios filtrados: " + propietarios.size());
+                }
+            } else {
+                System.err.println("❌ Error al filtrar propietarios. Código: " + codigoRespuesta);
+            }
+            
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("❌ Error de comunicación al filtrar propietarios: " + e.getMessage());
+            // En caso de error, mostrar todos los propietarios
+            cargarPropietarios();
+        }
     }
     
     /**
@@ -144,23 +185,13 @@ public class PropietarioSelectorController implements Initializable {
             
             PropietarioEditRowController controller = loader.getController();
             ModeloPropietario nuevoPropietario = new ModeloPropietario();
-            controller.setPropietario(nuevoPropietario, true);
-            
-            // Callback para cuando se guarda el nuevo propietario
-            controller.setOnGuardarCallback(propietario -> {
-                // Actualizar la lista
-                cargarPropietarios();
-                // Seleccionar el nuevo propietario
-                tablaPropietarios.getSelectionModel().select(propietario);
-                // Cerrar el diálogo
-                Stage stage = (Stage) root.getScene().getWindow();
-                stage.close();
-            });
-            
-            // Callback para cuando se cancela
-            controller.setOnCancelarCallback(() -> {
-                Stage stage = (Stage) root.getScene().getWindow();
-                stage.close();
+            controller.configurar(nuevoPropietario, true, (propietario, confirmado) -> {
+                if (confirmado) {
+                    // Recargar la lista de propietarios
+                    cargarPropietarios();
+                    // Seleccionar el nuevo propietario
+                    tablaPropietarios.getSelectionModel().select(propietario);
+                }
             });
             
             Stage stage = new Stage();
@@ -196,10 +227,20 @@ public class PropietarioSelectorController implements Initializable {
      */
     private void cerrarVentana() {
         Stage stage = (Stage) btnCancelar.getScene().getWindow();
-        stage.close();
+        if (stage != null) {
+            stage.close();
+        }
     }
-    
-    // Métodos de utilidad para mostrar diálogos
+
+    /**
+     * Método de compatibilidad - ya no se usa ServicioClinica
+     * @deprecated Usar GestorSocket en su lugar
+     */
+    @Deprecated
+    public void setServicio(ServicioClinica servicio) {
+        // Este método se mantiene por compatibilidad pero ya no se usa
+        System.out.println("⚠️ setServicio() está deprecated. PropietarioSelectorController ahora usa GestorSocket directamente.");
+    }
     
     private void mostrarAlerta(String titulo, String encabezado, String contenido) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
