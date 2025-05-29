@@ -391,11 +391,6 @@ public class DiagnosticoController implements Initializable {
             return;
         }
         
-        // if (txtMotivo.getText().isBlank()) {
-        //     mostrarError("Datos incompletos", "El motivo de la consulta es obligatorio");
-        //     return;
-        // }
-        
         if (diagnosticosSeleccionados.isEmpty()) {
             mostrarError("Datos incompletos", "Debe seleccionar al menos un diagnóstico");
             return;
@@ -408,8 +403,25 @@ public class DiagnosticoController implements Initializable {
         // Establecer datos básicos
         diagnostico.setPacienteId(paciente.getId());
         diagnostico.setNombrePaciente(paciente.getNombre());
-        // diagnostico.setFecha(Date.from(dpFecha.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant()));
-        // diagnostico.setMotivo(txtMotivo.getText());
+        
+        // CORREGIDO: Establecer fecha y motivo desde la cita actual
+        if (citaActual != null) {
+            // Convertir LocalDateTime de la cita a Date para el diagnóstico
+            Date fechaDiagnostico = Date.from(citaActual.getFechaHora()
+                .atZone(java.time.ZoneId.systemDefault()).toInstant());
+            diagnostico.setFecha(fechaDiagnostico);
+            
+            // Establecer el motivo desde la cita
+            diagnostico.setMotivo(citaActual.getMotivo());
+            
+            // Establecer ID de la cita asociada
+            diagnostico.setCitaId(citaActual.getId());
+        } else {
+            // Si no hay cita, usar fecha actual
+            diagnostico.setFecha(new Date());
+            diagnostico.setMotivo("Consulta general");
+        }
+        
         diagnostico.setAnamnesis(txtAnamnesis.getText());
         diagnostico.setExamenFisico(txtExamenFisico.getText());
         
@@ -430,16 +442,16 @@ public class DiagnosticoController implements Initializable {
         
         if (dpProximaVisita.getValue() != null) {
             diagnostico.setProximaVisita(Date.from(dpProximaVisita.getValue()
-                    .atStartOfDay(ZoneId.systemDefault()).toInstant()));
+                    .atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()));
         }
         
-        // Si no hay veterinario asignado, usar uno genérico (esto debe adaptarse según tu sistema)
+        // Establecer veterinario desde el usuario actual o desde la cita
         if (diagnostico.getVeterinario() == null || diagnostico.getVeterinario().isBlank()) {
-            diagnostico.setVeterinario("Dr. Veterinario");
-        }
-        
-        if (citaActual != null && citaActual.getId() != null) {
-            diagnostico.setCitaId(citaActual.getId());
+            if (citaActual != null && citaActual.getNombreVeterinario() != null) {
+                diagnostico.setVeterinario(citaActual.getNombreVeterinario());
+            } else {
+                diagnostico.setVeterinario("Dr. Veterinario");
+            }
         }
         
         // Guardar diagnóstico usando protocolo
@@ -457,44 +469,59 @@ public class DiagnosticoController implements Initializable {
                     // Mostrar mensaje de éxito inmediato
                     mostrarInformacion("Diagnóstico guardado", "El diagnóstico ha sido guardado correctamente.");
                     
+                    // Actualizar contador de diagnósticos en el calendario si hay cita asociada
+                    if (citaActual != null && citaActual.getId() != null) {
+                        try {
+                            // Incrementar contador de diagnósticos en el calendario
+                            com.example.pruebamongodbcss.calendar.CalendarService calendarService = 
+                                new com.example.pruebamongodbcss.calendar.CalendarService();
+                            boolean contadorActualizado = calendarService.actualizarContadorDiagnosticos(
+                                citaActual.getId().toString(), true);
+                            
+                            if (contadorActualizado) {
+                                System.out.println("✅ Contador de diagnósticos actualizado en el calendario");
+                            } else {
+                                System.out.println("⚠️ No se pudo actualizar el contador de diagnósticos en el calendario");
+                            }
+                        } catch (Exception e) {
+                            System.err.println("Error al actualizar contador de diagnósticos: " + e.getMessage());
+                        }
+                    }
+                    
                     // Cambiar estado de la cita a 'PENDIENTE_DE_FACTURAR' si hay cita asociada
                     if (citaActual != null && citaActual.getId() != null) {
                         // Usar Platform.runLater para evitar problemas de concurrencia
                         Platform.runLater(() -> {
                             try {
+                                // Cambiar estado de la cita
                                 gestorSocket.enviarPeticion(com.example.pruebamongodbcss.Protocolo.Protocolo.CAMBIAR_ESTADO_CITA + 
                                     com.example.pruebamongodbcss.Protocolo.Protocolo.SEPARADOR_CODIGO + 
-                                    citaActual.getId().toString() + 
-                                    com.example.pruebamongodbcss.Protocolo.Protocolo.SEPARADOR_PARAMETROS + 
-                                    "PENDIENTE_DE_FACTURAR");
+                                    citaActual.getId().toString() + ":" + "PENDIENTE_DE_FACTURAR");
                                 
-                                int codigoCita = gestorSocket.getEntrada().readInt();
-                                if (codigoCita == com.example.pruebamongodbcss.Protocolo.Protocolo.CAMBIAR_ESTADO_CITA_RESPONSE) {
-                                    boolean actualizado = gestorSocket.getEntrada().readBoolean();
-                                    if (actualizado) {
-                                        System.out.println("✅ Estado de cita actualizado a PENDIENTE_DE_FACTURAR");
-                                        
-                                        // Ejecutar callback para refrescar el calendario
-                                        if (onGuardarCallback != null) {
-                                            onGuardarCallback.run();
-                                        }
-                                        
-                                        // Cerrar el formulario automáticamente
-                                        Platform.runLater(() -> {
-                                            // Obtener la ventana actual y cerrarla
-                                            Stage stage = (Stage) btnGuardar.getScene().getWindow();
-                                            stage.close();
-                                        });
-                                        
-                                    } else {
-                                        System.err.println("⚠️ No se pudo actualizar el estado de la cita");
+                                int codigoEstado = gestorSocket.getEntrada().readInt();
+                                if (codigoEstado == com.example.pruebamongodbcss.Protocolo.Protocolo.CAMBIAR_ESTADO_CITA_RESPONSE) {
+                                    boolean cambiado = gestorSocket.getEntrada().readBoolean();
+                                    if (cambiado) {
+                                        System.out.println("✅ Estado de cita cambiado a PENDIENTE_DE_FACTURAR");
                                     }
-                                } else if (codigoCita == com.example.pruebamongodbcss.Protocolo.Protocolo.ERROR_CAMBIAR_ESTADO_CITA) {
-                                    String errorMsg = gestorSocket.getEntrada().readUTF();
-                                    System.err.println("❌ Error al cambiar estado: " + errorMsg);
                                 }
+                                
+                                // Ejecutar callback y cerrar
+                                if (onGuardarCallback != null) {
+                                    onGuardarCallback.run();
+                                }
+                                
+                                Stage stage = (Stage) btnGuardar.getScene().getWindow();
+                                stage.close();
+                                
                             } catch (Exception e) {
-                                System.err.println("❌ Error al cambiar estado de cita: " + e.getMessage());
+                                System.err.println("Error al cambiar estado de cita: " + e.getMessage());
+                                // Aún así ejecutar callback y cerrar
+                                if (onGuardarCallback != null) {
+                                    onGuardarCallback.run();
+                                }
+                                Stage stage = (Stage) btnGuardar.getScene().getWindow();
+                                stage.close();
                             }
                         });
                     } else {

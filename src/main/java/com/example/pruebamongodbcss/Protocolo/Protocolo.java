@@ -341,4 +341,25 @@ public interface Protocolo {
     static final int OBTENER_FACTURAS_FINALIZADAS_RESPONSE = 1245;
     static final int ERROR_OBTENER_FACTURAS_FINALIZADAS = 1246;
 
+    // Códigos para contadores de diagnósticos y facturas en el calendario
+    static final int ACTUALIZAR_CONTADOR_DIAGNOSTICOS = 1247;
+    static final int ACTUALIZAR_CONTADOR_DIAGNOSTICOS_RESPONSE = 1248;
+    static final int ERROR_ACTUALIZAR_CONTADOR_DIAGNOSTICOS = 1249;
+
+    static final int ACTUALIZAR_CONTADOR_FACTURAS = 1250;
+    static final int ACTUALIZAR_CONTADOR_FACTURAS_RESPONSE = 1251;
+    static final int ERROR_ACTUALIZAR_CONTADOR_FACTURAS = 1252;
+
+    static final int PUEDE_AGREGAR_FACTURA = 1253;
+    static final int PUEDE_AGREGAR_FACTURA_RESPONSE = 1254;
+    static final int ERROR_PUEDE_AGREGAR_FACTURA = 1255;
+
+    static final int OBTENER_CONTADOR_FACTURAS = 1256;
+    static final int OBTENER_CONTADOR_FACTURAS_RESPONSE = 1257;
+    static final int ERROR_OBTENER_CONTADOR_FACTURAS = 1258;
+
+    static final int OBTENER_CONTADOR_DIAGNOSTICOS = 1259;
+    static final int OBTENER_CONTADOR_DIAGNOSTICOS_RESPONSE = 1260;
+    static final int ERROR_OBTENER_CONTADOR_DIAGNOSTICOS = 1261;
+
 } 

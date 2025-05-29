@@ -462,6 +462,15 @@ public class CalendarService {
             event.setPacienteId(doc.getString("pacienteId"));
         }
         
+        // Contadores de diagnósticos y facturas
+        if (doc.containsKey("contadorDiagnosticos")) {
+            event.setContadorDiagnosticos(doc.getInteger("contadorDiagnosticos", 0));
+        }
+        
+        if (doc.containsKey("contadorFacturas")) {
+            event.setContadorFacturas(doc.getInteger("contadorFacturas", 0));
+        }
+        
         return event;
     }
     
@@ -574,6 +583,15 @@ public class CalendarService {
                 }
             } else if (doc.containsKey("usuarioAsignado")) {
                 event.setUsuario(doc.getString("usuarioAsignado"));
+            }
+            
+            // Contadores de diagnósticos y facturas
+            if (doc.containsKey("contadorDiagnosticos")) {
+                event.setContadorDiagnosticos(doc.getInteger("contadorDiagnosticos", 0));
+            }
+            
+            if (doc.containsKey("contadorFacturas")) {
+                event.setContadorFacturas(doc.getInteger("contadorFacturas", 0));
             }
             
             return event;
@@ -690,6 +708,10 @@ public class CalendarService {
         if (event.getPacienteId() != null) {
             doc.append("pacienteId", event.getPacienteId());
         }
+        
+        // Contadores de diagnósticos y facturas
+        doc.append("contadorDiagnosticos", event.getContadorDiagnosticos());
+        doc.append("contadorFacturas", event.getContadorFacturas());
         
         return doc;
     }
@@ -1105,5 +1127,149 @@ public class CalendarService {
     public int probarVerificacionAutomatica() {
         System.out.println("🧪 PRUEBA MANUAL: Ejecutando verificación automática...");
         return verificarYActualizarEstadosAutomaticos();
+    }
+    
+    /**
+     * Actualiza el contador de diagnósticos para una cita específica
+     * @param citaId ID de la cita
+     * @param incrementar true para incrementar, false para decrementar
+     * @return true si se actualizó correctamente
+     */
+    public boolean actualizarContadorDiagnosticos(String citaId, boolean incrementar) {
+        try {
+            if (citaId == null || citaId.isEmpty()) {
+                return false;
+            }
+            
+            // Buscar el evento en la colección de citas
+            Document filtro = new Document("_id", new org.bson.types.ObjectId(citaId));
+            Document evento = appointmentsCollection.find(filtro).first();
+            
+            if (evento != null) {
+                int contadorActual = evento.getInteger("contadorDiagnosticos", 0);
+                int nuevoContador = incrementar ? contadorActual + 1 : Math.max(0, contadorActual - 1);
+                
+                Document actualizacion = new Document("$set", new Document("contadorDiagnosticos", nuevoContador));
+                appointmentsCollection.updateOne(filtro, actualizacion);
+                
+                System.out.println("📊 Contador de diagnósticos actualizado para cita " + citaId + ": " + contadorActual + " -> " + nuevoContador);
+                return true;
+            }
+            
+            return false;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error al actualizar contador de diagnósticos", e);
+            return false;
+        }
+    }
+    
+    /**
+     * Actualiza el contador de facturas para una cita específica
+     * @param citaId ID de la cita
+     * @param incrementar true para incrementar, false para decrementar
+     * @return true si se actualizó correctamente
+     */
+    public boolean actualizarContadorFacturas(String citaId, boolean incrementar) {
+        try {
+            if (citaId == null || citaId.isEmpty()) {
+                return false;
+            }
+            
+            // Buscar el evento en la colección de citas
+            Document filtro = new Document("_id", new org.bson.types.ObjectId(citaId));
+            Document evento = appointmentsCollection.find(filtro).first();
+            
+            if (evento != null) {
+                int contadorActual = evento.getInteger("contadorFacturas", 0);
+                int nuevoContador = incrementar ? contadorActual + 1 : Math.max(0, contadorActual - 1);
+                
+                Document actualizacion = new Document("$set", new Document("contadorFacturas", nuevoContador));
+                appointmentsCollection.updateOne(filtro, actualizacion);
+                
+                System.out.println("💰 Contador de facturas actualizado para cita " + citaId + ": " + contadorActual + " -> " + nuevoContador);
+                return true;
+            }
+            
+            return false;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error al actualizar contador de facturas", e);
+            return false;
+        }
+    }
+    
+    /**
+     * Verifica si una cita puede tener más facturas asociadas
+     * @param citaId ID de la cita
+     * @return true si puede tener más facturas (contador < 1)
+     */
+    public boolean puedeAgregarFactura(String citaId) {
+        try {
+            if (citaId == null || citaId.isEmpty()) {
+                return false;
+            }
+            
+            Document filtro = new Document("_id", new org.bson.types.ObjectId(citaId));
+            Document evento = appointmentsCollection.find(filtro).first();
+            
+            if (evento != null) {
+                int contadorFacturas = evento.getInteger("contadorFacturas", 0);
+                return contadorFacturas < 1;
+            }
+            
+            return false;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error al verificar si puede agregar factura", e);
+            return false;
+        }
+    }
+    
+    /**
+     * Obtiene el contador de facturas para una cita específica
+     * @param citaId ID de la cita
+     * @return número de facturas asociadas
+     */
+    public int obtenerContadorFacturas(String citaId) {
+        try {
+            if (citaId == null || citaId.isEmpty()) {
+                return 0;
+            }
+            
+            Document filtro = new Document("_id", new org.bson.types.ObjectId(citaId));
+            Document evento = appointmentsCollection.find(filtro).first();
+            
+            if (evento != null) {
+                return evento.getInteger("contadorFacturas", 0);
+            }
+            
+            return 0;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error al obtener contador de facturas", e);
+            return 0;
+        }
+    }
+    
+    /**
+     * Obtiene el contador de diagnósticos para una cita específica
+     * @param citaId ID de la cita
+     * @return número de diagnósticos asociados
+     */
+    public int obtenerContadorDiagnosticos(String citaId) {
+        try {
+            if (citaId == null || citaId.isEmpty()) {
+                return 0;
+            }
+            
+            Document filtro = new Document("_id", new org.bson.types.ObjectId(citaId));
+            Document evento = appointmentsCollection.find(filtro).first();
+            
+            if (evento != null) {
+                return evento.getInteger("contadorDiagnosticos", 0);
+            }
+            
+            return 0;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error al obtener contador de diagnósticos", e);
+            return 0;
+        }
     }
 } 

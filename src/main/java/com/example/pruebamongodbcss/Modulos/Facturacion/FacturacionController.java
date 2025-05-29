@@ -846,6 +846,25 @@ public class FacturacionController implements Initializable {
                     
                     if (codigoRespuesta == Protocolo.ELIMINAR_FACTURA_RESPONSE) {
                         Platform.runLater(() -> {
+                            // Decrementar contador de facturas en el calendario si hay cita asociada
+                            if (factura.getCitaId() != null) {
+                                try {
+                                    // Decrementar contador de facturas en el calendario
+                                    com.example.pruebamongodbcss.calendar.CalendarService calendarService = 
+                                        new com.example.pruebamongodbcss.calendar.CalendarService();
+                                    boolean contadorActualizado = calendarService.actualizarContadorFacturas(
+                                        factura.getCitaId().toString(), false);
+                                    
+                                    if (contadorActualizado) {
+                                        System.out.println("✅ Contador de facturas decrementado en el calendario");
+                                    } else {
+                                        System.out.println("⚠️ No se pudo decrementar el contador de facturas en el calendario");
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al decrementar contador de facturas: " + e.getMessage());
+                                }
+                            }
+                            
                             listaBorradores.remove(factura);
                             mostrarInfo("Éxito", "Borrador eliminado correctamente");
                         });

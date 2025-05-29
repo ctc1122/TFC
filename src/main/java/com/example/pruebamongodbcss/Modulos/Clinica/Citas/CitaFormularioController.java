@@ -47,6 +47,11 @@ public class CitaFormularioController implements Initializable {
     @FXML private DatePicker dpFecha;
     @FXML private ComboBox<String> cmbHora;
     @FXML private ComboBox<String> cmbMinuto;
+    @FXML private CheckBox chkDuracionManual;
+    @FXML private ComboBox<Integer> cmbDuracion;
+    @FXML private DatePicker dpFechaFin;
+    @FXML private ComboBox<String> cmbHoraFin;
+    @FXML private ComboBox<String> cmbMinutoFin;
     @FXML private TextField txtMotivo;
     @FXML private ComboBox<EstadoCita> cmbEstado;
     @FXML private TextArea txtObservaciones;
@@ -80,12 +85,18 @@ public class CitaFormularioController implements Initializable {
         configurarComboMinutos();
         configurarComboEstado();
         configurarComboPaciente();
+        configurarComboDuracion();
+        configurarEventosDuracionManual();
         
         // Valores predeterminados
         dpFecha.setValue(LocalDate.now());
         cmbHora.getSelectionModel().select("09");
         cmbMinuto.getSelectionModel().select("00");
         cmbEstado.getSelectionModel().select(EstadoCita.PENDIENTE);
+        cmbDuracion.getSelectionModel().select(Integer.valueOf(30)); // 30 minutos por defecto
+        
+        // Configurar fecha fin automática inicialmente
+        actualizarFechaFinAutomatica();
     }
     
     /**
@@ -96,6 +107,7 @@ public class CitaFormularioController implements Initializable {
                 .mapToObj(hora -> String.format("%02d", hora))
                 .collect(Collectors.toList());
         cmbHora.setItems(FXCollections.observableArrayList(horas));
+        cmbHoraFin.setItems(FXCollections.observableArrayList(horas));
     }
     
     /**
@@ -104,6 +116,139 @@ public class CitaFormularioController implements Initializable {
     private void configurarComboMinutos() {
         List<String> minutos = Arrays.asList("00", "15", "30", "45");
         cmbMinuto.setItems(FXCollections.observableArrayList(minutos));
+        cmbMinutoFin.setItems(FXCollections.observableArrayList(minutos));
+    }
+    
+    /**
+     * Configura el combo box de duración
+     */
+    private void configurarComboDuracion() {
+        List<Integer> duraciones = Arrays.asList(15, 30, 45, 60, 90, 120, 180, 240);
+        cmbDuracion.setItems(FXCollections.observableArrayList(duraciones));
+        cmbDuracion.setConverter(new StringConverter<Integer>() {
+            @Override
+            public String toString(Integer duracion) {
+                return duracion != null ? duracion + " min" : "";
+            }
+            
+            @Override
+            public Integer fromString(String string) {
+                if (string == null || string.isEmpty()) return null;
+                try {
+                    return Integer.parseInt(string.replace(" min", ""));
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+        });
+    }
+    
+    /**
+     * Configura los eventos para la duración manual
+     */
+    private void configurarEventosDuracionManual() {
+        // Listener para el checkbox de duración manual
+        chkDuracionManual.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            cmbDuracion.setDisable(!newVal);
+            dpFechaFin.setDisable(!newVal);
+            cmbHoraFin.setDisable(!newVal);
+            cmbMinutoFin.setDisable(!newVal);
+            
+            if (newVal) {
+                // Modo manual: habilitar controles de fecha fin
+                dpFechaFin.setPromptText("Seleccionar fecha fin");
+                actualizarFechaFinManual();
+            } else {
+                // Modo automático: calcular fecha fin basada en duración
+                dpFechaFin.setPromptText("Fecha fin automática");
+                actualizarFechaFinAutomatica();
+            }
+        });
+        
+        // Listeners para actualizar fecha fin automáticamente cuando cambie la fecha/hora de inicio
+        dpFecha.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (!chkDuracionManual.isSelected()) {
+                actualizarFechaFinAutomatica();
+            }
+        });
+        
+        cmbHora.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (!chkDuracionManual.isSelected()) {
+                actualizarFechaFinAutomatica();
+            }
+        });
+        
+        cmbMinuto.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (!chkDuracionManual.isSelected()) {
+                actualizarFechaFinAutomatica();
+            }
+        });
+        
+        // Listener para actualizar fecha fin cuando cambie la duración
+        cmbDuracion.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (!chkDuracionManual.isSelected()) {
+                actualizarFechaFinAutomatica();
+            }
+        });
+    }
+    
+    /**
+     * Actualiza la fecha fin automáticamente basada en la fecha/hora de inicio y duración
+     */
+    private void actualizarFechaFinAutomatica() {
+        if (dpFecha.getValue() != null && 
+            cmbHora.getValue() != null && 
+            cmbMinuto.getValue() != null) {
+            
+            try {
+                LocalDateTime fechaHoraInicio = obtenerFechaHoraSeleccionada();
+                Integer duracion = cmbDuracion.getValue();
+                if (duracion == null) {
+                    duracion = DURACION_CITA_MINUTOS;
+                }
+                
+                LocalDateTime fechaHoraFin = fechaHoraInicio.plusMinutes(duracion);
+                
+                dpFechaFin.setValue(fechaHoraFin.toLocalDate());
+                cmbHoraFin.setValue(String.format("%02d", fechaHoraFin.getHour()));
+                cmbMinutoFin.setValue(String.format("%02d", fechaHoraFin.getMinute()));
+                
+            } catch (Exception e) {
+                // Ignorar errores de conversión
+            }
+        }
+    }
+    
+    /**
+     * Actualiza la fecha fin manualmente cuando está en modo manual
+     */
+    private void actualizarFechaFinManual() {
+        if (dpFecha.getValue() != null) {
+            // Por defecto, establecer la fecha fin igual a la fecha de inicio
+            dpFechaFin.setValue(dpFecha.getValue());
+            
+            if (cmbHora.getValue() != null && cmbMinuto.getValue() != null) {
+                try {
+                    LocalDateTime fechaHoraInicio = obtenerFechaHoraSeleccionada();
+                    LocalDateTime fechaHoraFin = fechaHoraInicio.plusMinutes(30); // 30 min por defecto
+                    
+                    cmbHoraFin.setValue(String.format("%02d", fechaHoraFin.getHour()));
+                    cmbMinutoFin.setValue(String.format("%02d", fechaHoraFin.getMinute()));
+                } catch (Exception e) {
+                    // Establecer valores por defecto
+                    cmbHoraFin.setValue("10");
+                    cmbMinutoFin.setValue("00");
+                }
+            }
+        }
+    }
+    
+    /**
+     * Maneja el cambio del checkbox de duración manual
+     */
+    @FXML
+    private void onDuracionManualChanged() {
+        // La lógica ya está manejada en configurarEventosDuracionManual()
     }
     
     /**
@@ -382,10 +527,54 @@ public class CitaFormularioController implements Initializable {
                     } else if (!cmbMinuto.getItems().isEmpty()) {
                         cmbMinuto.getSelectionModel().selectFirst();
                     }
+                    
+                    // NUEVO: Configurar fecha fin y duración
+                    if (cita.getFechaHoraFin() != null) {
+                        LocalDateTime fechaHoraFin = cita.getFechaHoraFin();
+                        
+                        // Calcular duración
+                        int duracionCalculada = (int) java.time.Duration.between(fechaHora, fechaHoraFin).toMinutes();
+                        
+                        // Verificar si es una duración estándar o personalizada
+                        List<Integer> duracionesEstandar = Arrays.asList(15, 30, 45, 60, 90, 120, 180, 240);
+                        boolean esDuracionEstandar = duracionesEstandar.contains(duracionCalculada);
+                        
+                        if (esDuracionEstandar && fechaHoraFin.toLocalDate().equals(fechaHora.toLocalDate())) {
+                            // Modo automático: duración estándar en el mismo día
+                            chkDuracionManual.setSelected(false);
+                            cmbDuracion.setValue(duracionCalculada);
+                        } else {
+                            // Modo manual: duración personalizada o fecha fin diferente
+                            chkDuracionManual.setSelected(true);
+                            cmbDuracion.setValue(duracionCalculada);
+                            
+                            // Configurar fecha fin
+                            dpFechaFin.setValue(fechaHoraFin.toLocalDate());
+                            
+                            // Configurar hora fin
+                            String horaFinStr = String.format("%02d", fechaHoraFin.getHour());
+                            String minutoFinStr = String.format("%02d", fechaHoraFin.getMinute());
+                            
+                            if (cmbHoraFin.getItems().contains(horaFinStr)) {
+                                cmbHoraFin.getSelectionModel().select(horaFinStr);
+                            }
+                            
+                            if (cmbMinutoFin.getItems().contains(minutoFinStr)) {
+                                cmbMinutoFin.getSelectionModel().select(minutoFinStr);
+                            }
+                        }
+                    } else {
+                        // Si no hay fecha fin, usar duración por defecto
+                        chkDuracionManual.setSelected(false);
+                        int duracionCita = cita.getDuracionMinutos() > 0 ? cita.getDuracionMinutos() : DURACION_CITA_MINUTOS;
+                        cmbDuracion.setValue(duracionCita);
+                    }
                 } else {
                     dpFecha.setValue(LocalDate.now());
                     if (!cmbHora.getItems().isEmpty()) cmbHora.getSelectionModel().selectFirst();
                     if (!cmbMinuto.getItems().isEmpty()) cmbMinuto.getSelectionModel().selectFirst();
+                    chkDuracionManual.setSelected(false);
+                    cmbDuracion.setValue(DURACION_CITA_MINUTOS);
                 }
                 
                 // Establecer motivo
@@ -437,6 +626,28 @@ public class CitaFormularioController implements Initializable {
             return false;
         }
         
+        // Validar fecha fin si está en modo manual
+        if (chkDuracionManual.isSelected()) {
+            if (dpFechaFin.getValue() == null) {
+                mostrarError("Debe seleccionar una fecha fin.");
+                return false;
+            }
+            
+            if (cmbHoraFin.getSelectionModel().isEmpty() || cmbMinutoFin.getSelectionModel().isEmpty()) {
+                mostrarError("Debe seleccionar una hora fin válida.");
+                return false;
+            }
+            
+            // Validar que la fecha fin sea posterior a la fecha inicio
+            LocalDateTime fechaHoraInicio = obtenerFechaHoraSeleccionada();
+            LocalDateTime fechaHoraFin = obtenerFechaHoraFinSeleccionada();
+            
+            if (fechaHoraFin.isBefore(fechaHoraInicio) || fechaHoraFin.isEqual(fechaHoraInicio)) {
+                mostrarError("La fecha y hora de fin debe ser posterior a la fecha y hora de inicio.");
+                return false;
+            }
+        }
+        
         if (txtMotivo.getText().trim().isEmpty()) {
             mostrarError("Debe especificar el motivo de la cita.");
             return false;
@@ -458,7 +669,18 @@ public class CitaFormularioController implements Initializable {
             try {
                 gestorSocket.enviarPeticion(Protocolo.HAY_CONFLICTO_HORARIO + Protocolo.SEPARADOR_CODIGO);
                 gestorSocket.getSalida().writeObject(fechaHora);
-                gestorSocket.getSalida().writeInt(DURACION_CITA_MINUTOS);
+                
+                // Calcular duración para la validación
+                int duracionValidacion;
+                if (chkDuracionManual.isSelected()) {
+                    LocalDateTime fechaHoraFin = obtenerFechaHoraFinSeleccionada();
+                    duracionValidacion = (int) java.time.Duration.between(fechaHora, fechaHoraFin).toMinutes();
+                } else {
+                    Integer duracionSeleccionada = cmbDuracion.getValue();
+                    duracionValidacion = (duracionSeleccionada != null) ? duracionSeleccionada : DURACION_CITA_MINUTOS;
+                }
+                
+                gestorSocket.getSalida().writeInt(duracionValidacion);
                 gestorSocket.getSalida().writeObject(citaId);
                 gestorSocket.getSalida().flush();
                 
@@ -473,7 +695,15 @@ public class CitaFormularioController implements Initializable {
             }
         } else if (servicio != null) {
             // Usar servicio directo (compatibilidad)
-            hayConflicto = servicio.hayConflictoHorario(fechaHora, DURACION_CITA_MINUTOS, citaId);
+            int duracionValidacion;
+            if (chkDuracionManual.isSelected()) {
+                LocalDateTime fechaHoraFin = obtenerFechaHoraFinSeleccionada();
+                duracionValidacion = (int) java.time.Duration.between(fechaHora, fechaHoraFin).toMinutes();
+            } else {
+                Integer duracionSeleccionada = cmbDuracion.getValue();
+                duracionValidacion = (duracionSeleccionada != null) ? duracionSeleccionada : DURACION_CITA_MINUTOS;
+            }
+            hayConflicto = servicio.hayConflictoHorario(fechaHora, duracionValidacion, citaId);
         }
         
         if (hayConflicto) {
@@ -494,6 +724,27 @@ public class CitaFormularioController implements Initializable {
         int minuto = Integer.parseInt(cmbMinuto.getValue());
         
         return LocalDateTime.of(fecha, LocalTime.of(hora, minuto));
+    }
+    
+    /**
+     * Obtiene la fecha y hora fin seleccionadas en el formulario
+     */
+    private LocalDateTime obtenerFechaHoraFinSeleccionada() {
+        if (chkDuracionManual.isSelected()) {
+            LocalDate fechaFin = dpFechaFin.getValue();
+            int horaFin = Integer.parseInt(cmbHoraFin.getValue());
+            int minutoFin = Integer.parseInt(cmbMinutoFin.getValue());
+            
+            return LocalDateTime.of(fechaFin, LocalTime.of(horaFin, minutoFin));
+        } else {
+            // Calcular automáticamente basado en duración
+            LocalDateTime fechaHoraInicio = obtenerFechaHoraSeleccionada();
+            Integer duracion = cmbDuracion.getValue();
+            if (duracion == null) {
+                duracion = DURACION_CITA_MINUTOS;
+            }
+            return fechaHoraInicio.plusMinutes(duracion);
+        }
     }
     
     /**
@@ -577,6 +828,16 @@ public class CitaFormularioController implements Initializable {
             }
             
             cita.setFechaHora(obtenerFechaHoraSeleccionada());
+            
+            // NUEVO: Establecer fecha fin y duración
+            LocalDateTime fechaHoraFin = obtenerFechaHoraFinSeleccionada();
+            cita.setFechaHoraFin(fechaHoraFin);
+            
+            // Calcular duración en minutos
+            int duracionMinutos = (int) java.time.Duration.between(
+                cita.getFechaHora(), fechaHoraFin).toMinutes();
+            cita.setDuracionMinutos(duracionMinutos);
+            
             cita.setMotivo(txtMotivo.getText().trim());
             cita.setEstado(cmbEstado.getValue());
             cita.setObservaciones(txtObservaciones.getText().trim());

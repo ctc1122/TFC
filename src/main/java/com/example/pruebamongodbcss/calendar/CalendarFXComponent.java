@@ -34,6 +34,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Control;
@@ -2328,6 +2329,31 @@ public class CalendarFXComponent extends BorderPane {
     // Agrego el método para abrir el formulario de facturación desde una cita
     private void abrirFormularioFacturacionDesdeCita(CalendarEvent event) {
         try {
+            // Verificar si la cita puede tener más facturas (sistema de semáforo)
+            CalendarService calendarService = new CalendarService();
+            boolean puedeAgregarFactura = calendarService.puedeAgregarFactura(event.getId());
+            
+            if (!puedeAgregarFactura) {
+                // Mostrar mensaje de advertencia
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Límite de facturas alcanzado");
+                alert.setHeaderText("Esta cita ya tiene una factura asociada");
+                alert.setContentText("Cada cita solo puede tener máximo 1 factura (incluyendo borradores). " +
+                    "Si necesita crear una nueva factura, primero debe eliminar la existente.");
+                
+                ButtonType btnVerFacturas = new ButtonType("Ver facturas existentes");
+                ButtonType btnCancelar = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
+                alert.getButtonTypes().setAll(btnVerFacturas, btnCancelar);
+                
+                Optional<ButtonType> resultado = alert.showAndWait();
+                if (resultado.isPresent() && resultado.get() == btnVerFacturas) {
+                    // Aquí podrías abrir una ventana para ver las facturas existentes
+                    System.out.println("🔍 Mostrando facturas existentes para la cita: " + event.getId());
+                    // TODO: Implementar vista de facturas existentes
+                }
+                return;
+            }
+            
             // Obtener la cita, paciente y propietario
             com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
             org.bson.types.ObjectId citaId = new org.bson.types.ObjectId(event.getId());

@@ -1120,6 +1120,25 @@ public class FacturaFormController implements Initializable {
                                 actualizarNumeroFacturaEnInterfaz();
                             }
                             
+                            // Actualizar contador de facturas en el calendario si hay cita asociada
+                            if (citaId != null) {
+                                try {
+                                    // Incrementar contador de facturas en el calendario
+                                    com.example.pruebamongodbcss.calendar.CalendarService calendarService = 
+                                        new com.example.pruebamongodbcss.calendar.CalendarService();
+                                    boolean contadorActualizado = calendarService.actualizarContadorFacturas(
+                                        citaId.toString(), true);
+                                    
+                                    if (contadorActualizado) {
+                                        System.out.println("✅ Contador de facturas actualizado en el calendario");
+                                    } else {
+                                        System.out.println("⚠️ No se pudo actualizar el contador de facturas en el calendario");
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al actualizar contador de facturas: " + e.getMessage());
+                                }
+                            }
+                            
                             // Mostrar mensaje de éxito
                             String mensaje = factura.isEsBorrador() ? 
                                 "Borrador guardado correctamente" : 
