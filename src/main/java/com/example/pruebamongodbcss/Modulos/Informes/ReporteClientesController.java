@@ -1,16 +1,28 @@
 package com.example.pruebamongodbcss.Modulos.Informes;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.ResourceBundle;
 
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.Utilidades.GestorSocket;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -30,6 +42,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 
 public class ReporteClientesController implements Initializable {
 
@@ -221,9 +234,189 @@ public class ReporteClientesController implements Initializable {
     }
     
     private void exportarReporte() {
-        // Implementar exportación a PDF/Excel
-        mostrarAlert("Información", "Función en desarrollo", 
-                    "La función de exportación se implementará próximamente.");
+        try {
+            // Selector de archivo para guardar el PDF
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Guardar Reporte de Clientes");
+            fileChooser.setInitialFileName("Reporte_Clientes_" + 
+                LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + ".pdf");
+            fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Archivos PDF", "*.pdf")
+            );
+            
+            java.io.File archivo = fileChooser.showSaveDialog(btnExportar.getScene().getWindow());
+            if (archivo == null) {
+                return; // Usuario canceló
+            }
+            
+            // Crear el documento PDF
+            Document documento = new Document(PageSize.A4);
+            PdfWriter.getInstance(documento, new FileOutputStream(archivo));
+            documento.open();
+            
+            // Definir fuentes
+            Font tituloFont = new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD);
+            Font subtituloFont = new Font(Font.FontFamily.HELVETICA, 14, Font.BOLD);
+            Font normalFont = new Font(Font.FontFamily.HELVETICA, 12, Font.NORMAL);
+            Font smallFont = new Font(Font.FontFamily.HELVETICA, 10, Font.NORMAL);
+            
+            // Título principal
+            Paragraph titulo = new Paragraph("REPORTE DE CLIENTES", tituloFont);
+            titulo.setAlignment(Element.ALIGN_CENTER);
+            titulo.setSpacingAfter(15);
+            documento.add(titulo);
+            
+            // Fecha y hora del reporte
+            Paragraph fecha = new Paragraph("Generado el: " + 
+                LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + 
+                " a las " + java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")), 
+                smallFont);
+            fecha.setAlignment(Element.ALIGN_RIGHT);
+            fecha.setSpacingAfter(20);
+            documento.add(fecha);
+            
+            // Obtener datos actuales
+            AnalisisClientesData analisis = obtenerAnalisisClientes();
+            List<DatoGraficoData> datosGrafico = obtenerPropietariosPorMes(12);
+            List<ClienteTopData> topClientes = obtenerTopClientes(10);
+            
+            if (analisis != null) {
+                // Sección: Métricas principales
+                Paragraph seccionMetricas = new Paragraph("ESTADÍSTICAS PRINCIPALES", subtituloFont);
+                seccionMetricas.setSpacingBefore(15);
+                seccionMetricas.setSpacingAfter(10);
+                documento.add(seccionMetricas);
+                
+                // Tabla de métricas en dos columnas
+                PdfPTable tablaMetricas = new PdfPTable(2);
+                tablaMetricas.setWidthPercentage(100);
+                tablaMetricas.setSpacingAfter(18);
+                
+                // Configurar celdas de métricas
+                addMetricaCell(tablaMetricas, "Total de Clientes", String.valueOf(analisis.getTotalClientes()), normalFont);
+                addMetricaCell(tablaMetricas, "Nuevos Este Mes", String.valueOf(analisis.getClientesNuevosMes()), normalFont);
+                addMetricaCell(tablaMetricas, "Promedio Mascotas por Cliente", formatoDecimal.format(analisis.getPromedioMascotasPorCliente()), normalFont);
+                addMetricaCell(tablaMetricas, "Período de Análisis", LocalDate.now().getYear() + "", normalFont);
+                
+                documento.add(tablaMetricas);
+                
+                // Sección: Evolución mensual
+                Paragraph seccionEvolucion = new Paragraph("EVOLUCIÓN DE NUEVOS CLIENTES POR MES", subtituloFont);
+                seccionEvolucion.setSpacingBefore(15);
+                seccionEvolucion.setSpacingAfter(10);
+                documento.add(seccionEvolucion);
+                
+                // Tabla de evolución mensual
+                PdfPTable tablaEvolucion = new PdfPTable(4);
+                tablaEvolucion.setWidthPercentage(100);
+                tablaEvolucion.setWidths(new float[]{3, 3, 3, 3});
+                tablaEvolucion.setSpacingAfter(18);
+                
+                // Headers de la tabla de evolución
+                addHeaderCell(tablaEvolucion, "Mes", subtituloFont);
+                addHeaderCell(tablaEvolucion, "Nuevos Clientes", subtituloFont);
+                addHeaderCell(tablaEvolucion, "Mes", subtituloFont);
+                addHeaderCell(tablaEvolucion, "Nuevos Clientes", subtituloFont);
+                
+                // Datos en dos columnas para aprovechar espacio
+                for (int i = 0; i < datosGrafico.size(); i += 2) {
+                    DatoGraficoData dato1 = datosGrafico.get(i);
+                    addDataCell(tablaEvolucion, dato1.getEtiqueta(), normalFont);
+                    addDataCell(tablaEvolucion, String.valueOf((int)dato1.getValor()), normalFont);
+                    
+                    if (i + 1 < datosGrafico.size()) {
+                        DatoGraficoData dato2 = datosGrafico.get(i + 1);
+                        addDataCell(tablaEvolucion, dato2.getEtiqueta(), normalFont);
+                        addDataCell(tablaEvolucion, String.valueOf((int)dato2.getValor()), normalFont);
+                    } else {
+                        addDataCell(tablaEvolucion, "", normalFont);
+                        addDataCell(tablaEvolucion, "", normalFont);
+                    }
+                }
+                
+                documento.add(tablaEvolucion);
+            }
+            
+            // Sección: Top 10 clientes
+            Paragraph seccionTop = new Paragraph("TOP 10 CLIENTES POR FACTURACIÓN", subtituloFont);
+            seccionTop.setSpacingBefore(15);
+            seccionTop.setSpacingAfter(10);
+            documento.add(seccionTop);
+            
+            // Tabla de top clientes
+            PdfPTable tablaTop = new PdfPTable(4);
+            tablaTop.setWidthPercentage(100);
+            tablaTop.setWidths(new float[]{4, 2, 1.5f, 2.5f});
+            tablaTop.setSpacingAfter(15);
+            
+            // Headers
+            addHeaderCell(tablaTop, "Cliente", subtituloFont);
+            addHeaderCell(tablaTop, "Total Facturado", subtituloFont);
+            addHeaderCell(tablaTop, "Nº Facturas", subtituloFont);
+            addHeaderCell(tablaTop, "Promedio/Factura", subtituloFont);
+            
+            // Datos de clientes
+            int posicion = 1;
+            for (ClienteTopData cliente : topClientes) {
+                addDataCell(tablaTop, posicion + ". " + cliente.getNombre(), normalFont);
+                addDataCell(tablaTop, formatoMoneda.format(cliente.getTotalFacturado()), normalFont);
+                addDataCell(tablaTop, String.valueOf(cliente.getNumeroFacturas()), normalFont);
+                addDataCell(tablaTop, formatoMoneda.format(cliente.getPromedioFactura()), normalFont);
+                posicion++;
+            }
+            
+            documento.add(tablaTop);
+            
+            // Pie de página
+            Paragraph pie = new Paragraph("Reporte generado automáticamente por el Sistema de Gestión Veterinaria", smallFont);
+            pie.setAlignment(Element.ALIGN_CENTER);
+            pie.setSpacingBefore(20);
+            documento.add(pie);
+            
+            // Cerrar documento
+            documento.close();
+            
+            // Mostrar mensaje de éxito
+            mostrarAlert("Éxito", "Reporte exportado", 
+                        "El reporte se ha exportado correctamente a:\n" + archivo.getAbsolutePath());
+                        
+        } catch (DocumentException | IOException e) {
+            System.err.println("Error al exportar reporte: " + e.getMessage());
+            e.printStackTrace();
+            mostrarAlert("Error", "Error al exportar", 
+                        "Ha ocurrido un error al exportar el reporte:\n" + e.getMessage());
+        }
+    }
+    
+    // Métodos auxiliares para crear celdas de PDF
+    private void addMetricaCell(PdfPTable tabla, String etiqueta, String valor, Font font) {
+        PdfPCell cellEtiqueta = new PdfPCell(new Phrase(etiqueta + ":", font));
+        cellEtiqueta.setBorder(PdfPCell.NO_BORDER);
+        cellEtiqueta.setPadding(6);
+        tabla.addCell(cellEtiqueta);
+        
+        PdfPCell cellValor = new PdfPCell(new Phrase(valor, new Font(font.getFamily(), font.getSize(), Font.BOLD)));
+        cellValor.setBorder(PdfPCell.NO_BORDER);
+        cellValor.setPadding(6);
+        cellValor.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        tabla.addCell(cellValor);
+    }
+    
+    private void addHeaderCell(PdfPTable tabla, String texto, Font font) {
+        PdfPCell cell = new PdfPCell(new Phrase(texto, font));
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setPadding(8);
+        cell.setBackgroundColor(new com.itextpdf.text.BaseColor(220, 220, 220));
+        tabla.addCell(cell);
+    }
+    
+    private void addDataCell(PdfPTable tabla, String texto, Font font) {
+        PdfPCell cell = new PdfPCell(new Phrase(texto, font));
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setPadding(6);
+        tabla.addCell(cell);
     }
     
     private void volverAlDashboard() {

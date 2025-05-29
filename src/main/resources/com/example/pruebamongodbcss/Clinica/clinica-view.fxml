@@ -107,7 +107,6 @@
                                  <Button fx:id="btnNuevoPropietario" onAction="#onNuevoPropietario" styleClass="btn-primary" text="Nuevo Propietario" />
                                  <Button fx:id="btnEditarPropietario" onAction="#onEditarPropietario" styleClass="btn-secondary" text="Editar" />
                                  <Button fx:id="btnEliminarPropietario" onAction="#onEliminarPropietario" styleClass="btn-danger" text="Eliminar" />
-                                 <Button fx:id="btnVerMascotas" onAction="#onVerMascotas" styleClass="btn-info" text="Ver Mascotas" />
                               </children>
                               <VBox.margin>
                                  <Insets left="10.0" right="10.0" top="10.0" />

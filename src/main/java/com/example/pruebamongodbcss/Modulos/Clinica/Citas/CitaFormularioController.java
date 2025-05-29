@@ -1087,7 +1087,6 @@ public class CitaFormularioController implements Initializable {
             
             // Obtener el controlador
             PacienteEditRowController controller = loader.getController();
-            controller.setServicio(servicio);
             
             // Crear un nuevo paciente vacío
             ModeloPaciente nuevoPaciente = new ModeloPaciente();

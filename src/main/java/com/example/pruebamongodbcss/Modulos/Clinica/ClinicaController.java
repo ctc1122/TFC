@@ -56,6 +56,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.SVGPath;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.stage.FileChooser;
@@ -101,7 +102,6 @@ public class ClinicaController implements Initializable {
     @FXML private Button btnNuevoPropietario;
     @FXML private Button btnEditarPropietario;
     @FXML private Button btnEliminarPropietario;
-    @FXML private Button btnVerMascotas;
     
     // Tab de Diagnósticos
     @FXML private Tab tabDiagnosticos;
@@ -649,6 +649,17 @@ public class ClinicaController implements Initializable {
                 textField.setEditable(false);
                 btnSeleccionar.setMinWidth(30);
                 btnSeleccionar.getStyleClass().add("btn-secondary");
+                
+                // Crear y añadir icono SVG blanco de "más"
+                SVGPath iconoMas = new SVGPath();
+                iconoMas.setContent("M12 5v6m0 0v6m0-6h6m-6 0H6");
+                iconoMas.setFill(javafx.scene.paint.Color.WHITE);
+                iconoMas.setStroke(javafx.scene.paint.Color.WHITE);
+                iconoMas.setStrokeWidth(2);
+                iconoMas.setScaleX(0.6);
+                iconoMas.setScaleY(0.6);
+                btnSeleccionar.setGraphic(iconoMas);
+                btnSeleccionar.setText(""); // Quitar el texto y solo mostrar el icono
                 
                 btnSeleccionar.setOnAction(e -> {
                     ModeloPaciente paciente = getTableView().getItems().get(getIndex());
@@ -3023,8 +3034,8 @@ public class ClinicaController implements Initializable {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/propietario-selector.fxml"));
             Parent root = loader.load();
             PropietarioSelectorController controller = loader.getController();
-            // TODO: Implementar setServicio con gestorPeticiones en lugar de servicioClinica
-            // controller.setServicio(servicioClinica);
+            
+            // Ya no es necesario setServicio porque el controller usa GestorSocket directamente
 
             controller.setPropietarioSeleccionadoCallback(propietario -> {
                 // Asignar el propietario al paciente
