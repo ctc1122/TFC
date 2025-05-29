@@ -416,4 +416,17 @@ public interface Protocolo {
     static final int CONTAR_CITAS_POR_FECHA_RESPONSE = 1299;
     static final int ERROR_CONTAR_CITAS_POR_FECHA = 1300;
 
+    // Códigos para operaciones específicas de reportes de clientes
+    static final int OBTENER_ANALISIS_CLIENTES = 1301;
+    static final int OBTENER_ANALISIS_CLIENTES_RESPONSE = 1302;
+    static final int ERROR_OBTENER_ANALISIS_CLIENTES = 1303;
+
+    static final int OBTENER_PROPIETARIOS_POR_MES = 1304;
+    static final int OBTENER_PROPIETARIOS_POR_MES_RESPONSE = 1305;
+    static final int ERROR_OBTENER_PROPIETARIOS_POR_MES = 1306;
+
+    static final int OBTENER_TOP_CLIENTES = 1307;
+    static final int OBTENER_TOP_CLIENTES_RESPONSE = 1308;
+    static final int ERROR_OBTENER_TOP_CLIENTES = 1309;
+
 } 

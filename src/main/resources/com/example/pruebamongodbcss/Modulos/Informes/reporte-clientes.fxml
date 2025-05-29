@@ -18,7 +18,7 @@
             <HBox alignment="CENTER_LEFT" spacing="20.0">
                <children>
                   <Label style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Reporte de Clientes" />
-                  <Button onAction="#volverAlDashboard" style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-background-radius: 5;" text="← Volver al Dashboard" />
+                  <Button fx:id="btnVolver" style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-background-radius: 5;" text="← Volver al Dashboard" />
                </children>
             </HBox>
             
@@ -56,12 +56,6 @@
                                  <children>
                                     <Label style="-fx-font-size: 14px; -fx-text-fill: #666;" text="Nuevos Este Mes" />
                                     <Label fx:id="lblClientesNuevosMes" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #28a745;" text="0" />
-                                 </children>
-                              </VBox>
-                              <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;">
-                                 <children>
-                                    <Label style="-fx-font-size: 14px; -fx-text-fill: #666;" text="Clientes Activos" />
-                                    <Label fx:id="lblClientesActivos" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #ff6b35;" text="0" />
                                  </children>
                               </VBox>
                               <VBox alignment="CENTER" spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); -fx-padding: 20;">

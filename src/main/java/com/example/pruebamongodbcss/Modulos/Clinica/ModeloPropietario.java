@@ -23,6 +23,7 @@ public class ModeloPropietario implements Serializable{
     private String email;
     private List<ObjectId> mascotas;
     private Date fechaAlta;
+    private Date fechaRegistro; // Fecha específica para estadísticas
     private String observaciones;
     
     // Propiedad para control de edición en la UI (transient)
@@ -31,6 +32,10 @@ public class ModeloPropietario implements Serializable{
     public ModeloPropietario() {
         this.mascotas = new ArrayList<>();
         this.editando = false;
+        this.fechaRegistro = new Date(); // Asignar fecha actual automáticamente
+        if (this.fechaAlta == null) {
+            this.fechaAlta = new Date(); // Por compatibilidad
+        }
     }
     
     // Constructor a partir de un documento de MongoDB
@@ -47,6 +52,13 @@ public class ModeloPropietario implements Serializable{
         this.mascotas = mascotasDoc != null ? mascotasDoc : new ArrayList<>();
         
         this.fechaAlta = doc.getDate("fechaAlta");
+        this.fechaRegistro = doc.getDate("fechaRegistro");
+        // Si no existe fechaRegistro, usar fechaAlta como fallback
+        if (this.fechaRegistro == null && this.fechaAlta != null) {
+            this.fechaRegistro = this.fechaAlta;
+        } else if (this.fechaRegistro == null) {
+            this.fechaRegistro = new Date();
+        }
         this.observaciones = doc.getString("observaciones");
         
         // La propiedad editando es transient, no se carga de la BD
@@ -67,6 +79,7 @@ public class ModeloPropietario implements Serializable{
            .append("email", email)
            .append("mascotas", mascotas)
            .append("fechaAlta", fechaAlta)
+           .append("fechaRegistro", fechaRegistro)
            .append("observaciones", observaciones);
         return doc;
     }
@@ -154,6 +167,14 @@ public class ModeloPropietario implements Serializable{
 
     public void setFechaAlta(Date fechaAlta) {
         this.fechaAlta = fechaAlta;
+    }
+
+    public Date getFechaRegistro() {
+        return fechaRegistro;
+    }
+
+    public void setFechaRegistro(Date fechaRegistro) {
+        this.fechaRegistro = fechaRegistro;
     }
 
     public String getObservaciones() {

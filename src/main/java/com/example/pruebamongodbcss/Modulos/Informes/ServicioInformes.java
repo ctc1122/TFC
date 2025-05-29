@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -421,12 +422,13 @@ public class ServicioInformes {
         List<ClienteTop> topClientes = new ArrayList<>();
         
         try {
+            // Primero agrupamos por propietarioId y usamos nombreCliente que ya está en la factura
             List<Bson> pipeline = Arrays.asList(
                 Aggregates.match(Filters.eq("estado", "EMITIDA")),
-                Aggregates.group("$clienteId", 
+                Aggregates.group("$propietarioId", 
                     Accumulators.sum("totalFacturado", "$total"),
                     Accumulators.sum("numeroFacturas", 1),
-                    Accumulators.first("clienteNombre", "$clienteNombre")),
+                    Accumulators.first("nombreCliente", "$nombreCliente")),
                 Aggregates.sort(Sorts.descending("totalFacturado")),
                 Aggregates.limit(limite)
             );
@@ -435,19 +437,51 @@ public class ServicioInformes {
             while (cursor.hasNext()) {
                 Document doc = cursor.next();
                 ClienteTop cliente = new ClienteTop();
-                cliente.setNombre(doc.getString("clienteNombre"));
-                cliente.setTotalFacturado(doc.getDouble("totalFacturado"));
+                
+                String nombreCliente = doc.getString("nombreCliente");
+                // Si no hay nombre en la factura, intentar obtenerlo de propietarios
+                if (nombreCliente == null || nombreCliente.trim().isEmpty()) {
+                    ObjectId propietarioId = doc.getObjectId("_id");
+                    if (propietarioId != null) {
+                        Document propietario = propietariosCollection.find(Filters.eq("_id", propietarioId)).first();
+                        if (propietario != null) {
+                            String nombre = propietario.getString("nombre");
+                            String apellidos = propietario.getString("apellidos");
+                            nombreCliente = (nombre != null ? nombre : "") + 
+                                           (apellidos != null ? " " + apellidos : "");
+                        }
+                    }
+                }
+                
+                // Si aún no tenemos nombre, usar un placeholder
+                if (nombreCliente == null || nombreCliente.trim().isEmpty()) {
+                    nombreCliente = "Cliente #" + doc.getObjectId("_id");
+                }
+                
+                cliente.setNombre(nombreCliente.trim());
+                cliente.setTotalFacturado(doc.getDouble("totalFacturado") != null ? doc.getDouble("totalFacturado") : 0.0);
                 cliente.setNumeroFacturas(doc.getInteger("numeroFacturas", 0));
                 
                 if (cliente.getNumeroFacturas() > 0) {
                     cliente.setPromedioFactura(cliente.getTotalFacturado() / cliente.getNumeroFacturas());
+                } else {
+                    cliente.setPromedioFactura(0.0);
                 }
                 
                 topClientes.add(cliente);
             }
             cursor.close();
+            
+            System.out.println("DEBUG: Encontrados " + topClientes.size() + " clientes top");
+            for (ClienteTop cliente : topClientes) {
+                System.out.println("DEBUG: Cliente: " + cliente.getNombre() + 
+                                 ", Total: " + cliente.getTotalFacturado() + 
+                                 ", Facturas: " + cliente.getNumeroFacturas());
+            }
+            
         } catch (Exception e) {
             System.err.println("Error al obtener top clientes: " + e.getMessage());
+            e.printStackTrace();
         }
         
         return topClientes;
@@ -686,6 +720,62 @@ public class ServicioInformes {
                 double ventas = calcularVentasPorFecha(fecha, fecha);
                 String etiqueta = String.valueOf(fecha.getDayOfMonth());
                 datos.add(new DatoGrafico(etiqueta, ventas));
+            }
+        }
+        
+        return datos;
+    }
+    
+    /**
+     * Cuenta propietarios registrados este mes
+     */
+    public int contarPropietariosMesActual() {
+        LocalDate hoy = LocalDate.now();
+        LocalDate inicioMes = hoy.withDayOfMonth(1);
+        LocalDate finMes = hoy.withDayOfMonth(hoy.lengthOfMonth());
+        
+        try {
+            Date fechaInicio = Date.from(inicioMes.atStartOfDay(ZoneId.systemDefault()).toInstant());
+            Date fechaFin = Date.from(finMes.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            
+            long count = propietariosCollection.countDocuments(Filters.and(
+                Filters.gte("fechaRegistro", fechaInicio),
+                Filters.lt("fechaRegistro", fechaFin)
+            ));
+            
+            return (int) count;
+        } catch (Exception e) {
+            System.err.println("Error al contar propietarios del mes actual: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Obtiene datos de propietarios registrados por mes para gráficos
+     */
+    public List<DatoGrafico> obtenerPropietariosPorMes(int meses) {
+        List<DatoGrafico> datos = new ArrayList<>();
+        LocalDate fechaActual = LocalDate.now();
+        
+        for (int i = meses - 1; i >= 0; i--) {
+            LocalDate fechaMes = fechaActual.minusMonths(i);
+            LocalDate inicioMes = fechaMes.withDayOfMonth(1);
+            LocalDate finMes = fechaMes.withDayOfMonth(fechaMes.lengthOfMonth());
+            
+            try {
+                Date fechaInicio = Date.from(inicioMes.atStartOfDay(ZoneId.systemDefault()).toInstant());
+                Date fechaFin = Date.from(finMes.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+                
+                long count = propietariosCollection.countDocuments(Filters.and(
+                    Filters.gte("fechaRegistro", fechaInicio),
+                    Filters.lt("fechaRegistro", fechaFin)
+                ));
+                
+                String etiqueta = fechaMes.format(DateTimeFormatter.ofPattern("MMM"));
+                datos.add(new DatoGrafico(etiqueta, count));
+            } catch (Exception e) {
+                System.err.println("Error al obtener propietarios del mes: " + e.getMessage());
+                datos.add(new DatoGrafico(fechaMes.format(DateTimeFormatter.ofPattern("MMM")), 0));
             }
         }
         

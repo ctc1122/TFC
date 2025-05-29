@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -2103,6 +2104,102 @@ public class ClienteHandler implements Runnable {
                                 System.err.println("Error al obtener usuarios por rol: " + e.getMessage());
                                 synchronized (salida) {
                                     salida.writeInt(Protocolo.ERROR_OBTENER_USUARIOS_POR_ROL);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_ANALISIS_CLIENTES:
+                            System.out.println("Procesando solicitud de obtener análisis de clientes...");
+                            try {
+                                com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes = 
+                                    new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
+                                com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.AnalisisClientes analisis = 
+                                    servicioInformes.obtenerAnalisisClientes();
+                                    
+                                // Crear objeto de datos simplificado para transmisión
+                                com.example.pruebamongodbcss.Modulos.Informes.ReporteClientesController.AnalisisClientesData data = 
+                                    new com.example.pruebamongodbcss.Modulos.Informes.ReporteClientesController.AnalisisClientesData();
+                                data.setTotalClientes(analisis.getTotalClientes());
+                                data.setClientesNuevosMes(analisis.getClientesNuevosMes());
+                                data.setPromedioMascotasPorCliente(analisis.getPromedioMascotasPorCliente());
+                                
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_ANALISIS_CLIENTES_RESPONSE);
+                                    salida.writeObject(data);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener análisis de clientes: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_ANALISIS_CLIENTES);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_PROPIETARIOS_POR_MES:
+                            System.out.println("Procesando solicitud de obtener propietarios por mes...");
+                            try {
+                                int meses = Integer.parseInt(parametros[0]);
+                                com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes = 
+                                    new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
+                                List<com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.DatoGrafico> datos = 
+                                    servicioInformes.obtenerPropietariosPorMes(meses);
+                                    
+                                // Convertir a objetos de datos simplificados
+                                List<com.example.pruebamongodbcss.Modulos.Informes.ReporteClientesController.DatoGraficoData> datosSimplificados = 
+                                    new ArrayList<>();
+                                for (com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.DatoGrafico dato : datos) {
+                                    datosSimplificados.add(new com.example.pruebamongodbcss.Modulos.Informes.ReporteClientesController.DatoGraficoData(
+                                        dato.getEtiqueta(), dato.getValor()));
+                                }
+                                
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_PROPIETARIOS_POR_MES_RESPONSE);
+                                    salida.writeObject(datosSimplificados);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener propietarios por mes: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_PROPIETARIOS_POR_MES);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_TOP_CLIENTES:
+                            System.out.println("Procesando solicitud de obtener top clientes...");
+                            try {
+                                int limite = Integer.parseInt(parametros[0]);
+                                com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes = 
+                                    new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
+                                List<com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.ClienteTop> topClientes = 
+                                    servicioInformes.obtenerTopClientes(limite);
+                                    
+                                // Convertir a objetos de datos simplificados
+                                List<com.example.pruebamongodbcss.Modulos.Informes.ReporteClientesController.ClienteTopData> clientesSimplificados = 
+                                    new ArrayList<>();
+                                for (com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.ClienteTop cliente : topClientes) {
+                                    com.example.pruebamongodbcss.Modulos.Informes.ReporteClientesController.ClienteTopData clienteData = 
+                                        new com.example.pruebamongodbcss.Modulos.Informes.ReporteClientesController.ClienteTopData();
+                                    clienteData.setNombre(cliente.getNombre());
+                                    clienteData.setTotalFacturado(cliente.getTotalFacturado());
+                                    clienteData.setNumeroFacturas(cliente.getNumeroFacturas());
+                                    clienteData.setPromedioFactura(cliente.getPromedioFactura());
+                                    clientesSimplificados.add(clienteData);
+                                }
+                                
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_TOP_CLIENTES_RESPONSE);
+                                    salida.writeObject(clientesSimplificados);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener top clientes: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_TOP_CLIENTES);
                                     salida.flush();
                                 }
                             }
