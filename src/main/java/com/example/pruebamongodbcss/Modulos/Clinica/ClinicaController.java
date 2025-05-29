@@ -1152,32 +1152,39 @@ public class ClinicaController implements Initializable {
                     int index = getIndex();
                     if (index >= 0 && index < getTableView().getItems().size()) {
                         ModeloPaciente paciente = getTableView().getItems().get(index);
+                        
+                        try {
+                            // Validar campos obligatorios antes de guardar
+                            if (paciente.getNombre() == null || paciente.getNombre().trim().isEmpty()) {
+                                mostrarAlerta("Error de validación", "Nombre requerido",
+                                        "El nombre del paciente es obligatorio.");
+                                return;
+                            }
 
-                        // Validar campos obligatorios antes de guardar
-                        if (paciente.getNombre() == null || paciente.getNombre().trim().isEmpty()) {
-                            mostrarAlerta("Error de validación", "Nombre requerido",
-                                    "El nombre del paciente es obligatorio.");
-                            return;
+                            if (paciente.getEspecie() == null || paciente.getEspecie().trim().isEmpty()) {
+                                mostrarAlerta("Error de validación", "Especie requerida",
+                                        "La especie del paciente es obligatoria.");
+                                return;
+                            }
+
+                            if (paciente.getPropietarioId() == null) {
+                                mostrarAlerta("Error de validación", "Propietario requerido",
+                                        "Debe asignar un propietario al paciente.");
+                                return;
+                            }
+
+                            // Guardar el paciente
+                            guardarPaciente(paciente);
+
+                            // Desactivar modo edición
+                            paciente.setEditando(false);
+                            getTableView().refresh();
+                            
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            mostrarAlerta("Error", "Error al guardar paciente",
+                                    "Ha ocurrido un error al intentar guardar el paciente: " + e.getMessage());
                         }
-
-                        if (paciente.getEspecie() == null || paciente.getEspecie().trim().isEmpty()) {
-                            mostrarAlerta("Error de validación", "Especie requerida",
-                                    "La especie del paciente es obligatoria.");
-                            return;
-                        }
-
-                        if (paciente.getPropietarioId() == null) {
-                            mostrarAlerta("Error de validación", "Propietario requerido",
-                                    "Debe asignar un propietario al paciente.");
-                            return;
-                        }
-
-                        // Guardar el paciente
-                        guardarPaciente(paciente);
-
-                        // Desactivar modo edición
-                        paciente.setEditando(false);
-                        getTableView().refresh();
                     }
                 });
 
@@ -3471,5 +3478,19 @@ public class ClinicaController implements Initializable {
     public void recargarPropietarios() {
         System.out.println("🔄 Recargando propietarios...");
         cargarPropietarios();
+    }
+    
+    /**
+     * Refresca solo la tabla de propietarios
+     */
+    private void refreshTablaPropietarios() {
+        Platform.runLater(() -> {
+            try {
+                cargarPropietarios();
+                System.out.println("✅ Tabla de propietarios actualizada");
+            } catch (Exception e) {
+                System.err.println("❌ Error al refrescar tabla de propietarios: " + e.getMessage());
+            }
+        });
     }
 } 

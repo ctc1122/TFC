@@ -61,6 +61,7 @@ public class PacienteEditRowController implements Initializable {
         configurarCombos();
         configurarValidaciones();
         configurarBotones();
+        configurarCamposTexto();
     }
     
     private void configurarCombos() {
@@ -73,6 +74,45 @@ public class PacienteEditRowController implements Initializable {
             String newText = change.getControlNewText();
             return newText.matches("^\\d*\\.?\\d*$") ? change : null;
         }));
+    }
+    
+    /**
+     * Configura los campos de texto para evitar problemas de visualización
+     */
+    private void configurarCamposTexto() {
+        // Asegurar que los MFXTextField mantengan su texto visible
+        txtNombre.setPromptText("Ingrese el nombre del paciente");
+        txtRaza.setPromptText("Ingrese la raza");
+        txtPeso.setPromptText("Peso en kg");
+        
+        // Forzar actualización visual cuando pierden el foco
+        txtNombre.focusedProperty().addListener((obs, oldVal, newVal) -> {
+            if (!newVal) { // Cuando pierde el foco
+                String texto = txtNombre.getText();
+                if (texto != null && !texto.isEmpty()) {
+                    // Forzar redibujado
+                    txtNombre.applyCss();
+                }
+            }
+        });
+        
+        txtRaza.focusedProperty().addListener((obs, oldVal, newVal) -> {
+            if (!newVal) {
+                String texto = txtRaza.getText();
+                if (texto != null && !texto.isEmpty()) {
+                    txtRaza.applyCss();
+                }
+            }
+        });
+        
+        txtPeso.focusedProperty().addListener((obs, oldVal, newVal) -> {
+            if (!newVal) {
+                String texto = txtPeso.getText();
+                if (texto != null && !texto.isEmpty()) {
+                    txtPeso.applyCss();
+                }
+            }
+        });
     }
     
     private void configurarBotones() {
