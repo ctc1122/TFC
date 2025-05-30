@@ -446,4 +446,8 @@ public interface Protocolo {
     static final int OBTENER_DASHBOARD_VENTAS_RESPONSE = 1320;
     static final int ERROR_OBTENER_DASHBOARD_VENTAS = 1321;
 
+    static final int OBTENER_TOP_FACTURAS_POR_IMPORTE = 1322;
+    static final int OBTENER_TOP_FACTURAS_POR_IMPORTE_RESPONSE = 1323;
+    static final int ERROR_OBTENER_TOP_FACTURAS_POR_IMPORTE = 1324;
+
 } 

@@ -59,16 +59,22 @@ public class ReporteVentasController implements Initializable {
     private VBox chartContainer;
     
     @FXML
-    private TableView<ServicioVendidoRow> tableServicios;
+    private TableView<FacturaTopRow> tableFacturas;
     
     @FXML
-    private TableColumn<ServicioVendidoRow, String> colServicio;
+    private TableColumn<FacturaTopRow, String> colNumeroFactura;
     
     @FXML
-    private TableColumn<ServicioVendidoRow, Integer> colCantidad;
+    private TableColumn<FacturaTopRow, String> colCliente;
     
     @FXML
-    private TableColumn<ServicioVendidoRow, String> colTotal;
+    private TableColumn<FacturaTopRow, String> colTotalFactura;
+    
+    @FXML
+    private TableColumn<FacturaTopRow, String> colFecha;
+    
+    @FXML
+    private TableColumn<FacturaTopRow, Integer> colServicios;
     
     private GestorSocket gestorSocket;
     private Usuario usuarioActual;
@@ -101,11 +107,13 @@ public class ReporteVentasController implements Initializable {
     }
     
     private void configurarTabla() {
-        colServicio.setCellValueFactory(new PropertyValueFactory<>("nombre"));
-        colCantidad.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
-        colTotal.setCellValueFactory(new PropertyValueFactory<>("totalFormateado"));
+        colNumeroFactura.setCellValueFactory(new PropertyValueFactory<>("numeroFactura"));
+        colCliente.setCellValueFactory(new PropertyValueFactory<>("nombreCliente"));
+        colTotalFactura.setCellValueFactory(new PropertyValueFactory<>("totalFormateado"));
+        colFecha.setCellValueFactory(new PropertyValueFactory<>("fechaCreacion"));
+        colServicios.setCellValueFactory(new PropertyValueFactory<>("numeroServicios"));
         
-        tableServicios.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tableFacturas.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
     
     private void generarReporte() {
@@ -136,11 +144,11 @@ public class ReporteVentasController implements Initializable {
                 // Actualizar gráfico de evolución
                 actualizarGraficoEvolucion();
                 
-                // Obtener top servicios vendidos
-                List<ServicioVendidoData> topServicios = obtenerTopServiciosVendidos(10, inicio, fin);
+                // Obtener top facturas por importe
+                List<FacturaTopData> topFacturas = obtenerTopFacturasPorImporte(10, inicio, fin);
                 
                 // Actualizar tabla
-                actualizarTablaTopServicios(topServicios);
+                actualizarTablaTopFacturas(topFacturas);
             }
             
         } catch (Exception e) {
@@ -224,17 +232,19 @@ public class ReporteVentasController implements Initializable {
         }
     }
     
-    private void actualizarTablaTopServicios(List<ServicioVendidoData> topServicios) {
-        tableServicios.getItems().clear();
+    private void actualizarTablaTopFacturas(List<FacturaTopData> topFacturas) {
+        tableFacturas.getItems().clear();
         
-        for (ServicioVendidoData servicio : topServicios) {
-            ServicioVendidoRow row = new ServicioVendidoRow(
-                servicio.getNombre(),
-                servicio.getCantidad(),
-                servicio.getTotal(),
-                formatoMoneda.format(servicio.getTotal())
+        for (FacturaTopData factura : topFacturas) {
+            FacturaTopRow row = new FacturaTopRow(
+                factura.getNumeroFactura(),
+                factura.getNombreCliente(),
+                factura.getTotal(),
+                formatoMoneda.format(factura.getTotal()),
+                factura.getFechaCreacion().toString(),
+                factura.getNumeroServicios()
             );
-            tableServicios.getItems().add(row);
+            tableFacturas.getItems().add(row);
         }
     }
     
@@ -392,9 +402,9 @@ public class ReporteVentasController implements Initializable {
     }
     
     @SuppressWarnings("unchecked")
-    private List<ServicioVendidoData> obtenerTopServiciosVendidos(int limite, LocalDate fechaInicio, LocalDate fechaFin) {
+    private List<FacturaTopData> obtenerTopFacturasPorImporte(int limite, LocalDate fechaInicio, LocalDate fechaFin) {
         try {
-            String peticion = Protocolo.OBTENER_TOP_SERVICIOS_VENDIDOS + Protocolo.SEPARADOR_CODIGO + 
+            String peticion = Protocolo.OBTENER_TOP_FACTURAS_POR_IMPORTE + Protocolo.SEPARADOR_CODIGO + 
                              limite + Protocolo.SEPARADOR_PARAMETROS + 
                              fechaInicio.toString() + Protocolo.SEPARADOR_PARAMETROS + fechaFin.toString();
             gestorSocket.enviarPeticion(peticion);
@@ -402,14 +412,14 @@ public class ReporteVentasController implements Initializable {
             ObjectInputStream entrada = gestorSocket.getEntrada();
             int codigoRespuesta = entrada.readInt();
             
-            if (codigoRespuesta == Protocolo.OBTENER_TOP_SERVICIOS_VENDIDOS_RESPONSE) {
-                return (List<ServicioVendidoData>) entrada.readObject();
+            if (codigoRespuesta == Protocolo.OBTENER_TOP_FACTURAS_POR_IMPORTE_RESPONSE) {
+                return (List<FacturaTopData>) entrada.readObject();
             } else {
-                System.err.println("Error al obtener top servicios vendidos");
+                System.err.println("Error al obtener top facturas por importe");
                 return List.of(); // Lista vacía
             }
         } catch (Exception e) {
-            System.err.println("Error en petición obtenerTopServiciosVendidos: " + e.getMessage());
+            System.err.println("Error en petición obtenerTopFacturasPorImporte: " + e.getMessage());
             return List.of();
         }
     }
@@ -457,11 +467,83 @@ public class ReporteVentasController implements Initializable {
         public void setValor(double valor) { this.valor = valor; }
     }
     
+    public static class FacturaTopData implements java.io.Serializable {
+        private static final long serialVersionUID = 1L;
+        private String numeroFactura;
+        private String nombreCliente;
+        private double total;
+        private LocalDate fechaCreacion;
+        private int numeroServicios;
+        
+        public String getNumeroFactura() { return numeroFactura; }
+        public void setNumeroFactura(String numeroFactura) { this.numeroFactura = numeroFactura; }
+        
+        public String getNombreCliente() { return nombreCliente; }
+        public void setNombreCliente(String nombreCliente) { this.nombreCliente = nombreCliente; }
+        
+        public double getTotal() { return total; }
+        public void setTotal(double total) { this.total = total; }
+        
+        public LocalDate getFechaCreacion() { return fechaCreacion; }
+        public void setFechaCreacion(LocalDate fechaCreacion) { this.fechaCreacion = fechaCreacion; }
+        
+        public int getNumeroServicios() { return numeroServicios; }
+        public void setNumeroServicios(int numeroServicios) { this.numeroServicios = numeroServicios; }
+    }
+    
+    // Clase para las filas de la tabla de servicios vendidos
+    public static class FacturaTopRow {
+        private String numeroFactura;
+        private String nombreCliente;
+        private Double total;
+        private String totalFormateado;
+        private String fechaCreacion;
+        private Integer numeroServicios;
+        
+        public FacturaTopRow(String numeroFactura, String nombreCliente, Double total, 
+                           String totalFormateado, String fechaCreacion, Integer numeroServicios) {
+            this.numeroFactura = numeroFactura;
+            this.nombreCliente = nombreCliente;
+            this.total = total;
+            this.totalFormateado = totalFormateado;
+            this.fechaCreacion = fechaCreacion;
+            this.numeroServicios = numeroServicios;
+        }
+        
+        // Getters y setters
+        public String getNumeroFactura() { return numeroFactura; }
+        public void setNumeroFactura(String numeroFactura) { this.numeroFactura = numeroFactura; }
+        
+        public String getNombreCliente() { return nombreCliente; }
+        public void setNombreCliente(String nombreCliente) { this.nombreCliente = nombreCliente; }
+        
+        public Double getTotal() { return total; }
+        public void setTotal(Double total) { this.total = total; }
+        
+        public String getTotalFormateado() { return totalFormateado; }
+        public void setTotalFormateado(String totalFormateado) { this.totalFormateado = totalFormateado; }
+        
+        public String getFechaCreacion() { return fechaCreacion; }
+        public void setFechaCreacion(String fechaCreacion) { this.fechaCreacion = fechaCreacion; }
+        
+        public Integer getNumeroServicios() { return numeroServicios; }
+        public void setNumeroServicios(Integer numeroServicios) { this.numeroServicios = numeroServicios; }
+    }
+    
+    // Clase para servicios vendidos en comunicación cliente-servidor
     public static class ServicioVendidoData implements java.io.Serializable {
         private static final long serialVersionUID = 1L;
         private String nombre;
         private int cantidad;
         private double total;
+        
+        public ServicioVendidoData() {}
+        
+        public ServicioVendidoData(String nombre, int cantidad, double total) {
+            this.nombre = nombre;
+            this.cantidad = cantidad;
+            this.total = total;
+        }
         
         public String getNombre() { return nombre; }
         public void setNombre(String nombre) { this.nombre = nombre; }
@@ -471,33 +553,5 @@ public class ReporteVentasController implements Initializable {
         
         public double getTotal() { return total; }
         public void setTotal(double total) { this.total = total; }
-    }
-    
-    // Clase para las filas de la tabla
-    public static class ServicioVendidoRow {
-        private String nombre;
-        private Integer cantidad;
-        private Double total;
-        private String totalFormateado;
-        
-        public ServicioVendidoRow(String nombre, Integer cantidad, Double total, String totalFormateado) {
-            this.nombre = nombre;
-            this.cantidad = cantidad;
-            this.total = total;
-            this.totalFormateado = totalFormateado;
-        }
-        
-        // Getters y setters
-        public String getNombre() { return nombre; }
-        public void setNombre(String nombre) { this.nombre = nombre; }
-        
-        public Integer getCantidad() { return cantidad; }
-        public void setCantidad(Integer cantidad) { this.cantidad = cantidad; }
-        
-        public Double getTotal() { return total; }
-        public void setTotal(Double total) { this.total = total; }
-        
-        public String getTotalFormateado() { return totalFormateado; }
-        public void setTotalFormateado(String totalFormateado) { this.totalFormateado = totalFormateado; }
     }
 } 

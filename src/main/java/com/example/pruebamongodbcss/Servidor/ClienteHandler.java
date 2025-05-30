@@ -2369,6 +2369,53 @@ public class ClienteHandler implements Runnable {
                             }
                             break;
                             
+                        case Protocolo.OBTENER_TOP_FACTURAS_POR_IMPORTE:
+                            System.out.println("Procesando solicitud de obtener top facturas por importe...");
+                            try {
+                                if (parametros.length >= 3) {
+                                    int limite = Integer.parseInt(parametros[0]);
+                                    LocalDate fechaInicioFacturas = LocalDate.parse(parametros[1]);
+                                    LocalDate fechaFinFacturas = LocalDate.parse(parametros[2]);
+                                    
+                                    com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes = 
+                                        new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
+                                    List<com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.FacturaTop> topFacturas = 
+                                        servicioInformes.obtenerTopFacturasPorImporte(limite, fechaInicioFacturas, fechaFinFacturas);
+                                    
+                                    // Convertir a objetos serializables para envío
+                                    List<com.example.pruebamongodbcss.Modulos.Informes.ReporteVentasController.FacturaTopData> facturas = new ArrayList<>();
+                                    for (com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.FacturaTop factura : topFacturas) {
+                                        com.example.pruebamongodbcss.Modulos.Informes.ReporteVentasController.FacturaTopData data = 
+                                            new com.example.pruebamongodbcss.Modulos.Informes.ReporteVentasController.FacturaTopData();
+                                        data.setNumeroFactura(factura.getNumeroFactura());
+                                        data.setNombreCliente(factura.getNombreCliente());
+                                        data.setTotal(factura.getTotal());
+                                        data.setFechaCreacion(factura.getFechaCreacion());
+                                        data.setNumeroServicios(factura.getNumeroServicios());
+                                        facturas.add(data);
+                                    }
+                                    
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.OBTENER_TOP_FACTURAS_POR_IMPORTE_RESPONSE);
+                                        salida.writeObject(facturas);
+                                        salida.flush();
+                                    }
+                                } else {
+                                    System.err.println("Error: Faltan parámetros para top facturas");
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_OBTENER_TOP_FACTURAS_POR_IMPORTE);
+                                        salida.flush();
+                                    }
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener top facturas: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_TOP_FACTURAS_POR_IMPORTE);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
                         default:
                             System.out.println("Mensaje no reconocido: " + codigo);
                     }

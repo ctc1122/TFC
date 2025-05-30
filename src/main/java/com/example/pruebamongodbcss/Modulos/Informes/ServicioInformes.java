@@ -1455,4 +1455,84 @@ public class ServicioInformes {
         public LocalDate getFechaFin() { return fechaFin; }
         public void setFechaFin(LocalDate fechaFin) { this.fechaFin = fechaFin; }
     }
+    
+    public static class FacturaTop implements Serializable {
+        private static final long serialVersionUID = 1L;
+        private String numeroFactura;
+        private String nombreCliente;
+        private double total;
+        private LocalDate fechaCreacion;
+        private int numeroServicios;
+        
+        // Getters y setters
+        public String getNumeroFactura() { return numeroFactura; }
+        public void setNumeroFactura(String numeroFactura) { this.numeroFactura = numeroFactura; }
+        
+        public String getNombreCliente() { return nombreCliente; }
+        public void setNombreCliente(String nombreCliente) { this.nombreCliente = nombreCliente; }
+        
+        public double getTotal() { return total; }
+        public void setTotal(double total) { this.total = total; }
+        
+        public LocalDate getFechaCreacion() { return fechaCreacion; }
+        public void setFechaCreacion(LocalDate fechaCreacion) { this.fechaCreacion = fechaCreacion; }
+        
+        public int getNumeroServicios() { return numeroServicios; }
+        public void setNumeroServicios(int numeroServicios) { this.numeroServicios = numeroServicios; }
+    }
+    
+    /**
+     * Obtiene las top facturas por importe en un período
+     */
+    public List<FacturaTop> obtenerTopFacturasPorImporte(int limite, LocalDate fechaInicio, LocalDate fechaFin) {
+        List<FacturaTop> topFacturas = new ArrayList<>();
+        
+        try {
+            // Convertir LocalDate a Date para MongoDB
+            Date fechaInicioDate = Date.from(fechaInicio.atStartOfDay(ZoneId.systemDefault()).toInstant());
+            Date fechaFinDate = Date.from(fechaFin.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            
+            // Filtro por rango de fechas y estado EMITIDA
+            Bson filtroFechas = Filters.and(
+                Filters.gte("fechaCreacion", fechaInicioDate),
+                Filters.lt("fechaCreacion", fechaFinDate),
+                Filters.eq("estado", "EMITIDA")
+            );
+            
+            // Obtener facturas ordenadas por total descendente
+            List<Document> facturas = facturasCollection.find(filtroFechas)
+                .sort(Sorts.descending("total"))
+                .limit(limite)
+                .into(new ArrayList<>());
+            
+            for (Document factura : facturas) {
+                FacturaTop facturaTop = new FacturaTop();
+                
+                // Datos básicos de la factura
+                facturaTop.setNumeroFactura(factura.getString("numeroFactura"));
+                facturaTop.setNombreCliente(factura.getString("nombreCliente"));
+                facturaTop.setTotal(factura.getDouble("total"));
+                
+                // Fecha de creación
+                Date fechaCreacion = factura.getDate("fechaCreacion");
+                if (fechaCreacion != null) {
+                    facturaTop.setFechaCreacion(fechaCreacion.toInstant()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate());
+                }
+                
+                // Contar servicios
+                List<Document> servicios = factura.getList("servicios", Document.class);
+                facturaTop.setNumeroServicios(servicios != null ? servicios.size() : 0);
+                
+                topFacturas.add(facturaTop);
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error al obtener top facturas por importe: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return topFacturas;
+    }
 } 

@@ -88,15 +88,17 @@
                      </padding>
                   </VBox>
                   
-                  <!-- Tabla de servicios más vendidos -->
+                  <!-- Tabla de facturas con mayor importe -->
                   <VBox spacing="15.0">
                      <children>
-                        <Label styleClass="reporte-section-title" text="Servicios Más Vendidos" />
-                        <TableView fx:id="tableServicios" styleClass="reporte-table">
+                        <Label styleClass="reporte-section-title" text="Top 10 Facturas de Mayor Importe" />
+                        <TableView fx:id="tableFacturas" styleClass="reporte-table">
                           <columns>
-                            <TableColumn fx:id="colServicio" prefWidth="300.0" text="Servicio" />
-                            <TableColumn fx:id="colCantidad" prefWidth="150.0" text="Cantidad Vendida" />
-                              <TableColumn fx:id="colTotal" prefWidth="150.0" text="Total Facturado" />
+                            <TableColumn fx:id="colNumeroFactura" prefWidth="120.0" text="Nº Factura" />
+                            <TableColumn fx:id="colCliente" prefWidth="200.0" text="Cliente" />
+                            <TableColumn fx:id="colTotalFactura" prefWidth="120.0" text="Importe" />
+                            <TableColumn fx:id="colFecha" prefWidth="100.0" text="Fecha" />
+                            <TableColumn fx:id="colServicios" prefWidth="80.0" text="Servicios" />
                           </columns>
                         </TableView>
                      </children>
