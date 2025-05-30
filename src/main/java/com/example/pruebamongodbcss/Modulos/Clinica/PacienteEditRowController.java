@@ -26,7 +26,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextFormatter;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -38,7 +38,7 @@ public class PacienteEditRowController implements Initializable {
     // =========================
     // 1. ATRIBUTOS FXML Y DE CLASE
     // =========================
-    @FXML private HBox rowContainer;
+    @FXML private BorderPane rowContainer;
     @FXML private MFXTextField txtNombre, txtRaza, txtPeso;
     @FXML private MFXComboBox<String> cmbSexo, cmbEspecie;
     @FXML private MFXDatePicker dpFechaNacimiento;
@@ -159,10 +159,18 @@ public class PacienteEditRowController implements Initializable {
      * Carga los datos del paciente en los controles
      */
     private void cargarDatosPaciente() {
-        txtNombre.setText(paciente.getNombre());
-        cmbEspecie.setValue(paciente.getEspecie());
-        txtRaza.setText(paciente.getRaza());
-        cmbSexo.setValue(paciente.getSexo());
+        if (paciente.getNombre() != null) {
+            txtNombre.setText(paciente.getNombre());
+        }
+        if (paciente.getEspecie() != null) {
+            cmbEspecie.setValue(paciente.getEspecie());
+        }
+        if (paciente.getRaza() != null) {
+            txtRaza.setText(paciente.getRaza());
+        }
+        if (paciente.getSexo() != null) {
+            cmbSexo.setValue(paciente.getSexo());
+        }
 
         if (paciente.getFechaNacimiento() != null) {
             dpFechaNacimiento.setValue(LocalDate.from(paciente.getFechaNacimiento().toInstant().atZone(java.time.ZoneId.systemDefault())));
@@ -266,7 +274,7 @@ public class PacienteEditRowController implements Initializable {
      * Valida que todos los campos obligatorios estén completos
      */
     private boolean validarCampos() {
-        if (txtNombre.getText().trim().isEmpty()) {
+        if (obtenerTextoSeguro(txtNombre).isEmpty()) {
             mostrarYFoco("El nombre del paciente es obligatorio.", txtNombre);
             return false;
         }
@@ -312,9 +320,10 @@ public class PacienteEditRowController implements Initializable {
     }
     
     private void actualizarPacienteDesdeFormulario() {
-        paciente.setNombre(txtNombre.getText().trim());
+        // Usar métodos null-safe para obtener los valores de los campos
+        paciente.setNombre(obtenerTextoSeguro(txtNombre));
         paciente.setEspecie(cmbEspecie.getValue());
-        paciente.setRaza(txtRaza.getText().trim());
+        paciente.setRaza(obtenerTextoSeguro(txtRaza));
         paciente.setSexo(cmbSexo.getValue());
 
         if (dpFechaNacimiento.getValue() != null) {
@@ -322,8 +331,13 @@ public class PacienteEditRowController implements Initializable {
         }
 
         try {
-            double peso = Double.parseDouble(txtPeso.getText().replace(",", "."));
-            paciente.setPeso(peso);
+            String pesoTexto = obtenerTextoSeguro(txtPeso);
+            if (!pesoTexto.isEmpty()) {
+                double peso = Double.parseDouble(pesoTexto.replace(",", "."));
+                paciente.setPeso(peso);
+            } else {
+                paciente.setPeso(0);
+            }
         } catch (NumberFormatException e) {
             paciente.setPeso(0);
         }
@@ -333,6 +347,14 @@ public class PacienteEditRowController implements Initializable {
             paciente.setPropietarioId(propietario.getId());
             paciente.setNombrePropietario(propietario.getNombre() + " " + propietario.getApellidos());
         }
+    }
+    
+    /**
+     * Método auxiliar para obtener texto de un MFXTextField de forma segura
+     */
+    private String obtenerTextoSeguro(MFXTextField campo) {
+        String texto = campo.getText();
+        return texto != null ? texto.trim() : "";
     }
     
     private void guardarPaciente() {

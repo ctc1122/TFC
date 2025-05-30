@@ -5,73 +5,95 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 
-<HBox fx:id="rowContainer" spacing="10" styleClass="edit-row" xmlns="http://javafx.com/javafx"
+<BorderPane fx:id="rowContainer" styleClass="edit-row" xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.PacienteEditRowController">
+      fx:controller="com.example.pruebamongodbcss.Modulos.Clinica.PacienteEditRowController"
+      prefWidth="600.0" prefHeight="400.0">
     
-    <padding>
-        <Insets top="10" right="10" bottom="10" left="10"/>
-    </padding>
+    <top>
+        <HBox alignment="CENTER" style="-fx-background-color: #3f51b5;" prefHeight="50.0">
+            <children>
+                <Label text="Nuevo Paciente" textFill="WHITE" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+            </children>
+            <padding>
+                <Insets top="10.0" bottom="10.0" />
+            </padding>
+        </HBox>
+    </top>
     
-    <VBox spacing="5" HBox.hgrow="ALWAYS">
-        <HBox spacing="10">
-            <!-- Nombre -->
-            <VBox spacing="2">
-                <Label text="Nombre *" />
-                <MFXTextField fx:id="txtNombre" prefWidth="150" />
-            </VBox>
+    <center>
+        <VBox spacing="20.0">
+            <padding>
+                <Insets top="20.0" right="20.0" bottom="20.0" left="20.0"/>
+            </padding>
             
-            <!-- Especie -->
-            <VBox spacing="2">
-                <Label text="Especie *" />
-                <MFXComboBox fx:id="cmbEspecie" prefWidth="150" />
-            </VBox>
-            
-            <!-- Raza -->
-            <VBox spacing="2">
-                <Label text="Raza" />
-                <MFXTextField fx:id="txtRaza" prefWidth="150" />
-            </VBox>
-        </HBox>
-        
-        <HBox spacing="10" layoutY="50">
-            <!-- Sexo -->
-            <VBox spacing="2">
-                <Label text="Sexo *" />
-                <MFXComboBox fx:id="cmbSexo" prefWidth="120" />
-            </VBox>
-            
-            <!-- Fecha de nacimiento -->
-            <VBox spacing="2">
-                <Label text="F. Nacimiento *" />
-                <MFXDatePicker fx:id="dpFechaNacimiento" prefWidth="150" />
-            </VBox>
-            
-            <!-- Peso -->
-            <VBox spacing="2">
-                <Label text="Peso (kg)" />
-                <MFXTextField fx:id="txtPeso" prefWidth="100" />
-            </VBox>
-        </HBox>
-        
-        <HBox spacing="10" layoutY="100">
-            <!-- Propietario -->
-            <VBox spacing="2" HBox.hgrow="ALWAYS">
-                <Label text="Propietario *" />
-                <HBox spacing="5" alignment="CENTER_LEFT">
-                    <Label fx:id="lblPropietario" text="Sin propietario" HBox.hgrow="ALWAYS" prefHeight="30" />
-                    <MFXButton fx:id="btnBuscarPropietario" text="+" 
-                              minWidth="30" minHeight="30" 
-                              styleClass="btn-buscar-propietario"/>
+            <!-- Formulario principal con GridPane -->
+            <GridPane hgap="15.0" vgap="15.0">
+                <columnConstraints>
+                    <ColumnConstraints hgrow="NEVER" minWidth="120.0" prefWidth="120.0" />
+                    <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" prefWidth="200.0" />
+                    <ColumnConstraints hgrow="NEVER" minWidth="120.0" prefWidth="120.0" />
+                    <ColumnConstraints hgrow="ALWAYS" minWidth="150.0" prefWidth="200.0" />
+                </columnConstraints>
+                <rowConstraints>
+                    <RowConstraints minHeight="30.0" prefHeight="35.0" vgrow="SOMETIMES" />
+                    <RowConstraints minHeight="30.0" prefHeight="35.0" vgrow="SOMETIMES" />
+                    <RowConstraints minHeight="30.0" prefHeight="35.0" vgrow="SOMETIMES" />
+                    <RowConstraints minHeight="30.0" prefHeight="35.0" vgrow="SOMETIMES" />
+                </rowConstraints>
+                
+                <!-- Primera fila: Nombre y Especie -->
+                <Label text="Nombre *" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold;" />
+                <MFXTextField fx:id="txtNombre" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                
+                <Label text="Especie *" GridPane.columnIndex="2" GridPane.rowIndex="0" style="-fx-font-weight: bold;" />
+                <MFXComboBox fx:id="cmbEspecie" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+                
+                <!-- Segunda fila: Raza y Sexo -->
+                <Label text="Raza" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-weight: bold;" />
+                <MFXTextField fx:id="txtRaza" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                
+                <Label text="Sexo *" GridPane.columnIndex="2" GridPane.rowIndex="1" style="-fx-font-weight: bold;" />
+                <MFXComboBox fx:id="cmbSexo" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+                
+                <!-- Tercera fila: Fecha de Nacimiento y Peso -->
+                <Label text="F. Nacimiento *" GridPane.columnIndex="0" GridPane.rowIndex="2" style="-fx-font-weight: bold;" />
+                <MFXDatePicker fx:id="dpFechaNacimiento" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                
+                <Label text="Peso (kg)" GridPane.columnIndex="2" GridPane.rowIndex="2" style="-fx-font-weight: bold;" />
+                <MFXTextField fx:id="txtPeso" GridPane.columnIndex="3" GridPane.rowIndex="2" />
+                
+                <!-- Cuarta fila: Propietario (ocupa toda la fila) -->
+                <Label text="Propietario *" GridPane.columnIndex="0" GridPane.rowIndex="3" style="-fx-font-weight: bold;" />
+                <HBox spacing="10.0" alignment="CENTER_LEFT" GridPane.columnIndex="1" GridPane.rowIndex="3" GridPane.columnSpan="3">
+                    <children>
+                        <Label fx:id="lblPropietario" text="Sin propietario" HBox.hgrow="ALWAYS" 
+                               style="-fx-background-color: #f5f5f5; -fx-padding: 8px; -fx-background-radius: 4px;" />
+                        <MFXButton fx:id="btnBuscarPropietario" text="+" 
+                                  minWidth="35.0" minHeight="35.0" 
+                                  styleClass="btn-buscar-propietario"
+                                  style="-fx-background-color: #3f51b5; -fx-text-fill: white; -fx-background-radius: 18px;" />
+                    </children>
                 </HBox>
-            </VBox>
+            </GridPane>
+        </VBox>
+    </center>
+    
+    <bottom>
+        <!-- Botones de acción -->
+        <HBox spacing="15.0" alignment="CENTER" style="-fx-background-color: #f8f9fa;">
+            <children>
+                <MFXButton fx:id="btnGuardar" text="Guardar" styleClass="btn-primary" 
+                          prefWidth="120.0" prefHeight="35.0"
+                          style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-background-radius: 5px;" />
+                <MFXButton fx:id="btnCancelar" text="Cancelar" styleClass="btn-secondary" 
+                          prefWidth="120.0" prefHeight="35.0"
+                          style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-background-radius: 5px;" />
+            </children>
+            <padding>
+                <Insets top="15.0" right="20.0" bottom="15.0" left="20.0" />
+            </padding>
         </HBox>
-    </VBox>
+    </bottom>
     
-    <!-- Botones de acción -->
-    <VBox spacing="10" alignment="CENTER">
-        <MFXButton fx:id="btnGuardar" text="Guardar" styleClass="btn-primary" prefWidth="90" />
-        <MFXButton fx:id="btnCancelar" text="Cancelar" styleClass="btn-secondary" prefWidth="90" />
-    </VBox>
-    
-</HBox> 
+</BorderPane> 
