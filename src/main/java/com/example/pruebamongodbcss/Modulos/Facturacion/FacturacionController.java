@@ -54,16 +54,12 @@ public class FacturacionController implements Initializable {
     
     // Tab de listado de facturas
     @FXML private Tab tabListado;
-    @FXML private ComboBox<String> cmbClientes;
     @FXML private ComboBox<String> cmbEstados;
     @FXML private MFXDatePicker dpFechaInicio;
     @FXML private MFXDatePicker dpFechaFin;
     @FXML private Button btnBuscar;
     @FXML private Button btnLimpiarFiltros;
     @FXML private TextField txtBuscar;
-    @FXML private Button btnNuevaFactura;
-    @FXML private Button btnVerFactura;
-    @FXML private Button btnEditarFactura;
     @FXML private Button btnEliminarFactura;
     @FXML private Button btnExportarPDF;
     @FXML private TableView<ModeloFactura> tablaFacturas;
@@ -373,9 +369,6 @@ public class FacturacionController implements Initializable {
     private void configurarEventos() {
         btnBuscar.setOnAction(e -> buscarFacturas());
         btnLimpiarFiltros.setOnAction(e -> limpiarFiltros());
-        btnNuevaFactura.setOnAction(e -> onNuevaFactura());
-        btnVerFactura.setOnAction(e -> onVerFactura());
-        btnEditarFactura.setOnAction(e -> onEditarFactura());
         btnEliminarFactura.setOnAction(e -> onEliminarFactura());
         btnExportarPDF.setOnAction(e -> onExportarPDF());
         btnNuevoBorrador.setOnAction(e -> onNuevoBorrador());
@@ -1161,31 +1154,6 @@ public class FacturacionController implements Initializable {
     /**
      * Métodos de eventos para los botones del FXML
      */
-    @FXML
-    private void onNuevaFactura() {
-        crearNuevaFactura();
-    }
-
-    @FXML
-    private void onVerFactura() {
-        ModeloFactura facturaSeleccionada = tablaFacturas.getSelectionModel().getSelectedItem();
-        if (facturaSeleccionada != null) {
-            verFactura(facturaSeleccionada);
-        } else {
-            mostrarError("Error", "Debe seleccionar una factura");
-        }
-    }
-
-    @FXML
-    private void onEditarFactura() {
-        ModeloFactura facturaSeleccionada = tablaFacturas.getSelectionModel().getSelectedItem();
-        if (facturaSeleccionada != null) {
-            editarFactura(facturaSeleccionada);
-        } else {
-            mostrarError("Error", "Debe seleccionar una factura");
-        }
-    }
-
     @FXML
     private void onEliminarFactura() {
         ModeloFactura facturaSeleccionada = tablaFacturas.getSelectionModel().getSelectedItem();

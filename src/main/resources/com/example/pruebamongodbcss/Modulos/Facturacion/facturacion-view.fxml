@@ -52,16 +52,6 @@
                            <!-- Filtros de búsqueda -->
                            <HBox alignment="CENTER_LEFT" spacing="10.0" minHeight="-Infinity" style="-fx-background-color: #f8fafc; -fx-background-radius: 6px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.03), 4, 0, 0, 1);">
                               <children>
-                                 <Label text="Cliente:" style="-fx-text-fill: #374151; -fx-font-weight: 500; -fx-font-size: 12px;">
-                                    <HBox.margin>
-                                       <Insets right="5.0" />
-                                    </HBox.margin>
-                                 </Label>
-                                 <ComboBox fx:id="cmbClientes" minWidth="150.0" promptText="Todos los clientes" HBox.hgrow="SOMETIMES" style="-fx-background-color: white; -fx-padding: 4px 8px; -fx-font-size: 11px;">
-                                    <HBox.margin>
-                                       <Insets right="10.0" />
-                                    </HBox.margin>
-                                 </ComboBox>
                                  <Label text="Estado:" style="-fx-text-fill: #374151; -fx-font-weight: 500; -fx-font-size: 12px;">
                                     <HBox.margin>
                                        <Insets right="5.0" />
@@ -106,9 +96,6 @@
                            <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-background-color: #f8fafc; -fx-background-radius: 6px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.03), 4, 0, 0, 1);">
                               <children>
                                  <TextField fx:id="txtBuscar" promptText="Buscar por número de factura, cliente o paciente..." HBox.hgrow="ALWAYS" style="-fx-background-color: white; -fx-padding: 8px 12px; -fx-font-size: 12px; -fx-text-fill: #1f2937;" />
-                                 <Button fx:id="btnNuevaFactura" onAction="#onNuevaFactura" style="-fx-background-color: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Nueva Factura" />
-                                 <Button fx:id="btnVerFactura" onAction="#onVerFactura" style="-fx-background-color: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Ver Detalles" />
-                                 <Button fx:id="btnEditarFactura" onAction="#onEditarFactura" style="-fx-background-color: linear-gradient(135deg, #64748b 0%, #475569 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Editar" />
                                  <Button fx:id="btnEliminarFactura" onAction="#onEliminarFactura" style="-fx-background-color: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Eliminar" />
                                  <Button fx:id="btnExportarPDF" onAction="#onExportarPDF" style="-fx-background-color: linear-gradient(135deg, #10b981 0%, #059669 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="PDF" />
                               </children>
