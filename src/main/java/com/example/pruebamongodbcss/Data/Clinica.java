@@ -15,7 +15,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
-import Utilidades.GestorConexion;
+import Utilidades1.GestorConexion;
 
 public class Clinica {
     private String CIF;

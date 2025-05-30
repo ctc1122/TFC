@@ -50,7 +50,6 @@ module com.example.pruebamongodbcss {
     exports com.example.pruebamongodbcss.Modulos.Carrusel;
     exports com.example.pruebamongodbcss.Modulos.InicioSesion;
     exports com.example.pruebamongodbcss.Modulos.UMLSSearch;
-    exports com.example.pruebamongodbcss.Modulos.Videollamada;
     exports com.example.pruebamongodbcss.Modulos.Clinica;
     exports com.example.pruebamongodbcss.Modulos.Empresa;
     exports com.example.pruebamongodbcss.LaboratorioJorge;
@@ -64,13 +63,14 @@ module com.example.pruebamongodbcss {
     exports com.example.pruebamongodbcss.calendar.google;
     exports com.example.pruebamongodbcss.Modulos.Fichaje;
     exports com.example.pruebamongodbcss.Modulos.Informes;
+    
 
     // Apertura de submódulos para FXML
     opens com.example.pruebamongodbcss.Modulos.AppChat to javafx.fxml;
     opens com.example.pruebamongodbcss.Modulos.Carrusel to javafx.fxml;
     opens com.example.pruebamongodbcss.Modulos.InicioSesion to javafx.fxml;
     opens com.example.pruebamongodbcss.Modulos.UMLSSearch to javafx.fxml;
-    opens com.example.pruebamongodbcss.Modulos.Videollamada to javafx.fxml;
+
     opens com.example.pruebamongodbcss.Modulos.Clinica to javafx.fxml;
     opens com.example.pruebamongodbcss.Modulos.Empresa to javafx.fxml;
     opens com.example.pruebamongodbcss.LaboratorioJorge to javafx.fxml;

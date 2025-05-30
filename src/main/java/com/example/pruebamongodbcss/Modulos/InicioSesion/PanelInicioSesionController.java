@@ -9,10 +9,10 @@ import java.util.ResourceBundle;
 
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
-import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 import com.example.pruebamongodbcss.theme.ThemeManager;
 
-import Utilidades.ScreensaverManager;
+import Utilidades1.GestorSocket;
+import Utilidades1.ScreensaverManager;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXML;

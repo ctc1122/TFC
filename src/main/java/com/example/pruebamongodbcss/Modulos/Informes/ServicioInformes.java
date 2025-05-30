@@ -23,7 +23,7 @@ import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
 
-import Utilidades.GestorConexion;
+import Utilidades1.GestorConexion;
 
 public class ServicioInformes {
     

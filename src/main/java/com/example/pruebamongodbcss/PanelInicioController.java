@@ -10,7 +10,6 @@ import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Modulos.AppChat.ServidorAppChat;
 import com.example.pruebamongodbcss.Modulos.AppChat.VentanaChat;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
-import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 import com.example.pruebamongodbcss.calendar.CalendarScreen;
 import com.example.pruebamongodbcss.calendar.CalendarService;
 import com.example.pruebamongodbcss.theme.ThemeManager;
@@ -18,6 +17,7 @@ import com.example.pruebamongodbcss.theme.ThemeToggleSwitch;
 import com.example.pruebamongodbcss.theme.ThemeUtil;
 import com.jfoenix.controls.JFXButton;
 
+import Utilidades1.GestorSocket;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;

@@ -5,8 +5,9 @@ import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
-import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 import com.example.pruebamongodbcss.theme.ThemeManager;
+
+import Utilidades1.GestorSocket;
 import io.github.palexdev.materialfx.controls.MFXDatePicker;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -1339,8 +1340,8 @@ public class FacturacionController implements Initializable {
         
         try {
             // Obtener instancia del gestor de inventario
-            com.example.pruebamongodbcss.Utilidades.GestorSocketInventario gestorInventario = 
-                com.example.pruebamongodbcss.Utilidades.GestorSocketInventario.getInstance();
+            Utilidades1.GestorSocketInventario gestorInventario = 
+                Utilidades1.GestorSocketInventario.getInstance();
             
             // Verificar conexión al servidor de inventario
             if (!gestorInventario.isConectado()) {
@@ -1366,8 +1367,8 @@ public class FacturacionController implements Initializable {
                     String idMensaje = "MSG_RESTORE_DELETE_" + System.currentTimeMillis();
                     String facturaId = factura.getId() != null ? factura.getId().toString() : "UNKNOWN";
                     
-                    String mensajeRestablecimiento = com.example.pruebamongodbcss.Utilidades.ProtocoloInventarioVeterinaria.construirMensaje(
-                        com.example.pruebamongodbcss.Utilidades.ProtocoloInventarioVeterinaria.RESTABLECER_INVENTARIO,
+                    String mensajeRestablecimiento = Utilidades1.ProtocoloInventarioVeterinaria.construirMensaje(
+                        Utilidades1.ProtocoloInventarioVeterinaria.RESTABLECER_INVENTARIO,
                         facturaId,
                         codigoProducto,
                         String.valueOf(medicamento.getCantidad()),
@@ -1385,11 +1386,11 @@ public class FacturacionController implements Initializable {
                     System.out.println("📥 Respuesta: " + respuesta);
                     
                     // Parsear respuesta
-                    String[] partesRespuesta = com.example.pruebamongodbcss.Utilidades.ProtocoloInventarioVeterinaria.parsearMensaje(respuesta);
+                    String[] partesRespuesta = Utilidades1.ProtocoloInventarioVeterinaria.parsearMensaje(respuesta);
                     
                     if (partesRespuesta.length >= 3) {
                         int codigoRespuesta = Integer.parseInt(partesRespuesta[0]);
-                        if (codigoRespuesta == com.example.pruebamongodbcss.Utilidades.ProtocoloInventarioVeterinaria.RESTABLECER_INVENTARIO_RESPONSE) {
+                        if (codigoRespuesta == Utilidades1.ProtocoloInventarioVeterinaria.RESTABLECER_INVENTARIO_RESPONSE) {
                             System.out.println("✅ Inventario restablecido para: " + medicamento.getDescripcion());
                         } else {
                             System.out.println("⚠️ Error al restablecer inventario para: " + medicamento.getDescripcion());

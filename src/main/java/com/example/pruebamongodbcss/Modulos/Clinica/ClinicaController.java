@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import org.bson.types.ObjectId;
 
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
-import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 
+import Utilidades1.GestorSocket;
 import io.github.palexdev.materialfx.controls.MFXDatePicker;
 import io.github.palexdev.materialfx.controls.MFXProgressSpinner;
 import javafx.application.Platform;

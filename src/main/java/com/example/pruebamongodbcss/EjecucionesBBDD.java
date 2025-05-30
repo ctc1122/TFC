@@ -4,7 +4,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoDatabase;
 
-import Utilidades.GestorConexion;
+import Utilidades1.GestorConexion;
 
 public class EjecucionesBBDD {
     public static void main(String[] args) {

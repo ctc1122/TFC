@@ -8,8 +8,8 @@ import java.util.ResourceBundle;
 import java.util.function.Consumer;
 
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
-import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 
+import Utilidades1.GestorSocket;
 import io.github.palexdev.materialfx.controls.MFXButton;
 import io.github.palexdev.materialfx.controls.MFXTextField;
 import javafx.collections.FXCollections;

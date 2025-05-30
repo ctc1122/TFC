@@ -1,4 +1,4 @@
-package com.example.pruebamongodbcss.Utilidades;
+package Utilidades1;
 
 /**
  * Protocolo de comunicación específico para el servidor de inventario (puerto 50005)

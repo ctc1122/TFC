@@ -7,9 +7,10 @@ import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario;
 import com.example.pruebamongodbcss.Modulos.Inventario.BuscadorMedicamentosController;
 import com.example.pruebamongodbcss.Modulos.Inventario.ModeloMedicamentoInventario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
-import com.example.pruebamongodbcss.Utilidades.GestorSocket;
-import com.example.pruebamongodbcss.Utilidades.GestorSocketInventario;
-import com.example.pruebamongodbcss.Utilidades.ProtocoloInventarioVeterinaria;
+
+import Utilidades1.GestorSocket;
+import Utilidades1.GestorSocketInventario;
+import Utilidades1.ProtocoloInventarioVeterinaria;
 import io.github.palexdev.materialfx.controls.MFXDatePicker;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;

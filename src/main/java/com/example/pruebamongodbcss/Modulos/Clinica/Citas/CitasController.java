@@ -16,9 +16,9 @@ import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario;
 import com.example.pruebamongodbcss.Modulos.Facturacion.FacturacionController;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
-import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 import com.example.pruebamongodbcss.calendar.google.GoogleCalendarWebView;
 
+import Utilidades1.GestorSocket;
 import io.github.palexdev.materialfx.controls.MFXDatePicker;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;

@@ -8,7 +8,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
-import Utilidades.GestorConexion;
+import Utilidades1.GestorConexion;
 
 public class CrearUsuarioAdmin {
     

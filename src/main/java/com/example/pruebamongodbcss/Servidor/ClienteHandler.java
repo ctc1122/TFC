@@ -26,10 +26,11 @@ import com.example.pruebamongodbcss.Modulos.Fichaje.ServicioFichaje;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.calendar.CalendarService;
 import com.mongodb.client.MongoCollection;
+
+import Utilidades1.GestorConexion;
+
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
-
-import Utilidades.GestorConexion;
 
 public class ClienteHandler implements Runnable {
     private final Socket clientSocket;
