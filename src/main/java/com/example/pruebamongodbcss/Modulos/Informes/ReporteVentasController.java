@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -31,6 +32,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 
 public class ReporteVentasController implements Initializable {
 
@@ -249,9 +251,174 @@ public class ReporteVentasController implements Initializable {
     }
     
     private void exportarReporte() {
-        // TODO: Implementar exportación a PDF/Excel
-        System.out.println("Exportando reporte de ventas...");
-        mostrarAlert("Información", "Funcionalidad en desarrollo", "La exportación se implementará próximamente.");
+        try {
+            // Selector de archivo para guardar el PDF
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Guardar Reporte de Ventas");
+            fileChooser.setInitialFileName("Reporte_Ventas_" + 
+                LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + ".pdf");
+            fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Archivos PDF", "*.pdf")
+            );
+            
+            java.io.File archivo = fileChooser.showSaveDialog(btnExportar.getScene().getWindow());
+            if (archivo == null) {
+                return; // Usuario canceló
+            }
+            
+            // Crear el documento PDF
+            com.itextpdf.text.Document documento = new com.itextpdf.text.Document(com.itextpdf.text.PageSize.A4);
+            com.itextpdf.text.pdf.PdfWriter.getInstance(documento, new java.io.FileOutputStream(archivo));
+            documento.open();
+            
+            // Definir fuentes
+            com.itextpdf.text.Font tituloFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 18, com.itextpdf.text.Font.BOLD);
+            com.itextpdf.text.Font subtituloFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 14, com.itextpdf.text.Font.BOLD);
+            com.itextpdf.text.Font normalFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 12, com.itextpdf.text.Font.NORMAL);
+            com.itextpdf.text.Font smallFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 10, com.itextpdf.text.Font.NORMAL);
+            
+            // Título principal
+            com.itextpdf.text.Paragraph titulo = new com.itextpdf.text.Paragraph("REPORTE DE VENTAS", tituloFont);
+            titulo.setAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
+            titulo.setSpacingAfter(15);
+            documento.add(titulo);
+            
+            // Fecha y hora del reporte
+            com.itextpdf.text.Paragraph fecha = new com.itextpdf.text.Paragraph("Generado el: " + 
+                LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + 
+                " a las " + java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")), 
+                smallFont);
+            fecha.setAlignment(com.itextpdf.text.Element.ALIGN_RIGHT);
+            fecha.setSpacingAfter(20);
+            documento.add(fecha);
+            
+            // Obtener las fechas seleccionadas
+            LocalDate inicio = fechaInicio.getValue();
+            LocalDate fin = fechaFin.getValue();
+            
+            // Período del reporte
+            com.itextpdf.text.Paragraph periodo = new com.itextpdf.text.Paragraph("Período: " + 
+                inicio.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + " - " + 
+                fin.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), normalFont);
+            periodo.setAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
+            periodo.setSpacingAfter(20);
+            documento.add(periodo);
+            
+            // Obtener datos actuales
+            AnalisisVentasData analisis = obtenerAnalisisVentas(inicio, fin);
+            List<DatoGraficoData> datosEvolucion = obtenerEvolucionVentasPorPeriodo(12);
+            List<FacturaTopData> topFacturas = obtenerTopFacturasPorImporte(10, inicio, fin);
+            
+            if (analisis != null) {
+                // Sección: Métricas principales
+                com.itextpdf.text.Paragraph seccionMetricas = new com.itextpdf.text.Paragraph("ESTADÍSTICAS PRINCIPALES", subtituloFont);
+                seccionMetricas.setSpacingBefore(15);
+                seccionMetricas.setSpacingAfter(10);
+                documento.add(seccionMetricas);
+                
+                // Tabla de métricas en dos columnas
+                com.itextpdf.text.pdf.PdfPTable tablaMetricas = new com.itextpdf.text.pdf.PdfPTable(2);
+                tablaMetricas.setWidthPercentage(100);
+                tablaMetricas.setSpacingAfter(18);
+                
+                // Configurar celdas de métricas
+                addMetricaCell(tablaMetricas, "Total de Ventas", formatoMoneda.format(analisis.getTotalVentas()), normalFont);
+                addMetricaCell(tablaMetricas, "Número de Facturas", String.valueOf(analisis.getNumeroFacturas()), normalFont);
+                addMetricaCell(tablaMetricas, "Promedio por Venta", formatoMoneda.format(analisis.getPromedioVenta()), normalFont);
+                addMetricaCell(tablaMetricas, "Período Analizado", 
+                    inicio.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + " - " + 
+                    fin.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), normalFont);
+                
+                documento.add(tablaMetricas);
+                
+                // Sección: Evolución de ventas
+                com.itextpdf.text.Paragraph seccionEvolucion = new com.itextpdf.text.Paragraph("EVOLUCIÓN DE VENTAS (ÚLTIMOS 12 MESES)", subtituloFont);
+                seccionEvolucion.setSpacingBefore(15);
+                seccionEvolucion.setSpacingAfter(10);
+                documento.add(seccionEvolucion);
+                
+                // Tabla de evolución mensual
+                com.itextpdf.text.pdf.PdfPTable tablaEvolucion = new com.itextpdf.text.pdf.PdfPTable(4);
+                tablaEvolucion.setWidthPercentage(100);
+                tablaEvolucion.setWidths(new float[]{3, 3, 3, 3});
+                tablaEvolucion.setSpacingAfter(18);
+                
+                // Headers de la tabla de evolución
+                addHeaderCell(tablaEvolucion, "Período", subtituloFont);
+                addHeaderCell(tablaEvolucion, "Ventas", subtituloFont);
+                addHeaderCell(tablaEvolucion, "Período", subtituloFont);
+                addHeaderCell(tablaEvolucion, "Ventas", subtituloFont);
+                
+                // Datos en dos columnas para aprovechar espacio
+                for (int i = 0; i < datosEvolucion.size(); i += 2) {
+                    DatoGraficoData dato1 = datosEvolucion.get(i);
+                    addDataCell(tablaEvolucion, dato1.getEtiqueta(), normalFont);
+                    addDataCell(tablaEvolucion, formatoMoneda.format(dato1.getValor()), normalFont);
+                    
+                    if (i + 1 < datosEvolucion.size()) {
+                        DatoGraficoData dato2 = datosEvolucion.get(i + 1);
+                        addDataCell(tablaEvolucion, dato2.getEtiqueta(), normalFont);
+                        addDataCell(tablaEvolucion, formatoMoneda.format(dato2.getValor()), normalFont);
+                    } else {
+                        addDataCell(tablaEvolucion, "", normalFont);
+                        addDataCell(tablaEvolucion, "", normalFont);
+                    }
+                }
+                
+                documento.add(tablaEvolucion);
+            }
+            
+            // Sección: Top 10 facturas
+            com.itextpdf.text.Paragraph seccionTop = new com.itextpdf.text.Paragraph("TOP 10 FACTURAS POR IMPORTE", subtituloFont);
+            seccionTop.setSpacingBefore(15);
+            seccionTop.setSpacingAfter(10);
+            documento.add(seccionTop);
+            
+            // Tabla de top facturas
+            com.itextpdf.text.pdf.PdfPTable tablaTop = new com.itextpdf.text.pdf.PdfPTable(5);
+            tablaTop.setWidthPercentage(100);
+            tablaTop.setWidths(new float[]{2, 3, 2, 2, 1.5f});
+            tablaTop.setSpacingAfter(15);
+            
+            // Headers
+            addHeaderCell(tablaTop, "Nº Factura", subtituloFont);
+            addHeaderCell(tablaTop, "Cliente", subtituloFont);
+            addHeaderCell(tablaTop, "Total", subtituloFont);
+            addHeaderCell(tablaTop, "Fecha", subtituloFont);
+            addHeaderCell(tablaTop, "Servicios", subtituloFont);
+            
+            // Datos de facturas
+            int posicion = 1;
+            for (FacturaTopData factura : topFacturas) {
+                addDataCell(tablaTop, factura.getNumeroFactura(), normalFont);
+                addDataCell(tablaTop, factura.getNombreCliente(), normalFont);
+                addDataCell(tablaTop, formatoMoneda.format(factura.getTotal()), normalFont);
+                addDataCell(tablaTop, factura.getFechaCreacion().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), normalFont);
+                addDataCell(tablaTop, String.valueOf(factura.getNumeroServicios()), normalFont);
+                posicion++;
+            }
+            
+            documento.add(tablaTop);
+            
+            // Pie de página
+            com.itextpdf.text.Paragraph pie = new com.itextpdf.text.Paragraph("Reporte generado automáticamente por el Sistema de Gestión Veterinaria", smallFont);
+            pie.setAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
+            pie.setSpacingBefore(20);
+            documento.add(pie);
+            
+            // Cerrar documento
+            documento.close();
+            
+            // Mostrar mensaje de éxito
+            mostrarAlert("Éxito", "Reporte exportado", 
+                        "El reporte se ha exportado correctamente a:\n" + archivo.getAbsolutePath());
+                        
+        } catch (com.itextpdf.text.DocumentException | java.io.IOException e) {
+            System.err.println("Error al exportar reporte: " + e.getMessage());
+            e.printStackTrace();
+            mostrarAlert("Error", "Error al exportar", 
+                        "Ha ocurrido un error al exportar el reporte:\n" + e.getMessage());
+        }
     }
     
     @FXML
@@ -553,5 +720,36 @@ public class ReporteVentasController implements Initializable {
         
         public double getTotal() { return total; }
         public void setTotal(double total) { this.total = total; }
+    }
+    
+    // Métodos auxiliares para crear celdas de PDF
+    private void addMetricaCell(com.itextpdf.text.pdf.PdfPTable tabla, String etiqueta, String valor, com.itextpdf.text.Font font) {
+        com.itextpdf.text.pdf.PdfPCell cellEtiqueta = new com.itextpdf.text.pdf.PdfPCell(new com.itextpdf.text.Phrase(etiqueta + ":", font));
+        cellEtiqueta.setBorder(com.itextpdf.text.pdf.PdfPCell.NO_BORDER);
+        cellEtiqueta.setPadding(6);
+        tabla.addCell(cellEtiqueta);
+        
+        com.itextpdf.text.pdf.PdfPCell cellValor = new com.itextpdf.text.pdf.PdfPCell(new com.itextpdf.text.Phrase(valor, new com.itextpdf.text.Font(font.getFamily(), font.getSize(), com.itextpdf.text.Font.BOLD)));
+        cellValor.setBorder(com.itextpdf.text.pdf.PdfPCell.NO_BORDER);
+        cellValor.setPadding(6);
+        cellValor.setHorizontalAlignment(com.itextpdf.text.Element.ALIGN_RIGHT);
+        tabla.addCell(cellValor);
+    }
+    
+    private void addHeaderCell(com.itextpdf.text.pdf.PdfPTable tabla, String texto, com.itextpdf.text.Font font) {
+        com.itextpdf.text.pdf.PdfPCell cell = new com.itextpdf.text.pdf.PdfPCell(new com.itextpdf.text.Phrase(texto, font));
+        cell.setHorizontalAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
+        cell.setVerticalAlignment(com.itextpdf.text.Element.ALIGN_MIDDLE);
+        cell.setPadding(8);
+        cell.setBackgroundColor(new com.itextpdf.text.BaseColor(220, 220, 220));
+        tabla.addCell(cell);
+    }
+    
+    private void addDataCell(com.itextpdf.text.pdf.PdfPTable tabla, String texto, com.itextpdf.text.Font font) {
+        com.itextpdf.text.pdf.PdfPCell cell = new com.itextpdf.text.pdf.PdfPCell(new com.itextpdf.text.Phrase(texto, font));
+        cell.setHorizontalAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
+        cell.setVerticalAlignment(com.itextpdf.text.Element.ALIGN_MIDDLE);
+        cell.setPadding(6);
+        tabla.addCell(cell);
     }
 } 
