@@ -725,6 +725,11 @@ public class CitaFormularioController implements Initializable {
             return false;
         }
         
+        // ====================================================================
+        // VALIDACIÓN DE CONFLICTOS DE HORARIO DESHABILITADA
+        // Comentado para permitir múltiples citas a la misma hora
+        // ====================================================================
+        /*
         // Validar que no haya conflicto de horarios
         boolean hayConflicto = false;
         if (gestorSocket != null) {
@@ -773,6 +778,7 @@ public class CitaFormularioController implements Initializable {
             mostrarError("Ya existe una cita programada para esa fecha y hora.");
             return false;
         }
+        */
         
         ocultarError();
         return true;
