@@ -93,10 +93,6 @@ public class FacturacionController implements Initializable {
     // Tab de borradores
     @FXML private Tab tabBorradores;
     @FXML private TextField txtBuscarBorrador;
-    @FXML private Button btnNuevoBorrador;
-    @FXML private Button btnEditarBorrador;
-    @FXML private Button btnFinalizarBorrador;
-    @FXML private Button btnEliminarBorrador;
     @FXML private TableView<ModeloFactura> tablaBorradores;
     @FXML private TableColumn<ModeloFactura, String> colBorradorFecha;
     @FXML private TableColumn<ModeloFactura, String> colBorradorCliente;
@@ -371,10 +367,6 @@ public class FacturacionController implements Initializable {
         btnLimpiarFiltros.setOnAction(e -> limpiarFiltros());
         btnEliminarFactura.setOnAction(e -> onEliminarFactura());
         btnExportarPDF.setOnAction(e -> onExportarPDF());
-        btnNuevoBorrador.setOnAction(e -> onNuevoBorrador());
-        btnEditarBorrador.setOnAction(e -> onEditarBorrador());
-        btnFinalizarBorrador.setOnAction(e -> onFinalizarBorrador());
-        btnEliminarBorrador.setOnAction(e -> onEliminarBorrador());
         btnActualizarEstadisticas.setOnAction(e -> actualizarEstadisticas());
         btnExportarEstadisticas.setOnAction(e -> exportarEstadisticas());
         cmbPeriodo.setOnAction(e -> cargarEstadisticas());
@@ -1171,42 +1163,6 @@ public class FacturacionController implements Initializable {
             exportarPDF(facturaSeleccionada);
         } else {
             mostrarError("Error", "Debe seleccionar una factura");
-        }
-    }
-
-    @FXML
-    private void onNuevoBorrador() {
-        crearNuevaFactura();
-    }
-
-    @FXML
-    private void onEditarBorrador() {
-        ModeloFactura borradorSeleccionado = tablaBorradores.getSelectionModel().getSelectedItem();
-        if (borradorSeleccionado != null) {
-            editarFactura(borradorSeleccionado);
-        } else {
-            mostrarError("Error", "Debe seleccionar un borrador");
-        }
-    }
-
-    @FXML
-    private void onFinalizarBorrador() {
-        ModeloFactura borradorSeleccionado = tablaBorradores.getSelectionModel().getSelectedItem();
-        if (borradorSeleccionado != null) {
-            // Implementar lógica para finalizar borrador
-            mostrarInfo("Información", "Funcionalidad en desarrollo");
-        } else {
-            mostrarError("Error", "Debe seleccionar un borrador");
-        }
-    }
-
-    @FXML
-    private void onEliminarBorrador() {
-        ModeloFactura borradorSeleccionado = tablaBorradores.getSelectionModel().getSelectedItem();
-        if (borradorSeleccionado != null) {
-            eliminarBorrador(borradorSeleccionado);
-        } else {
-            mostrarError("Error", "Debe seleccionar un borrador");
         }
     }
 

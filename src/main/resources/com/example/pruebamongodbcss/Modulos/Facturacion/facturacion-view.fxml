@@ -285,10 +285,6 @@
                            <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-background-color: #f8fafc; -fx-background-radius: 6px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.03), 4, 0, 0, 1);">
                               <children>
                                  <TextField fx:id="txtBuscarBorrador" promptText="Buscar borrador..." HBox.hgrow="ALWAYS" style="-fx-background-color: white; -fx-padding: 8px 12px; -fx-font-size: 12px; -fx-text-fill: #1f2937;" />
-                                 <Button fx:id="btnNuevoBorrador" onAction="#onNuevoBorrador" styleClass="btn-primary" text="Nuevo Borrador" />
-                                 <Button fx:id="btnEditarBorrador" onAction="#onEditarBorrador" styleClass="btn-secondary" text="Editar" />
-                                 <Button fx:id="btnFinalizarBorrador" onAction="#onFinalizarBorrador" styleClass="btn-success" text="Finalizar" />
-                                 <Button fx:id="btnEliminarBorrador" onAction="#onEliminarBorrador" styleClass="btn-danger" text="Eliminar" />
                               </children>
                               <VBox.margin>
                                  <Insets left="10.0" right="10.0" top="10.0" />
