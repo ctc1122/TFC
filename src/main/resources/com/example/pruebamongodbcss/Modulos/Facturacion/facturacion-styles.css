@@ -604,4 +604,15 @@
 .dark-theme .preview-box {
     -fx-background-color: #334155;
     -fx-border-color: transparent;
+}
+
+/* Estilo para cabeceras de tabla con texto negro */
+.tabla-cabeceras-negras .column-header-background .label {
+    -fx-text-fill: black !important;
+    -fx-font-weight: 600;
+    -fx-font-size: 11px;
+}
+
+.tabla-cabeceras-negras .column-header-background {
+    -fx-background-color: linear-gradient(to bottom, #f1f5f9 0%, #e2e8f0 100%);
 } 
