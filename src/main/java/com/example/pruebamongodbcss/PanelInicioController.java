@@ -179,9 +179,9 @@ public class PanelInicioController implements Initializable {
             btnInformesCarousel.setTooltip(new Tooltip("Informes"));
 
             // Configurar eventos del carrusel
-            // Doble clic para desplegar menú (solo si no se está arrastrando)
-            btnChicha.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2 && !isDragging) {
+            // Click simple para desplegar menú (solo si no se está arrastrando)
+            btnChicha.setOnAction(event -> {
+                if (!isDragging) {
                     toggleMenuRadial();
                 }
             });
@@ -620,8 +620,28 @@ public class PanelInicioController implements Initializable {
             }
             
             // Actualizar posición del botón
-            boton.setLayoutX(event.getSceneX() - xOffset);
-            boton.setLayoutY(event.getSceneY() - yOffset);
+            double newX = event.getSceneX() - xOffset;
+            double newY = event.getSceneY() - yOffset;
+            boton.setLayoutX(newX);
+            boton.setLayoutY(newY);
+            
+            // Si el menú radial está visible, contraerlo automáticamente al arrastrar
+            if (menuVisible) {
+                // Contraer el menú radial con animación suave - los botones se animan hacia el centro
+                JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnEmpresaCarousel, btnSalirCarousel, btnChatCarousel, btnFacturacionCarousel, btnInformesCarousel};
+                double centerX = newX + boton.getWidth() / 2;
+                double centerY = newY + boton.getHeight() / 2;
+                
+                // Animar todos los botones hacia el centro siguiendo al botón principal
+                for (JFXButton btn : botones) {
+                    if (btn != null && btn.isVisible()) {
+                        animateButtonTo(btn, centerX - btn.getWidth() / 2, centerY - btn.getHeight() / 2, false);
+                    }
+                }
+                
+                // Marcar el menú como no visible
+                menuVisible = false;
+            }
             
             // Crear o actualizar la zona de anclaje (siempre al arrastrar)
             crearZonaAnclaje();
@@ -656,6 +676,9 @@ public class PanelInicioController implements Initializable {
             if (zonaAnclaje != null) {
                 zonaAnclaje.setVisible(false);
             }
+            
+            // Reset del estado de arrastre después de un breve delay
+            javafx.application.Platform.runLater(() -> isDragging = false);
         });
     }
 
