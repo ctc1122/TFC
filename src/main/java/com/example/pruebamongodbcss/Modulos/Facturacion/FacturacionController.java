@@ -264,13 +264,39 @@ public class FacturacionController implements Initializable {
                     private final Button btnVer = new Button("Ver");
                     private final Button btnPDF = new Button("PDF");
                     private final Button btnEditar = new Button("Editar");
-                    private final HBox hbox = new HBox(5, btnVer, btnPDF, btnEditar);
+                    private final VBox vbox = new VBox(5, btnVer, btnPDF, btnEditar);
                     
                     {
                         btnVer.getStyleClass().add("btn-info");
                         btnPDF.getStyleClass().add("btn-success");
                         btnEditar.getStyleClass().add("btn-primary");
-                        hbox.setAlignment(Pos.CENTER);
+                        
+                        // Configurar el VBox para disposición vertical
+                        vbox.setAlignment(Pos.CENTER);
+                        vbox.setSpacing(5);
+                        
+                        // Hacer que los botones ocupen todo el ancho disponible
+                        btnVer.setMaxWidth(Double.MAX_VALUE);
+                        btnPDF.setMaxWidth(Double.MAX_VALUE);
+                        btnEditar.setMaxWidth(Double.MAX_VALUE);
+                        
+                        // Ajustar el tamaño de los botones para mejor legibilidad
+                        btnVer.setMinHeight(30);
+                        btnPDF.setMinHeight(30);
+                        btnEditar.setMinHeight(30);
+                        btnVer.setPrefHeight(30);
+                        btnPDF.setPrefHeight(30);
+                        btnEditar.setPrefHeight(30);
+                        
+                        // Asegurar un ancho mínimo para que el texto se vea completo
+                        btnVer.setMinWidth(70);
+                        btnPDF.setMinWidth(70);
+                        btnEditar.setMinWidth(70);
+                        
+                        // Configurar el estilo de fuente para mejor legibilidad
+                        btnVer.setStyle(btnVer.getStyle() + "; -fx-font-size: 11px; -fx-font-weight: 500;");
+                        btnPDF.setStyle(btnPDF.getStyle() + "; -fx-font-size: 11px; -fx-font-weight: 500;");
+                        btnEditar.setStyle(btnEditar.getStyle() + "; -fx-font-size: 11px; -fx-font-weight: 500;");
                         
                         btnVer.setOnAction(e -> {
                             ModeloFactura factura = getTableView().getItems().get(getIndex());
@@ -284,7 +310,12 @@ public class FacturacionController implements Initializable {
                         
                         btnEditar.setOnAction(e -> {
                             ModeloFactura factura = getTableView().getItems().get(getIndex());
-                            editarFactura(factura);
+                            // Verificar si la factura es borrador antes de permitir edición
+                            if (factura.isEsBorrador()) {
+                                editarFactura(factura);
+                            } else {
+                                mostrarError("Factura ya emitida", "Factura ya emitida, no se puede modificar");
+                            }
                         });
                     }
                     
@@ -294,10 +325,8 @@ public class FacturacionController implements Initializable {
                         if (empty) {
                             setGraphic(null);
                         } else {
-                            ModeloFactura factura = getTableView().getItems().get(getIndex());
-                            // Mostrar/ocultar botones según el estado
-                            btnEditar.setVisible(factura.isEsBorrador());
-                            setGraphic(hbox);
+                            // Ahora el botón Editar siempre es visible
+                            setGraphic(vbox);
                         }
                     }
                 };
@@ -362,10 +391,36 @@ public class FacturacionController implements Initializable {
      * Aplica el tema actual
      */
     private void aplicarTema() {
-        if (ThemeManager.getInstance().isDarkTheme()) {
-            mainPane.getStyleClass().add("dark-theme");
-        } else {
-            mainPane.getStyleClass().remove("dark-theme");
+        try {
+            // Cargar el archivo CSS específico de facturación
+            String facturacionCSS = getClass().getResource("/com/example/pruebamongodbcss/Modulos/Facturacion/facturacion-styles.css").toExternalForm();
+            
+            // Agregar la hoja de estilos específica si no está ya agregada
+            if (!mainPane.getScene().getStylesheets().contains(facturacionCSS)) {
+                mainPane.getScene().getStylesheets().add(facturacionCSS);
+                System.out.println("✅ Archivo CSS de facturación cargado: " + facturacionCSS);
+            }
+            
+            // Aplicar clase CSS al contenedor principal para identificar el módulo
+            if (!mainPane.getStyleClass().contains("facturacion-module")) {
+                mainPane.getStyleClass().add("facturacion-module");
+            }
+            
+            // Aplicar tema oscuro/claro
+            if (ThemeManager.getInstance().isDarkTheme()) {
+                mainPane.getStyleClass().add("dark-theme");
+            } else {
+                mainPane.getStyleClass().remove("dark-theme");
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error al cargar estilos CSS de facturación: " + e.getMessage());
+            // Aplicar solo el tema básico si hay error
+            if (ThemeManager.getInstance().isDarkTheme()) {
+                mainPane.getStyleClass().add("dark-theme");
+            } else {
+                mainPane.getStyleClass().remove("dark-theme");
+            }
         }
     }
     
@@ -779,25 +834,41 @@ public class FacturacionController implements Initializable {
     }
     
     /**
-     * Ve los detalles de una factura
+     * Muestra los detalles de una factura usando el mismo formulario que editar pero en modo solo lectura
      */
     private void verFactura(ModeloFactura factura) {
+        if (factura == null) {
+            mostrarError("Error", "No se ha seleccionado ninguna factura");
+            return;
+        }
+
+        // Usar la misma funcionalidad que editarFactura pero en modo solo lectura
+        System.out.println("👁️ Abriendo factura en modo SOLO LECTURA: " + 
+                          (factura.getNumeroFactura() != null ? factura.getNumeroFactura() : "BORRADOR"));
+        
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Facturacion/factura-detalle.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Modulos/Facturacion/factura-form.fxml"));
             Parent root = loader.load();
             
-            FacturaDetalleController controller = loader.getController();
-            controller.setFactura(factura);
+            FacturaFormController controller = loader.getController();
+            controller.setUsuarioActual(usuarioActual);
+            controller.setFacturacionController(this);
+            controller.setFactura(factura); // Cargar factura existente
+            
+            // CONFIGURAR EN MODO SOLO LECTURA
+            controller.configurarModoVisualizacion();
             
             Stage stage = new Stage();
-            stage.setTitle("Detalle de Factura - " + factura.getNumeroFactura());
+            stage.setTitle("Ver Factura (Solo Lectura) - " + (factura.getNumeroFactura() != null ? factura.getNumeroFactura() : "BORRADOR"));
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setScene(new Scene(root));
             stage.setResizable(true);
             stage.showAndWait();
             
         } catch (Exception e) {
-            mostrarError("Error", "No se pudo abrir el detalle de la factura: " + e.getMessage());
+            System.err.println("❌ Error al abrir la factura: " + e.getMessage());
+            e.printStackTrace();
+            mostrarError("Error", "No se pudo abrir la factura: " + e.getMessage());
         }
     }
     

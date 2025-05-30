@@ -127,6 +127,9 @@ public class FacturaFormController implements Initializable {
     // Lista para medicamentos agregados solo en esta sesión (para restablecimiento)
     private List<ModeloFactura.ConceptoFactura> medicamentosAgregadosEnSesion;
     
+    // NUEVO: Campo para controlar el modo solo lectura
+    private boolean modoSoloLectura = false;
+    
     // IDs seleccionados
     private ObjectId propietarioId;
     private ObjectId pacienteId;
@@ -333,11 +336,21 @@ public class FacturaFormController implements Initializable {
                         hbox.setAlignment(Pos.CENTER);
                         
                         btnEditar.setOnAction(e -> {
+                            // VERIFICAR MODO SOLO LECTURA
+                            if (modoSoloLectura) {
+                                mostrarInfo("Solo lectura", "No se pueden editar servicios en modo solo lectura");
+                                return;
+                            }
                             ModeloFactura.ConceptoFactura concepto = getTableView().getItems().get(getIndex());
                             editarConcepto(concepto, true);
                         });
                         
                         btnEliminar.setOnAction(e -> {
+                            // VERIFICAR MODO SOLO LECTURA
+                            if (modoSoloLectura) {
+                                mostrarInfo("Solo lectura", "No se pueden eliminar servicios en modo solo lectura");
+                                return;
+                            }
                             ModeloFactura.ConceptoFactura concepto = getTableView().getItems().get(getIndex());
                             listaServicios.remove(concepto);
                             calcularTotales();
@@ -347,7 +360,11 @@ public class FacturaFormController implements Initializable {
                     @Override
                     protected void updateItem(Void item, boolean empty) {
                         super.updateItem(item, empty);
-                        setGraphic(empty ? null : hbox);
+                        if (empty || modoSoloLectura) {
+                            setGraphic(null);
+                        } else {
+                            setGraphic(hbox);
+                        }
                     }
                 };
             }
@@ -381,11 +398,22 @@ public class FacturaFormController implements Initializable {
                         hbox.setAlignment(Pos.CENTER);
                         
                         btnEditar.setOnAction(e -> {
+                            // VERIFICAR MODO SOLO LECTURA
+                            if (modoSoloLectura) {
+                                mostrarInfo("Solo lectura", "No se pueden editar medicamentos en modo solo lectura");
+                                return;
+                            }
                             ModeloFactura.ConceptoFactura concepto = getTableView().getItems().get(getIndex());
                             editarConcepto(concepto, false);
                         });
                         
                         btnEliminar.setOnAction(e -> {
+                            // VERIFICAR MODO SOLO LECTURA
+                            if (modoSoloLectura) {
+                                mostrarInfo("Solo lectura", "No se pueden eliminar medicamentos en modo solo lectura");
+                                return;
+                            }
+                            
                             ModeloFactura.ConceptoFactura concepto = getTableView().getItems().get(getIndex());
                             
                             // Confirmar eliminación
@@ -426,7 +454,11 @@ public class FacturaFormController implements Initializable {
                     @Override
                     protected void updateItem(Void item, boolean empty) {
                         super.updateItem(item, empty);
-                        setGraphic(empty ? null : hbox);
+                        if (empty || modoSoloLectura) {
+                            setGraphic(null);
+                        } else {
+                            setGraphic(hbox);
+                        }
                     }
                 };
             }
@@ -1538,6 +1570,9 @@ public class FacturaFormController implements Initializable {
      * Configura el formulario en modo solo lectura o editable
      */
     private void configurarModoSoloLectura(boolean soloLectura) {
+        // ACTUALIZAR EL CAMPO DE ESTADO
+        this.modoSoloLectura = soloLectura;
+        
         // Controles de datos básicos
         txtNumeroFactura.setEditable(!soloLectura);
         dpFechaEmision.setDisable(soloLectura);
@@ -1562,22 +1597,38 @@ public class FacturaFormController implements Initializable {
         btnAgregarServicio.setDisable(soloLectura);
         btnAgregarMedicamento.setDisable(soloLectura);
         
+        // RECONFIGURAR LAS COLUMNAS DE ACCIONES DE LAS TABLAS
+        if (soloLectura) {
+            // Ocultar las columnas de acciones en modo solo lectura
+            colServicioAcciones.setVisible(false);
+            colMedicamentoAcciones.setVisible(false);
+            System.out.println("🔒 Columnas de acciones ocultadas en modo solo lectura");
+        } else {
+            // Mostrar las columnas de acciones en modo edición
+            colServicioAcciones.setVisible(true);
+            colMedicamentoAcciones.setVisible(true);
+            System.out.println("✏️ Columnas de acciones visibles en modo edición");
+        }
+        
         // Observaciones
         txtObservaciones.setEditable(!soloLectura);
         
         // Botones de acción
         if (soloLectura) {
-            // Solo mostrar botón de cancelar/cerrar en modo solo lectura
+            // OCULTAR TODOS LOS BOTONES EN MODO SOLO LECTURA
             btnGuardarBorrador.setVisible(false);
             btnGuardar.setVisible(false);
             btnFinalizar.setVisible(false);
-            btnCancelar.setText("Cerrar");
+            btnCancelar.setVisible(false); // ← OCULTAR TAMBIÉN EL BOTÓN CERRAR
+            System.out.println("🔒 Todos los botones ocultos en modo solo lectura");
         } else {
             // Mostrar todos los botones en modo edición
             btnGuardarBorrador.setVisible(true);
             btnGuardar.setVisible(true);
             btnFinalizar.setVisible(true);
+            btnCancelar.setVisible(true);
             btnCancelar.setText("Cancelar");
+            System.out.println("✏️ Todos los botones visibles en modo edición");
         }
         
         // Configurar estilo visual
@@ -2011,5 +2062,16 @@ public class FacturaFormController implements Initializable {
     /**
      * Aplica estilos CSS para cambiar las cabeceras de tabla a color negro
      */
+
+    /**
+     * Configura el formulario en modo solo lectura desde el exterior
+     */
+    public void configurarModoVisualizacion() {
+        Platform.runLater(() -> {
+            configurarModoSoloLectura(true);
+            lblTitulo.setText("Ver Factura (Solo Lectura)");
+            System.out.println("🔒 Formulario configurado en modo solo lectura");
+        });
+    }
 
 } 

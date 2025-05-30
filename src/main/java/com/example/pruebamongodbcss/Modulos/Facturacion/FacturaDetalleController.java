@@ -1,17 +1,5 @@
 package com.example.pruebamongodbcss.Modulos.Facturacion;
 
-import com.jfoenix.controls.JFXButton;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
-import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.VBox;
-import javafx.stage.FileChooser;
-import javafx.stage.Stage;
-
 import java.awt.Desktop;
 import java.io.File;
 import java.net.URL;
@@ -20,64 +8,86 @@ import java.text.SimpleDateFormat;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.BorderPane;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+
 /**
  * Controlador para mostrar los detalles de una factura
  */
 public class FacturaDetalleController implements Initializable {
 
-    // Datos generales
-    @FXML private VBox rootPane;
+    // Contenedor principal - corregido para coincidir con FXML
+    @FXML private BorderPane mainPane;
+    
+    // Datos generales - corregidos para coincidir con FXML
+    @FXML private Label lblTitulo;
     @FXML private Label lblNumeroFactura;
     @FXML private Label lblFechaEmision;
     @FXML private Label lblFechaVencimiento;
     @FXML private Label lblEstado;
     @FXML private Label lblMetodoPago;
     
-    // Datos del cliente
+    // Datos del cliente - corregidos para coincidir con FXML
     @FXML private Label lblNombreCliente;
-    @FXML private Label lblDniCliente;
+    @FXML private Label lblDNICliente;
     @FXML private Label lblDireccionCliente;
     @FXML private Label lblTelefonoCliente;
     @FXML private Label lblEmailCliente;
     
-    // Datos del paciente
+    // Datos del paciente - corregidos para coincidir con FXML
     @FXML private Label lblNombrePaciente;
     @FXML private Label lblEspeciePaciente;
     @FXML private Label lblRazaPaciente;
     
-    // Datos del veterinario
-    @FXML private Label lblVeterinario;
+    // Datos del veterinario - corregidos para coincidir con FXML
+    @FXML private Label lblNombreVeterinario;
+    @FXML private Label lblNumeroColegiado;
     
-    // Servicios
-    @FXML private TableView<ModeloFactura.ConceptoFactura> tableServicios;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colDescripcionServicio;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Integer> colCantidadServicio;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colPrecioServicio;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colDescuentoServicio;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colIvaServicio;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colTotalServicio;
+    // Servicios - corregidos para coincidir con FXML
+    @FXML private TableView<ModeloFactura.ConceptoFactura> tablaServicios;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colServicioDescripcion;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Integer> colServicioCantidad;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colServicioPrecio;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colServicioIVA;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colServicioSubtotal;
     
-    // Medicamentos
-    @FXML private TableView<ModeloFactura.ConceptoFactura> tableMedicamentos;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colDescripcionMedicamento;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Integer> colCantidadMedicamento;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colPrecioMedicamento;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colDescuentoMedicamento;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colIvaMedicamento;
-    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colTotalMedicamento;
+    // Medicamentos - corregidos para coincidir con FXML
+    @FXML private TableView<ModeloFactura.ConceptoFactura> tablaMedicamentos;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colMedicamentoNombre;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, Integer> colMedicamentoCantidad;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colMedicamentoPrecio;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colMedicamentoIVA;
+    @FXML private TableColumn<ModeloFactura.ConceptoFactura, String> colMedicamentoSubtotal;
     
-    // Totales
-    @FXML private Label lblSubtotal;
-    @FXML private Label lblIvaGeneral;
-    @FXML private Label lblIvaMedicamentos;
+    // Totales - corregidos para coincidir con FXML
+    @FXML private Label lblSubtotalServicios;
+    @FXML private Label lblSubtotalMedicamentos;
+    @FXML private Label lblIVAServicios;
+    @FXML private Label lblIVAMedicamentos;
     @FXML private Label lblTotal;
     
-    // Observaciones
+    // Observaciones - correcto
     @FXML private TextArea txtObservaciones;
     
-    // Botones
-    @FXML private JFXButton btnExportarPDF;
-    @FXML private JFXButton btnCerrar;
+    // Botones - correctos
+    @FXML private Button btnExportarPDF;
+    @FXML private Button btnCerrar;
+    @FXML private Button btnEditar;
+    @FXML private Button btnImprimir;
     
     // Datos
     private ModeloFactura factura;
@@ -117,51 +127,43 @@ public class FacturaDetalleController implements Initializable {
     }
     
     private void configurarTablaServicios() {
-        colDescripcionServicio.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
-        colCantidadServicio.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
-        colPrecioServicio.setCellValueFactory(cellData -> {
+        colServicioDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
+        colServicioCantidad.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
+        colServicioPrecio.setCellValueFactory(cellData -> {
             double precio = cellData.getValue().getPrecioUnitario();
             return new SimpleStringProperty(formatoMoneda.format(precio));
         });
-        colDescuentoServicio.setCellValueFactory(cellData -> {
-            double descuento = cellData.getValue().getDescuento();
-            return new SimpleStringProperty(String.format("%.1f%%", descuento));
-        });
-        colIvaServicio.setCellValueFactory(cellData -> {
+        colServicioIVA.setCellValueFactory(cellData -> {
             double iva = cellData.getValue().getTipoIva();
             return new SimpleStringProperty(String.format("%.1f%%", iva));
         });
-        colTotalServicio.setCellValueFactory(cellData -> {
+        colServicioSubtotal.setCellValueFactory(cellData -> {
             double total = cellData.getValue().getTotal();
             return new SimpleStringProperty(formatoMoneda.format(total));
         });
         
-        tableServicios.setItems(listaServicios);
-        tableServicios.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tablaServicios.setItems(listaServicios);
+        tablaServicios.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
     
     private void configurarTablaMedicamentos() {
-        colDescripcionMedicamento.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
-        colCantidadMedicamento.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
-        colPrecioMedicamento.setCellValueFactory(cellData -> {
+        colMedicamentoNombre.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
+        colMedicamentoCantidad.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
+        colMedicamentoPrecio.setCellValueFactory(cellData -> {
             double precio = cellData.getValue().getPrecioUnitario();
             return new SimpleStringProperty(formatoMoneda.format(precio));
         });
-        colDescuentoMedicamento.setCellValueFactory(cellData -> {
-            double descuento = cellData.getValue().getDescuento();
-            return new SimpleStringProperty(String.format("%.1f%%", descuento));
-        });
-        colIvaMedicamento.setCellValueFactory(cellData -> {
+        colMedicamentoIVA.setCellValueFactory(cellData -> {
             double iva = cellData.getValue().getTipoIva();
             return new SimpleStringProperty(String.format("%.1f%%", iva));
         });
-        colTotalMedicamento.setCellValueFactory(cellData -> {
+        colMedicamentoSubtotal.setCellValueFactory(cellData -> {
             double total = cellData.getValue().getTotal();
             return new SimpleStringProperty(formatoMoneda.format(total));
         });
         
-        tableMedicamentos.setItems(listaMedicamentos);
-        tableMedicamentos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tablaMedicamentos.setItems(listaMedicamentos);
+        tablaMedicamentos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
     
     private void configurarEventos() {
@@ -194,7 +196,7 @@ public class FacturaDetalleController implements Initializable {
         
         // Datos del cliente
         lblNombreCliente.setText(factura.getNombreCliente() != null ? factura.getNombreCliente() : "");
-        lblDniCliente.setText(factura.getDniCliente() != null ? factura.getDniCliente() : "");
+        lblDNICliente.setText(factura.getDniCliente() != null ? factura.getDniCliente() : "");
         lblDireccionCliente.setText(factura.getDireccionCliente() != null ? factura.getDireccionCliente() : "");
         lblTelefonoCliente.setText(factura.getTelefonoCliente() != null ? factura.getTelefonoCliente() : "");
         lblEmailCliente.setText(factura.getEmailCliente() != null ? factura.getEmailCliente() : "");
@@ -205,7 +207,8 @@ public class FacturaDetalleController implements Initializable {
         lblRazaPaciente.setText(factura.getRazaPaciente() != null ? factura.getRazaPaciente() : "");
         
         // Veterinario
-        lblVeterinario.setText(factura.getVeterinarioNombre() != null ? factura.getVeterinarioNombre() : "");
+        lblNombreVeterinario.setText(factura.getVeterinarioNombre() != null ? factura.getVeterinarioNombre() : "");
+        lblNumeroColegiado.setText(""); // Se puede agregar este campo a ModeloFactura si es necesario
         
         // Servicios y medicamentos
         listaServicios.clear();
@@ -218,10 +221,16 @@ public class FacturaDetalleController implements Initializable {
             listaMedicamentos.addAll(factura.getMedicamentos());
         }
         
-        // Totales
-        lblSubtotal.setText(formatoMoneda.format(factura.getSubtotal()));
-        lblIvaGeneral.setText(formatoMoneda.format(factura.getIvaGeneral()));
-        lblIvaMedicamentos.setText(formatoMoneda.format(factura.getIvaMedicamentos()));
+        // Totales - calculando desde los datos disponibles
+        double subtotalServicios = factura.getServicios() != null ? 
+            factura.getServicios().stream().mapToDouble(s -> s.getTotal()).sum() : 0.0;
+        double subtotalMedicamentos = factura.getMedicamentos() != null ? 
+            factura.getMedicamentos().stream().mapToDouble(m -> m.getTotal()).sum() : 0.0;
+            
+        lblSubtotalServicios.setText(formatoMoneda.format(subtotalServicios));
+        lblSubtotalMedicamentos.setText(formatoMoneda.format(subtotalMedicamentos));
+        lblIVAServicios.setText(formatoMoneda.format(factura.getIvaGeneral()));
+        lblIVAMedicamentos.setText(formatoMoneda.format(factura.getIvaMedicamentos()));
         lblTotal.setText(formatoMoneda.format(factura.getTotal()));
         
         // Observaciones
@@ -259,20 +268,20 @@ public class FacturaDetalleController implements Initializable {
     private void ocultarSeccionesVacias() {
         // Ocultar tabla de servicios si está vacía
         if (listaServicios.isEmpty()) {
-            tableServicios.setVisible(false);
-            tableServicios.setManaged(false);
+            tablaServicios.setVisible(false);
+            tablaServicios.setManaged(false);
         } else {
-            tableServicios.setVisible(true);
-            tableServicios.setManaged(true);
+            tablaServicios.setVisible(true);
+            tablaServicios.setManaged(true);
         }
         
         // Ocultar tabla de medicamentos si está vacía
         if (listaMedicamentos.isEmpty()) {
-            tableMedicamentos.setVisible(false);
-            tableMedicamentos.setManaged(false);
+            tablaMedicamentos.setVisible(false);
+            tablaMedicamentos.setManaged(false);
         } else {
-            tableMedicamentos.setVisible(true);
-            tableMedicamentos.setManaged(true);
+            tablaMedicamentos.setVisible(true);
+            tablaMedicamentos.setManaged(true);
         }
         
         // Ocultar observaciones si están vacías
@@ -300,7 +309,7 @@ public class FacturaDetalleController implements Initializable {
                 new FileChooser.ExtensionFilter("Archivos PDF", "*.pdf")
             );
             
-            Stage stage = (Stage) rootPane.getScene().getWindow();
+            Stage stage = (Stage) mainPane.getScene().getWindow();
             File archivo = fileChooser.showSaveDialog(stage);
             
             if (archivo != null) {
@@ -333,7 +342,7 @@ public class FacturaDetalleController implements Initializable {
     }
     
     private void cerrarVentana() {
-        Stage stage = (Stage) rootPane.getScene().getWindow();
+        Stage stage = (Stage) mainPane.getScene().getWindow();
         stage.close();
     }
     
@@ -351,5 +360,47 @@ public class FacturaDetalleController implements Initializable {
         alert.setHeaderText(titulo);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+    
+    // Métodos FXML para los botones del archivo FXML
+    
+    /**
+     * Método llamado desde el FXML para cerrar la ventana
+     */
+    @FXML
+    private void onCerrar() {
+        cerrarVentana();
+    }
+    
+    /**
+     * Método llamado desde el FXML para editar la factura
+     */
+    @FXML
+    private void onEditar() {
+        // Por ahora mostrar mensaje informativo
+        // Se puede implementar lógica para abrir el editor de facturas
+        mostrarInfo("Funcionalidad en desarrollo", 
+            "La función de editar desde el detalle estará disponible próximamente.\n" +
+            "Puede editar la factura desde el listado principal.");
+    }
+    
+    /**
+     * Método llamado desde el FXML para exportar PDF
+     */
+    @FXML
+    private void onExportarPDF() {
+        exportarPDF();
+    }
+    
+    /**
+     * Método llamado desde el FXML para imprimir
+     */
+    @FXML
+    private void onImprimir() {
+        // Por ahora mostrar mensaje informativo
+        // Se puede implementar lógica de impresión directa
+        mostrarInfo("Funcionalidad en desarrollo", 
+            "La función de impresión directa estará disponible próximamente.\n" +
+            "Puede exportar a PDF e imprimir desde su visor de PDF.");
     }
 } 
