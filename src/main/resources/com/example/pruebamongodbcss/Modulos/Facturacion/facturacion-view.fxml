@@ -191,9 +191,9 @@
                                        <Insets right="15.0" />
                                     </HBox.margin>
                                  </MFXDatePicker>
-                                 <Button fx:id="btnActualizarEstadisticas" onAction="#actualizarEstadisticas" style="-fx-background-color: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); -fx-text-fill: white; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Actualizar" />
+                                 <Button fx:id="btnActualizarEstadisticas" onAction="#actualizarEstadisticas" styleClass="btn-primary" text="Actualizar" />
                                  <Region HBox.hgrow="ALWAYS" />
-                                 <Button fx:id="btnExportarEstadisticas" onAction="#exportarEstadisticas" style="-fx-background-color: linear-gradient(135deg, #10b981 0%, #059669 100%); -fx-text-fill: white; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Exportar Reporte" />
+                                 <Button fx:id="btnExportarEstadisticas" onAction="#exportarEstadisticas" styleClass="btn-success" text="Exportar Reporte" />
                               </children>
                               <VBox.margin>
                                  <Insets left="10.0" right="10.0" top="10.0" />
@@ -298,10 +298,10 @@
                            <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-background-color: #f8fafc; -fx-background-radius: 6px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.03), 4, 0, 0, 1);">
                               <children>
                                  <TextField fx:id="txtBuscarBorrador" promptText="Buscar borrador..." HBox.hgrow="ALWAYS" style="-fx-background-color: white; -fx-padding: 8px 12px; -fx-font-size: 12px; -fx-text-fill: #1f2937;" />
-                                 <Button fx:id="btnNuevoBorrador" onAction="#onNuevoBorrador" style="-fx-background-color: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Nuevo Borrador" />
-                                 <Button fx:id="btnEditarBorrador" onAction="#onEditarBorrador" style="-fx-background-color: linear-gradient(135deg, #64748b 0%, #475569 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Editar" />
-                                 <Button fx:id="btnFinalizarBorrador" onAction="#onFinalizarBorrador" style="-fx-background-color: linear-gradient(135deg, #10b981 0%, #059669 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Finalizar" />
-                                 <Button fx:id="btnEliminarBorrador" onAction="#onEliminarBorrador" style="-fx-background-color: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Eliminar" />
+                                 <Button fx:id="btnNuevoBorrador" onAction="#onNuevoBorrador" styleClass="btn-primary" text="Nuevo Borrador" />
+                                 <Button fx:id="btnEditarBorrador" onAction="#onEditarBorrador" styleClass="btn-secondary" text="Editar" />
+                                 <Button fx:id="btnFinalizarBorrador" onAction="#onFinalizarBorrador" styleClass="btn-success" text="Finalizar" />
+                                 <Button fx:id="btnEliminarBorrador" onAction="#onEliminarBorrador" styleClass="btn-danger" text="Eliminar" />
                               </children>
                               <VBox.margin>
                                  <Insets left="10.0" right="10.0" top="10.0" />

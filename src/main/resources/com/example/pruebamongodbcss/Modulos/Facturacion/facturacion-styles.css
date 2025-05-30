@@ -607,12 +607,128 @@
 }
 
 /* Estilo para cabeceras de tabla con texto negro */
+
+/* Botones en modo oscuro - Mantener colores específicos */
+.dark-theme .btn-primary {
+    -fx-background-color: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    -fx-text-fill: white !important;
+    -fx-cursor: hand;
+    -fx-background-radius: 4px;
+    -fx-border-radius: 4px;
+    -fx-border-width: 0px;
+    -fx-padding: 6px 12px;
+    -fx-font-weight: 600;
+    -fx-font-size: 12px;
+    -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.2), 4, 0, 0, 1);
+}
+
+.dark-theme .btn-primary:hover {
+    -fx-background-color: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.3), 6, 0, 0, 1);
+    -fx-scale-y: 1.02;
+    -fx-scale-x: 1.02;
+}
+
+.dark-theme .btn-secondary {
+    -fx-background-color: linear-gradient(135deg, #64748b 0%, #475569 100%) !important;
+    -fx-text-fill: white !important;
+    -fx-cursor: hand;
+    -fx-background-radius: 4px;
+    -fx-border-radius: 4px;
+    -fx-border-width: 0px;
+    -fx-padding: 6px 12px;
+    -fx-font-weight: 600;
+    -fx-font-size: 12px;
+    -fx-effect: dropshadow(gaussian, rgba(100, 116, 139, 0.2), 4, 0, 0, 1);
+}
+
+.dark-theme .btn-secondary:hover {
+    -fx-background-color: linear-gradient(135deg, #475569 0%, #334155 100%) !important;
+    -fx-effect: dropshadow(gaussian, rgba(100, 116, 139, 0.3), 6, 0, 0, 1);
+    -fx-scale-y: 1.02;
+    -fx-scale-x: 1.02;
+}
+
+.dark-theme .btn-success {
+    -fx-background-color: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    -fx-text-fill: white !important;
+    -fx-cursor: hand;
+    -fx-background-radius: 4px;
+    -fx-border-radius: 4px;
+    -fx-border-width: 0px;
+    -fx-padding: 6px 12px;
+    -fx-font-weight: 600;
+    -fx-font-size: 12px;
+    -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.2), 4, 0, 0, 1);
+}
+
+.dark-theme .btn-success:hover {
+    -fx-background-color: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+    -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.3), 6, 0, 0, 1);
+    -fx-scale-y: 1.02;
+    -fx-scale-x: 1.02;
+}
+
+.dark-theme .btn-danger {
+    -fx-background-color: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    -fx-text-fill: white !important;
+    -fx-cursor: hand;
+    -fx-background-radius: 4px;
+    -fx-border-radius: 4px;
+    -fx-border-width: 0px;
+    -fx-padding: 6px 12px;
+    -fx-font-weight: 600;
+    -fx-font-size: 12px;
+    -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.2), 4, 0, 0, 1);
+}
+
+.dark-theme .btn-danger:hover {
+    -fx-background-color: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+    -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.3), 6, 0, 0, 1);
+    -fx-scale-y: 1.02;
+    -fx-scale-x: 1.02;
+}
+
+.dark-theme .btn-info {
+    -fx-background-color: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
+    -fx-text-fill: white !important;
+    -fx-cursor: hand;
+    -fx-background-radius: 4px;
+    -fx-border-radius: 4px;
+    -fx-border-width: 0px;
+    -fx-padding: 6px 12px;
+    -fx-font-weight: 600;
+    -fx-font-size: 12px;
+    -fx-effect: dropshadow(gaussian, rgba(6, 182, 212, 0.2), 4, 0, 0, 1);
+}
+
+.dark-theme .btn-info:hover {
+    -fx-background-color: linear-gradient(135deg, #0891b2 0%, #0e7490 100%) !important;
+    -fx-effect: dropshadow(gaussian, rgba(6, 182, 212, 0.3), 6, 0, 0, 1);
+    -fx-scale-y: 1.02;
+    -fx-scale-x: 1.02;
+}
+
+/* Estilos para tablas con cabeceras de texto negro (compatibilidad) */
+.tabla-cabeceras-negras .column-header-background {
+    -fx-background-color: linear-gradient(to bottom, #f1f5f9 0%, #e2e8f0 100%);
+}
+
 .tabla-cabeceras-negras .column-header-background .label {
     -fx-text-fill: black !important;
     -fx-font-weight: 600;
     -fx-font-size: 11px;
 }
 
-.tabla-cabeceras-negras .column-header-background {
-    -fx-background-color: linear-gradient(to bottom, #f1f5f9 0%, #e2e8f0 100%);
-} 
+/* En modo oscuro, mantener cabeceras claras pero con texto visible */
+.dark-theme .tabla-cabeceras-negras .column-header-background {
+    -fx-background-color: linear-gradient(to bottom, #475569 0%, #334155 100%);
+}
+
+.dark-theme .tabla-cabeceras-negras .column-header-background .label {
+    -fx-text-fill: white !important;
+    -fx-font-weight: 600;
+    -fx-font-size: 11px;
+}
+
+

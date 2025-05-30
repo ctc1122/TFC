@@ -178,8 +178,7 @@ public class FacturaFormController implements Initializable {
             
             cargarDatosEnFormulario();
             
-            // Aplicar estilos CSS para cabeceras de tabla negras
-            aplicarEstilosCabecerasNegras();
+            
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -2012,33 +2011,5 @@ public class FacturaFormController implements Initializable {
     /**
      * Aplica estilos CSS para cambiar las cabeceras de tabla a color negro
      */
-    private void aplicarEstilosCabecerasNegras() {
-        try {
-            // CSS para cambiar cabeceras a negro
-            String cssEstilos = """
-                .table-view .column-header-background .label {
-                    -fx-text-fill: black !important;
-                    -fx-font-weight: 600;
-                    -fx-font-size: 11px;
-                }
-                .table-view .column-header-background {
-                    -fx-background-color: linear-gradient(to bottom, #f1f5f9 0%, #e2e8f0 100%);
-                }
-                """;
-            
-            // Aplicar estilos a las tablas
-            if (tablaServicios != null) {
-                tablaServicios.setStyle(tablaServicios.getStyle() + cssEstilos);
-                System.out.println("✅ Estilos aplicados a tabla de servicios");
-            }
-            
-            if (tablaMedicamentos != null) {
-                tablaMedicamentos.setStyle(tablaMedicamentos.getStyle() + cssEstilos);
-                System.out.println("✅ Estilos aplicados a tabla de medicamentos");
-            }
-            
-        } catch (Exception e) {
-            System.err.println("⚠️ Error al aplicar estilos de cabeceras: " + e.getMessage());
-        }
-    }
+
 } 
