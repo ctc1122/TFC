@@ -15,11 +15,11 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane fx:id="mainPane" prefHeight="650.0" prefWidth="900.0" style="-fx-background-color: #f8fafc;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Facturacion.FacturaFormController">
+<BorderPane fx:id="mainPane" prefHeight="650.0" prefWidth="900.0" style="-fx-background-color: #f8fafc;" stylesheets="@facturacion-styles.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Facturacion.FacturaFormController">
    <top>
       <VBox style="-fx-background-color: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0, 0, 1);">
          <children>
-            <Label fx:id="lblTitulo" text="📋 Nueva Factura" style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 18px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 2, 0, 0, 1);" />
+            <Label fx:id="lblTitulo" text="📋 Nueva Factura" style="-fx-text-fill: black; -fx-font-weight: bold; -fx-font-size: 18px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 2, 0, 0, 1);" />
          </children>
          <padding>
             <Insets bottom="8.0" left="15.0" right="15.0" top="8.0" />
@@ -80,7 +80,7 @@
                                  <HBox alignment="CENTER_LEFT" spacing="6.0">
                                     <children>
                                        <Label text="Cliente" style="-fx-text-fill: #374151; -fx-font-weight: 500; -fx-font-size: 11px;" />
-                                       <Button fx:id="btnSeleccionarCliente" onAction="#onSeleccionarCliente" style="-fx-background-color: #64748b; -fx-text-fill: white; -fx-padding: 2px 6px; -fx-font-size: 9px; -fx-background-radius: 3px;" text="🔍" />
+                                       <Button fx:id="btnSeleccionarCliente" onAction="#onSeleccionarCliente" style="-fx-background-color: #64748b; -fx-text-fill: black; -fx-padding: 2px 6px; -fx-font-size: 9px; -fx-background-radius: 3px;" text="🔍" />
                                     </children>
                                  </HBox>
                                  <TextField fx:id="txtCliente" editable="false" promptText="Seleccione un cliente..." style="-fx-background-color: #f8fafc; -fx-text-fill: #64748b; -fx-padding: 6px 8px; -fx-font-size: 11px; -fx-min-height: 28px;" />
@@ -91,7 +91,7 @@
                                  <HBox alignment="CENTER_LEFT" spacing="6.0">
                                     <children>
                                        <Label text="Paciente" style="-fx-text-fill: #374151; -fx-font-weight: 500; -fx-font-size: 11px;" />
-                                       <Button fx:id="btnSeleccionarPaciente" onAction="#onSeleccionarPaciente" style="-fx-background-color: #64748b; -fx-text-fill: white; -fx-padding: 2px 6px; -fx-font-size: 9px; -fx-background-radius: 3px;" text="🐕" />
+                                       <Button fx:id="btnSeleccionarPaciente" onAction="#onSeleccionarPaciente" style="-fx-background-color: #64748b; -fx-text-fill: black; -fx-padding: 2px 6px; -fx-font-size: 9px; -fx-background-radius: 3px;" text="🐕" />
                                     </children>
                                  </HBox>
                                  <TextField fx:id="txtPaciente" editable="false" promptText="Seleccione un paciente..." style="-fx-background-color: #f8fafc; -fx-text-fill: #64748b; -fx-padding: 6px 8px; -fx-font-size: 11px; -fx-min-height: 28px;" />
@@ -162,11 +162,11 @@
                      <HBox alignment="CENTER_LEFT" spacing="8.0">
                         <children>
                            <Label text="🛠️ Servicios" style="-fx-text-fill: #1e293b; -fx-font-weight: bold; -fx-font-size: 13px;" />
-                           <Button fx:id="btnAgregarServicio" onAction="#onAgregarServicio" style="-fx-background-color: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); -fx-text-fill: white; -fx-padding: 4px 10px; -fx-font-size: 10px; -fx-background-radius: 3px; -fx-font-weight: bold;" text="➕ Agregar" />
+                           <Button fx:id="btnAgregarServicio" onAction="#onAgregarServicio" style="-fx-background-color: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); -fx-text-fill: black; -fx-padding: 4px 10px; -fx-font-size: 10px; -fx-background-radius: 3px; -fx-font-weight: bold;" text="➕ Agregar" />
                         </children>
                      </HBox>
                      
-                     <TableView fx:id="tablaServicios" style="-fx-background-color: white;" maxHeight="120.0" minHeight="80.0">
+                     <TableView fx:id="tablaServicios" style="-fx-background-color: white;" styleClass="tabla-cabeceras-negras" maxHeight="120.0" minHeight="80.0">
                         <columns>
                            <TableColumn fx:id="colServicioDescripcion" text="Descripción" prefWidth="140.0" />
                            <TableColumn fx:id="colServicioCantidad" text="Cant." prefWidth="50.0" />
@@ -191,11 +191,11 @@
                      <HBox alignment="CENTER_LEFT" spacing="8.0">
                         <children>
                            <Label text="💊 Medicamentos" style="-fx-text-fill: #1e293b; -fx-font-weight: bold; -fx-font-size: 13px;" />
-                           <Button fx:id="btnAgregarMedicamento" onAction="#onAgregarMedicamento" style="-fx-background-color: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); -fx-text-fill: white; -fx-padding: 4px 10px; -fx-font-size: 10px; -fx-background-radius: 3px; -fx-font-weight: bold;" text="➕ Agregar" />
+                           <Button fx:id="btnAgregarMedicamento" onAction="#onAgregarMedicamento" style="-fx-background-color: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); -fx-text-fill: black; -fx-padding: 4px 10px; -fx-font-size: 10px; -fx-background-radius: 3px; -fx-font-weight: bold;" text="➕ Agregar" />
                         </children>
                      </HBox>
                      
-                     <TableView fx:id="tablaMedicamentos" style="-fx-background-color: white;" maxHeight="120.0" minHeight="80.0">
+                     <TableView fx:id="tablaMedicamentos" style="-fx-background-color: white;" styleClass="tabla-cabeceras-negras" maxHeight="120.0" minHeight="80.0">
                         <columns>
                            <TableColumn fx:id="colMedicamentoNombre" text="Medicamento" prefWidth="140.0" />
                            <TableColumn fx:id="colMedicamentoCantidad" text="Cant." prefWidth="50.0" />
@@ -262,8 +262,8 @@
                                  
                                  <HBox alignment="CENTER_RIGHT" spacing="8.0" style="-fx-background-color: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); -fx-background-radius: 4px; -fx-padding: 8px 12px;">
                                     <children>
-                                       <Label text="TOTAL:" style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px;" />
-                                       <Label fx:id="lblTotal" text="0,00 €" style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px;" />
+                                       <Label text="TOTAL:" style="-fx-text-fill: black; -fx-font-weight: bold; -fx-font-size: 13px;" />
+                                       <Label fx:id="lblTotal" text="0,00 €" style="-fx-text-fill: black; -fx-font-weight: bold; -fx-font-size: 13px;" />
                                     </children>
                                  </HBox>
                               </children>
@@ -286,10 +286,10 @@
          <children>
             <HBox alignment="CENTER_RIGHT" spacing="8.0" style="-fx-background-color: transparent;">
                <children>
-                  <Button fx:id="btnCancelar" onAction="#onCancelar" style="-fx-background-color: linear-gradient(135deg, #64748b 0%, #475569 100%); -fx-text-fill: white; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="❌ Cancelar" />
-                  <Button fx:id="btnGuardarBorrador" onAction="#onGuardarBorrador" style="-fx-background-color: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); -fx-text-fill: white; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="💾 Borrador" />
-                  <Button fx:id="btnGuardar" onAction="#onGuardar" style="-fx-background-color: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); -fx-text-fill: white; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="💾 Guardar" />
-                  <Button fx:id="btnFinalizar" onAction="#onFinalizar" style="-fx-background-color: linear-gradient(135deg, #10b981 0%, #059669 100%); -fx-text-fill: white; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="✅ Finalizar" />
+                  <Button fx:id="btnCancelar" onAction="#onCancelar" style="-fx-background-color: linear-gradient(135deg, #64748b 0%, #475569 100%); -fx-text-fill: black; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="❌ Cancelar" />
+                  <Button fx:id="btnGuardarBorrador" onAction="#onGuardarBorrador" style="-fx-background-color: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); -fx-text-fill: black; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="💾 Borrador" />
+                  <Button fx:id="btnGuardar" onAction="#onGuardar" style="-fx-background-color: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); -fx-text-fill: black; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="💾 Guardar" />
+                  <Button fx:id="btnFinalizar" onAction="#onFinalizar" style="-fx-background-color: linear-gradient(135deg, #10b981 0%, #059669 100%); -fx-text-fill: black; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="✅ Finalizar" />
                </children>
                <padding>
                   <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
