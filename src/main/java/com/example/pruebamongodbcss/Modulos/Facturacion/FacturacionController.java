@@ -5,8 +5,9 @@ import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPropietario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
-import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 import com.example.pruebamongodbcss.theme.ThemeManager;
+
+import Utilidades1.GestorSocket;
 import io.github.palexdev.materialfx.controls.MFXDatePicker;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -15,7 +16,6 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -30,8 +30,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
-import org.bson.types.ObjectId;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -601,12 +599,10 @@ public class FacturacionController implements Initializable {
             
         } catch (java.io.IOException e) {
             System.err.println("❌ Error de E/O en la comunicación: " + e.getMessage());
-            e.printStackTrace();
             Platform.runLater(() -> mostrarError("Error de comunicación", 
                 "Error de comunicación con el servidor: " + e.getMessage()));
         } catch (Exception e) {
             System.err.println("❌ Error general al cargar borradores: " + e.getMessage());
-            e.printStackTrace();
             Platform.runLater(() -> mostrarError("Error", "Error al cargar borradores: " + (e.getMessage() != null ? e.getMessage() : "Error desconocido")));
         } finally {
             // Cerrar la conexión independiente
@@ -672,7 +668,7 @@ public class FacturacionController implements Initializable {
                 }
                 
             } catch (Exception e) {
-                e.printStackTrace();
+
                 Platform.runLater(() -> mostrarError("Error", "Error en la búsqueda: " + (e.getMessage() != null ? e.getMessage() : "Error desconocido")));
             }
         }).start();
@@ -801,7 +797,6 @@ public class FacturacionController implements Initializable {
             stage.showAndWait();
             
         } catch (Exception e) {
-            e.printStackTrace();
             mostrarError("Error", "No se pudo abrir el detalle de la factura: " + e.getMessage());
         }
     }
@@ -827,7 +822,6 @@ public class FacturacionController implements Initializable {
             stage.showAndWait();
             
         } catch (Exception e) {
-            e.printStackTrace();
             mostrarError("Error", "No se pudo abrir el editor de factura: " + e.getMessage());
         }
     }
@@ -1339,8 +1333,8 @@ public class FacturacionController implements Initializable {
         
         try {
             // Obtener instancia del gestor de inventario
-            com.example.pruebamongodbcss.Utilidades.GestorSocketInventario gestorInventario = 
-                com.example.pruebamongodbcss.Utilidades.GestorSocketInventario.getInstance();
+            Utilidades1.GestorSocketInventario gestorInventario = 
+                Utilidades1.GestorSocketInventario.getInstance();
             
             // Verificar conexión al servidor de inventario
             if (!gestorInventario.isConectado()) {
@@ -1366,8 +1360,8 @@ public class FacturacionController implements Initializable {
                     String idMensaje = "MSG_RESTORE_DELETE_" + System.currentTimeMillis();
                     String facturaId = factura.getId() != null ? factura.getId().toString() : "UNKNOWN";
                     
-                    String mensajeRestablecimiento = com.example.pruebamongodbcss.Utilidades.ProtocoloInventarioVeterinaria.construirMensaje(
-                        com.example.pruebamongodbcss.Utilidades.ProtocoloInventarioVeterinaria.RESTABLECER_INVENTARIO,
+                    String mensajeRestablecimiento = Utilidades1.ProtocoloInventarioVeterinaria.construirMensaje(
+                        Utilidades1.ProtocoloInventarioVeterinaria.RESTABLECER_INVENTARIO,
                         facturaId,
                         codigoProducto,
                         String.valueOf(medicamento.getCantidad()),
@@ -1385,11 +1379,11 @@ public class FacturacionController implements Initializable {
                     System.out.println("📥 Respuesta: " + respuesta);
                     
                     // Parsear respuesta
-                    String[] partesRespuesta = com.example.pruebamongodbcss.Utilidades.ProtocoloInventarioVeterinaria.parsearMensaje(respuesta);
+                    String[] partesRespuesta = Utilidades1.ProtocoloInventarioVeterinaria.parsearMensaje(respuesta);
                     
                     if (partesRespuesta.length >= 3) {
                         int codigoRespuesta = Integer.parseInt(partesRespuesta[0]);
-                        if (codigoRespuesta == com.example.pruebamongodbcss.Utilidades.ProtocoloInventarioVeterinaria.RESTABLECER_INVENTARIO_RESPONSE) {
+                        if (codigoRespuesta == Utilidades1.ProtocoloInventarioVeterinaria.RESTABLECER_INVENTARIO_RESPONSE) {
                             System.out.println("✅ Inventario restablecido para: " + medicamento.getDescripcion());
                         } else {
                             System.out.println("⚠️ Error al restablecer inventario para: " + medicamento.getDescripcion());

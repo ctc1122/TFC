@@ -22,7 +22,7 @@ import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 
-import Utilidades.GestorConexion;
+import Utilidades1.GestorConexion;
 
 /**
  * Servicio para gestionar las citas en la base de datos

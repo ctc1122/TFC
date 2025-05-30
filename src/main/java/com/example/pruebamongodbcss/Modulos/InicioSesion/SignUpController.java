@@ -8,8 +8,8 @@ import java.util.ResourceBundle;
 import com.example.pruebamongodbcss.Data.PatronExcepcion;
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
-import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 
+import Utilidades1.GestorSocket;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;

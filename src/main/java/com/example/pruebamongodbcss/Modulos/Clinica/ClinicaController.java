@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import org.bson.types.ObjectId;
 
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
-import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 
+import Utilidades1.GestorSocket;
 import io.github.palexdev.materialfx.controls.MFXDatePicker;
 import io.github.palexdev.materialfx.controls.MFXProgressSpinner;
 import javafx.application.Platform;
@@ -1214,12 +1214,8 @@ public class ClinicaController implements Initializable {
                                 } else {
                                     mostrarAlerta("Error", "Error al obtener el paciente", "No se pudo obtener el paciente. Inténtelo de nuevo.");
                                 }
-                            } catch (ClassNotFoundException e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
-                            } catch (IOException e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
+                            } catch (ClassNotFoundException | IOException e) {
+                               
                             }
 
                         }

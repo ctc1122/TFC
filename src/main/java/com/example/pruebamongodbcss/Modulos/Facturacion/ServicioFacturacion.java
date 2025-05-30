@@ -15,7 +15,7 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
 import com.mongodb.client.model.Updates;
 
-import Utilidades.GestorConexion;
+import Utilidades1.GestorConexion;
 
 /**
  * Servicio para gestionar las operaciones de facturación en la base de datos

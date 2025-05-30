@@ -10,8 +10,8 @@ import java.util.ResourceBundle;
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Data.Usuario.Rol;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
-import com.example.pruebamongodbcss.Utilidades.GestorSocket;
 
+import Utilidades1.GestorSocket;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;

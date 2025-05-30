@@ -14,7 +14,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.result.DeleteResult;
 
-import Utilidades.GestorConexion;
+import Utilidades1.GestorConexion;
 
 /**
  * Servicio unificado para gestionar todos los usuarios del sistema.

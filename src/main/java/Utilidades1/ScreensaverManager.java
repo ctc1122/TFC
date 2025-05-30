@@ -1,4 +1,4 @@
-package Utilidades;
+package Utilidades1;
 
 import java.awt.AWTException;
 import java.awt.MouseInfo;
@@ -17,7 +17,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 public class ScreensaverManager {
-    private static final int INACTIVITY_TIMEOUT = 600000;
+    private static final int INACTIVITY_TIMEOUT = 300000; // 5 minutes in milliseconds
     //private static final int INACTIVITY_TIMEOUT = 5000; 
     private Timer inactivityTimer;
     private Stage screensaverStage;
@@ -49,6 +49,12 @@ public class ScreensaverManager {
     public void updateActiveStage(Stage newStage) {
         System.out.println("Actualizando ventana activa...");
         this.activeStage = newStage;
+        
+        // Si el salvapantallas está activo, ocultarlo para evitar problemas
+        if (isScreensaverActive.get()) {
+            System.out.println("Salvapantallas activo detectado, ocultándolo para actualizar ventana");
+            hideScreensaver();
+        }
     }
 
     private void initializeScreensaver() {

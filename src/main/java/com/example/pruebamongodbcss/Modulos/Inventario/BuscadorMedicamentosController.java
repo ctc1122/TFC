@@ -1,7 +1,5 @@
 package com.example.pruebamongodbcss.Modulos.Inventario;
 
-import com.example.pruebamongodbcss.Utilidades.GestorSocketInventario;
-import com.example.pruebamongodbcss.Utilidades.ProtocoloInventarioVeterinaria;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -22,6 +20,9 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import org.bson.Document;
+
+import Utilidades1.GestorSocketInventario;
+import Utilidades1.ProtocoloInventarioVeterinaria;
 
 import java.io.IOException;
 import java.net.URL;

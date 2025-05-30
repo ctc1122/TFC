@@ -26,10 +26,11 @@ import com.example.pruebamongodbcss.Modulos.Fichaje.ServicioFichaje;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.calendar.CalendarService;
 import com.mongodb.client.MongoCollection;
+
+import Utilidades1.GestorConexion;
+
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
-
-import Utilidades.GestorConexion;
 
 public class ClienteHandler implements Runnable {
     private final Socket clientSocket;
@@ -37,11 +38,11 @@ public class ClienteHandler implements Runnable {
     private ObjectOutputStream salida;
 
     //Declaro los servicios
-    private ServicioUsuarios servicioUsuarios;
-    private ServicioClinica servicioClinica;
-    private CalendarService calendarService;
-    private com.example.pruebamongodbcss.Modulos.Facturacion.ServicioFacturacion servicioFacturacion;
-    private ServicioFichaje servicioFichaje;
+    private final ServicioUsuarios servicioUsuarios;
+    private final ServicioClinica servicioClinica;
+    private final CalendarService calendarService;
+    private final com.example.pruebamongodbcss.Modulos.Facturacion.ServicioFacturacion servicioFacturacion;
+    private final ServicioFichaje servicioFichaje;
     
     //Declaro el constructor
     public ClienteHandler(Socket socket) {

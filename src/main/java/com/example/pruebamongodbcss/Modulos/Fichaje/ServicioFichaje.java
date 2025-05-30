@@ -13,13 +13,14 @@ import org.bson.types.ObjectId;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+
+import Utilidades1.GestorConexion;
+
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
 import static com.mongodb.client.model.Filters.lte;
 import static com.mongodb.client.model.Sorts.descending;
-
-import Utilidades.GestorConexion;
 
 public class ServicioFichaje {
     private MongoCollection<Document> coleccionFichajes;

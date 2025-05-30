@@ -18,7 +18,9 @@ import org.bson.types.ObjectId;
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.PanelInicioController;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
-import com.example.pruebamongodbcss.Utilidades.GestorSocket;
+
+import Utilidades1.GestorSocket;
+
 import com.example.pruebamongodbcss.Modulos.Fichaje.ExportadorFichajes;
 import com.example.pruebamongodbcss.Modulos.Fichaje.EstadisticasFichaje;
 

@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import com.mongodb.client.MongoDatabase;
 
-import Utilidades.GestorConexion;
+import Utilidades1.GestorConexion;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
