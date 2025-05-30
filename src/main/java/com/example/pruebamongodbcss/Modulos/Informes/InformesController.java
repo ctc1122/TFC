@@ -654,7 +654,7 @@ public class InformesController implements Initializable {
         reportsGrid.setAlignment(Pos.CENTER);
         reportsGrid.setStyle("-fx-background-color: transparent;");
         
-        // Crear tarjetas de reportes
+        // Crear tarjetas de reportes (solo 4 reportes principales)
         VBox reporteVentas = crearTarjetaReporte("Reporte de Ventas", 
             "Análisis detallado de ventas por período", 
             "/Iconos/iconInvoice1.png", 
@@ -665,33 +665,21 @@ public class InformesController implements Initializable {
             "/Iconos/IconPruebaClientes.png", 
             () -> abrirReporteClientes());
             
-        VBox reporteFichajes = crearTarjetaReporte("Reporte de Empleados", 
+        VBox reporteEmpleados = crearTarjetaReporte("Reporte de Empleados", 
             "Análisis de asistencia y horas trabajadas", 
             "/Iconos/iconClock2.png", 
             () -> abrirReporteFichajes());
-            
-        VBox reporteCitas = crearTarjetaReporte("Reporte de Citas", 
-            "Estadísticas de citas y servicios", 
-            "/Iconos/iconInicio4.png", 
-            () -> abrirReporteCitas());
-            
-        VBox reporteFinanciero = crearTarjetaReporte("Reporte Financiero", 
-            "Análisis financiero completo", 
-            "/Iconos/iconAdministrador2.png", 
-            () -> abrirReporteFinanciero());
             
         VBox reporteInventario = crearTarjetaReporte("Reporte de Inventario", 
             "Control de stock y productos", 
             "/Iconos/iconPet2.png", 
             () -> abrirReporteInventario());
         
-        // Añadir al grid
-        reportsGrid.add(reporteVentas, 0, 0);
-        reportsGrid.add(reporteClientes, 1, 0);
-        reportsGrid.add(reporteFichajes, 2, 0);
-        reportsGrid.add(reporteCitas, 0, 1);
-        reportsGrid.add(reporteFinanciero, 1, 1);
-        reportsGrid.add(reporteInventario, 2, 1);
+        // Añadir al grid en disposición 2x2
+        reportsGrid.add(reporteVentas, 0, 0);     // Fila 0, Columna 0
+        reportsGrid.add(reporteClientes, 1, 0);   // Fila 0, Columna 1
+        reportsGrid.add(reporteEmpleados, 0, 1);  // Fila 1, Columna 0
+        reportsGrid.add(reporteInventario, 1, 1); // Fila 1, Columna 1
     }
     
     private VBox crearTarjetaReporte(String titulo, String descripcion, String iconPath, Runnable accion) {
@@ -700,8 +688,8 @@ public class InformesController implements Initializable {
         tarjeta.setAlignment(Pos.CENTER);
         tarjeta.setSpacing(15);
         tarjeta.setPadding(new Insets(20));
-        tarjeta.setPrefWidth(250);
-        tarjeta.setPrefHeight(180);
+        tarjeta.setPrefWidth(300);
+        tarjeta.setPrefHeight(230);
         
         // NO aplicar transparencia - dejar que el CSS maneje el estilo
         // tarjeta.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-cursor: hand;");
