@@ -117,24 +117,6 @@
                   </VBox>
                </content>
             </Tab>
-            <Tab fx:id="tabCalendario" closable="false" text="Calendario">
-               <content>
-                  <BorderPane fx:id="calendarContainer">
-                     <top>
-                        <HBox alignment="CENTER" spacing="10.0">
-                           <children>
-                              <Button fx:id="btnMesAnterior" onAction="#onMesAnterior" styleClass="btn-secondary" text="&lt;&lt; Anterior" />
-                              <Label fx:id="lblMesActual" style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Mes Actual" />
-                              <Button fx:id="btnMesSiguiente" onAction="#onMesSiguiente" styleClass="btn-secondary" text="Siguiente &gt;&gt;" />
-                           </children>
-                           <padding>
-                              <Insets bottom="10.0" top="10.0" />
-                           </padding>
-                        </HBox>
-                     </top>
-                  </BorderPane>
-               </content>
-            </Tab>
          </tabs>
       </TabPane>
    </center>
