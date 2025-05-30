@@ -114,12 +114,9 @@ public class ClinicaController implements Initializable {
     @FXML private MFXDatePicker dpFechaFin;
     @FXML private TextField txtBuscarDiagnostico;
     @FXML private Button btnBuscarDiagnostico;
-    @FXML private Button btnVerDiagnostico;
     @FXML private Button btnEliminarDiagnostico;
     @FXML private ComboBox<ModeloPaciente> cmbPacientesDiagnostico;
     @FXML private Button btnLimpiarFiltro;
-    @FXML private Button btnExportarPDF;
-    @FXML private Button btnExportarCSV;
     
     // Servicio clínico
     //private ServicioClinica servicioClinica;
@@ -1999,126 +1996,6 @@ public class ClinicaController implements Initializable {
         }
     }
     
-    /**
-     * Exporta los diagnósticos seleccionados o visibles a un archivo CSV
-     */
-    @FXML
-    private void onExportarCSVDiagnostico() {
-        // Si no hay diagnósticos para exportar
-        if (diagnosticosObservable.isEmpty()) {
-            mostrarAlerta("Sin datos", "No hay diagnósticos para exportar", 
-                    "No hay diagnósticos disponibles para exportar a CSV.");
-            return;
-        }
-        
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Guardar CSV");
-        fileChooser.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter("Archivos CSV", "*.csv")
-        );
-        fileChooser.setInitialFileName("diagnosticos.csv");
-        
-        File file = fileChooser.showSaveDialog(mainPane.getScene().getWindow());
-        if (file != null) {
-            try (FileWriter writer = new FileWriter(file)) {
-                // Escribir encabezados
-                writer.write("Fecha,Paciente,Motivo,Diagnóstico,Veterinario\n");
-                
-                // Escribir cada diagnóstico
-                for (ModeloDiagnostico diag : diagnosticosObservable) {
-                    String fecha = diag.getFecha() != null ? formatoFecha.format(diag.getFecha()) : "";
-                    String paciente = diag.getNombrePaciente() != null ? diag.getNombrePaciente().replace(",", ";") : "";
-                    String motivo = diag.getMotivo() != null ? diag.getMotivo().replace(",", ";") : "";
-                    String diagnostico = diag.getDiagnostico() != null ? diag.getDiagnostico().replace(",", ";") : "";
-                    String veterinario = diag.getVeterinario() != null ? diag.getVeterinario().replace(",", ";") : "";
-                    
-                    writer.write(fecha + "," +
-                                paciente + "," +
-                                motivo + "," +
-                                diagnostico + "," +
-                                veterinario + "\n");
-                }
-                
-                mostrarMensaje("Exportación exitosa", "Diagnósticos exportados", 
-                        "Los diagnósticos han sido exportados correctamente a CSV.");
-                
-            } catch (Exception e) {
-                e.printStackTrace();
-                mostrarAlerta("Error", "Error al exportar", 
-                        "Ha ocurrido un error al intentar exportar los diagnósticos a CSV: " + e.getMessage());
-            }
-        }
-    }
-    
-    /**
-     * Exporta los diagnósticos seleccionados o visibles a un archivo PDF
-     */
-    @FXML
-    private void onExportarPDFDiagnostico(ActionEvent event) {
-        ModeloDiagnostico diagnostico = tablaDiagnosticos.getSelectionModel().getSelectedItem();
-        if (diagnostico == null) {
-            mostrarAlerta("Selección requerida", "No hay diagnóstico seleccionado",
-                    "Por favor, seleccione un diagnóstico para exportar a PDF.");
-            return;
-        }
-
-        try {
-            // Abrir la vista de diagnóstico para exportación
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Diagnostico/diagnostico-view.fxml"));
-            Parent root = loader.load();
-
-            // Obtener el controlador y configurarlo con el diagnóstico seleccionado
-            com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico.DiagnosticoController controller = loader.getController();
-
-            // Buscar el paciente asociado al diagnóstico
-            //Hacemos una peticion al servidor para obtener el paciente asociado al diagnóstico
-            gestorPeticiones.enviarPeticion(Protocolo.OBTENERPACIENTE_POR_ID + Protocolo.SEPARADOR_CODIGO + diagnostico.getPacienteId());
-
-            ObjectInputStream entrada = gestorPeticiones.getEntrada();
-            if (entrada.readInt() == Protocolo.OBTENERPACIENTE_POR_ID_RESPONSE) {
-                ModeloPaciente paciente = (ModeloPaciente) entrada.readObject();
-                if (paciente != null) {
-                    // Obtener la cita más reciente del paciente
-                    try {
-                        gestorPeticiones.enviarPeticion(Protocolo.BUSCAR_CITAS_POR_PACIENTE + Protocolo.SEPARADOR_CODIGO + paciente.getId());
-                        
-                        ObjectInputStream entradaCitas = gestorPeticiones.getEntrada();
-                        if (entradaCitas.readInt() == Protocolo.BUSCAR_CITAS_POR_PACIENTE_RESPONSE) {
-                            List<ModeloCita> citas = (List<ModeloCita>) entradaCitas.readObject();
-                            ModeloCita cita = citas.isEmpty() ? null : citas.get(0); // La primera cita es la más reciente porque están ordenadas
-                            controller.setPaciente(paciente, cita);
-                            controller.setDiagnostico(diagnostico);
-
-                            // Llamar al método de exportación a PDF
-                            controller.exportarPDFDesdeLista(diagnostico, paciente, cita);
-                        } else {
-                            mostrarAlerta("Error", "Error al obtener citas",
-                                    "No se pudieron obtener las citas del paciente.");
-                        }
-                    } catch (IOException | ClassNotFoundException ex) {
-                        ex.printStackTrace();
-                        mostrarAlerta("Error", "Error al obtener citas",
-                                "Ha ocurrido un error al obtener las citas: " + ex.getMessage());
-                    }
-                } else {
-                    mostrarAlerta("Error", "Paciente no encontrado",
-                            "No se pudo encontrar el paciente asociado a este diagnóstico.");
-                }
-            } else {
-                mostrarAlerta("Error", "Error al obtener el paciente",
-                        "No se pudo obtener el paciente. Inténtelo de nuevo.");
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            mostrarAlerta("Error", "Error al exportar",
-                    "Ha ocurrido un error al intentar exportar el diagnóstico a PDF: " + e.getMessage());
-        } catch (ClassNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
-    
     // ********** CARGA DE DATOS **********
     private void cargarPacientes() {
         pacientesObservable.clear();
@@ -2659,17 +2536,6 @@ public class ClinicaController implements Initializable {
     }
     
     @FXML
-    private void onVerDiagnostico(ActionEvent event) {
-        ModeloDiagnostico diagnostico = tablaDiagnosticos.getSelectionModel().getSelectedItem();
-        if (diagnostico != null) {
-            abrirDetallesDiagnostico(diagnostico);
-        } else {
-            mostrarAlerta("Selección requerida", "No hay diagnóstico seleccionado", 
-                    "Por favor, seleccione un diagnóstico para ver detalles.");
-        }
-    }
-    
-    @FXML
     private void onEliminarDiagnostico(ActionEvent event) {
         ModeloDiagnostico diagnostico = tablaDiagnosticos.getSelectionModel().getSelectedItem();
         if (diagnostico != null) {
@@ -2714,7 +2580,142 @@ public class ClinicaController implements Initializable {
     }
     
     private void abrirDetallesDiagnostico(ModeloDiagnostico diagnostico) {
-        // Implementar apertura de detalles de diagnóstico
+        try {
+            // Cargar la vista de diagnóstico
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Diagnostico/diagnostico-view.fxml"));
+            Parent root = loader.load();
+            
+            // Obtener el controlador
+            com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico.DiagnosticoController controller = loader.getController();
+            
+            // Hacer las variables finales para usar en las lambdas
+            final ModeloDiagnostico diagnosticoFinal = diagnostico;
+            
+            // Crear una nueva ventana
+            Stage nuevaVentana = new Stage();
+            nuevaVentana.setTitle("Diagnóstico - " + diagnostico.getNombrePaciente());
+            nuevaVentana.initModality(Modality.NONE); // Ventana independiente, no modal
+            nuevaVentana.setResizable(true);
+            
+            // Establecer el icono de la ventana
+            try {
+                Image icon = new Image(getClass().getResourceAsStream("/logo.png"));
+                nuevaVentana.getIcons().add(icon);
+            } catch (Exception e) {
+                System.err.println("No se pudo cargar el icono de la ventana: " + e.getMessage());
+            }
+            
+            // Crear la escena
+            Scene scene = new Scene(root, 1200, 800); // Tamaño inicial de la ventana
+            nuevaVentana.setScene(scene);
+            
+            // Buscar los datos del paciente y cita en un hilo separado
+            new Thread(() -> {
+                try {
+                    // Buscar el paciente asociado al diagnóstico
+                    gestorPeticiones.enviarPeticion(Protocolo.OBTENERPACIENTE_POR_ID + Protocolo.SEPARADOR_CODIGO + diagnosticoFinal.getPacienteId());
+                    
+                    ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                    if (entrada.readInt() == Protocolo.OBTENERPACIENTE_POR_ID_RESPONSE) {
+                        ModeloPaciente paciente = (ModeloPaciente) entrada.readObject();
+                        
+                        if (paciente != null) {
+                            // Buscar las citas del paciente para obtener la más reciente o relacionada
+                            ModeloCita cita = null;
+                            try {
+                                gestorPeticiones.enviarPeticion(Protocolo.BUSCAR_CITAS_POR_PACIENTE + Protocolo.SEPARADOR_CODIGO + paciente.getId());
+                                
+                                ObjectInputStream entradaCitas = gestorPeticiones.getEntrada();
+                                if (entradaCitas.readInt() == Protocolo.BUSCAR_CITAS_POR_PACIENTE_RESPONSE) {
+                                    List<ModeloCita> citas = (List<ModeloCita>) entradaCitas.readObject();
+                                    
+                                    // Si el diagnóstico tiene una cita asociada, buscarla específicamente
+                                    if (diagnosticoFinal.getCitaId() != null && !citas.isEmpty()) {
+                                        cita = citas.stream()
+                                            .filter(c -> c.getId().equals(diagnosticoFinal.getCitaId()))
+                                            .findFirst()
+                                            .orElse(citas.get(0)); // Si no se encuentra, usar la primera
+                                    } else if (!citas.isEmpty()) {
+                                        cita = citas.get(0); // Usar la cita más reciente
+                                    }
+                                }
+                            } catch (Exception ex) {
+                                System.err.println("No se pudieron obtener las citas del paciente: " + ex.getMessage());
+                            }
+                            
+                            // Hacer las variables finales para las lambdas
+                            final ModeloPaciente pacienteFinal = paciente;
+                            final ModeloCita citaFinal = cita;
+                            
+                            // Ejecutar en el hilo de la interfaz
+                            Platform.runLater(() -> {
+                                try {
+                                    // Configurar el controlador con los datos
+                                    controller.setPaciente(pacienteFinal, citaFinal);
+                                    controller.setDiagnostico(diagnosticoFinal);
+                                    
+                                    // Configurar callback para cerrar la ventana al guardar/cancelar
+                                    Runnable cerrarVentana = () -> {
+                                        nuevaVentana.close();
+                                        // Refrescar la tabla de diagnósticos en la ventana principal
+                                        buscarDiagnosticos();
+                                    };
+                                    
+                                    controller.setOnGuardarCallback(cerrarVentana);
+                                    controller.setOnCancelarCallback(() -> nuevaVentana.close());
+                                    
+                                    // Actualizar el título de la ventana con el nombre del paciente
+                                    nuevaVentana.setTitle("Diagnóstico - " + pacienteFinal.getNombre() + 
+                                        (citaFinal != null ? " (" + citaFinal.getMotivo() + ")" : ""));
+                                    
+                                    System.out.println("✅ Diagnóstico cargado correctamente para paciente: " + pacienteFinal.getNombre());
+                                    
+                                } catch (Exception ex) {
+                                    ex.printStackTrace();
+                                    mostrarAlerta("Error", "Error al configurar diagnóstico", 
+                                            "Ha ocurrido un error al configurar la vista del diagnóstico: " + ex.getMessage());
+                                    nuevaVentana.close();
+                                }
+                            });
+                            
+                        } else {
+                            Platform.runLater(() -> {
+                                mostrarAlerta("Error", "Paciente no encontrado",
+                                        "No se pudo encontrar el paciente asociado a este diagnóstico.");
+                                nuevaVentana.close();
+                            });
+                        }
+                    } else {
+                        Platform.runLater(() -> {
+                            mostrarAlerta("Error", "Error al obtener el paciente",
+                                    "No se pudo obtener el paciente. Inténtelo de nuevo.");
+                            nuevaVentana.close();
+                        });
+                    }
+                    
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                    Platform.runLater(() -> {
+                        mostrarAlerta("Error", "Error al cargar diagnóstico",
+                                "Ha ocurrido un error al cargar la vista del diagnóstico: " + e.getMessage());
+                        nuevaVentana.close();
+                    });
+                }
+            }).start();
+            
+            // Mostrar la ventana inmediatamente (los datos se cargarán en segundo plano)
+            nuevaVentana.show();
+            
+            // Centrar la ventana en pantalla
+            nuevaVentana.centerOnScreen();
+            
+            System.out.println("✅ Nueva ventana de diagnóstico abierta");
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error inesperado", 
+                    "Ha ocurrido un error inesperado al abrir el diagnóstico: " + e.getMessage());
+        }
     }
     
     // ********** MÉTODOS DE UTILIDAD **********
