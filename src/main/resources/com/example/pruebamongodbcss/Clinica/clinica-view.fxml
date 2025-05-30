@@ -191,7 +191,6 @@
                            </HBox>
                            <HBox alignment="CENTER_LEFT" spacing="10.0" minHeight="-Infinity">
                               <children>
-                                 <Button fx:id="btnNuevoDiagnostico" onAction="#onNuevoDiagnostico" styleClass="btn-primary" text="Nuevo Diagnóstico" />
                                  <Button fx:id="btnVerDiagnostico" onAction="#onVerDiagnostico" styleClass="btn-info" text="Ver Detalles" />
                                  <Button fx:id="btnEliminarDiagnostico" onAction="#onEliminarDiagnostico" styleClass="btn-danger" text="Eliminar" />
                                  <Button fx:id="btnLimpiarFiltro" onAction="#onLimpiarFiltroDiagnostico" styleClass="btn-secondary" text="Mostrar Todos" />

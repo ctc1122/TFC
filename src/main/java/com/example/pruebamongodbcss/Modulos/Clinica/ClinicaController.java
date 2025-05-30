@@ -115,7 +115,6 @@ public class ClinicaController implements Initializable {
     @FXML private MFXDatePicker dpFechaFin;
     @FXML private TextField txtBuscarDiagnostico;
     @FXML private Button btnBuscarDiagnostico;
-    @FXML private Button btnNuevoDiagnostico;
     @FXML private Button btnVerDiagnostico;
     @FXML private Button btnEliminarDiagnostico;
     @FXML private ComboBox<ModeloPaciente> cmbPacientesDiagnostico;
