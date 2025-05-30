@@ -212,8 +212,9 @@
                                              <TableColumn fx:id="colFechaDiagnostico" text="Fecha" />
                                              <TableColumn fx:id="colPacienteDiagnostico" text="Paciente" />
                                              <TableColumn fx:id="colMotivo" text="Motivo" />
-                                             <TableColumn fx:id="colDiagnostico" text="Diagnóstico" />
                                              <TableColumn fx:id="colVeterinario" text="Veterinario" />
+                                             <TableColumn fx:id="colDiagnostico" text="Diagnóstico" />
+                                             <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="100.0" />
                                           </columns>
                                           <columnResizePolicy>
                                              <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

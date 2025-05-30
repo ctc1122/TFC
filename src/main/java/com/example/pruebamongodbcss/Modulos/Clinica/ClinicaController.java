@@ -109,6 +109,7 @@ public class ClinicaController implements Initializable {
     @FXML private TableColumn<ModeloDiagnostico, String> colMotivo;
     @FXML private TableColumn<ModeloDiagnostico, String> colDiagnostico;
     @FXML private TableColumn<ModeloDiagnostico, String> colVeterinario;
+    @FXML private TableColumn<ModeloDiagnostico, Void> colAcciones;
     @FXML private MFXDatePicker dpFechaInicio;
     @FXML private MFXDatePicker dpFechaFin;
     @FXML private TextField txtBuscarDiagnostico;
@@ -3049,11 +3050,12 @@ public class ClinicaController implements Initializable {
         tablaDiagnosticos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         
         // Configurar propiedades de columnas para que sean responsive
-        configurarColumnaCabecera(colFechaDiagnostico, "Fecha", 0.15, tablaDiagnosticos);
-        configurarColumnaCabecera(colPacienteDiagnostico, "Paciente", 0.2, tablaDiagnosticos);
-        configurarColumnaCabecera(colMotivo, "Motivo\nConsulta", 0.2, tablaDiagnosticos);
-        configurarColumnaCabecera(colDiagnostico, "Diagnóstico", 0.3, tablaDiagnosticos);
+        configurarColumnaCabecera(colFechaDiagnostico, "Fecha", 0.12, tablaDiagnosticos);
+        configurarColumnaCabecera(colPacienteDiagnostico, "Paciente", 0.18, tablaDiagnosticos);
+        configurarColumnaCabecera(colMotivo, "Motivo\nConsulta", 0.18, tablaDiagnosticos);
+        configurarColumnaCabecera(colDiagnostico, "Diagnóstico", 0.25, tablaDiagnosticos);
         configurarColumnaCabecera(colVeterinario, "Veterinario", 0.15, tablaDiagnosticos);
+        configurarColumnaCabecera(colAcciones, "Acciones", 0.12, tablaDiagnosticos);
         
         colFechaDiagnostico.setCellValueFactory(data -> {
             Date fecha = data.getValue().getFecha();
@@ -3063,6 +3065,34 @@ public class ClinicaController implements Initializable {
         colMotivo.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getMotivo()));
         colDiagnostico.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDiagnostico()));
         colVeterinario.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getVeterinario()));
+        
+        // Configurar columna de acciones con botones "Ver"
+        colAcciones.setCellFactory(col -> new TableCell<ModeloDiagnostico, Void>() {
+            private final Button btnVer = new Button("Ver");
+            
+            {
+                btnVer.setOnAction(event -> {
+                    ModeloDiagnostico diagnostico = getTableView().getItems().get(getIndex());
+                    if (diagnostico != null) {
+                        abrirDetallesDiagnostico(diagnostico);
+                    }
+                });
+                btnVer.getStyleClass().add("btn-info");
+                btnVer.setPrefWidth(60);
+                btnVer.setMaxWidth(60);
+                btnVer.setMinWidth(60);
+            }
+            
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(btnVer);
+                }
+            }
+        });
         
         tablaDiagnosticos.setItems(diagnosticosObservable);
         
