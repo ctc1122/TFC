@@ -654,7 +654,7 @@ public class InformesController implements Initializable {
         reportsGrid.setAlignment(Pos.CENTER);
         reportsGrid.setStyle("-fx-background-color: transparent;");
         
-        // Crear tarjetas de reportes (solo 4 reportes principales)
+        // Crear tarjetas de reportes (solo 3 reportes principales)
         VBox reporteVentas = crearTarjetaReporte("Reporte de Ventas", 
             "Análisis detallado de ventas por período", 
             "/Iconos/iconInvoice1.png", 
@@ -669,17 +669,11 @@ public class InformesController implements Initializable {
             "Análisis de asistencia y horas trabajadas", 
             "/Iconos/iconClock2.png", 
             () -> abrirReporteFichajes());
-            
-        VBox reporteInventario = crearTarjetaReporte("Reporte de Inventario", 
-            "Control de stock y productos", 
-            "/Iconos/iconPet2.png", 
-            () -> abrirReporteInventario());
         
-        // Añadir al grid en disposición 2x2
+        // Añadir al grid en disposición 1x3 (una fila, tres columnas)
         reportsGrid.add(reporteVentas, 0, 0);     // Fila 0, Columna 0
         reportsGrid.add(reporteClientes, 1, 0);   // Fila 0, Columna 1
-        reportsGrid.add(reporteEmpleados, 0, 1);  // Fila 1, Columna 0
-        reportsGrid.add(reporteInventario, 1, 1); // Fila 1, Columna 1
+        reportsGrid.add(reporteEmpleados, 2, 0);  // Fila 0, Columna 2
     }
     
     private VBox crearTarjetaReporte(String titulo, String descripcion, String iconPath, Runnable accion) {
@@ -1018,74 +1012,6 @@ public class InformesController implements Initializable {
     private void abrirReporteFinanciero() {
         // Redirigir al reporte de ventas con análisis financiero extendido
         abrirReporteVentas();
-    }
-    
-    private void abrirReporteInventario() {
-        // Implementar reporte de inventario/servicios
-        System.out.println("Abriendo análisis de servicios más demandados...");
-        mostrarAlert("Información", "Funcionalidad en desarrollo", "Esta función se implementará próximamente.");
-        // mostrarAnalisisServicios();
-    }
-    
-    private void mostrarAnalisisServicios() {
-        /* Temporalmente comentado hasta implementar en servidor
-        try {
-            // Crear una vista rápida de análisis de servicios
-            VBox analisisContainer = new VBox();
-            analisisContainer.setSpacing(20);
-            analisisContainer.getStyleClass().addAll("module-main-container", "informes-view");
-            analisisContainer.setPadding(new Insets(20));
-            
-            // Aplicar tema al contenedor
-            ThemeUtil.applyModuleTheme(analisisContainer);
-            
-            // Título
-            Label titulo = new Label("Análisis de Servicios Más Demandados");
-            titulo.getStyleClass().addAll("informes-section-title", "title-label");
-            
-            // Botón volver
-            Button btnVolver = new Button("← Volver al Dashboard");
-            btnVolver.getStyleClass().addAll("btn-secondary");
-            btnVolver.setOnAction(e -> cargarDashboard());
-            
-            HBox header = new HBox();
-            header.setSpacing(20);
-            header.getChildren().addAll(titulo, btnVolver);
-            
-            // Obtener datos de servicios
-            List<Protocolo.ServicioVendido> topServicios = obtenerTopServicios(10);
-            
-            // Crear tabla de servicios
-            TableView<Protocolo.ServicioVendido> tablaServicios = new TableView<>();
-            tablaServicios.getStyleClass().addAll("module-card");
-            ThemeUtil.applyCardTheme(tablaServicios);
-            
-            TableColumn<Protocolo.ServicioVendido, String> colNombre = new TableColumn<>("Servicio");
-            colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
-            colNombre.setPrefWidth(300);
-            
-            TableColumn<Protocolo.ServicioVendido, Integer> colCantidad = new TableColumn<>("Cantidad");
-            colCantidad.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
-            colCantidad.setPrefWidth(150);
-            
-            TableColumn<Protocolo.ServicioVendido, String> colTotal = new TableColumn<>("Total Facturado");
-            colTotal.setCellValueFactory(cellData -> {
-                double total = cellData.getValue().getTotal();
-                return new SimpleStringProperty(formatoMoneda.format(total));
-            });
-            colTotal.setPrefWidth(150);
-            
-            tablaServicios.getColumns().addAll(colNombre, colCantidad, colTotal);
-            tablaServicios.getItems().addAll(topServicios);
-            
-            analisisContainer.getChildren().addAll(header, tablaServicios);
-            
-            mainContainer.setCenter(analisisContainer);
-            
-        } catch (Exception e) {
-            System.err.println("Error al mostrar análisis de servicios: " + e.getMessage());
-        }
-        */
     }
     
     private void mostrarAlert(String titulo, String header, String mensaje) {
