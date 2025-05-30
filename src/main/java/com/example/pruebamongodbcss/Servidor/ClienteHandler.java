@@ -38,11 +38,11 @@ public class ClienteHandler implements Runnable {
     private ObjectOutputStream salida;
 
     //Declaro los servicios
-    private ServicioUsuarios servicioUsuarios;
-    private ServicioClinica servicioClinica;
-    private CalendarService calendarService;
-    private com.example.pruebamongodbcss.Modulos.Facturacion.ServicioFacturacion servicioFacturacion;
-    private ServicioFichaje servicioFichaje;
+    private final ServicioUsuarios servicioUsuarios;
+    private final ServicioClinica servicioClinica;
+    private final CalendarService calendarService;
+    private final com.example.pruebamongodbcss.Modulos.Facturacion.ServicioFacturacion servicioFacturacion;
+    private final ServicioFichaje servicioFichaje;
     
     //Declaro el constructor
     public ClienteHandler(Socket socket) {

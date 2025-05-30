@@ -16,7 +16,6 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -31,8 +30,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
-import org.bson.types.ObjectId;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -602,12 +599,10 @@ public class FacturacionController implements Initializable {
             
         } catch (java.io.IOException e) {
             System.err.println("❌ Error de E/O en la comunicación: " + e.getMessage());
-            e.printStackTrace();
             Platform.runLater(() -> mostrarError("Error de comunicación", 
                 "Error de comunicación con el servidor: " + e.getMessage()));
         } catch (Exception e) {
             System.err.println("❌ Error general al cargar borradores: " + e.getMessage());
-            e.printStackTrace();
             Platform.runLater(() -> mostrarError("Error", "Error al cargar borradores: " + (e.getMessage() != null ? e.getMessage() : "Error desconocido")));
         } finally {
             // Cerrar la conexión independiente
@@ -673,7 +668,7 @@ public class FacturacionController implements Initializable {
                 }
                 
             } catch (Exception e) {
-                e.printStackTrace();
+
                 Platform.runLater(() -> mostrarError("Error", "Error en la búsqueda: " + (e.getMessage() != null ? e.getMessage() : "Error desconocido")));
             }
         }).start();
@@ -802,7 +797,6 @@ public class FacturacionController implements Initializable {
             stage.showAndWait();
             
         } catch (Exception e) {
-            e.printStackTrace();
             mostrarError("Error", "No se pudo abrir el detalle de la factura: " + e.getMessage());
         }
     }
@@ -828,7 +822,6 @@ public class FacturacionController implements Initializable {
             stage.showAndWait();
             
         } catch (Exception e) {
-            e.printStackTrace();
             mostrarError("Error", "No se pudo abrir el editor de factura: " + e.getMessage());
         }
     }

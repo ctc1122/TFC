@@ -1214,12 +1214,8 @@ public class ClinicaController implements Initializable {
                                 } else {
                                     mostrarAlerta("Error", "Error al obtener el paciente", "No se pudo obtener el paciente. Inténtelo de nuevo.");
                                 }
-                            } catch (ClassNotFoundException e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
-                            } catch (IOException e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
+                            } catch (ClassNotFoundException | IOException e) {
+                               
                             }
 
                         }
