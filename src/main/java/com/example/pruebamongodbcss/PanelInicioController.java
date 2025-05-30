@@ -156,7 +156,7 @@ public class PanelInicioController implements Initializable {
             setButtonIcon(btnSalir, "/Iconos/iconSalir.png", 32, 32);
             setButtonIcon(btnChat, "/Iconos/iconChat.png", 32, 32);
             setButtonIcon(btnFacturacion, "/Iconos/iconInvoice1.png", 32, 32);
-            setButtonIcon(btnInformes, "/Iconos/iconChart.png", 32, 32);
+            setButtonIcon(btnInformes, "/Iconos/iconChart2.png", 32, 32);
 
             // Configurar iconos y tooltips para los botones del carrusel
             setButtonIcon(btnMenuPrincipalCarousel, "/Iconos/iconInicio4.png", 32, 32);
@@ -167,7 +167,7 @@ public class PanelInicioController implements Initializable {
             setButtonIcon(btnSalirCarousel, "/Iconos/iconSalir.png", 32, 32);
             setButtonIcon(btnChatCarousel, "/Iconos/iconChat.png", 32, 32);
             setButtonIcon(btnFacturacionCarousel, "/Iconos/iconInvoice1.png", 32, 32);
-            setButtonIcon(btnInformesCarousel, "/Iconos/iconChart.png", 32, 32);
+            setButtonIcon(btnInformesCarousel, "/Iconos/iconChart2.png", 32, 32);
 
             // Tooltips para los botones del carrusel
             btnMenuPrincipalCarousel.setTooltip(new Tooltip("Menú Principal"));
