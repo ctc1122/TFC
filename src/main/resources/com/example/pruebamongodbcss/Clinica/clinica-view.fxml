@@ -56,7 +56,6 @@
                                     </padding>
                                  </TextField>
                                  <Button fx:id="btnNuevoPaciente" onAction="#onNuevoPaciente" styleClass="btn-primary" text="Nuevo Paciente" />
-                                 <Button fx:id="btnEditarPaciente" onAction="#onEditarPaciente" styleClass="btn-secondary" text="Editar" />
                                  <Button fx:id="btnEliminarPaciente" onAction="#onEliminarPaciente" styleClass="btn-danger" text="Eliminar" />
                                  <Button fx:id="btnVerHistorial" onAction="#onVerHistorial" styleClass="btn-info" text="Ver Historial" />
                               </children>
@@ -105,7 +104,6 @@
                                     </padding>
                                  </TextField>
                                  <Button fx:id="btnNuevoPropietario" onAction="#onNuevoPropietario" styleClass="btn-primary" text="Nuevo Propietario" />
-                                 <Button fx:id="btnEditarPropietario" onAction="#onEditarPropietario" styleClass="btn-secondary" text="Editar" />
                                  <Button fx:id="btnEliminarPropietario" onAction="#onEliminarPropietario" styleClass="btn-danger" text="Eliminar" />
                               </children>
                               <VBox.margin>

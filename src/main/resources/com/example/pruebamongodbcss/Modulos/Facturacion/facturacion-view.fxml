@@ -22,11 +22,11 @@
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.chart.CategoryAxis?>
 
-<BorderPane fx:id="mainPane" style="-fx-background-color: #f8fafc;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Facturacion.FacturacionController">
+<BorderPane fx:id="mainPane" styleClass="facturacion-main-pane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.Modulos.Facturacion.FacturacionController">
    <top>
-      <HBox alignment="CENTER_LEFT" style="-fx-background-color: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0, 0, 1);" BorderPane.alignment="CENTER">
+      <HBox alignment="CENTER_LEFT" styleClass="facturacion-header" BorderPane.alignment="CENTER">
          <children>
-            <Label text="Gestión de Facturación" style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 24px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 2, 0, 0, 1);">
+            <Label text="Gestión de Facturación" styleClass="facturacion-header-title">
                <HBox.margin>
                   <Insets left="20.0" />
                </HBox.margin>
@@ -38,52 +38,52 @@
       </HBox>
    </top>
    <center>
-      <VBox style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS" BorderPane.alignment="CENTER">
+      <VBox styleClass="facturacion-content" VBox.vgrow="ALWAYS" BorderPane.alignment="CENTER">
          <VBox.margin>
             <Insets top="2" left="32" right="32" bottom="2"/>
          </VBox.margin>
-         <TabPane fx:id="tabPane" BorderPane.alignment="CENTER" VBox.vgrow="ALWAYS" tabClosingPolicy="UNAVAILABLE" style="-fx-background-color: white; -fx-background-radius: 8px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 8, 0, 0, 2);">
+         <TabPane fx:id="tabPane" BorderPane.alignment="CENTER" VBox.vgrow="ALWAYS" tabClosingPolicy="UNAVAILABLE" styleClass="facturacion-tabpane">
             <tabs>
                <!-- Tab de Listado de Facturas -->
                <Tab fx:id="tabListado" closable="false" text="Facturas">
                   <content>
-                     <VBox spacing="10.0" style="-fx-background-color: white;" VBox.vgrow="ALWAYS">
+                     <VBox spacing="10.0" styleClass="facturacion-tab-content" VBox.vgrow="ALWAYS">
                         <children>
                            <!-- Filtros de búsqueda -->
-                           <HBox alignment="CENTER_LEFT" spacing="10.0" minHeight="-Infinity" style="-fx-background-color: #f8fafc; -fx-background-radius: 6px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.03), 4, 0, 0, 1);">
+                           <HBox alignment="CENTER_LEFT" spacing="10.0" minHeight="-Infinity" styleClass="facturacion-filter-panel">
                               <children>
-                                 <Label text="Estado:" style="-fx-text-fill: #374151; -fx-font-weight: 500; -fx-font-size: 12px;">
+                                 <Label text="Estado:" styleClass="facturacion-filter-label">
                                     <HBox.margin>
                                        <Insets right="5.0" />
                                     </HBox.margin>
                                  </Label>
-                                 <ComboBox fx:id="cmbEstados" minWidth="120.0" promptText="Todos los estados" HBox.hgrow="SOMETIMES" style="-fx-background-color: white; -fx-padding: 4px 8px; -fx-font-size: 11px;">
+                                 <ComboBox fx:id="cmbEstados" minWidth="120.0" promptText="Todos los estados" HBox.hgrow="SOMETIMES" styleClass="facturacion-combo">
                                     <HBox.margin>
                                        <Insets right="10.0" />
                                     </HBox.margin>
                                  </ComboBox>
-                                 <Label text="Desde:" style="-fx-text-fill: #374151; -fx-font-weight: 500; -fx-font-size: 12px;">
+                                 <Label text="Desde:" styleClass="facturacion-filter-label">
                                     <HBox.margin>
                                        <Insets right="5.0" />
                                     </HBox.margin>
                                  </Label>
-                                 <MFXDatePicker fx:id="dpFechaInicio" promptText="Fecha inicio" style="-fx-background-color: white; -fx-font-size: 11px;">
+                                 <MFXDatePicker fx:id="dpFechaInicio" promptText="Fecha inicio" styleClass="facturacion-datepicker">
                                     <HBox.margin>
                                        <Insets right="10.0" />
                                     </HBox.margin>
                                  </MFXDatePicker>
-                                 <Label text="Hasta:" style="-fx-text-fill: #374151; -fx-font-weight: 500; -fx-font-size: 12px;">
+                                 <Label text="Hasta:" styleClass="facturacion-filter-label">
                                     <HBox.margin>
                                        <Insets right="5.0" />
                                     </HBox.margin>
                                  </Label>
-                                 <MFXDatePicker fx:id="dpFechaFin" promptText="Fecha fin" style="-fx-background-color: white; -fx-font-size: 11px;">
+                                 <MFXDatePicker fx:id="dpFechaFin" promptText="Fecha fin" styleClass="facturacion-datepicker">
                                     <HBox.margin>
                                        <Insets right="10.0" />
                                     </HBox.margin>
                                  </MFXDatePicker>
-                                 <Button fx:id="btnBuscar" onAction="#buscarFacturas" style="-fx-background-color: linear-gradient(135deg, #64748b 0%, #475569 100%); -fx-text-fill: white; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Buscar" />
-                                 <Button fx:id="btnLimpiarFiltros" onAction="#limpiarFiltros" style="-fx-background-color: linear-gradient(135deg, #64748b 0%, #475569 100%); -fx-text-fill: white; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Limpiar" />
+                                 <Button fx:id="btnBuscar" onAction="#buscarFacturas" styleClass="facturacion-btn-secondary" text="Buscar" />
+                                 <Button fx:id="btnLimpiarFiltros" onAction="#limpiarFiltros" styleClass="facturacion-btn-secondary" text="Limpiar" />
                               </children>
                               <VBox.margin>
                                  <Insets left="10.0" right="10.0" top="10.0" />
@@ -93,11 +93,11 @@
                               </padding>
                            </HBox>
                            <!-- Búsqueda por texto -->
-                           <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-background-color: #f8fafc; -fx-background-radius: 6px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.03), 4, 0, 0, 1);">
+                           <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="facturacion-search-panel">
                               <children>
-                                 <TextField fx:id="txtBuscar" promptText="Buscar por número de factura, cliente o paciente..." HBox.hgrow="ALWAYS" style="-fx-background-color: white; -fx-padding: 8px 12px; -fx-font-size: 12px; -fx-text-fill: #1f2937;" />
-                                 <Button fx:id="btnEliminarFactura" onAction="#onEliminarFactura" style="-fx-background-color: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="Eliminar" />
-                                 <Button fx:id="btnExportarPDF" onAction="#onExportarPDF" style="-fx-background-color: linear-gradient(135deg, #10b981 0%, #059669 100%); -fx-text-fill: white; -fx-padding: 8px 15px; -fx-font-size: 12px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="PDF" />
+                                 <TextField fx:id="txtBuscar" promptText="Buscar por número de factura, cliente o paciente..." HBox.hgrow="ALWAYS" styleClass="facturacion-textfield" />
+                                 <Button fx:id="btnEliminarFactura" onAction="#onEliminarFactura" styleClass="facturacion-btn-danger" text="Eliminar" />
+                                 <Button fx:id="btnExportarPDF" onAction="#onExportarPDF" styleClass="facturacion-btn-success" text="PDF" />
                               </children>
                               <VBox.margin>
                                  <Insets left="10.0" right="10.0" top="5.0" />
@@ -107,11 +107,11 @@
                               </padding>
                            </HBox>
                            <!-- Tabla de facturas -->
-                           <StackPane VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-background-radius: 6px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.04), 6, 0, 0, 1);">
+                           <StackPane VBox.vgrow="ALWAYS" styleClass="facturacion-table-container">
                               <children>
-                                 <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent;">
+                                 <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="facturacion-scroll-pane">
                                     <content>
-                                       <TableView fx:id="tablaFacturas" VBox.vgrow="ALWAYS" style="-fx-background-color: white;">
+                                       <TableView fx:id="tablaFacturas" VBox.vgrow="ALWAYS" styleClass="facturacion-table">
                                           <columns>
                                              <TableColumn fx:id="colNumero" text="Número" />
                                              <TableColumn fx:id="colFecha" text="Fecha" />
@@ -279,12 +279,12 @@
                <!-- Tab de Borradores -->
                <Tab fx:id="tabBorradores" closable="false" text="Borradores">
                   <content>
-                     <VBox spacing="10.0" style="-fx-background-color: white;" VBox.vgrow="ALWAYS">
+                     <VBox spacing="10.0" styleClass="facturacion-tab-content" VBox.vgrow="ALWAYS">
                         <children>
                            <!-- Controles para borradores -->
-                           <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-background-color: #f8fafc; -fx-background-radius: 6px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.03), 4, 0, 0, 1);">
+                           <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="facturacion-search-panel">
                               <children>
-                                 <TextField fx:id="txtBuscarBorrador" promptText="Buscar borrador..." HBox.hgrow="ALWAYS" style="-fx-background-color: white; -fx-padding: 8px 12px; -fx-font-size: 12px; -fx-text-fill: #1f2937;" />
+                                 <TextField fx:id="txtBuscarBorrador" promptText="Buscar borrador..." HBox.hgrow="ALWAYS" styleClass="facturacion-textfield" />
                               </children>
                               <VBox.margin>
                                  <Insets left="10.0" right="10.0" top="10.0" />
@@ -295,11 +295,11 @@
                            </HBox>
                            
                            <!-- Tabla de borradores -->
-                           <StackPane VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-background-radius: 6px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.04), 6, 0, 0, 1);">
+                           <StackPane VBox.vgrow="ALWAYS" styleClass="facturacion-table-container">
                               <children>
-                                 <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent;">
+                                 <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="facturacion-scroll-pane">
                                     <content>
-                                       <TableView fx:id="tablaBorradores" VBox.vgrow="ALWAYS" style="-fx-background-color: white;">
+                                       <TableView fx:id="tablaBorradores" VBox.vgrow="ALWAYS" styleClass="facturacion-table">
                                           <columns>
                                              <TableColumn fx:id="colBorradorFecha" text="Fecha Creación" />
                                              <TableColumn fx:id="colBorradorCliente" text="Cliente" />

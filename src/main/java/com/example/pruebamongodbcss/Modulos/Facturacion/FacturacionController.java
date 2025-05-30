@@ -373,39 +373,95 @@ public class FacturacionController implements Initializable {
     }
     
     /**
-     * Aplica el tema actual
+     * Aplica el tema actual de forma compatible con el ThemeManager global
      */
     private void aplicarTema() {
         try {
-            // Cargar el archivo CSS específico de facturación
+            System.out.println("🎨 Aplicando tema al módulo de facturación...");
+            
+            // Verificar que tenemos una Scene disponible
+            if (mainPane.getScene() == null) {
+                System.out.println("⚠️ Scene no disponible aún, aplazando aplicación de tema");
+                return;
+            }
+            
+            // PASO 1: Cargar CSS específico de facturación SOLO una vez
             String facturacionCSS = getClass().getResource("/com/example/pruebamongodbcss/Modulos/Facturacion/facturacion-styles.css").toExternalForm();
             
-            // Agregar la hoja de estilos específica si no está ya agregada
-            if (!mainPane.getScene().getStylesheets().contains(facturacionCSS)) {
+            // Verificar si el CSS ya está cargado para evitar duplicados
+            boolean cssYaCargado = mainPane.getScene().getStylesheets().contains(facturacionCSS);
+            if (!cssYaCargado) {
                 mainPane.getScene().getStylesheets().add(facturacionCSS);
-                System.out.println("✅ Archivo CSS de facturación cargado: " + facturacionCSS);
+                System.out.println("✅ CSS de facturación cargado: " + facturacionCSS);
+            } else {
+                System.out.println("ℹ️ CSS de facturación ya estaba cargado");
             }
             
-            // Aplicar clase CSS al contenedor principal para identificar el módulo
+            // PASO 2: Aplicar clase identificadora del módulo
             if (!mainPane.getStyleClass().contains("facturacion-module")) {
                 mainPane.getStyleClass().add("facturacion-module");
+                System.out.println("✅ Clase 'facturacion-module' agregada");
             }
             
-            // Aplicar tema oscuro/claro
-            if (ThemeManager.getInstance().isDarkTheme()) {
-                mainPane.getStyleClass().add("dark-theme");
-            } else {
-                mainPane.getStyleClass().remove("dark-theme");
-            }
+            // PASO 3: Gestionar tema oscuro/claro de manera reactiva
+            Platform.runLater(() -> {
+                if (ThemeManager.getInstance().isDarkTheme()) {
+                    if (!mainPane.getStyleClass().contains("dark-theme")) {
+                        mainPane.getStyleClass().add("dark-theme");
+                        System.out.println("🌙 Tema oscuro aplicado al módulo de facturación");
+                    }
+                } else {
+                    if (mainPane.getStyleClass().contains("dark-theme")) {
+                        mainPane.getStyleClass().remove("dark-theme");
+                        System.out.println("☀️ Tema claro aplicado al módulo de facturación");
+                    }
+                }
+                
+                // PASO 4: Forzar actualización visual de botones
+                refrescarBotones();
+            });
             
         } catch (Exception e) {
-            System.err.println("Error al cargar estilos CSS de facturación: " + e.getMessage());
+            System.err.println("❌ Error al aplicar tema en facturación: " + e.getMessage());
+            e.printStackTrace();
             // Aplicar solo el tema básico si hay error
-            if (ThemeManager.getInstance().isDarkTheme()) {
-                mainPane.getStyleClass().add("dark-theme");
-            } else {
-                mainPane.getStyleClass().remove("dark-theme");
+            Platform.runLater(() -> {
+                if (ThemeManager.getInstance().isDarkTheme()) {
+                    mainPane.getStyleClass().add("dark-theme");
+                } else {
+                    mainPane.getStyleClass().remove("dark-theme");
+                }
+            });
+        }
+    }
+    
+    /**
+     * Fuerza la actualización visual de todos los botones del módulo
+     */
+    private void refrescarBotones() {
+        try {
+            // Buscar todos los botones en el módulo y forzar su actualización
+            mainPane.lookupAll(".button").forEach(node -> {
+                if (node instanceof Button) {
+                    Button btn = (Button) node;
+                    // Forzar recálculo de estilos
+                    btn.applyCss();
+                    btn.autosize();
+                }
+            });
+            
+            // También actualizar las tablas
+            if (tablaFacturas != null) {
+                tablaFacturas.refresh();
             }
+            if (tablaBorradores != null) {
+                tablaBorradores.refresh();
+            }
+            
+            System.out.println("🔄 Botones y tablas actualizados");
+            
+        } catch (Exception e) {
+            System.err.println("⚠️ Error al refrescar botones: " + e.getMessage());
         }
     }
     
@@ -1449,5 +1505,13 @@ public class FacturacionController implements Initializable {
         
         System.out.println("⚠️ No se pudo determinar el código de producto de: " + descripcion);
         return null;
+    }
+
+    /**
+     * Método público para actualizar el tema del módulo (llamado desde el sistema principal)
+     */
+    public void actualizarTema() {
+        System.out.println("🔄 Actualizando tema del módulo de facturación desde sistema principal...");
+        aplicarTema();
     }
 } 

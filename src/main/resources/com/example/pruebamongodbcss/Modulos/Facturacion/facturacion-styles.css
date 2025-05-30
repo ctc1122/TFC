@@ -19,6 +19,242 @@
     -fx-info-dark: #dcd8b7;
 }
 
+/* === CLASES ESPECÍFICAS DE FACTURACIÓN === */
+
+/* Panel principal de facturación */
+.facturacion-main-pane {
+    -fx-background-color: #f8fafc;
+}
+
+/* Cabecera con gradiente */
+.facturacion-header {
+    -fx-background-color: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0, 0, 1);
+}
+
+.facturacion-header-title {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 24px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 2, 0, 0, 1);
+}
+
+/* Contenido principal */
+.facturacion-content {
+    -fx-background-color: transparent;
+}
+
+/* TabPane principal */
+.facturacion-tabpane {
+    -fx-background-color: white;
+    -fx-background-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 8, 0, 0, 2);
+}
+
+/* Contenido de pestañas */
+.facturacion-tab-content {
+    -fx-background-color: white;
+}
+
+/* Paneles de filtros */
+.facturacion-filter-panel {
+    -fx-background-color: #f8fafc;
+    -fx-background-radius: 6px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.03), 4, 0, 0, 1);
+}
+
+/* Etiquetas de filtros */
+.facturacion-filter-label {
+    -fx-text-fill: #374151;
+    -fx-font-weight: 500;
+    -fx-font-size: 12px;
+}
+
+/* ComboBox personalizados */
+.facturacion-combo {
+    -fx-background-color: white;
+    -fx-padding: 4px 8px;
+    -fx-font-size: 11px;
+    -fx-border-color: #d1d5db;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+
+.facturacion-combo:focused {
+    -fx-border-color: #667eea;
+}
+
+/* DatePickers personalizados */
+.facturacion-datepicker {
+    -fx-background-color: white;
+    -fx-font-size: 11px;
+    -fx-border-color: #d1d5db;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+
+.facturacion-datepicker:focused {
+    -fx-border-color: #667eea;
+}
+
+/* Botones personalizados */
+.facturacion-btn-secondary {
+    -fx-background-color: linear-gradient(135deg, #64748b 0%, #475569 100%);
+    -fx-text-fill: white;
+    -fx-padding: 6px 12px;
+    -fx-font-size: 11px;
+    -fx-background-radius: 4px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.facturacion-btn-secondary:hover {
+    -fx-background-color: linear-gradient(135deg, #475569 0%, #334155 100%);
+}
+
+.facturacion-btn-danger {
+    -fx-background-color: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    -fx-text-fill: white;
+    -fx-padding: 8px 15px;
+    -fx-font-size: 12px;
+    -fx-background-radius: 4px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.facturacion-btn-danger:hover {
+    -fx-background-color: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.facturacion-btn-success {
+    -fx-background-color: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    -fx-text-fill: white;
+    -fx-padding: 8px 15px;
+    -fx-font-size: 12px;
+    -fx-background-radius: 4px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.facturacion-btn-success:hover {
+    -fx-background-color: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+/* Panel de búsqueda */
+.facturacion-search-panel {
+    -fx-background-color: #f8fafc;
+    -fx-background-radius: 6px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.03), 4, 0, 0, 1);
+}
+
+/* Campo de texto personalizado */
+.facturacion-textfield {
+    -fx-background-color: white;
+    -fx-padding: 8px 12px;
+    -fx-font-size: 12px;
+    -fx-text-fill: #1f2937;
+    -fx-border-color: #d1d5db;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+
+.facturacion-textfield:focused {
+    -fx-border-color: #667eea;
+}
+
+/* Contenedores de tablas */
+.facturacion-table-container {
+    -fx-background-color: white;
+    -fx-background-radius: 6px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.04), 6, 0, 0, 1);
+}
+
+/* ScrollPane personalizado */
+.facturacion-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+/* Tablas personalizadas */
+.facturacion-table {
+    -fx-background-color: white;
+}
+
+/* === SECCIÓN DE ESTADÍSTICAS === */
+
+/* Contenedor de estadísticas */
+.facturacion-stats-container {
+    -fx-background-color: transparent;
+}
+
+/* Tarjetas de estadísticas */
+.facturacion-stats-card {
+    -fx-background-color: white;
+    -fx-background-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 8, 0, 0, 2);
+}
+
+/* Números de estadísticas */
+.facturacion-stats-number {
+    -fx-font-weight: bold;
+    -fx-font-size: 24px;
+}
+
+.facturacion-stats-blue {
+    -fx-text-fill: #3b82f6;
+}
+
+.facturacion-stats-green {
+    -fx-text-fill: #10b981;
+}
+
+.facturacion-stats-orange {
+    -fx-text-fill: #f59e0b;
+}
+
+.facturacion-stats-cyan {
+    -fx-text-fill: #06b6d4;
+}
+
+/* Etiquetas de estadísticas */
+.facturacion-stats-label {
+    -fx-text-fill: #64748b;
+    -fx-font-weight: 500;
+    -fx-font-size: 12px;
+}
+
+/* === SECCIÓN DE GRÁFICOS === */
+
+/* Contenedor de gráficos */
+.facturacion-charts-container {
+    -fx-background-color: transparent;
+}
+
+/* Tarjetas de gráficos */
+.facturacion-chart-card {
+    -fx-background-color: white;
+    -fx-background-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 8, 0, 0, 2);
+}
+
+/* Títulos de gráficos */
+.facturacion-chart-title {
+    -fx-text-fill: #1e293b;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+/* Gráficos específicos */
+.facturacion-pie-chart {
+    -fx-background-color: transparent;
+}
+
+.facturacion-line-chart {
+    -fx-background-color: transparent;
+}
+
+/* === ESTILOS ORIGINALES MANTENIDOS === */
+
 /* Estilo para la cabecera del panel */
 .panel-header {
     -fx-background-color: #4CAF50;
@@ -565,9 +801,9 @@
 /* Anular la limitación de max-width que afecta a los botones de facturación */
 
 /* Botones específicos del módulo de facturación - anular max-width restrictivo */
-#btnNuevaFactura, #btnVerFactura, #btnEditarFactura, #btnEliminarFactura, #btnExportarPDF,
-#btnBuscar, #btnLimpiarFiltros, #btnActualizarEstadisticas, #btnExportarEstadisticas,
-#btnNuevoBorrador, #btnEditarBorrador, #btnFinalizarBorrador, #btnEliminarBorrador {
+/* Eliminadas referencias a botones que ya no existen: btnNuevaFactura, btnVerFactura, btnEditarFactura, btnNuevoBorrador, btnEditarBorrador, btnFinalizarBorrador, btnEliminarBorrador */
+#btnEliminarFactura, #btnExportarPDF,
+#btnBuscar, #btnLimpiarFiltros, #btnActualizarEstadisticas, #btnExportarEstadisticas {
     -fx-max-width: infinity !important;
     -fx-min-width: -fx-pref-width !important;
     -fx-pref-width: -1 !important;
@@ -584,7 +820,8 @@
 }
 
 /* Asegurar que los botones con estilos específicos también tengan ancho correcto */
-.btn-primary, .btn-secondary, .btn-success, .btn-danger, .btn-info {
+.btn-primary, .btn-secondary, .btn-success, .btn-danger, .btn-info,
+.facturacion-btn-secondary, .facturacion-btn-danger, .facturacion-btn-success {
     -fx-max-width: infinity !important;
     -fx-min-width: -fx-pref-width !important;
     -fx-pref-width: -1 !important;
@@ -606,7 +843,79 @@
 
 /* === FIN CORRECCIÓN BOTONES === */
 
-/* Tema oscuro adaptado para facturación */
+/* === TEMA OSCURO ADAPTADO PARA FACTURACIÓN === */
+
+.dark-theme .facturacion-main-pane {
+    -fx-background-color: #1f2937;
+}
+
+.dark-theme .facturacion-header {
+    -fx-background-color: linear-gradient(135deg, #4338ca 0%, #581c87 100%);
+}
+
+.dark-theme .facturacion-header-title {
+    -fx-text-fill: white;
+}
+
+.dark-theme .facturacion-content {
+    -fx-background-color: transparent;
+}
+
+.dark-theme .facturacion-tabpane {
+    -fx-background-color: #374151;
+}
+
+.dark-theme .facturacion-tab-content {
+    -fx-background-color: #374151;
+}
+
+.dark-theme .facturacion-filter-panel,
+.dark-theme .facturacion-search-panel {
+    -fx-background-color: #4b5563;
+}
+
+.dark-theme .facturacion-filter-label {
+    -fx-text-fill: #d1d5db;
+}
+
+.dark-theme .facturacion-combo,
+.dark-theme .facturacion-datepicker,
+.dark-theme .facturacion-textfield {
+    -fx-background-color: #374151;
+    -fx-text-fill: #f9fafb;
+    -fx-border-color: #6b7280;
+}
+
+.dark-theme .facturacion-combo:focused,
+.dark-theme .facturacion-datepicker:focused,
+.dark-theme .facturacion-textfield:focused {
+    -fx-border-color: #818cf8;
+}
+
+.dark-theme .facturacion-table-container {
+    -fx-background-color: #374151;
+}
+
+.dark-theme .facturacion-table {
+    -fx-background-color: #374151;
+}
+
+.dark-theme .facturacion-stats-card,
+.dark-theme .facturacion-chart-card {
+    -fx-background-color: #374151;
+}
+
+.dark-theme .facturacion-stats-label,
+.dark-theme .facturacion-chart-title {
+    -fx-text-fill: #d1d5db;
+}
+
+.dark-theme .facturacion-pie-chart,
+.dark-theme .facturacion-line-chart {
+    -fx-background-color: transparent;
+}
+
+/* Tema oscuro general */
 .dark-theme .panel-content {
     -fx-background-color: #2e2e2e;
 }
@@ -679,6 +988,73 @@
 
 .text-area:focused {
     -fx-border-color: #4CAF50;
+}
+
+/* === ESTILOS PARA GRÁFICOS EN TEMA OSCURO === */
+
+.dark-theme .chart .axis {
+    -fx-tick-label-fill: #f9fafb;
+    -fx-tick-label-font-size: 11px;
+    -fx-tick-label-font-weight: normal;
+}
+
+.dark-theme .chart .axis-label {
+    -fx-text-fill: #f9fafb;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.dark-theme .chart .axis-tick-mark {
+    -fx-stroke: #9ca3af;
+    -fx-stroke-width: 1px;
+}
+
+.dark-theme .chart .axis-minor-tick-mark {
+    -fx-stroke: #6b7280;
+    -fx-stroke-width: 0.5px;
+}
+
+/* Específicos para LineChart en tema oscuro */
+.dark-theme .line-chart .chart-plot-background {
+    -fx-background-color: #374151;
+}
+
+.dark-theme .line-chart .chart-vertical-grid-lines {
+    -fx-stroke: #4b5563;
+    -fx-stroke-width: 0.5px;
+}
+
+.dark-theme .line-chart .chart-horizontal-grid-lines {
+    -fx-stroke: #4b5563;
+    -fx-stroke-width: 0.5px;
+}
+
+.dark-theme .line-chart .chart-vertical-zero-line,
+.dark-theme .line-chart .chart-horizontal-zero-line {
+    -fx-stroke: #9ca3af;
+    -fx-stroke-width: 1px;
+}
+
+/* Específicos para PieChart en tema oscuro */
+.dark-theme .pie-chart .chart-legend {
+    -fx-background-color: transparent;
+    -fx-text-fill: #f9fafb;
+}
+
+.dark-theme .pie-chart .chart-legend-item {
+    -fx-text-fill: #f9fafb;
+    -fx-font-size: 11px;
+}
+
+.dark-theme .pie-chart .chart-pie-label {
+    -fx-text-fill: #f9fafb;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.dark-theme .pie-chart .chart-pie-label-line {
+    -fx-stroke: #9ca3af;
+    -fx-stroke-width: 1px;
 }
 
 

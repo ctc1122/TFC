@@ -86,7 +86,6 @@ public class ClinicaController implements Initializable {
     @FXML private TableColumn<ModeloPaciente, String> colFechaNacPaciente;
     @FXML private TextField txtBuscarPaciente;
     @FXML private Button btnNuevoPaciente;
-    @FXML private Button btnEditarPaciente;
     @FXML private Button btnEliminarPaciente;
     @FXML private Button btnVerHistorial;
     
@@ -100,7 +99,6 @@ public class ClinicaController implements Initializable {
     @FXML private TableColumn<ModeloPropietario, String> colEmail;
     @FXML private TextField txtBuscarPropietario;
     @FXML private Button btnNuevoPropietario;
-    @FXML private Button btnEditarPropietario;
     @FXML private Button btnEliminarPropietario;
     
     // Tab de Diagnósticos
@@ -2338,18 +2336,6 @@ public class ClinicaController implements Initializable {
     }
     
     @FXML
-    private void onEditarPaciente(ActionEvent event) {
-        ModeloPaciente pacienteSeleccionado = tablaPacientes.getSelectionModel().getSelectedItem();
-        
-        if (pacienteSeleccionado != null) {
-            habilitarEdicionPaciente(pacienteSeleccionado, false);
-        } else {
-            mostrarAlerta("Selección requerida", "Seleccione un paciente", 
-                    "Debe seleccionar un paciente de la tabla para editarlo.");
-        }
-    }
-    
-    @FXML
     private void onEliminarPaciente(ActionEvent event) {
         ModeloPaciente paciente = tablaPacientes.getSelectionModel().getSelectedItem();
         if (paciente != null) {
@@ -2442,18 +2428,6 @@ public class ClinicaController implements Initializable {
         Platform.runLater(() -> {
             tablaPropietarios.edit(0, colNombre);
         });
-    }
-    
-    @FXML
-    private void onEditarPropietario(ActionEvent event) {
-        ModeloPropietario propietarioSeleccionado = tablaPropietarios.getSelectionModel().getSelectedItem();
-        
-        if (propietarioSeleccionado != null) {
-            habilitarEdicionPropietario(propietarioSeleccionado, false);
-        } else {
-            mostrarAlerta("Selección requerida", "Seleccione un propietario", 
-                    "Debe seleccionar un propietario de la tabla para editarlo.");
-        }
     }
     
     @FXML
