@@ -131,6 +131,16 @@ public class PanelInicioSesionController extends Application implements Initiali
             
             stage.setTitle("Inicio de sesión!");
             stage.setScene(scene);
+            
+            // Establecer el icono de la ventana
+            try {
+                Image icon = new Image(getClass().getResourceAsStream("/logo.png"));
+                stage.getIcons().add(icon);
+                System.out.println("Icono de la ventana establecido correctamente");
+            } catch (Exception e) {
+                System.err.println("No se pudo cargar el icono de la ventana: " + e.getMessage());
+            }
+            
             stage.setOnCloseRequest(event -> {
                 stage.close();
             });
@@ -549,8 +559,8 @@ public class PanelInicioSesionController extends Application implements Initiali
             // Obtener la ventana actual
             Stage currentStage = (Stage) btnInicioSesion.getScene().getWindow();
             
-            // Crear una nueva escena con dimensiones específicas
-            Scene scene = new Scene(root, 1200, 800);
+            // Crear una nueva escena responsive (sin dimensiones fijas)
+            Scene scene = new Scene(root);
             
             // Registrar la escena en el ThemeManager
             ThemeManager.getInstance().registerScene(scene);
@@ -560,6 +570,18 @@ public class PanelInicioSesionController extends Application implements Initiali
                 // Crear una nueva ventana con decoración
                 Stage newStage = new Stage();
                 newStage.setTitle("ChichaVet - Clínica Veterinaria");
+                
+                // Establecer el icono de la ventana
+                try {
+                    Image icon = new Image(getClass().getResourceAsStream("/logo.png"));
+                    newStage.getIcons().add(icon);
+                } catch (Exception e) {
+                    System.err.println("No se pudo cargar el icono de la ventana: " + e.getMessage());
+                }
+                
+                // Hacer la ventana redimensionable y responsive
+                newStage.setResizable(true);
+                
                 newStage.setOnCloseRequest(event -> {
                     event.consume();
                     cerrarAplicacion();
@@ -571,13 +593,15 @@ public class PanelInicioSesionController extends Application implements Initiali
                 // Cerrar la ventana original
                 currentStage.hide();
                 
-                // Mostrar la nueva ventana centrada
+                // Mostrar la nueva ventana y maximizarla automáticamente
                 newStage.show();
-                newStage.centerOnScreen();
+                newStage.setMaximized(true); // Maximizar automáticamente para ocupar toda la pantalla
+                
             } else {
                 // Usar la ventana actual
+                currentStage.setResizable(true); // Hacer redimensionable
                 currentStage.setScene(scene);
-                currentStage.centerOnScreen();
+                currentStage.setMaximized(true); // Maximizar automáticamente
             }
             
         } catch (Exception e) {

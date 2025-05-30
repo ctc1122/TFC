@@ -118,8 +118,17 @@ public class PanelInicioController implements Initializable {
                     // Aplicar el tema a todas las ventanas abiertas
                     ThemeUtil.applyThemeToAllOpenWindows();
                     
-                    // Crear e inicializar el salvapantallas para esta ventana
+                    // Establecer el icono de la ventana principal
                     Stage currentStage = (Stage) root.getScene().getWindow();
+                    try {
+                        Image icon = new Image(getClass().getResourceAsStream("/logo.png"));
+                        currentStage.getIcons().clear(); // Limpiar iconos existentes
+                        currentStage.getIcons().add(icon);
+                    } catch (Exception e) {
+                        System.err.println("No se pudo cargar el icono de la ventana: " + e.getMessage());
+                    }
+                    
+                    // Crear e inicializar el salvapantallas para esta ventana
                     screensaverManager = new ScreensaverManager(currentStage);
                     screensaverManager.startInactivityMonitoring();
                     System.out.println("ScreensaverManager creado e iniciado en PanelInicioController");
@@ -283,6 +292,28 @@ public class PanelInicioController implements Initializable {
                 // Configurar actualización periódica del contador (cada 5 minutos)
                 configurarActualizacionPeriodicaEventos();
             }
+            
+            // Configurar posicionamiento dinámico del carrusel para responsive design
+            javafx.application.Platform.runLater(() -> {
+                if (root.getScene() != null && btnChicha != null) {
+                    // Obtener el panel central
+                    BorderPane centerPane = (BorderPane) root.getCenter();
+                    Pane mainPane = (Pane) centerPane.getCenter();
+                    
+                    // Configurar listeners para centrar el botón automáticamente
+                    mainPane.widthProperty().addListener((obs, oldVal, newVal) -> {
+                        centrarBotonCarrusel();
+                    });
+                    
+                    mainPane.heightProperty().addListener((obs, oldVal, newVal) -> {
+                        centrarBotonCarrusel();
+                    });
+                    
+                    // Centrar inicialmente
+                    centrarBotonCarrusel();
+                }
+            });
+            
         } catch (Exception e) {
             System.err.println("Error al inicializar el controlador: " + e.getMessage());
             mostrarError("Error de Inicialización", "No se pudo inicializar correctamente la aplicación.");
@@ -510,6 +541,16 @@ public class PanelInicioController implements Initializable {
             Parent root = loader.load();
             Scene scene = ThemeUtil.createScene(root, 900, 450);
             Stage stage = (Stage) btnSalir.getScene().getWindow();
+            
+            // Establecer el icono de la ventana
+            try {
+                Image icon = new Image(getClass().getResourceAsStream("/logo.png"));
+                stage.getIcons().clear(); // Limpiar iconos existentes
+                stage.getIcons().add(icon);
+            } catch (Exception e) {
+                System.err.println("No se pudo cargar el icono de la ventana: " + e.getMessage());
+            }
+            
             stage.setScene(scene);
             stage.centerOnScreen();
             
@@ -1244,9 +1285,27 @@ public class PanelInicioController implements Initializable {
         timeline.play();
     }
 
-
-
-
+    /**
+     * Centra dinámicamente el botón del carrusel en el panel central
+     */
+    private void centrarBotonCarrusel() {
+        if (btnChicha != null && btnChicha.isVisible()) {
+            BorderPane centerPane = (BorderPane) root.getCenter();
+            if (centerPane != null && centerPane.getCenter() instanceof Pane) {
+                Pane mainPane = (Pane) centerPane.getCenter();
+                
+                // Calcular posición central
+                double x = (mainPane.getWidth() - btnChicha.getWidth()) / 2;
+                double y = (mainPane.getHeight() - btnChicha.getHeight()) / 2;
+                
+                // Aplicar posición solo si son valores válidos
+                if (x >= 0 && y >= 0) {
+                    btnChicha.setLayoutX(x);
+                    btnChicha.setLayoutY(y);
+                }
+            }
+        }
+    }
 
     private void abrirModuloChat() {
         try {
@@ -1270,6 +1329,15 @@ public class PanelInicioController implements Initializable {
             
             Stage stage = new Stage();
             stage.setTitle("Chat - " + usuarioActual.getNombre());
+            
+            // Establecer el icono de la ventana
+            try {
+                Image icon = new Image(getClass().getResourceAsStream("/logo.png"));
+                stage.getIcons().add(icon);
+            } catch (Exception e) {
+                System.err.println("No se pudo cargar el icono de la ventana de chat: " + e.getMessage());
+            }
+            
             stage.setScene(scene);
             
             // Habilitar redimensión
@@ -1300,9 +1368,18 @@ public class PanelInicioController implements Initializable {
                 Stage stage = new Stage();
                 stage.initStyle(StageStyle.TRANSPARENT);
                 
+                // Establecer el icono de la ventana
+                try {
+                    Image icon = new Image(getClass().getResourceAsStream("/logo.png"));
+                    stage.getIcons().add(icon);
+                } catch (Exception e) {
+                    System.err.println("No se pudo cargar el icono de la ventana de chat: " + e.getMessage());
+                }
+                
                 FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/chatPanel.fxml"));
                 Scene scene = new Scene(fxmlLoader.load());
                 scene.setFill(null); // Hacer el fondo transparente
+                
                 stage.setScene(scene);
                 
                 VentanaChat ventanaChat = fxmlLoader.getController();

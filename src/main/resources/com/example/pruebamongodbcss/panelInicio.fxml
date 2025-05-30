@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import com.example.pruebamongodbcss.theme.ThemeToggleSwitch?>
 
-<BorderPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="436.0" prefWidth="781.0" styleClass="panel-azul-fondo" stylesheets="@custom-fonts.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.PanelInicioController">
+<BorderPane fx:id="root" minHeight="600.0" minWidth="800.0" prefHeight="800.0" prefWidth="1200.0" styleClass="panel-azul-fondo" stylesheets="@custom-fonts.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.pruebamongodbcss.PanelInicioController">
    <left>
       <BorderPane fx:id="sidebarContainer" prefWidth="200.0">
          <BorderPane.margin>
@@ -79,10 +79,10 @@
    <center>
       <BorderPane BorderPane.alignment="CENTER">
          <center>
-            <Pane fx:id="mainPane" prefHeight="400.0" prefWidth="622.0" stylesheets="@app.css">
+            <Pane fx:id="mainPane" stylesheets="@app.css">
                <children>
                   <!-- Botón principal del carrusel (inicialmente visible) -->
-                  <JFXButton fx:id="btnChicha" layoutX="261.0" layoutY="150.0" styleClass="itemMenu">
+                  <JFXButton fx:id="btnChicha" styleClass="itemMenu">
                      <graphic>
                         <ImageView fitHeight="100.0" fitWidth="100.0" pickOnBounds="true" preserveRatio="true">
                            <image>
