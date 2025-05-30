@@ -488,7 +488,6 @@ public class PanelInicioController implements Initializable {
             mantenerCarruselVisible();
             
         } catch (Exception e) {
-            e.printStackTrace();
             mostrarError("Error", "Error al iniciar el módulo de Empresa: " + e.getMessage());
         }
     }
@@ -515,7 +514,6 @@ public class PanelInicioController implements Initializable {
             stage.centerOnScreen();
             
         } catch (IOException e) {
-            e.printStackTrace();
             System.err.println("Error al cerrar sesión: " + e.getMessage());
         }
     }
@@ -544,7 +542,6 @@ public class PanelInicioController implements Initializable {
             mantenerCarruselVisible();
             
         } catch (IOException e) {
-            e.printStackTrace();
             System.err.println("Error al cargar la vista principal: " + e.getMessage());
         }
     }
@@ -597,7 +594,7 @@ public class PanelInicioController implements Initializable {
                 
                 // Traer botones al frente si están visibles
                 if (menuVisible) {
-                    JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel, btnChatCarousel, btnFacturacionCarousel};
+                    JFXButton[] botones = {btnMenuPrincipalCarousel, btnAnimalesCarousel, but_clientesCarousel, btnFichajeCarousel, btnSalirCarousel, btnChatCarousel, btnFacturacionCarousel, btnInformesCarousel};
                     for (JFXButton btn : botones) {
                         btn.toFront();
                     }

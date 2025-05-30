@@ -477,7 +477,7 @@ VBox[style*="white"],
 }
 
 /* Menu lateral - Botones */
-#btnMenuPrincipal, #btnAnimales, #but_clientes, #btnFichaje, #btnEmpresa, #btnSalir, #btnChat, #btnGoogleCalendar, #btnFacturacion {
+#btnMenuPrincipal, #btnAnimales, #but_clientes, #btnFichaje, #btnEmpresa, #btnSalir, #btnChat, #btnGoogleCalendar, #btnFacturacion, #btnInformes {
     -fx-background-color: -fx-sidebar-button-bg;
     -fx-text-fill: -fx-sidebar-button-text;
     -fx-background-radius: 5px;
@@ -485,7 +485,7 @@ VBox[style*="white"],
     -fx-border-width: 0;
 }
 
-#btnMenuPrincipal:hover, #btnAnimales:hover, #but_clientes:hover, #btnFichaje:hover, #btnEmpresa:hover, #btnSalir:hover, #btnChat:hover, #btnGoogleCalendar:hover, #btnFacturacion:hover {
+#btnMenuPrincipal:hover, #btnAnimales:hover, #but_clientes:hover, #btnFichaje:hover, #btnEmpresa:hover, #btnSalir:hover, #btnChat:hover, #btnGoogleCalendar:hover, #btnFacturacion:hover, #btnInformes:hover {
     -fx-background-color: -fx-sidebar-button-hover;
     -fx-border-color: #DDA15E;
     -fx-border-width: 0 0 1 0;
