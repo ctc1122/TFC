@@ -12,7 +12,6 @@ import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.theme.ThemeManager;
 
 import Utilidades1.GestorSocket;
-import Utilidades1.ScreensaverManager;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -45,7 +44,6 @@ public class PanelInicioSesionController extends Application implements Initiali
     
     private GestorSocket gestorSocket;
     private boolean conectado = false;
-    private ScreensaverManager screensaverManager;
 
     @FXML
     private VBox leftPanel; // Panel izquierdo que contiene el login
@@ -109,9 +107,6 @@ public class PanelInicioSesionController extends Application implements Initiali
     public void start(Stage stage) throws Exception {
         System.out.println("Iniciando la aplicación...");
         try {
-            // Inicializar el salvapantallas con la ventana principal
-            screensaverManager = new ScreensaverManager(stage);
-            
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/InicioSesion/PruebaDoblePanel.fxml"));
             Scene scene = new Scene(fxmlLoader.load(), 900, 450);
             //450 width y 900 height
@@ -141,11 +136,6 @@ public class PanelInicioSesionController extends Application implements Initiali
             });
             stage.setResizable(false);
             stage.show();
-            
-            // Iniciar el monitoreo de inactividad después de que la ventana esté visible
-            Platform.runLater(() -> {
-                screensaverManager.startInactivityMonitoring();
-            });
             
             System.out.println("Aplicación iniciada correctamente");
         } catch (Exception e) {
@@ -588,11 +578,6 @@ public class PanelInicioSesionController extends Application implements Initiali
                 // Usar la ventana actual
                 currentStage.setScene(scene);
                 currentStage.centerOnScreen();
-            }
-            
-            // Detener el salvapantallas
-            if (screensaverManager != null) {
-                screensaverManager.stop();
             }
             
         } catch (Exception e) {

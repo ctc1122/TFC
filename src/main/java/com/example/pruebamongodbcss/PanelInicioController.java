@@ -18,6 +18,7 @@ import com.example.pruebamongodbcss.theme.ThemeUtil;
 import com.jfoenix.controls.JFXButton;
 
 import Utilidades1.GestorSocket;
+import Utilidades1.ScreensaverManager;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
@@ -91,6 +92,7 @@ public class PanelInicioController implements Initializable {
     private long lastPressTime = 0;
 
     private GestorSocket gestorSocket;
+    private ScreensaverManager screensaverManager;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -115,6 +117,12 @@ public class PanelInicioController implements Initializable {
                     
                     // Aplicar el tema a todas las ventanas abiertas
                     ThemeUtil.applyThemeToAllOpenWindows();
+                    
+                    // Crear e inicializar el salvapantallas para esta ventana
+                    Stage currentStage = (Stage) root.getScene().getWindow();
+                    screensaverManager = new ScreensaverManager(currentStage);
+                    screensaverManager.startInactivityMonitoring();
+                    System.out.println("ScreensaverManager creado e iniciado en PanelInicioController");
                     
                     // Cargar automáticamente la vista home
                     restaurarVistaPrincipal();
@@ -490,6 +498,11 @@ public class PanelInicioController implements Initializable {
      */
     @FXML
     public void cerrarSesion(){
+        // Detener el salvapantallas si está activo
+        if (screensaverManager != null) {
+            screensaverManager.stop();
+        }
+        
         if (gestorSocket != null) {
             gestorSocket.cerrarConexion();
         }
