@@ -2416,6 +2416,89 @@ public class ClienteHandler implements Runnable {
                             }
                             break;
                             
+                        case Protocolo.OBTENER_ESTADISTICAS_EMPLEADOS:
+                            System.out.println("Procesando solicitud de obtener estadísticas de empleados...");
+                            try {
+                                com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes = 
+                                    new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
+                                com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.EstadisticasEmpleados stats = 
+                                    servicioInformes.obtenerEstadisticasEmpleados();
+                                    
+                                // Convertir a objeto de datos simplificado
+                                com.example.pruebamongodbcss.Modulos.Informes.ReporteEmpleadosController.EstadisticasEmpleadosData statsData = 
+                                    new com.example.pruebamongodbcss.Modulos.Informes.ReporteEmpleadosController.EstadisticasEmpleadosData();
+                                statsData.setTotalEmpleados(stats.getTotalEmpleados());
+                                statsData.setEmpleadosActivos(stats.getEmpleadosActivos());
+                                statsData.setPromedioHorasMes(stats.getPromedioHorasMes());
+                                
+                                // Convertir empleados por rol
+                                java.util.List<com.example.pruebamongodbcss.Modulos.Informes.ReporteEmpleadosController.DatoGraficoData> empleadosPorRol = 
+                                    new java.util.ArrayList<>();
+                                for (com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.DatoGrafico dato : stats.getEmpleadosPorRol()) {
+                                    empleadosPorRol.add(new com.example.pruebamongodbcss.Modulos.Informes.ReporteEmpleadosController.DatoGraficoData(
+                                        dato.getEtiqueta(), dato.getValor()));
+                                }
+                                statsData.setEmpleadosPorRol(empleadosPorRol);
+                                
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.OBTENER_ESTADISTICAS_EMPLEADOS_RESPONSE);
+                                    salida.writeObject(statsData);
+                                    salida.flush();
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener estadísticas de empleados: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_ESTADISTICAS_EMPLEADOS);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_PRODUCTIVIDAD_EMPLEADOS:
+                            System.out.println("Procesando solicitud de obtener productividad de empleados...");
+                            try {
+                                if (parametros.length >= 1) {
+                                    int limite = Integer.parseInt(parametros[0]);
+                                    
+                                    com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes = 
+                                        new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
+                                    java.util.List<com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.ProductividadEmpleado> productividad = 
+                                        servicioInformes.obtenerProductividadEmpleados(limite);
+                                        
+                                    // Convertir a objetos de datos simplificados
+                                    java.util.List<com.example.pruebamongodbcss.Modulos.Informes.ReporteEmpleadosController.ProductividadEmpleadoData> productividadSimplificada = 
+                                        new java.util.ArrayList<>();
+                                    for (com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.ProductividadEmpleado emp : productividad) {
+                                        com.example.pruebamongodbcss.Modulos.Informes.ReporteEmpleadosController.ProductividadEmpleadoData empData = 
+                                            new com.example.pruebamongodbcss.Modulos.Informes.ReporteEmpleadosController.ProductividadEmpleadoData();
+                                        empData.setNombreEmpleado(emp.getNombreEmpleado());
+                                        empData.setCitasAtendidas(emp.getCitasAtendidas());
+                                        empData.setHorasTrabajadas(emp.getHorasTrabajadas());
+                                        empData.setEficiencia(emp.getEficiencia());
+                                        productividadSimplificada.add(empData);
+                                    }
+                                    
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.OBTENER_PRODUCTIVIDAD_EMPLEADOS_RESPONSE);
+                                        salida.writeObject(productividadSimplificada);
+                                        salida.flush();
+                                    }
+                                } else {
+                                    System.err.println("Error: Faltan parámetros para productividad de empleados");
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_OBTENER_PRODUCTIVIDAD_EMPLEADOS);
+                                        salida.flush();
+                                    }
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener productividad de empleados: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_PRODUCTIVIDAD_EMPLEADOS);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
                         default:
                             System.out.println("Mensaje no reconocido: " + codigo);
                     }

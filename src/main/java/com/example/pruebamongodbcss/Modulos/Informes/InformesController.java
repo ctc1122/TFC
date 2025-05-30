@@ -665,7 +665,7 @@ public class InformesController implements Initializable {
             "/Iconos/IconPruebaClientes.png", 
             () -> abrirReporteClientes());
             
-        VBox reporteFichajes = crearTarjetaReporte("Reporte de Fichajes", 
+        VBox reporteFichajes = crearTarjetaReporte("Reporte de Empleados", 
             "Análisis de asistencia y horas trabajadas", 
             "/Iconos/iconClock2.png", 
             () -> abrirReporteFichajes());

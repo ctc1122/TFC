@@ -267,36 +267,50 @@ public class ServicioInformes {
     }
     
     /**
-     * Obtiene estadísticas detalladas de empleados
+     * Obtiene estadísticas básicas de empleados
      */
     public EstadisticasEmpleados obtenerEstadisticasEmpleados() {
         EstadisticasEmpleados stats = new EstadisticasEmpleados();
         
         try {
-            MongoCollection<Document> usuariosCollection = GestorConexion.conectarEmpresa().getCollection("usuarios");
-            
-            // Total de empleados
-            long totalEmpleados = usuariosCollection.countDocuments();
+            // Total de empleados activos en la colección usuarios
+            long totalEmpleados = usuariosCollection.countDocuments(new Document("activo", true));
             stats.setTotalEmpleados((int) totalEmpleados);
             
-            // Empleados por rol
-            List<DatoGrafico> empleadosPorRol = obtenerUsuariosPorRol();
-            stats.setEmpleadosPorRol(empleadosPorRol);
-            
-            // Empleados activos (que han fichado en los últimos 30 días)
-            LocalDate hace30Dias = LocalDate.now().minusDays(30);
-            Date fechaLimite = Date.from(hace30Dias.atStartOfDay(ZoneId.systemDefault()).toInstant());
-            
+            // Empleados activos que han fichado en los últimos 7 días
+            LocalDate hace7Dias = LocalDate.now().minusDays(7);
+            String fechaStr = hace7Dias.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             long empleadosActivos = fichajesCollection.distinct("empleadoId", 
-                Filters.gte("fechaHoraEntrada", fechaLimite), org.bson.types.ObjectId.class).into(new ArrayList<>()).size();
+                Filters.gte("fecha", fechaStr), ObjectId.class).into(new ArrayList<>()).size();
             stats.setEmpleadosActivos((int) empleadosActivos);
             
-            // Promedio de horas trabajadas por empleado este mes
+            // Distribución de empleados por rol desde la colección usuarios
+            List<DatoGrafico> empleadosPorRol = new ArrayList<>();
+            String[] roles = {"VETERINARIO", "AUXILIAR", "RECEPCIONISTA", "ADMINISTRADOR"};
+            
+            for (String rol : roles) {
+                long count = usuariosCollection.countDocuments(
+                    new Document("rol", rol).append("activo", true));
+                if (count > 0) {
+                    empleadosPorRol.add(new DatoGrafico(rol, count));
+                }
+            }
+            stats.setEmpleadosPorRol(empleadosPorRol);
+            
+            // Calcular promedio real de horas trabajadas este mes desde fichajes
             LocalDate inicioMes = LocalDate.now().withDayOfMonth(1);
-            stats.setPromedioHorasMes(calcularPromedioHorasPorEmpleado(inicioMes, LocalDate.now()));
+            LocalDate finMes = LocalDate.now();
+            double promedioHoras = calcularPromedioHorasReales(inicioMes, finMes);
+            stats.setPromedioHorasMes(promedioHoras);
             
         } catch (Exception e) {
             System.err.println("Error al obtener estadísticas de empleados: " + e.getMessage());
+            e.printStackTrace();
+            // Valores por defecto en caso de error
+            stats.setTotalEmpleados(0);
+            stats.setEmpleadosActivos(0);
+            stats.setEmpleadosPorRol(new ArrayList<>());
+            stats.setPromedioHorasMes(0.0);
         }
         
         return stats;
@@ -338,7 +352,7 @@ public class ServicioInformes {
                 prod.setCitasAtendidas((int) citasAtendidas);
                 
                 // Calcular horas trabajadas este mes
-                double horasTrabajadas = calcularHorasEmpleadoMes(idEmpleado, inicioMes, LocalDate.now());
+                double horasTrabajadas = calcularHorasTrabajadasEmpleado(idEmpleado, inicioMes, LocalDate.now());
                 prod.setHorasTrabajadas(horasTrabajadas);
                 
                 // Calcular eficiencia (citas por hora)
@@ -803,20 +817,48 @@ public class ServicioInformes {
         return datos;
     }
     
-    private double calcularHorasEmpleadoMes(String empleadoId, LocalDate inicio, LocalDate fin) {
-        // Implementación simplificada - en un caso real calcularías las horas exactas
+    private double calcularHorasTrabajadasEmpleado(String empleadoId, LocalDate inicio, LocalDate fin) {
         try {
-            Date fechaInicio = Date.from(inicio.atStartOfDay(ZoneId.systemDefault()).toInstant());
-            Date fechaFin = Date.from(fin.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            // Buscar fichajes del empleado en el período usando ObjectId
+            ObjectId empId = new ObjectId(empleadoId);
+            Document filtro = new Document("empleadoId", empId)
+                .append("fecha", new Document("$gte", inicio.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                    .append("$lte", fin.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
             
-            long fichajes = fichajesCollection.countDocuments(Filters.and(
-                Filters.eq("empleadoId", new org.bson.types.ObjectId(empleadoId)),
-                Filters.gte("fechaHoraEntrada", fechaInicio),
-                Filters.lt("fechaHoraEntrada", fechaFin)
-            ));
+            List<Document> fichajes = fichajesCollection.find(filtro).into(new ArrayList<>());
             
-            return fichajes * 8.0; // Estimación de 8 horas por día
+            if (fichajes.isEmpty()) {
+                // Si no hay fichajes, estimar 8 horas por día laborable
+                long diasLaborables = inicio.datesUntil(fin.plusDays(1))
+                    .filter(fecha -> fecha.getDayOfWeek().getValue() <= 5) // Lunes a viernes
+                    .count();
+                return diasLaborables * 8.0;
+            }
+            
+            // Calcular horas reales usando minutosTrabajoTotal
+            double totalHoras = 0.0;
+            int fichajesValidos = 0;
+            
+            for (Document fichaje : fichajes) {
+                Long minutosTrabajoTotal = fichaje.getLong("minutosTrabajoTotal");
+                if (minutosTrabajoTotal != null && minutosTrabajoTotal > 0) {
+                    double horas = minutosTrabajoTotal / 60.0;
+                    if (horas >= 0.5 && horas <= 12.0) { // Validar rango razonable
+                        totalHoras += horas;
+                        fichajesValidos++;
+                    }
+                }
+            }
+            
+            // Si no hay fichajes válidos, usar promedio de 8 horas por fichaje
+            if (fichajesValidos == 0 && !fichajes.isEmpty()) {
+                return fichajes.size() * 8.0;
+            }
+            
+            return totalHoras;
+            
         } catch (Exception e) {
+            System.err.println("Error al calcular horas trabajadas del empleado: " + e.getMessage());
             return 0.0;
         }
     }
@@ -1534,5 +1576,62 @@ public class ServicioInformes {
         }
         
         return topFacturas;
+    }
+    
+    /**
+     * Calcula el promedio real de horas trabajadas por todos los empleados en un período
+     */
+    private double calcularPromedioHorasReales(LocalDate inicio, LocalDate fin) {
+        try {
+            // Buscar todos los fichajes en el período especificado
+            Document filtroFechas = new Document("fecha", 
+                new Document("$gte", inicio.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                    .append("$lte", fin.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
+            
+            List<Document> fichajes = fichajesCollection.find(filtroFechas).into(new ArrayList<>());
+            
+            if (fichajes.isEmpty()) {
+                return 0.0;
+            }
+            
+            // Calcular horas totales trabajadas usando minutosTrabajoTotal del modelo
+            double horasTotales = 0.0;
+            int fichajesValidos = 0;
+            
+            for (Document fichaje : fichajes) {
+                // Usar el campo minutosTrabajoTotal que ya está calculado en ModeloFichaje
+                Long minutosTrabajoTotal = fichaje.getLong("minutosTrabajoTotal");
+                
+                if (minutosTrabajoTotal != null && minutosTrabajoTotal > 0) {
+                    double horasTrabajadas = minutosTrabajoTotal / 60.0;
+                    
+                    // Validar que las horas sean razonables (entre 0.5 y 12 horas)
+                    if (horasTrabajadas >= 0.5 && horasTrabajadas <= 12.0) {
+                        horasTotales += horasTrabajadas;
+                        fichajesValidos++;
+                    }
+                }
+            }
+            
+            if (fichajesValidos == 0) {
+                return 0.0;
+            }
+            
+            // Obtener número de empleados únicos que ficharon
+            List<ObjectId> empleadosUnicos = fichajesCollection.distinct("empleadoId", filtroFechas, ObjectId.class)
+                .into(new ArrayList<>());
+            
+            if (empleadosUnicos.isEmpty()) {
+                return 0.0;
+            }
+            
+            // Calcular promedio de horas por empleado
+            return horasTotales / empleadosUnicos.size();
+            
+        } catch (Exception e) {
+            System.err.println("Error al calcular promedio de horas reales: " + e.getMessage());
+            e.printStackTrace();
+            return 0.0;
+        }
     }
 } 

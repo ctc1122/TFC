@@ -126,18 +126,18 @@ public class ReporteClientesController implements Initializable {
             
             if (analisis != null) {
                 // Actualizar métricas (sin clientes activos)
-                lblTotalClientes.setText(String.valueOf(analisis.getTotalClientes()));
-                lblClientesNuevosMes.setText(String.valueOf(analisis.getClientesNuevosMes()));
-                lblPromedioMascotas.setText(formatoDecimal.format(analisis.getPromedioMascotasPorCliente()));
-                
-                // Actualizar gráfico de evolución de clientes
-                actualizarGraficoEvolucion();
-                
-                // Obtener top de clientes
+            lblTotalClientes.setText(String.valueOf(analisis.getTotalClientes()));
+            lblClientesNuevosMes.setText(String.valueOf(analisis.getClientesNuevosMes()));
+            lblPromedioMascotas.setText(formatoDecimal.format(analisis.getPromedioMascotasPorCliente()));
+            
+            // Actualizar gráfico de evolución de clientes
+            actualizarGraficoEvolucion();
+            
+            // Obtener top de clientes
                 List<ClienteTopData> topClientes = obtenerTopClientes(10);
-                
-                // Actualizar tabla
-                actualizarTablaTopClientes(topClientes);
+            
+            // Actualizar tabla
+            actualizarTablaTopClientes(topClientes);
             }
             
         } catch (Exception e) {

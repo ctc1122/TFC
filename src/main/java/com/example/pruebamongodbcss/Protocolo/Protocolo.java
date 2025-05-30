@@ -450,4 +450,13 @@ public interface Protocolo {
     static final int OBTENER_TOP_FACTURAS_POR_IMPORTE_RESPONSE = 1323;
     static final int ERROR_OBTENER_TOP_FACTURAS_POR_IMPORTE = 1324;
 
+    // Códigos para operaciones específicas de reportes de empleados
+    static final int OBTENER_ESTADISTICAS_EMPLEADOS = 1325;
+    static final int OBTENER_ESTADISTICAS_EMPLEADOS_RESPONSE = 1326;
+    static final int ERROR_OBTENER_ESTADISTICAS_EMPLEADOS = 1327;
+
+    static final int OBTENER_PRODUCTIVIDAD_EMPLEADOS = 1328;
+    static final int OBTENER_PRODUCTIVIDAD_EMPLEADOS_RESPONSE = 1329;
+    static final int ERROR_OBTENER_PRODUCTIVIDAD_EMPLEADOS = 1330;
+
 } 

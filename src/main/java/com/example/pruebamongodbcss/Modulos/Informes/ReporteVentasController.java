@@ -146,8 +146,8 @@ public class ReporteVentasController implements Initializable {
                 
                 // Obtener top facturas por importe
                 List<FacturaTopData> topFacturas = obtenerTopFacturasPorImporte(10, inicio, fin);
-                
-                // Actualizar tabla
+            
+            // Actualizar tabla
                 actualizarTablaTopFacturas(topFacturas);
             }
             

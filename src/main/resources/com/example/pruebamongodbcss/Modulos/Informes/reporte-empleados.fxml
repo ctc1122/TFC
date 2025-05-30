@@ -36,76 +36,54 @@
       </VBox>
    </top>
    <center>
-      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="reporte-scroll">
-         <content>
-            <VBox spacing="30.0" styleClass="reporte-content">
+      <VBox spacing="30.0" styleClass="reporte-content">
+         <children>
+            <!-- Métricas resumen -->
+            <VBox spacing="15.0">
                <children>
-                  <!-- Métricas resumen -->
-                  <VBox spacing="15.0">
+                  <Label styleClass="reporte-section-title" text="Estadísticas Generales" />
+                  <HBox alignment="CENTER" spacing="40.0">
                      <children>
-                        <Label styleClass="reporte-section-title" text="Estadísticas Generales" />
-                        <HBox alignment="CENTER" spacing="40.0">
+                        <VBox alignment="CENTER" spacing="10.0" styleClass="metric-card">
                            <children>
-                              <VBox alignment="CENTER" spacing="10.0" styleClass="metric-card">
-                                 <children>
-                                    <Label styleClass="metric-title" text="Total Empleados" />
-                                    <Label fx:id="lblTotalEmpleados" styleClass="metric-value" text="0" />
-                                 </children>
-                              </VBox>
-                              <VBox alignment="CENTER" spacing="10.0" styleClass="metric-card">
-                                 <children>
-                                    <Label styleClass="metric-title" text="Empleados Activos" />
-                                    <Label fx:id="lblEmpleadosActivos" styleClass="metric-value-success" text="0" />
-                                 </children>
-                              </VBox>
-                              <VBox alignment="CENTER" spacing="10.0" styleClass="metric-card">
-                                 <children>
-                                    <Label styleClass="metric-title" text="Promedio Horas/Mes" />
-                                    <Label fx:id="lblPromedioHoras" styleClass="metric-value-purple" text="0.0 h" />
-                                 </children>
-                              </VBox>
+                              <Label styleClass="metric-title" text="Total Empleados" />
+                              <Label fx:id="lblTotalEmpleados" styleClass="metric-value" text="0" />
                            </children>
-                        </HBox>
+                        </VBox>
+                        <VBox alignment="CENTER" spacing="10.0" styleClass="metric-card">
+                           <children>
+                              <Label styleClass="metric-title" text="Empleados Activos" />
+                              <Label fx:id="lblEmpleadosActivos" styleClass="metric-value-success" text="0" />
+                           </children>
+                        </VBox>
+                        <VBox alignment="CENTER" spacing="10.0" styleClass="metric-card">
+                           <children>
+                              <Label styleClass="metric-title" text="Promedio Horas/Mes" />
+                              <Label fx:id="lblPromedioHoras" styleClass="metric-value-purple" text="0.0 h" />
+                           </children>
+                        </VBox>
                      </children>
-                     <padding>
-                        <Insets left="20.0" right="20.0" />
-                     </padding>
-                  </VBox>
-                  
-                  <!-- Gráfico de distribución por roles -->
-                  <VBox spacing="15.0">
-                     <children>
-                        <Label styleClass="reporte-section-title" text="Distribución por Roles" />
-                        <VBox fx:id="chartContainer" styleClass="chart-container" />
-                     </children>
-                     <padding>
-                        <Insets left="20.0" right="20.0" />
-                     </padding>
-                  </VBox>
-                  
-                  <!-- Tabla de productividad -->
-                  <VBox spacing="15.0">
-                     <children>
-                        <Label styleClass="reporte-section-title" text="Productividad de Veterinarios" />
-                        <TableView fx:id="tableProductividad" styleClass="reporte-table">
-                          <columns>
-                            <TableColumn fx:id="colEmpleado" prefWidth="200.0" text="Empleado" />
-                            <TableColumn fx:id="colCitas" prefWidth="120.0" text="Citas Atendidas" />
-                            <TableColumn fx:id="colHoras" prefWidth="120.0" text="Horas Trabajadas" />
-                            <TableColumn fx:id="colEficiencia" prefWidth="120.0" text="Eficiencia (Citas/h)" />
-                          </columns>
-                        </TableView>
-                     </children>
-                     <padding>
-                        <Insets left="20.0" right="20.0" />
-                     </padding>
-                  </VBox>
+                  </HBox>
                </children>
                <padding>
-                  <Insets bottom="30.0" top="20.0" />
+                  <Insets left="20.0" right="20.0" />
                </padding>
             </VBox>
-         </content>
-      </ScrollPane>
+            
+            <!-- Gráfico de distribución por roles -->
+            <VBox spacing="15.0" VBox.vgrow="ALWAYS">
+               <children>
+                  <Label styleClass="reporte-section-title" text="Distribución por Roles" />
+                  <VBox fx:id="chartContainer" styleClass="chart-container" VBox.vgrow="ALWAYS" />
+               </children>
+               <padding>
+                  <Insets left="20.0" right="20.0" bottom="20.0" />
+               </padding>
+            </VBox>
+         </children>
+         <padding>
+            <Insets top="20.0" />
+         </padding>
+      </VBox>
    </center>
 </BorderPane> 
