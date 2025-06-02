@@ -87,7 +87,7 @@
 /* Card Styles */
 .card {
     -fx-background-color: -fx-primary-color;
-    -fx-background-radius: 10px;
+    -fx-background-radius: 15px;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 10, 0, 0, 4);
     -fx-padding: 0;
 }
@@ -128,6 +128,112 @@
     -fx-alignment: center;
 }
 
+/* ================= MÉTRICAS Y DASHBOARD ================= */
+
+/* Iconos de métricas */
+.metric-icon {
+    -fx-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 2, 0, 0, 1);
+}
+
+/* Valores principales de métricas */
+.metric-value {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 28px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 2, 0, 0, 1);
+    -fx-alignment: center;
+}
+
+/* Cambios y estadísticas secundarias */
+.metric-change {
+    -fx-text-fill: rgba(255, 255, 255, 0.9);
+    -fx-font-size: 12px;
+    -fx-alignment: center;
+}
+
+.metric-change-positive {
+    -fx-text-fill: #4CAF50;
+}
+
+.metric-change-negative {
+    -fx-text-fill: #f44336;
+}
+
+/* Métricas pequeñas */
+.metric-small {
+    -fx-text-fill: rgba(255, 255, 255, 0.8);
+    -fx-font-size: 11px;
+    -fx-alignment: center;
+}
+
+/* Progress bar para horas trabajadas */
+.hours-progress {
+    -fx-accent: #4CAF50;
+    -fx-background-color: rgba(255, 255, 255, 0.3);
+    -fx-background-radius: 10px;
+}
+
+.hours-progress > .track {
+    -fx-background-color: rgba(255, 255, 255, 0.3);
+    -fx-background-radius: 10px;
+}
+
+.hours-progress > .bar {
+    -fx-background-color: linear-gradient(to right, #4CAF50, #66BB6A);
+    -fx-background-radius: 10px;
+    -fx-effect: dropshadow(gaussian, rgba(76, 175, 80, 0.5), 5, 0, 0, 0);
+}
+
+/* ================= REPORTES ================= */
+
+/* Tarjetas de reportes */
+.report-card {
+    -fx-background-color: -fx-primary-color;
+    -fx-background-radius: 20px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 15, 0, 0, 5);
+    -fx-cursor: hand;
+    -fx-min-height: 200px;
+    -fx-transition: scale 0.2s ease-in-out, effect 0.2s ease-in-out;
+}
+
+.report-card:hover {
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 20, 0, 0, 8);
+}
+
+/* Contenido de las tarjetas de reportes */
+.report-content {
+    -fx-alignment: center;
+}
+
+/* Iconos de reportes */
+.report-icon {
+    -fx-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 3, 0, 0, 2);
+}
+
+/* Títulos de reportes */
+.report-title {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 18px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 2, 0, 0, 1);
+    -fx-alignment: center;
+    -fx-text-alignment: center;
+}
+
+/* Descripciones de reportes */
+.report-description {
+    -fx-text-fill: rgba(255, 255, 255, 0.9);
+    -fx-font-size: 12px;
+    -fx-alignment: center;
+    -fx-text-alignment: center;
+    -fx-wrap-text: true;
+    -fx-max-width: 180px;
+}
+
 /* Button Styles */
 .btn-card {
     -fx-background-color: -fx-accent-color;
@@ -135,7 +241,7 @@
     -fx-font-weight: bold;
     -fx-font-size: 12px;
     -fx-padding: 8px 16px;
-    -fx-background-radius: 4px;
+    -fx-background-radius: 8px;
     -fx-cursor: hand;
     -fx-transition: background-color 0.3s, scale 0.2s;
 }
@@ -189,7 +295,7 @@
     -fx-font-weight: bold;
     -fx-font-size: 13px;
     -fx-padding: 10px 20px;
-    -fx-background-radius: 4px;
+    -fx-background-radius: 8px;
     -fx-cursor: hand;
     -fx-transition: background-color 0.3s, scale 0.2s;
 }
@@ -204,57 +310,50 @@
     -fx-scale-y: 0.95;
 }
 
-/* Page Indicators */
+/* Page indicators */
 .page-indicator-container {
-    -fx-background-color: -fx-secondary-color;
-    -fx-border-width: 0 0 1 0;
-    -fx-border-color: #e0e0e0;
-    -fx-min-height: 30px;
+    -fx-background-color: transparent;
 }
 
 .indicator-active {
     -fx-fill: -fx-accent-color;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 3, 0, 0, 2);
     -fx-cursor: hand;
-    -fx-transition: scale 0.2s ease-in-out;
+    -fx-transition: fill 0.3s ease-in-out;
 }
 
 .indicator-active:hover {
-    -fx-scale-x: 1.1;
-    -fx-scale-y: 1.1;
+    -fx-fill: derive(-fx-accent-color, 15%);
 }
 
 .indicator-inactive {
-    -fx-fill: #cccccc;
+    -fx-fill: rgba(0, 0, 0, 0.3);
     -fx-cursor: hand;
-    -fx-transition: scale 0.2s ease-in-out, fill 0.3s ease-in-out;
+    -fx-transition: fill 0.3s ease-in-out;
 }
 
 .indicator-inactive:hover {
-    -fx-fill: derive(-fx-accent-color, 30%);
-    -fx-scale-x: 1.1;
-    -fx-scale-y: 1.1;
+    -fx-fill: rgba(0, 0, 0, 0.5);
 }
 
-/* Page Animation Support */
+/* Page transitions */
 .page-transition {
-    -fx-transition: all 0.5s ease-in-out;
+    -fx-transition: opacity 0.3s ease-in-out, translate-y 0.3s ease-in-out;
 }
 
-/* Feature Styles for Page 2 */
+/* Page title */
 .page-title {
     -fx-text-fill: -fx-text-color;
     -fx-font-weight: bold;
-    -fx-font-size: 22px;
-    -fx-padding: 0 0 10px 0;
+    -fx-font-size: 24px;
+    -fx-alignment: center;
 }
 
+/* Feature rows */
 .feature-row {
     -fx-background-color: -fx-primary-color;
     -fx-background-radius: 10px;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 5, 0, 0, 2);
-    -fx-padding: 10px;
-    -fx-min-height: 80px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 8, 0, 0, 3);
+    -fx-padding: 15px;
     -fx-cursor: hand;
     -fx-transition: scale 0.2s ease-in-out;
 }
@@ -262,160 +361,178 @@
 .feature-row:hover {
     -fx-scale-x: 1.02;
     -fx-scale-y: 1.02;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 8, 0, 0, 3);
 }
 
 .feature-title {
-    -fx-text-fill: -fx-accent-color;
+    -fx-text-fill: -fx-text-color;
     -fx-font-weight: bold;
     -fx-font-size: 16px;
 }
 
 .feature-description {
-    -fx-text-fill: -fx-text-color;
-    -fx-font-size: 14px;
-    -fx-padding: 5px 0 0 0;
+    -fx-text-fill: -fx-light-text-color;
+    -fx-font-size: 12px;
+    -fx-wrap-text: true;
 }
 
-/* ================= LIGHT THEME SPECIFIC ================= */
-/* These styles automatically apply when using light theme */
+/* ================= TEMA CLARO ESPECÍFICO ================= */
+
 .home-header {
-    -fx-border-width: 0 0 1 0;
-    -fx-border-color: #e0e0e0;
+    -fx-background-color: -fx-primary-color;
 }
 
 .card-main {
-    -fx-border-width: 1px;
-    -fx-border-color: #e0e0e0;
-    -fx-border-radius: 10px;
+    -fx-background-color: -fx-primary-color;
 }
 
 .card-secondary {
-    -fx-border-width: 1px;
-    -fx-border-color: #e0e0e0;
-    -fx-border-radius: 10px;
+    -fx-background-color: -fx-primary-color;
 }
 
 .feature-row {
-    -fx-border-width: 1px;
-    -fx-border-color: #e0e0e0;
-    -fx-border-radius: 10px;
+    -fx-background-color: -fx-primary-color;
 }
 
 .home-footer {
-    -fx-border-width: 1 0 0 0;
-    -fx-border-color: #e0e0e0;
+    -fx-background-color: -fx-primary-color;
 }
 
-/* ================= DARK THEME SPECIFIC ================= */
-/* These styles apply when the .dark-theme class is present on a parent element */
+/* ================= TEMA OSCURO ================= */
+
 .dark-theme .home-header {
-    -fx-border-width: 0 0 1 0;
-    -fx-border-color: -fx-light-accent;
+    -fx-background-color: #3a3a3a;
 }
 
 .dark-theme .home-title {
-    -fx-text-fill: -fx-text-color;
+    -fx-text-fill: #f0f0f0;
 }
 
 .dark-theme .card {
-    -fx-background-color: -fx-secondary-color;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 10, 0, 0, 4);
+    -fx-background-color: #3a3a3a;
 }
 
 .dark-theme .feature-row {
-    -fx-background-color: -fx-secondary-color;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 10, 0, 0, 4);
+    -fx-background-color: #3a3a3a;
 }
 
 .dark-theme .feature-row:hover {
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 12, 0, 0, 5);
+    -fx-background-color: #404040;
 }
 
 .dark-theme .card-title-secondary,
 .dark-theme .feature-title {
-    -fx-text-fill: -fx-accent-color;
+    -fx-text-fill: #4d7eff;
 }
 
 .dark-theme .card-text,
 .dark-theme .feature-description {
-    -fx-text-fill: -fx-light-text-color;
+    -fx-text-fill: #c0c0c0;
 }
 
 .dark-theme .card-main,
-.dark-theme .card-secondary,
-.dark-theme .feature-row {
-    -fx-border-color: -fx-light-accent;
+.dark-theme .card-secondary {
+    -fx-background-color: #3a3a3a;
 }
 
 .dark-theme .home-footer {
-    -fx-border-width: 1 0 0 0;
-    -fx-border-color: -fx-light-accent;
+    -fx-background-color: #3a3a3a;
 }
 
 .dark-theme .btn-card {
-    -fx-background-color: -fx-accent-color;
+    -fx-background-color: #3d5af1;
 }
 
 .dark-theme .btn-card:hover {
-    -fx-background-color: derive(-fx-accent-color, 15%);
+    -fx-background-color: derive(#3d5af1, 15%);
 }
 
 .dark-theme .page-indicator-container {
-    -fx-background-color: -fx-secondary-color;
-    -fx-border-color: -fx-light-accent;
+    -fx-background-color: transparent;
 }
 
 .dark-theme .indicator-inactive {
-    -fx-fill: #666666;
+    -fx-fill: rgba(255, 255, 255, 0.3);
 }
 
 .dark-theme .indicator-inactive:hover {
-    -fx-fill: #8899ff;
+    -fx-fill: rgba(255, 255, 255, 0.5);
 }
 
-/* Dark theme specific adjustments */
+/* Dark theme - métricas */
+.dark-theme .metric-icon {
+    -fx-fill: #f0f0f0;
+}
+
+.dark-theme .metric-value {
+    -fx-text-fill: #f0f0f0;
+}
+
+.dark-theme .metric-change {
+    -fx-text-fill: rgba(240, 240, 240, 0.9);
+}
+
+.dark-theme .metric-small {
+    -fx-text-fill: rgba(240, 240, 240, 0.8);
+}
+
+.dark-theme .hours-progress {
+    -fx-background-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark-theme .hours-progress > .track {
+    -fx-background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Dark theme - reportes */
+.dark-theme .report-card {
+    -fx-background-color: #3a3a3a;
+}
+
+.dark-theme .report-icon {
+    -fx-fill: #f0f0f0;
+}
+
+.dark-theme .report-title {
+    -fx-text-fill: #f0f0f0;
+}
+
+.dark-theme .report-description {
+    -fx-text-fill: rgba(240, 240, 240, 0.9);
+}
+
 .dark-theme .feature-description {
-    -fx-text-fill: #e0e0e0;
-    -fx-opacity: 0.9;
+    -fx-text-fill: #c0c0c0;
 }
 
 .dark-theme .page-title {
-    -fx-text-fill: white;
+    -fx-text-fill: #f0f0f0;
 }
 
 .dark-theme .feature-title {
-    -fx-text-fill: #7fbaff;
+    -fx-text-fill: #4d7eff;
 }
 
 .dark-theme .feature-description {
-    -fx-text-fill: #e0e0e0;
-    -fx-opacity: 1.0;
+    -fx-text-fill: #c0c0c0;
 }
 
 .dark-theme .feature-row {
-    -fx-background-color: #25272c;
-    -fx-border-color: #383b45;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 5, 0, 0, 2);
+    -fx-background-color: #3a3a3a;
 }
 
-/* Página 2 específicamente */
+/* Page 2 styles */
 #page2 {
-    -fx-min-height: 430px;
-    -fx-pref-height: 430px;
-    -fx-padding: 0 20px 20px 20px;
     -fx-background-color: -fx-secondary-color;
+    -fx-padding: 20px;
 }
 
-/* Para animaciones fluidas - Actualizado para StackPane */
+/* Feature rows en Page 2 */
 .home-page .feature-row {
-    -fx-opacity: 1;
-    -fx-translate-y: 0;
-    -fx-transition: opacity 0.5s, translate-y 0.5s, scale 0.2s;
+    -fx-min-height: 80px;
+    -fx-pref-height: 80px;
 }
 
-/* Para animaciones fluidas */
+/* Scroll styles */
 .home-scroll-pane {
-    -fx-pref-viewport-height: 450px;
-    -fx-smooth-scrolling: true;
+    -fx-fit-to-width: true;
 } 

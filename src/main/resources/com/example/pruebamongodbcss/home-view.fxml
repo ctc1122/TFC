@@ -3,6 +3,7 @@
 <?import com.jfoenix.controls.JFXButton?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
@@ -36,120 +37,214 @@
             <!-- Stack of pages -->
             <center>
                 <StackPane fx:id="pagesContainer" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
-                    <!-- Page 1: Grid Cards -->
+                    <!-- Page 1: Dashboard con calendario y métricas -->
                     <VBox fx:id="page1" styleClass="home-page" visible="true" VBox.vgrow="ALWAYS">
                         <HBox spacing="20.0" VBox.vgrow="ALWAYS">
-                            <!-- Izquierda: Calendario de vista previa extendido -->
-                            <BorderPane styleClass="card, card-main" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+                            <!-- Izquierda: Calendario (50% responsive) -->
+                            <BorderPane styleClass="card, card-main" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
                                 <center>
-                                    <fx:include source="calendar-component.fxml" />
+                                    <Label text="Vista previa del calendario" style="-fx-alignment: center; -fx-font-size: 14px;" />
                                 </center>
                                 <bottom>
-                                    <HBox alignment="CENTER_RIGHT" spacing="10.0" styleClass="card-footer">
-                                        <padding>
-                                            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                        </padding>
-                                        <JFXButton fx:id="btnViewCalendar" styleClass="btn-card" text="VER CALENDARIO" />
-                                    </HBox>
+                                    <JFXButton fx:id="btnViewCalendar" text="VER CALENDARIO" styleClass="btn-card" style="-fx-max-width: infinity;" />
                                 </bottom>
                             </BorderPane>
-                            <!-- Derecha: Tarjetas secundarias apiladas -->
-                            <VBox spacing="20.0" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS" style="-fx-min-width: 180; -fx-max-width: 220;">
-                                <!-- Tarjeta ELECTRIC -->
-                                <BorderPane styleClass="card, card-secondary" VBox.vgrow="ALWAYS">
+                            
+                            <!-- Derecha: Métricas (50% responsive) -->
+                            <VBox spacing="15.0" HBox.hgrow="ALWAYS" style="-fx-padding: 0 20 0 0;">
+                                <!-- Tarjeta de Ventas -->
+                                <BorderPane fx:id="ventasCard" styleClass="card" VBox.vgrow="ALWAYS" style="-fx-min-height: 200px;">
                                     <top>
-                                        <VBox alignment="CENTER" spacing="10.0" styleClass="card-header">
-                                            <padding>
-                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                            </padding>
-                                            <Label styleClass="card-title" text="ELECTRIC">
-                                                <font>
-                                                    <Font size="18.0" />
-                                                </font>
-                                            </Label>
-                                            <Label styleClass="card-subtitle" text="Gestiona tus citas" />
-                                        </VBox>
+                                        <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-padding: 15 15 10 15;">
+                                            <Label text="💰" styleClass="metric-icon" style="-fx-font-size: 24px;" />
+                                            <Label text="VENTAS DEL MES" styleClass="metric-title" style="-fx-font-size: 14px; -fx-font-weight: bold;" />
+                                        </HBox>
                                     </top>
                                     <center>
-                                        <VBox alignment="CENTER" spacing="10.0" styleClass="card-content">
-                                            <padding>
-                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                            </padding>
-                                            <Label styleClass="card-description" text="Accede a tu agenda y gestiona tus citas de forma rápida y sencilla." />
+                                        <VBox alignment="CENTER_LEFT" spacing="8.0" style="-fx-padding: 0 15 15 15;">
+                                            <Label fx:id="lblVentasMes" text="€0" styleClass="metric-value" style="-fx-font-size: 28px; -fx-font-weight: bold;" />
+                                            <Label fx:id="lblCambioVentas" text="0% vs anterior" styleClass="metric-change" style="-fx-font-size: 12px;" />
+                                            <HBox spacing="25.0" style="-fx-padding: 10 0 0 0;">
+                                                <VBox spacing="5.0">
+                                                    <Label text="Facturas" styleClass="metric-small" style="-fx-font-size: 11px;" />
+                                                    <Label fx:id="lblFacturasMes" text="0" styleClass="metric-value-small" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                                                </VBox>
+                                                <VBox spacing="5.0">
+                                                    <Label text="Promedio" styleClass="metric-small" style="-fx-font-size: 11px;" />
+                                                    <Label fx:id="lblPromedioVenta" text="€0" styleClass="metric-value-small" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                                                </VBox>
+                                            </HBox>
                                         </VBox>
                                     </center>
                                     <bottom>
-                                        <HBox alignment="CENTER_RIGHT" spacing="10.0" styleClass="card-footer">
-                                            <padding>
-                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                            </padding>
-                                            <JFXButton fx:id="btnViewAppointments" styleClass="btn-card" text="VER CITAS" />
-                                        </HBox>
+                                        <JFXButton fx:id="btnDescargarVentas" text="EXPORTAR" styleClass="btn-card" style="-fx-max-width: infinity; -fx-margin: 15;" />
                                     </bottom>
                                 </BorderPane>
-                                <!-- Tarjeta LEARN MORE -->
-                                <BorderPane styleClass="card, card-secondary" VBox.vgrow="ALWAYS">
+                                
+                                <!-- Tarjeta de Fichaje -->
+                                <BorderPane fx:id="fichajeCard" styleClass="card" VBox.vgrow="ALWAYS" style="-fx-min-height: 200px;">
                                     <top>
-                                        <VBox alignment="CENTER" spacing="10.0" styleClass="card-header">
-                                            <padding>
-                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                            </padding>
-                                            <Label styleClass="card-title" text="LEARN MORE">
-                                                <font>
-                                                    <Font size="18.0" />
-                                                </font>
-                                            </Label>
-                                            <Label styleClass="card-subtitle" text="Descubre más" />
-                                        </VBox>
+                                        <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-padding: 15 15 10 15;">
+                                            <Label text="🕐" styleClass="metric-icon" style="-fx-font-size: 24px;" />
+                                            <Label text="MI FICHAJE" styleClass="metric-title" style="-fx-font-size: 14px; -fx-font-weight: bold;" />
+                                        </HBox>
                                     </top>
                                     <center>
-                                        <VBox alignment="CENTER" spacing="10.0" styleClass="card-content">
-                                            <padding>
-                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                            </padding>
-                                            <Label styleClass="card-description" text="Explora todas las funcionalidades y aprende a sacar el máximo partido a tu agenda." />
+                                        <VBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-padding: 0 15 15 15;">
+                                            <HBox spacing="20.0">
+                                                <VBox spacing="5.0">
+                                                    <Label text="Este mes" styleClass="metric-small" style="-fx-font-size: 11px;" />
+                                                    <Label fx:id="lblHorasMes" text="0h" styleClass="metric-value-small" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                                                </VBox>
+                                                <VBox spacing="5.0">
+                                                    <Label text="Estado" styleClass="metric-small" style="-fx-font-size: 11px;" />
+                                                    <Label fx:id="lblEstadoFichaje" text="No fichado" styleClass="metric-value-small" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                                                </VBox>
+                                            </HBox>
+                                            <HBox spacing="20.0">
+                                                <VBox spacing="5.0">
+                                                    <Label text="Hoy" styleClass="metric-small" style="-fx-font-size: 11px;" />
+                                                    <Label fx:id="lblHorasHoy" text="0h" styleClass="metric-value-small" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                                                </VBox>
+                                                <VBox spacing="5.0">
+                                                    <Label text="Promedio" styleClass="metric-small" style="-fx-font-size: 11px;" />
+                                                    <Label fx:id="lblPromedioHoras" text="0h" styleClass="metric-value-small" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                                                </VBox>
+                                            </HBox>
+                                            <VBox spacing="8.0" style="-fx-padding: 10 0 0 0;">
+                                                <Label text="Progreso mensual (160h)" styleClass="metric-small" style="-fx-font-size: 11px;" />
+                                                <ProgressBar fx:id="progressHoras" progress="0.0" styleClass="hours-progress" style="-fx-max-width: infinity; -fx-pref-height: 12px;" />
+                                            </VBox>
                                         </VBox>
                                     </center>
-                                    <bottom>
-                                        <HBox alignment="CENTER_RIGHT" spacing="10.0" styleClass="card-footer">
-                                            <padding>
-                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                                            </padding>
-                                            <JFXButton fx:id="btnLearnMore" styleClass="btn-card" text="LEARN MORE" />
-                                        </HBox>
-                                    </bottom>
                                 </BorderPane>
                             </VBox>
                         </HBox>
                     </VBox>
                     
-                    <!-- Page 2: Feature details -->
+                    <!-- Page 2: Reportes y analíticas -->
                     <VBox fx:id="page2" styleClass="home-page" visible="false" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
-                        <VBox alignment="TOP_CENTER" spacing="15.0" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
+                        <VBox alignment="TOP_CENTER" spacing="20.0" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
                             <padding>
-                                <Insets top="15.0" bottom="15.0" left="20.0" right="20.0" />
+                                <Insets top="20.0" bottom="20.0" left="20.0" right="20.0" />
                             </padding>
-                            <!-- Calendar Container -->
-                            <BorderPane styleClass="calendar-container" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
-                                <!-- Calendar will be loaded here programmatically -->
-                            </BorderPane>
+                            
+                            <!-- Título de la sección -->
+                            <Label styleClass="page-title" text="ANÁLISIS Y REPORTES">
+                                <font>
+                                    <Font size="24.0" />
+                                </font>
+                            </Label>
+                            
+                            <!-- Grid de reportes -->
+                            <GridPane fx:id="reportsGrid" hgap="20.0" vgap="20.0" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
+                                <columnConstraints>
+                                    <ColumnConstraints hgrow="ALWAYS" />
+                                    <ColumnConstraints hgrow="ALWAYS" />
+                                </columnConstraints>
+                                <rowConstraints>
+                                    <RowConstraints vgrow="ALWAYS" />
+                                    <RowConstraints vgrow="ALWAYS" />
+                                </rowConstraints>
+                                
+                                <!-- Reporte de Ventas -->
+                                <BorderPane styleClass="report-card" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                    <center>
+                                        <VBox alignment="CENTER" spacing="15.0" styleClass="report-content">
+                                            <padding>
+                                                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                                            </padding>
+                                            <Label text="📊" styleClass="report-icon" style="-fx-font-size: 48px;" />
+                                            <Label styleClass="report-title" text="Análisis de Ventas">
+                                                <font>
+                                                    <Font size="16.0" />
+                                                </font>
+                                            </Label>
+                                            <Label styleClass="report-description" text="Reportes detallados de ingresos, tendencias y comparativas mensuales" textAlignment="CENTER" wrapText="true" />
+                                            <JFXButton fx:id="btnReporteVentas" styleClass="btn-card" text="VER REPORTE" />
+                                        </VBox>
+                                    </center>
+                                </BorderPane>
+                                
+                                <!-- Reporte de Clientes -->
+                                <BorderPane styleClass="report-card" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                    <center>
+                                        <VBox alignment="CENTER" spacing="15.0" styleClass="report-content">
+                                            <padding>
+                                                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                                            </padding>
+                                            <Label text="👥" styleClass="report-icon" style="-fx-font-size: 48px;" />
+                                            <Label styleClass="report-title" text="Análisis de Clientes">
+                                                <font>
+                                                    <Font size="16.0" />
+                                                </font>
+                                            </Label>
+                                            <Label styleClass="report-description" text="Estadísticas de clientes, nuevos registros y patrones de comportamiento" textAlignment="CENTER" wrapText="true" />
+                                            <JFXButton fx:id="btnReporteClientes" styleClass="btn-card" text="VER REPORTE" />
+                                        </VBox>
+                                    </center>
+                                </BorderPane>
+                                
+                                <!-- Reporte de Empleados -->
+                                <BorderPane styleClass="report-card" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                                    <center>
+                                        <VBox alignment="CENTER" spacing="15.0" styleClass="report-content">
+                                            <padding>
+                                                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                                            </padding>
+                                            <Label text="💼" styleClass="report-icon" style="-fx-font-size: 48px;" />
+                                            <Label styleClass="report-title" text="Productividad de Empleados">
+                                                <font>
+                                                    <Font size="16.0" />
+                                                </font>
+                                            </Label>
+                                            <Label styleClass="report-description" text="Análisis de rendimiento, horas trabajadas y eficiencia del personal" textAlignment="CENTER" wrapText="true" />
+                                            <JFXButton fx:id="btnReporteEmpleados" styleClass="btn-card" text="VER REPORTE" />
+                                        </VBox>
+                                    </center>
+                                </BorderPane>
+                                
+                                <!-- Reporte de Servicios -->
+                                <BorderPane styleClass="report-card" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                    <center>
+                                        <VBox alignment="CENTER" spacing="15.0" styleClass="report-content">
+                                            <padding>
+                                                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                                            </padding>
+                                            <Label text="🏥" styleClass="report-icon" style="-fx-font-size: 48px;" />
+                                            <Label styleClass="report-title" text="Servicios Populares">
+                                                <font>
+                                                    <Font size="16.0" />
+                                                </font>
+                                            </Label>
+                                            <Label styleClass="report-description" text="Servicios más demandados, tendencias y oportunidades de crecimiento" textAlignment="CENTER" wrapText="true" />
+                                            <JFXButton fx:id="btnReporteServicios" styleClass="btn-card" text="VER REPORTE" />
+                                        </VBox>
+                                    </center>
+                                </BorderPane>
+                            </GridPane>
                         </VBox>
+                        
+                        <!-- Navigation button at bottom -->
+                        <HBox alignment="CENTER" spacing="20.0">
+                            <padding>
+                                <Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
+                            </padding>
+                            <JFXButton fx:id="btnLearnMore" styleClass="btn-back" text="VOLVER AL DASHBOARD" />
+                        </HBox>
                     </VBox>
                 </StackPane>
             </center>
         </BorderPane>
     </center>
     
-    <!-- Bottom section with additional controls -->
+    <!-- Footer with scroll hint -->
     <bottom>
-        <HBox alignment="CENTER" spacing="15.0" styleClass="home-footer" HBox.hgrow="ALWAYS">
+        <HBox alignment="CENTER" spacing="10.0" styleClass="home-footer">
             <padding>
-                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                <Insets bottom="10.0" left="10.0" right="10.0" top="5.0" />
             </padding>
-            <JFXButton styleClass="btn-footer, btn-primary" text="SOLUTIONS" />
-            <JFXButton styleClass="btn-footer, btn-secondary" text="ABOUT US" />
-            <JFXButton styleClass="btn-footer, btn-info" text="PRICING" />
-            <JFXButton fx:id="btnDemoCalendar" styleClass="btn-card" text="DEMO CALENDAR" />
+            <Label text="Usa la rueda del ratón para navegar entre páginas" style="-fx-font-size: 12px; -fx-text-fill: #9CA3AF;" />
         </HBox>
     </bottom>
 </BorderPane> 

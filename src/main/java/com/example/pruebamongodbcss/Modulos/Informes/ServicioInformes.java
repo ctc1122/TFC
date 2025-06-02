@@ -2,6 +2,7 @@ package com.example.pruebamongodbcss.Modulos.Informes;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -1632,6 +1633,136 @@ public class ServicioInformes {
             System.err.println("Error al calcular promedio de horas reales: " + e.getMessage());
             e.printStackTrace();
             return 0.0;
+        }
+    }
+    
+    /**
+     * Obtiene estadísticas de fichaje específicas para un usuario
+     */
+    public EstadisticasFichajeUsuario obtenerEstadisticasFichajeUsuario(String usuarioEmpleado) {
+        EstadisticasFichajeUsuario estadisticas = new EstadisticasFichajeUsuario();
+        
+        try {
+            // Fechas del mes actual
+            LocalDate inicioMes = LocalDate.now().withDayOfMonth(1);
+            LocalDate finMes = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
+            LocalDate hoy = LocalDate.now();
+            
+            // Filtro para el usuario específico
+            Document filtroUsuario = new Document("usuarioEmpleado", usuarioEmpleado);
+            Document filtroMes = new Document("$and", List.of(
+                filtroUsuario,
+                new Document("fecha", new Document("$gte", inicioMes.toString()).append("$lte", finMes.toString()))
+            ));
+            
+            // Verificar si ha fichado hoy
+            Document filtroHoy = new Document("$and", List.of(
+                filtroUsuario,
+                new Document("fecha", hoy.toString())
+            ));
+            
+            Document fichajeHoy = fichajesCollection.find(filtroHoy).first();
+            estadisticas.setHaFichadoHoy(fichajeHoy != null);
+            
+            if (fichajeHoy != null) {
+                estadisticas.setEstadoFichaje(fichajeHoy.getString("estado"));
+                estadisticas.setTiempoTrabajadoHoy(fichajeHoy.getLong("minutosTrabajoTotal") != null ? 
+                    fichajeHoy.getLong("minutosTrabajoTotal") : 0L);
+                    
+                // Si está abierto, calcular tiempo transcurrido
+                if ("ABIERTO".equals(estadisticas.getEstadoFichaje()) && fichajeHoy.getString("fechaHoraEntrada") != null) {
+                    try {
+                        LocalDateTime entrada = LocalDateTime.parse(fichajeHoy.getString("fechaHoraEntrada"));
+                        long minutosTranscurridos = java.time.Duration.between(entrada, LocalDateTime.now()).toMinutes();
+                        estadisticas.setTiempoTrabajadoHoy(minutosTranscurridos);
+                    } catch (Exception e) {
+                        System.err.println("Error al calcular tiempo transcurrido: " + e.getMessage());
+                    }
+                }
+            } else {
+                estadisticas.setEstadoFichaje("SIN_FICHAR");
+                estadisticas.setTiempoTrabajadoHoy(0L);
+            }
+            
+            // Calcular horas trabajadas en el mes
+            List<Document> fichajesMes = fichajesCollection.find(filtroMes).into(new ArrayList<>());
+            long totalMinutosMes = 0;
+            int diasTrabajados = 0;
+            
+            for (Document fichaje : fichajesMes) {
+                Long minutosTrabajoTotal = fichaje.getLong("minutosTrabajoTotal");
+                String estado = fichaje.getString("estado");
+                
+                if (minutosTrabajoTotal != null && minutosTrabajoTotal > 0 && "CERRADO".equals(estado)) {
+                    totalMinutosMes += minutosTrabajoTotal;
+                    diasTrabajados++;
+                }
+            }
+            
+            estadisticas.setHorasTrabajadasMes(totalMinutosMes / 60.0);
+            estadisticas.setDiasTrabajadosMes(diasTrabajados);
+            estadisticas.setPromedioHorasDiarias(diasTrabajados > 0 ? 
+                (totalMinutosMes / 60.0) / diasTrabajados : 0.0);
+            
+        } catch (Exception e) {
+            System.err.println("Error al obtener estadísticas de fichaje del usuario: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return estadisticas;
+    }
+    
+    /**
+     * Clase para estadísticas de fichaje específicas del usuario
+     */
+    public static class EstadisticasFichajeUsuario {
+        private boolean haFichadoHoy;
+        private String estadoFichaje;
+        private long tiempoTrabajadoHoy; // en minutos
+        private double horasTrabajadasMes;
+        private int diasTrabajadosMes;
+        private double promedioHorasDiarias;
+        
+        public boolean isHaFichadoHoy() { return haFichadoHoy; }
+        public void setHaFichadoHoy(boolean haFichadoHoy) { this.haFichadoHoy = haFichadoHoy; }
+        
+        public String getEstadoFichaje() { return estadoFichaje; }
+        public void setEstadoFichaje(String estadoFichaje) { this.estadoFichaje = estadoFichaje; }
+        
+        public long getTiempoTrabajadoHoy() { return tiempoTrabajadoHoy; }
+        public void setTiempoTrabajadoHoy(long tiempoTrabajadoHoy) { this.tiempoTrabajadoHoy = tiempoTrabajadoHoy; }
+        
+        public double getHorasTrabajadasMes() { return horasTrabajadasMes; }
+        public void setHorasTrabajadasMes(double horasTrabajadasMes) { this.horasTrabajadasMes = horasTrabajadasMes; }
+        
+        public int getDiasTrabajadosMes() { return diasTrabajadosMes; }
+        public void setDiasTrabajadosMes(int diasTrabajadosMes) { this.diasTrabajadosMes = diasTrabajadosMes; }
+        
+        public double getPromedioHorasDiarias() { return promedioHorasDiarias; }
+        public void setPromedioHorasDiarias(double promedioHorasDiarias) { this.promedioHorasDiarias = promedioHorasDiarias; }
+        
+        public String getHorasTrabajadasFormateadas() {
+            if (horasTrabajadasMes <= 0) return "0h 0m";
+            long horas = (long) horasTrabajadasMes;
+            long minutos = (long) ((horasTrabajadasMes - horas) * 60);
+            return String.format("%dh %dm", horas, minutos);
+        }
+        
+        public String getTiempoHoyFormateado() {
+            if (tiempoTrabajadoHoy <= 0) return "0h 0m";
+            long horas = tiempoTrabajadoHoy / 60;
+            long minutos = tiempoTrabajadoHoy % 60;
+            return String.format("%dh %dm", horas, minutos);
+        }
+        
+        public String getEstadoFormateado() {
+            switch (estadoFichaje) {
+                case "ABIERTO": return "Fichado - Trabajando";
+                case "CERRADO": return "Jornada completada";
+                case "INCIDENCIA_AUTO": return "Incidencia automática";
+                case "INCOMPLETO": return "Fichaje incompleto";
+                default: return "No fichado";
+            }
         }
     }
 } 
