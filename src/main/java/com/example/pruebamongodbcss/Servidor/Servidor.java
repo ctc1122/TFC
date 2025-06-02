@@ -2,6 +2,7 @@ package com.example.pruebamongodbcss.Servidor;
 
 import java.awt.GridLayout;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
@@ -41,7 +42,7 @@ public class Servidor {
      */
     public void iniciar() {
         try {
-            serverSocket = new ServerSocket(puerto);
+            serverSocket = new ServerSocket(puerto,50, InetAddress.getByName("0.0.0.0"));
             System.out.println("Servidor iniciado en puerto " + puerto);
 
             // Iniciar hilo automático para gestión de estados de citas

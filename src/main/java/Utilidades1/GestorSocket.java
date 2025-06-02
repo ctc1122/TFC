@@ -6,7 +6,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 public class GestorSocket {
-    private static final String SERVER_HOST = "localhost";
+    private static final String SERVER_HOST = "192.168.56.1";
 
     private static final int SERVER_PORT_ALT = 50002;  // Puerto alternativo (local)
     
