@@ -38,9 +38,7 @@ import javafx.stage.StageStyle;
 import javafx.stage.Window;
 
 public class PanelInicioSesionController extends Application implements Initializable {
-    private static final String SERVER_HOST = "localhost";
-    private static final int SERVER_PORT = 5000;  // Puerto principal (Docker)
-    private static final int SERVER_PORT_ALT = 50002;  // Puerto alternativo (local)
+// Puerto alternativo (local)
     
     private GestorSocket gestorSocket;
     private boolean conectado = false;
