@@ -5,13 +5,11 @@ import java.io.ObjectInputStream;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Modulos.AppChat.ServidorAppChat;
 import com.example.pruebamongodbcss.Modulos.AppChat.VentanaChat;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.calendar.CalendarScreen;
-import com.example.pruebamongodbcss.calendar.CalendarService;
 import com.example.pruebamongodbcss.theme.ThemeManager;
 import com.example.pruebamongodbcss.theme.ThemeToggleSwitch;
 import com.example.pruebamongodbcss.theme.ThemeUtil;
@@ -74,8 +72,6 @@ public class PanelInicioController implements Initializable {
     
     // Usuario actual de la sesión
     private static Usuario usuarioActual;
-    private ServicioUsuarios servicioUsuarios;
-    private CalendarService calendarService;
 
     private boolean menuVisible = false;
     private boolean isCarouselMode = false;
@@ -253,9 +249,6 @@ public class PanelInicioController implements Initializable {
             }
 
 
-            // Inicializar servicio
-            servicioUsuarios = new ServicioUsuarios();
-            calendarService = new CalendarService();
             
             // Configurar arrastre del botón
             configurarArrastreBoton(btnChicha);
@@ -499,12 +492,26 @@ public class PanelInicioController implements Initializable {
                 return;
             }
             
-            // Establecer el usuario actual en el servicio
-            servicioUsuarios.setUsuarioActual(usuarioActual);
+            // Enviar petición para establecer el usuario actual en el servidor
+            try {
+                gestorSocket.enviarPeticion(Protocolo.SETUSERCONECTADO + Protocolo.SEPARADOR_CODIGO);
+                gestorSocket.getSalida().writeObject(usuarioActual);
+                gestorSocket.getSalida().flush();
+                
+                // Leer respuesta del servidor
+                int codigo = gestorSocket.getEntrada().readInt();
+                if (codigo != Protocolo.SETUSERCONECTADO_RESPONSE) {
+                    mostrarError("Error", "No se pudo establecer el usuario en el servidor.");
+                    return;
+                }
+            } catch (IOException e) {
+                mostrarError("Error", "Error de comunicación con el servidor: " + e.getMessage());
+                return;
+            }
             
             // Inicializar el módulo de Empresa usando la nueva clase simplificada
             com.example.pruebamongodbcss.Modulos.Empresa.EmpresaMain empresaMain = 
-                new com.example.pruebamongodbcss.Modulos.Empresa.EmpresaMain(servicioUsuarios);
+                new com.example.pruebamongodbcss.Modulos.Empresa.EmpresaMain(gestorSocket, usuarioActual);
             
             // Obtener el BorderPane central para integrar el módulo
             BorderPane centerPane = (BorderPane) root.getCenter();

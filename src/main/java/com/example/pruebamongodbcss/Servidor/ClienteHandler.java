@@ -26,11 +26,10 @@ import com.example.pruebamongodbcss.Modulos.Fichaje.ServicioFichaje;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.calendar.CalendarService;
 import com.mongodb.client.MongoCollection;
-
-import Utilidades1.GestorConexion;
-
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+
+import Utilidades1.GestorConexion;
 
 public class ClienteHandler implements Runnable {
     private final Socket clientSocket;
@@ -522,6 +521,32 @@ public class ClienteHandler implements Runnable {
                                 System.err.println("Error: No se encontraron veterinarios");
                                 synchronized (salida) {
                                     salida.writeInt(Protocolo.ERRORGETALLVETERINARIOS);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                        case Protocolo.BUSCAR_USUARIOS_POR_TEXTO:
+                            System.out.println("Procesando solicitud de buscar usuarios por texto...");
+                            if (parametros.length >= 1) {
+                                String textoABuscar = parametros[0];
+                                try {
+                                    List<Usuario> usuariosEncontrados = servicioUsuarios.buscarUsuariosPorTexto(textoABuscar);
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.BUSCAR_USUARIOS_POR_TEXTO_RESPONSE);
+                                        salida.writeObject(usuariosEncontrados);
+                                        salida.flush();
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Error al buscar usuarios por texto: " + e.getMessage());
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_BUSCAR_USUARIOS_POR_TEXTO);
+                                        salida.flush();
+                                    }
+                                }
+                            } else {
+                                System.err.println("Error: Faltan parámetros en la solicitud BUSCAR_USUARIOS_POR_TEXTO");
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_BUSCAR_USUARIOS_POR_TEXTO);
                                     salida.flush();
                                 }
                             }

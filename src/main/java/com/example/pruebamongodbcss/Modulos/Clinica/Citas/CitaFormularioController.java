@@ -1,11 +1,9 @@
 package com.example.pruebamongodbcss.Modulos.Clinica.Citas;
 
 import com.example.pruebamongodbcss.Data.EstadoCita;
-import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloCita;
 import com.example.pruebamongodbcss.Modulos.Clinica.ModeloPaciente;
-import com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica;
 import com.example.pruebamongodbcss.Modulos.Clinica.PacienteEditRowController;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 
@@ -61,7 +59,6 @@ public class CitaFormularioController implements Initializable {
     @FXML private Button btnCancelar;
     @FXML private Button btnGuardar;
     
-    private ServicioClinica servicio;
     private GestorSocket gestorSocket;
     private ModeloCita cita;
     private boolean esEdicion = false;
@@ -360,17 +357,6 @@ public class CitaFormularioController implements Initializable {
     }
     
     /**
-     * Establece el servicio de clínica
-     */
-    public void setServicio(ServicioClinica servicio) {
-        this.servicio = servicio;
-        
-        // Cargar datos iniciales
-        cargarPacientes();
-        cargarVeterinarios();
-    }
-    
-    /**
      * Establece el gestor de socket
      */
     public void setGestorSocket(GestorSocket gestorSocket) {
@@ -418,13 +404,12 @@ public class CitaFormularioController implements Initializable {
     }
     
     /**
-     * Carga la lista de pacientes
+     * Carga la lista de pacientes usando peticiones por socket
      */
     private void cargarPacientes() {
         pacientesObservable.clear();
         
         if (gestorSocket != null) {
-            // Usar gestorSocket
             try {
                 gestorSocket.enviarPeticion(Protocolo.OBTENER_TODOS_PACIENTES + Protocolo.SEPARADOR_CODIGO);
                 
@@ -433,27 +418,24 @@ public class CitaFormularioController implements Initializable {
                     @SuppressWarnings("unchecked")
                     List<ModeloPaciente> pacientes = (List<ModeloPaciente>) gestorSocket.getEntrada().readObject();
                     pacientesObservable.addAll(pacientes);
+                } else {
+                    System.err.println("Error del servidor al obtener pacientes: código " + codigo);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
                 System.err.println("Error al cargar pacientes: " + e.getMessage());
             }
-        } else if (servicio != null) {
-            // Usar servicio directo (compatibilidad)
-            List<ModeloPaciente> pacientes = servicio.obtenerTodosPacientes();
-            pacientesObservable.addAll(pacientes);
         }
     }
     
     /**
-     * Carga la lista de veterinarios
+     * Carga la lista de veterinarios usando peticiones por socket
      */
     private void cargarVeterinarios() {
         List<String> veterinarios = new ArrayList<>();
         mapaVeterinariosId.clear();
         
         if (gestorSocket != null) {
-            // Usar gestorSocket
             try {
                 gestorSocket.enviarPeticion(Protocolo.GETALLVETERINARIOS + Protocolo.SEPARADOR_CODIGO);
                 gestorSocket.getSalida().writeObject(Usuario.Rol.VETERINARIO);
@@ -470,21 +452,12 @@ public class CitaFormularioController implements Initializable {
                         veterinarios.add(nombreCompleto);
                         mapaVeterinariosId.put(nombreCompleto, veterinario.getId());
                     }
+                } else {
+                    System.err.println("Error del servidor al obtener veterinarios: código " + codigo);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
                 System.err.println("Error al cargar veterinarios: " + e.getMessage());
-            }
-        } else if (servicio != null) {
-            // Usar servicio directo (compatibilidad)
-            ServicioUsuarios servicioUsuarios = new ServicioUsuarios();
-            List<Usuario> listaVeterinarios = servicioUsuarios.buscarVeterinarios();
-            
-            // Convertir la lista de objetos Usuario a una lista de nombres
-            for (Usuario veterinario : listaVeterinarios) {
-                String nombreCompleto = "Dr. " + veterinario.getNombre() + " " + veterinario.getApellido();
-                veterinarios.add(nombreCompleto);
-                mapaVeterinariosId.put(nombreCompleto, veterinario.getId());
             }
         }
         
@@ -717,7 +690,6 @@ public class CitaFormularioController implements Initializable {
         }
         
         LocalDateTime fechaHora = obtenerFechaHoraSeleccionada();
-        ObjectId citaId = (cita != null) ? cita.getId() : null;
         
         // Validar que la fecha no sea anterior a hoy
         if (fechaHora.isBefore(LocalDateTime.now())) {
@@ -725,60 +697,7 @@ public class CitaFormularioController implements Initializable {
             return false;
         }
         
-        // ====================================================================
-        // VALIDACIÓN DE CONFLICTOS DE HORARIO DESHABILITADA
-        // Comentado para permitir múltiples citas a la misma hora
-        // ====================================================================
-        /*
-        // Validar que no haya conflicto de horarios
-        boolean hayConflicto = false;
-        if (gestorSocket != null) {
-            // Usar gestorSocket
-            try {
-                gestorSocket.enviarPeticion(Protocolo.HAY_CONFLICTO_HORARIO + Protocolo.SEPARADOR_CODIGO);
-                gestorSocket.getSalida().writeObject(fechaHora);
-                
-                // Calcular duración para la validación
-                int duracionValidacion;
-                if (chkDuracionManual.isSelected()) {
-                    LocalDateTime fechaHoraFin = obtenerFechaHoraFinSeleccionada();
-                    duracionValidacion = (int) java.time.Duration.between(fechaHora, fechaHoraFin).toMinutes();
-                } else {
-                    Integer duracionSeleccionada = cmbDuracion.getValue();
-                    duracionValidacion = (duracionSeleccionada != null) ? duracionSeleccionada : DURACION_CITA_MINUTOS;
-                }
-                
-                gestorSocket.getSalida().writeInt(duracionValidacion);
-                gestorSocket.getSalida().writeObject(citaId);
-                gestorSocket.getSalida().flush();
-                
-                int codigo = gestorSocket.getEntrada().readInt();
-                if (codigo == Protocolo.HAY_CONFLICTO_HORARIO_RESPONSE) {
-                    hayConflicto = gestorSocket.getEntrada().readBoolean();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                mostrarError("Error al validar conflicto de horarios: " + e.getMessage());
-                return false;
-            }
-        } else if (servicio != null) {
-            // Usar servicio directo (compatibilidad)
-            int duracionValidacion;
-            if (chkDuracionManual.isSelected()) {
-                LocalDateTime fechaHoraFin = obtenerFechaHoraFinSeleccionada();
-                duracionValidacion = (int) java.time.Duration.between(fechaHora, fechaHoraFin).toMinutes();
-            } else {
-                Integer duracionSeleccionada = cmbDuracion.getValue();
-                duracionValidacion = (duracionSeleccionada != null) ? duracionSeleccionada : DURACION_CITA_MINUTOS;
-            }
-            hayConflicto = servicio.hayConflictoHorario(fechaHora, duracionValidacion, citaId);
-        }
-        
-        if (hayConflicto) {
-            mostrarError("Ya existe una cita programada para esa fecha y hora.");
-            return false;
-        }
-        */
+        // Validación de conflictos deshabilitada por permitir múltiples citas
         
         ocultarError();
         return true;
@@ -858,36 +777,41 @@ public class CitaFormularioController implements Initializable {
                 cita.setVeterinarioId(mapaVeterinariosId.get(nombreVeterinario));
             }
             
-            // IMPORTANTE: Extraer username del veterinario para asignar la cita
-            // Quitar el "Dr. " o "Dra. " si existe
+            // IMPORTANTE: Extraer username del veterinario para asignar la cita usando petición por socket
             String nombreSinTitulo = nombreVeterinario;
             if (nombreVeterinario.startsWith("Dr. ") || nombreVeterinario.startsWith("Dra. ")) {
                 nombreSinTitulo = nombreVeterinario.substring(4);
             }
             
-            // Buscar el usuario del veterinario seleccionado
+            // Buscar el usuario del veterinario seleccionado usando petición por socket
             try {
-                ServicioUsuarios servicioUsuarios = new ServicioUsuarios();
-                // Dividir nombre y apellido
                 String[] partes = nombreSinTitulo.split(" ", 2);
                 String nombre = partes[0].trim();
-                String apellido = partes.length > 1 ? partes[1].trim() : "";
                 
-                // Buscar usuario que coincida con el nombre o apellido
-                List<Usuario> posiblesUsuarios = servicioUsuarios.buscarUsuariosPorTexto(nombre);
-                Usuario veterinario = null;
+                // Hacer petición para buscar usuarios
+                gestorSocket.enviarPeticion(Protocolo.BUSCAR_USUARIOS_POR_TEXTO + Protocolo.SEPARADOR_CODIGO + nombre);
                 
-                // Buscar coincidencia exacta de nombre y apellido
-                for (Usuario u : posiblesUsuarios) {
-                    if (u.getNombre().equalsIgnoreCase(nombre) && 
-                        u.getApellido().toLowerCase().contains(apellido.toLowerCase())) {
-                        veterinario = u;
-                        break;
+                int codigo = gestorSocket.getEntrada().readInt();
+                if (codigo == Protocolo.BUSCAR_USUARIOS_POR_TEXTO_RESPONSE) {
+                    @SuppressWarnings("unchecked")
+                    List<Usuario> posiblesUsuarios = (List<Usuario>) gestorSocket.getEntrada().readObject();
+                    Usuario veterinario = null;
+                    
+                    // Buscar coincidencia exacta de nombre y apellido
+                    String apellido = partes.length > 1 ? partes[1].trim() : "";
+                    for (Usuario u : posiblesUsuarios) {
+                        if (u.getNombre().equalsIgnoreCase(nombre) && 
+                            u.getApellido().toLowerCase().contains(apellido.toLowerCase())) {
+                            veterinario = u;
+                            break;
+                        }
                     }
-                }
-                
-                if (veterinario != null) {
-                    cita.setUsuarioAsignado(veterinario.getUsuario());
+                    
+                    if (veterinario != null) {
+                        cita.setUsuarioAsignado(veterinario.getUsuario());
+                    } else {
+                        cita.setUsuarioAsignado("sistema");
+                    }
                 } else {
                     cita.setUsuarioAsignado("sistema");
                 }
@@ -927,35 +851,29 @@ public class CitaFormularioController implements Initializable {
             GestorSocket gestorSocketIndependiente = null;
             
             try {
-                if (gestorSocket != null) {
-                    // Crear una nueva conexión independiente para evitar conflictos
-                    gestorSocketIndependiente = GestorSocket.crearConexionIndependiente();
-                    
-                    System.out.println("🔄 Guardando cita con conexión independiente...");
-                    
-                    // Enviar petición de guardar cita
-                    gestorSocketIndependiente.enviarPeticion(Protocolo.GUARDAR_CITA + Protocolo.SEPARADOR_CODIGO);
-                    gestorSocketIndependiente.getSalida().writeObject(cita);
-                    gestorSocketIndependiente.getSalida().flush();
-                    
-                    // Leer respuesta
-                    int codigo = gestorSocketIndependiente.getEntrada().readInt();
-                    if (codigo == Protocolo.GUARDAR_CITA_RESPONSE) {
-                        id = (ObjectId) gestorSocketIndependiente.getEntrada().readObject();
-                        System.out.println("✅ Cita guardada exitosamente con ID: " + id);
-                    } else if (codigo == Protocolo.ERROR_GUARDAR_CITA) {
-                        System.err.println("❌ Error del servidor al guardar cita");
-                        mostrarError("Error del servidor al guardar la cita.");
-                        return;
-                    } else {
-                        System.err.println("❌ Código de respuesta inesperado: " + codigo);
-                        mostrarError("Respuesta inesperada del servidor.");
-                        return;
-                    }
-                } else if (servicio != null) {
-                    // Usar servicio directo (compatibilidad)
-                    id = servicio.guardarCita(cita);
-                    System.out.println("✅ Cita guardada directamente con servicio, ID: " + id);
+                // Crear una nueva conexión independiente para evitar conflictos
+                gestorSocketIndependiente = GestorSocket.crearConexionIndependiente();
+                
+                System.out.println("🔄 Guardando cita con conexión independiente...");
+                
+                // Enviar petición de guardar cita
+                gestorSocketIndependiente.enviarPeticion(Protocolo.GUARDAR_CITA + Protocolo.SEPARADOR_CODIGO);
+                gestorSocketIndependiente.getSalida().writeObject(cita);
+                gestorSocketIndependiente.getSalida().flush();
+                
+                // Leer respuesta
+                int codigo = gestorSocketIndependiente.getEntrada().readInt();
+                if (codigo == Protocolo.GUARDAR_CITA_RESPONSE) {
+                    id = (ObjectId) gestorSocketIndependiente.getEntrada().readObject();
+                    System.out.println("✅ Cita guardada exitosamente con ID: " + id);
+                } else if (codigo == Protocolo.ERROR_GUARDAR_CITA) {
+                    System.err.println("❌ Error del servidor al guardar cita");
+                    mostrarError("Error del servidor al guardar la cita.");
+                    return;
+                } else {
+                    System.err.println("❌ Código de respuesta inesperado: " + codigo);
+                    mostrarError("Respuesta inesperada del servidor.");
+                    return;
                 }
                 
                 if (id != null) {
@@ -1023,22 +941,20 @@ public class CitaFormularioController implements Initializable {
                     String[] razas = null;
                     
                     if (gestorSocket != null) {
-                        // Usar gestorSocket
                         try {
                             gestorSocket.enviarPeticion(Protocolo.BUSCAR_RAZAS_POR_TIPO_ANIMAL + Protocolo.SEPARADOR_CODIGO + tipoAnimal);
                             
                             int codigo = gestorSocket.getEntrada().readInt();
                             if (codigo == Protocolo.BUSCAR_RAZAS_POR_TIPO_ANIMAL_RESPONSE) {
                                 razas = (String[]) gestorSocket.getEntrada().readObject();
+                            } else {
+                                System.err.println("Error del servidor al buscar razas: código " + codigo);
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
                             mostrarError("Error al buscar razas: " + e.getMessage());
                             return;
                         }
-                    } else if (servicio != null) {
-                        // Usar servicio directo (compatibilidad)
-                        razas = servicio.buscarRazasPorTipoAnimal(tipoAnimal);
                     }
                     
                     if (razas != null) {

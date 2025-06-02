@@ -1,8 +1,8 @@
 package com.example.pruebamongodbcss.Modulos.Empresa;
 
-import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.Data.Usuario;
 
+import Utilidades1.GestorSocket;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -17,14 +17,37 @@ import javafx.stage.Stage;
  */
 public class EmpresaMain {
     
-    private ServicioUsuarios servicioUsuarios;
+    private GestorSocket gestorSocket;
+    private Usuario usuarioActual;
     
     /**
-     * Constructor que inicializa el módulo con un servicio de usuarios.
-     * @param servicioUsuarios Servicio de usuarios a utilizar
+     * Constructor que inicializa el módulo con GestorSocket y el usuario actual.
+     * @param gestorSocket Gestor de socket para comunicación con el servidor
+     * @param usuarioActual Usuario actual de la sesión
      */
-    public EmpresaMain(ServicioUsuarios servicioUsuarios) {
-        this.servicioUsuarios = servicioUsuarios;
+    public EmpresaMain(GestorSocket gestorSocket, Usuario usuarioActual) {
+        this.gestorSocket = gestorSocket;
+        this.usuarioActual = usuarioActual;
+    }
+    
+    /**
+     * Constructor alternativo para compatibilidad (deprecated).
+     * @param servicioUsuarios Servicio de usuarios (no utilizado)
+     * @deprecated Usar el constructor con GestorSocket y Usuario
+     */
+    @Deprecated
+    public EmpresaMain(com.example.pruebamongodbcss.Data.ServicioUsuarios servicioUsuarios) {
+        // Constructor mantenido por compatibilidad
+        this.gestorSocket = GestorSocket.getInstance();
+        // El usuario actual se establecerá mediante setUsuarioActual
+    }
+    
+    /**
+     * Establece el usuario actual (para compatibilidad con el constructor deprecated)
+     * @param usuario Usuario actual
+     */
+    public void setUsuarioActual(Usuario usuario) {
+        this.usuarioActual = usuario;
     }
     
     /**
@@ -34,7 +57,6 @@ public class EmpresaMain {
     public boolean iniciar() {
         try {
             // Verificar si el usuario actual es administrador
-            Usuario usuarioActual = servicioUsuarios.getUsuarioActual();
             if (usuarioActual == null || !usuarioActual.esAdmin()) {
                 mostrarAlerta("Acceso denegado", "Acceso denegado", 
                     "Solo los administradores pueden acceder al módulo de Empresa.");
@@ -59,7 +81,6 @@ public class EmpresaMain {
     public boolean iniciarIntegrado(BorderPane panelPrincipal) {
         try {
             // Verificar si el usuario actual es administrador
-            Usuario usuarioActual = servicioUsuarios.getUsuarioActual();
             if (usuarioActual == null || !usuarioActual.esAdmin()) {
                 mostrarAlerta("Acceso denegado", "Acceso denegado", 
                     "Solo los administradores pueden acceder al módulo de Empresa.");
@@ -72,6 +93,11 @@ public class EmpresaMain {
             
             // Configurar el controlador
             GestionUsuariosController controller = loader.getController();
+            
+            // Establecer el usuario actual en el controlador
+            if (controller != null && usuarioActual != null) {
+                controller.setUsuarioActual(usuarioActual);
+            }
             
             if (panelPrincipal != null) {
                 // Cargar en el panel principal existente

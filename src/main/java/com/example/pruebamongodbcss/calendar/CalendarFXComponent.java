@@ -1,7 +1,6 @@
 package com.example.pruebamongodbcss.calendar;
 
 import java.io.ObjectInputStream;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -325,16 +324,15 @@ public class CalendarFXComponent extends BorderPane {
      */
     private void showNewAppointmentDialog() {
         try {
-            // Cargar el formulario de citas
+            // Cargar el formulario de citas desde la ubicación correcta
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Citas/cita-formulario.fxml"));
             Parent root = loader.load();
             
             // Obtener el controlador
             com.example.pruebamongodbcss.Modulos.Clinica.Citas.CitaFormularioController controller = loader.getController();
             
-            // Configurar el controlador con el servicio de clínica
-            com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
-            controller.setServicio(servicioClinica);
+            // Configurar el controlador con el GestorSocket
+            controller.setGestorSocket(gestorSocket);
             
             // Obtener la fecha y hora seleccionada del calendario
             LocalDate fechaSeleccionada = calendarView.getToday();
@@ -1022,9 +1020,8 @@ public class CalendarFXComponent extends BorderPane {
             // Obtener el controlador
             com.example.pruebamongodbcss.Modulos.Clinica.Citas.CitaFormularioController controller = loader.getController();
             
-            // Configurar el controlador con el servicio de clínica
-            com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica servicioClinica = new com.example.pruebamongodbcss.Modulos.Clinica.ServicioClinica();
-            controller.setServicio(servicioClinica);
+            // Configurar el controlador con el GestorSocket
+            controller.setGestorSocket(gestorSocket);
             
             // Si es una cita existente, cargar sus datos
             if (event.getId() != null && !event.getId().isEmpty()) {

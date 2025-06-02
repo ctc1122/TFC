@@ -459,4 +459,9 @@ public interface Protocolo {
     static final int OBTENER_PRODUCTIVIDAD_EMPLEADOS_RESPONSE = 1329;
     static final int ERROR_OBTENER_PRODUCTIVIDAD_EMPLEADOS = 1330;
 
+    // Códigos para búsqueda de usuarios por texto
+    static final int BUSCAR_USUARIOS_POR_TEXTO = 1331;
+    static final int BUSCAR_USUARIOS_POR_TEXTO_RESPONSE = 1332;
+    static final int ERROR_BUSCAR_USUARIOS_POR_TEXTO = 1333;
+
 } 
