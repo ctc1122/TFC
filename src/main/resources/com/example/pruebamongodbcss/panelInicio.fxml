@@ -37,6 +37,7 @@
                      <HBox alignment="CENTER_LEFT" spacing="10.0">
                         <JFXButton fx:id="btnToggleSidebar" text="≡" />
                         <!-- <ThemeToggleSwitch fx:id="themeToggle" /> -->
+                        <!-- NOMBRE DE LOS BOTONES AQUI -->
                      </HBox>
                      <JFXButton fx:id="btnMenuPrincipal" styleClass="itemMenu" prefWidth="200" text="Inicio" alignment="BASELINE_LEFT" />
                      <JFXButton fx:id="btnAnimales" styleClass="itemMenu" prefWidth="200" text="Pacientes y propietarios" alignment="BASELINE_LEFT" />
