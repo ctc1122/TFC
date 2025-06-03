@@ -6,12 +6,11 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 public class GestorSocket {
-    private static final String SERVER_HOST_NGROK = "0.tcp.ngrok.io";     // Base ngrok (puerto dinámico)
+   // Base ngrok (puerto dinámico)
     private static final String SERVER_HOST_SERVEO = "serveo.net";
     private static final String SERVER_HOST_LOCAL = "localhost";
     private static final int SERVER_PORT_SERVEO = 50002;  // Puerto serveo y localhost
-    private static final int[] NGROK_COMMON_PORTS = {10000, 11000, 12000, 13000, 14000, 15000, 16000, 17000, 18000, 19000}; // Puertos comunes ngrok
-    
+   
     private static GestorSocket instance;
     private Socket socket;
     private ObjectOutputStream salida;
@@ -44,21 +43,6 @@ public class GestorSocket {
     }
 
     private void conectarAlServidor() {
-        // Primer intento: ngrok TCP (intentar puertos comunes)
-        System.out.println("🚀 Intentando conectar a Ngrok TCP (puertos comunes)...");
-        for (int puerto : NGROK_COMMON_PORTS) {
-            try {
-                System.out.println("   Probando " + SERVER_HOST_NGROK + ":" + puerto);
-                socket = new Socket(SERVER_HOST_NGROK, puerto);
-                configurarSocket();
-                conectado = true;
-                System.out.println("✅ Conectado a Ngrok TCP (" + SERVER_HOST_NGROK + ":" + puerto + ") correctamente.");
-                return;
-            } catch (IOException e) {
-                // Continuar con el siguiente puerto
-            }
-        }
-        System.out.println("⚠️ No se pudo conectar a Ngrok TCP en puertos comunes");
         
         // Segundo intento: serveo.net (túnel SSH)
         try {
