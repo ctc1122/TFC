@@ -6,7 +6,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 public class GestorSocket {
-    private static final String SERVER_HOST = "172.20.10.7";
+    private static final String SERVER_HOST = "serveo.net";
 
     private static final int SERVER_PORT_ALT = 50002;  // Puerto alternativo (local)
     
@@ -45,8 +45,8 @@ public class GestorSocket {
         try {
             System.out.println("Intentando conectar al servidor alternativo: " + SERVER_HOST + ":" + SERVER_PORT_ALT);
             
-            socket = new Socket();
-            socket.connect(new java.net.InetSocketAddress(SERVER_HOST, SERVER_PORT_ALT), 30000); // 30 segundos de timeout para conexión
+            socket = new Socket(SERVER_HOST, SERVER_PORT_ALT);
+            //socket.connect(new java.net.InetSocketAddress(SERVER_HOST, SERVER_PORT_ALT), 30000); // 30 segundos de timeout para conexión
             socket.setKeepAlive(true); // Mantener la conexión viva
             socket.setTcpNoDelay(true); // Desactivar el algoritmo de Nagle para envío inmediato
             socket.setSoTimeout(60000); // Timeout de 60 segundos para operaciones de lectura
