@@ -146,7 +146,7 @@ public class PanelInicioController implements Initializable {
             // Configurar iconos y tooltips para el menú lateral
             setButtonIcon(btnMenuPrincipal, "/Iconos/iconInicio4.png", 32, 32);
             setButtonIcon(btnAnimales, "/Iconos/iconPet2.png", 32, 32);
-            setButtonIcon(but_clientes, "/Iconos/IconPruebaClientes.png", 32, 32);
+            setButtonIcon(but_clientes, "/Iconos/iconCalendar.png", 32, 32);
             setButtonIcon(btnFichaje, "/Iconos/iconClock2.png", 32, 32);
             setButtonIcon(btnEmpresa, "/Iconos/iconAdministrador2.png", 35, 38);
             setButtonIcon(btnSalir, "/Iconos/iconSalir.png", 32, 32);
@@ -157,7 +157,7 @@ public class PanelInicioController implements Initializable {
             // Configurar iconos y tooltips para los botones del carrusel
             setButtonIcon(btnMenuPrincipalCarousel, "/Iconos/iconInicio4.png", 32, 32);
             setButtonIcon(btnAnimalesCarousel, "/Iconos/iconPet2.png", 32, 32);
-            setButtonIcon(but_clientesCarousel, "/Iconos/IconPruebaClientes.png", 32, 32);
+            setButtonIcon(but_clientesCarousel, "/Iconos/iconCalendar.png", 32, 32);
             setButtonIcon(btnFichajeCarousel, "/Iconos/iconClock2.png", 32, 32);
             setButtonIcon(btnEmpresaCarousel, "/Iconos/iconAdministrador2.png", 35, 38);
             setButtonIcon(btnSalirCarousel, "/Iconos/iconSalir.png", 32, 32);
@@ -168,7 +168,7 @@ public class PanelInicioController implements Initializable {
             // Tooltips para los botones del carrusel
             btnMenuPrincipalCarousel.setTooltip(new Tooltip("Menú Principal"));
             btnAnimalesCarousel.setTooltip(new Tooltip("Animales"));
-            but_clientesCarousel.setTooltip(new Tooltip("Clientes"));
+            but_clientesCarousel.setTooltip(new Tooltip("Citas"));
             btnFichajeCarousel.setTooltip(new Tooltip("Fichaje"));
             btnSalirCarousel.setTooltip(new Tooltip("Cerrar sesión"));
             btnFacturacionCarousel.setTooltip(new Tooltip("Facturación"));

@@ -6,9 +6,11 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 public class GestorSocket {
-    private static final String SERVER_HOST = "serveo.net";
-
-    private static final int SERVER_PORT_ALT = 50002;  // Puerto alternativo (local)
+    private static final String SERVER_HOST_NGROK = "0.tcp.ngrok.io";     // Base ngrok (puerto dinámico)
+    private static final String SERVER_HOST_SERVEO = "serveo.net";
+    private static final String SERVER_HOST_LOCAL = "localhost";
+    private static final int SERVER_PORT_SERVEO = 50002;  // Puerto serveo y localhost
+    private static final int[] NGROK_COMMON_PORTS = {10000, 11000, 12000, 13000, 14000, 15000, 16000, 17000, 18000, 19000}; // Puertos comunes ngrok
     
     private static GestorSocket instance;
     private Socket socket;
@@ -42,28 +44,57 @@ public class GestorSocket {
     }
 
     private void conectarAlServidor() {
+        // Primer intento: ngrok TCP (intentar puertos comunes)
+        System.out.println("🚀 Intentando conectar a Ngrok TCP (puertos comunes)...");
+        for (int puerto : NGROK_COMMON_PORTS) {
+            try {
+                System.out.println("   Probando " + SERVER_HOST_NGROK + ":" + puerto);
+                socket = new Socket(SERVER_HOST_NGROK, puerto);
+                configurarSocket();
+                conectado = true;
+                System.out.println("✅ Conectado a Ngrok TCP (" + SERVER_HOST_NGROK + ":" + puerto + ") correctamente.");
+                return;
+            } catch (IOException e) {
+                // Continuar con el siguiente puerto
+            }
+        }
+        System.out.println("⚠️ No se pudo conectar a Ngrok TCP en puertos comunes");
+        
+        // Segundo intento: serveo.net (túnel SSH)
         try {
-            System.out.println("Intentando conectar al servidor alternativo: " + SERVER_HOST + ":" + SERVER_PORT_ALT);
-            
-            socket = new Socket(SERVER_HOST, SERVER_PORT_ALT);
-            //socket.connect(new java.net.InetSocketAddress(SERVER_HOST, SERVER_PORT_ALT), 30000); // 30 segundos de timeout para conexión
-            socket.setKeepAlive(true); // Mantener la conexión viva
-            socket.setTcpNoDelay(true); // Desactivar el algoritmo de Nagle para envío inmediato
-            socket.setSoTimeout(60000); // Timeout de 60 segundos para operaciones de lectura
-            
-            // Importante: primero crear el ObjectOutputStream antes que el ObjectInputStream
-            salida = new ObjectOutputStream(socket.getOutputStream());
-            salida.flush(); // Es importante hacer flush después de crear el ObjectOutputStream
-            
-            entrada = new ObjectInputStream(socket.getInputStream());
-            
+            System.out.println("🌐 Intentando conectar a Serveo.net: " + SERVER_HOST_SERVEO + ":" + SERVER_PORT_SERVEO);
+            socket = new Socket(SERVER_HOST_SERVEO, SERVER_PORT_SERVEO);
+            configurarSocket();
             conectado = true;
-            System.out.println("Conectado al servidor correctamente.");
-            
+            System.out.println("✅ Conectado a Serveo.net correctamente.");
+            return;
         } catch (IOException e) {
-            System.err.println("Error al conectar con el servidor: " + e.getMessage());
+            System.out.println("⚠️ No se pudo conectar a Serveo.net: " + e.getMessage());
+        }
+        
+        // Tercer intento (fallback final): conexión local
+        try {
+            System.out.println("🏠 Intentando conectar al servidor local: " + SERVER_HOST_LOCAL + ":" + SERVER_PORT_SERVEO);
+            socket = new Socket(SERVER_HOST_LOCAL, SERVER_PORT_SERVEO);
+            configurarSocket();
+            conectado = true;
+            System.out.println("✅ Conectado al servidor local correctamente.");
+        } catch (IOException e) {
+            System.err.println("❌ Error al conectar con todos los servidores: " + e.getMessage());
             conectado = false;
         }
+    }
+    
+    private void configurarSocket() throws IOException {
+        socket.setKeepAlive(true); // Mantener la conexión viva
+        socket.setTcpNoDelay(true); // Desactivar el algoritmo de Nagle para envío inmediato
+        socket.setSoTimeout(60000); // Timeout de 60 segundos para operaciones de lectura
+        
+        // Importante: primero crear el ObjectOutputStream antes que el ObjectInputStream
+        salida = new ObjectOutputStream(socket.getOutputStream());
+        salida.flush(); // Es importante hacer flush después de crear el ObjectOutputStream
+        
+        entrada = new ObjectInputStream(socket.getInputStream());
     }
 
     public void enviarPeticion(String codigoPeticion) throws IOException {

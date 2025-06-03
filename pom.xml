@@ -246,7 +246,7 @@
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.1.0</version>
         <configuration>
-          <mainClass>com.example.pruebamongodbcss.Modulos.Videollamada.SimpleLauncherTest</mainClass>
+          <mainClass>com.example.pruebamongodbcss.Servidor.ServidorSinGUI</mainClass>
         </configuration>
       </plugin>
     </plugins>
