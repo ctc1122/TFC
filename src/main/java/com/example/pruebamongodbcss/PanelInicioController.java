@@ -743,10 +743,10 @@ public class PanelInicioController implements Initializable {
         timeline.setOnFinished(event -> {
             if (isCollapsed) {
                 btnMenuPrincipal.setText("Menú Principal");
-                btnAnimales.setText("Animales");
+                btnAnimales.setText("Animales y propietarios");
                 btnFichaje.setText("Fichaje");
                 btnSalir.setText("SALIR");
-                but_clientes.setText("Clientes");
+                but_clientes.setText("Citas");
                 btnChat.setText("Chat");
                 btnFacturacion.setText("Facturacion");
                 btnInformes.setText("Informes");
