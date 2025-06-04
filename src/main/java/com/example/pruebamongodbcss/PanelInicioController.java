@@ -546,20 +546,55 @@ public class PanelInicioController implements Initializable {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/InicioSesion/PruebaDoblePanel.fxml"));
             Parent root = loader.load();
-            Scene scene = ThemeUtil.createScene(root, 900, 450);
-            Stage stage = (Stage) btnSalir.getScene().getWindow();
+            Scene scene = new Scene(root, 900, 450);
+            Stage currentStage = (Stage) btnSalir.getScene().getWindow();
+            
+            // Crear un nuevo Stage sin decoración
+            Stage newStage = new Stage();
+            newStage.initStyle(StageStyle.UNDECORATED);
+            newStage.setTitle("Inicio de sesión!");
+            newStage.setResizable(false);
             
             // Establecer el icono de la ventana
             try {
                 Image icon = new Image(getClass().getResourceAsStream("/logo.png"));
-                stage.getIcons().clear(); // Limpiar iconos existentes
-                stage.getIcons().add(icon);
+                newStage.getIcons().add(icon);
             } catch (Exception e) {
                 System.err.println("No se pudo cargar el icono de la ventana: " + e.getMessage());
             }
             
-            stage.setScene(scene);
-            stage.centerOnScreen();
+            // Variables para manejar el arrastre de la ventana
+            final double[] xOffset = {0};
+            final double[] yOffset = {0};
+            
+            // Evento para detectar cuando se presiona el mouse
+            scene.setOnMousePressed(event -> {
+                xOffset[0] = event.getSceneX();
+                yOffset[0] = event.getSceneY();
+            });
+            
+            // Evento para mover la ventana cuando se arrastra
+            scene.setOnMouseDragged(event -> {
+                newStage.setX(event.getScreenX() - xOffset[0]);
+                newStage.setY(event.getScreenY() - yOffset[0]);
+            });
+            
+            // Configurar el cierre de la aplicación cuando se cierre esta ventana
+            newStage.setOnCloseRequest(event -> {
+                javafx.application.Platform.exit();
+                System.exit(0);
+            });
+            
+            newStage.setScene(scene);
+            
+            // Mostrar la nueva ventana y centrarla PRIMERO
+            newStage.show();
+            newStage.centerOnScreen();
+            
+            // Cerrar la ventana actual DESPUÉS usando Platform.runLater
+            javafx.application.Platform.runLater(() -> {
+                currentStage.close();
+            });
             
         } catch (IOException e) {
             System.err.println("Error al cerrar sesión: " + e.getMessage());
