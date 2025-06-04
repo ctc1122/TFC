@@ -288,7 +288,6 @@
                <children>
                   <Button fx:id="btnCancelar" onAction="#onCancelar" style="-fx-background-color: linear-gradient(135deg, #64748b 0%, #475569 100%); -fx-text-fill: black; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="❌ Cancelar" />
                   <Button fx:id="btnGuardarBorrador" onAction="#onGuardarBorrador" style="-fx-background-color: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); -fx-text-fill: black; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="💾 Borrador" />
-                  <Button fx:id="btnGuardar" onAction="#onGuardar" style="-fx-background-color: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); -fx-text-fill: black; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="💾 Guardar" />
                   <Button fx:id="btnFinalizar" onAction="#onFinalizar" style="-fx-background-color: linear-gradient(135deg, #10b981 0%, #059669 100%); -fx-text-fill: black; -fx-padding: 6px 12px; -fx-font-size: 11px; -fx-background-radius: 4px; -fx-font-weight: bold;" text="✅ Finalizar" />
                </children>
                <padding>

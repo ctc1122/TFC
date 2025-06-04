@@ -52,7 +52,6 @@ module com.example.pruebamongodbcss {
     exports com.example.pruebamongodbcss.Modulos.UMLSSearch;
     exports com.example.pruebamongodbcss.Modulos.Clinica;
     exports com.example.pruebamongodbcss.Modulos.Empresa;
-    exports com.example.pruebamongodbcss.LaboratorioJorge;
     exports com.example.pruebamongodbcss.service;
     exports com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico;
     exports com.example.pruebamongodbcss.theme;
@@ -73,7 +72,6 @@ module com.example.pruebamongodbcss {
 
     opens com.example.pruebamongodbcss.Modulos.Clinica to javafx.fxml;
     opens com.example.pruebamongodbcss.Modulos.Empresa to javafx.fxml;
-    opens com.example.pruebamongodbcss.LaboratorioJorge to javafx.fxml;
     opens com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico to javafx.fxml;
     opens com.example.pruebamongodbcss.theme to javafx.fxml;
     opens com.example.pruebamongodbcss.Modulos.Clinica.Citas to javafx.fxml;

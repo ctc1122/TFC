@@ -1765,4 +1765,215 @@ public class ServicioInformes {
             }
         }
     }
+    
+    // ================= MÉTODOS PARA ESTADÍSTICAS DE FACTURACIÓN =================
+    
+    /**
+     * Obtiene estadísticas básicas de facturación para el módulo de facturación
+     */
+    public EstadisticasFacturacion obtenerEstadisticasFacturacion(String periodo) {
+        EstadisticasFacturacion estadisticas = new EstadisticasFacturacion();
+        
+        try {
+            int anoActual = Integer.parseInt(periodo);
+            LocalDate inicioAno = LocalDate.of(anoActual, 1, 1);
+            LocalDate finAno = LocalDate.of(anoActual, 12, 31);
+            
+            // Convertir LocalDate a Date para MongoDB
+            Date fechaInicio = Date.from(inicioAno.atStartOfDay(ZoneId.systemDefault()).toInstant());
+            Date fechaFin = Date.from(finAno.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            
+            // Filtro para facturas del año especificado
+            Bson filtroAno = Filters.and(
+                Filters.gte("fechaEmision", fechaInicio),
+                Filters.lt("fechaEmision", fechaFin)
+            );
+            
+            List<Document> facturas = facturasCollection.find(filtroAno).into(new ArrayList<>());
+            
+            // Variables para cálculos
+            double ingresosTotales = 0.0;
+            int totalFacturas = 0;
+            int facturasPendientes = 0;
+            
+            for (Document factura : facturas) {
+                // Contar solo facturas no borrador
+                Boolean esBorrador = factura.getBoolean("esBorrador");
+                if (esBorrador == null || !esBorrador) {
+                    totalFacturas++;
+                    
+                    Double total = factura.getDouble("total");
+                    if (total != null) {
+                        ingresosTotales += total;
+                    }
+                    
+                    // Contar facturas pendientes (EMITIDA o sin estado específico)
+                    String estado = factura.getString("estado");
+                    if ("EMITIDA".equals(estado) || "VENCIDA".equals(estado)) {
+                        facturasPendientes++;
+                    }
+                }
+            }
+            
+            // Calcular promedio
+            double promedioFactura = totalFacturas > 0 ? ingresosTotales / totalFacturas : 0.0;
+            
+            // Establecer valores
+            estadisticas.setTotalFacturas(totalFacturas);
+            estadisticas.setIngresosTotales(ingresosTotales);
+            estadisticas.setFacturasPendientes(facturasPendientes);
+            estadisticas.setPromedioFactura(promedioFactura);
+            
+        } catch (Exception e) {
+            System.err.println("Error al obtener estadísticas de facturación: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return estadisticas;
+    }
+    
+    /**
+     * Obtiene datos para el gráfico de estados de facturas (PieChart)
+     */
+    public List<DatoGrafico> obtenerDatosGraficoEstadosFacturas(String periodo) {
+        List<DatoGrafico> datos = new ArrayList<>();
+        
+        try {
+            int anoActual = Integer.parseInt(periodo);
+            LocalDate inicioAno = LocalDate.of(anoActual, 1, 1);
+            LocalDate finAno = LocalDate.of(anoActual, 12, 31);
+            
+            // Convertir LocalDate a Date para MongoDB
+            Date fechaInicio = Date.from(inicioAno.atStartOfDay(ZoneId.systemDefault()).toInstant());
+            Date fechaFin = Date.from(finAno.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            
+            // Filtro para facturas del año especificado (solo facturas no borrador)
+            Bson filtroAno = Filters.and(
+                Filters.gte("fechaEmision", fechaInicio),
+                Filters.lt("fechaEmision", fechaFin),
+                Filters.ne("esBorrador", true)  // Excluir borradores
+            );
+            
+            List<Document> facturas = facturasCollection.find(filtroAno).into(new ArrayList<>());
+            
+            // Contar por estado
+            Map<String, Integer> conteoEstados = new HashMap<>();
+            conteoEstados.put("EMITIDA", 0);
+            conteoEstados.put("PAGADA", 0);
+            conteoEstados.put("VENCIDA", 0);
+            conteoEstados.put("ANULADA", 0);
+            conteoEstados.put("SIN_ESTADO", 0);
+            
+            for (Document factura : facturas) {
+                String estado = factura.getString("estado");
+                if (estado == null || estado.isEmpty()) {
+                    estado = "SIN_ESTADO";
+                }
+                
+                conteoEstados.put(estado, conteoEstados.getOrDefault(estado, 0) + 1);
+            }
+            
+            // Convertir a DatoGrafico solo si hay facturas
+            for (Map.Entry<String, Integer> entry : conteoEstados.entrySet()) {
+                if (entry.getValue() > 0) {
+                    String etiqueta = formatearEtiquetaEstado(entry.getKey());
+                    datos.add(new DatoGrafico(etiqueta, entry.getValue()));
+                }
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error al obtener datos del gráfico de estados: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return datos;
+    }
+    
+    /**
+     * Obtiene datos para el gráfico de ingresos mensuales (LineChart)
+     */
+    public List<DatoGrafico> obtenerDatosGraficoIngresosMensuales(String periodo) {
+        List<DatoGrafico> datos = new ArrayList<>();
+        
+        try {
+            int anoActual = Integer.parseInt(periodo);
+            String[] nombresMeses = {"Ene", "Feb", "Mar", "Abr", "May", "Jun", 
+                                   "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"};
+            
+            // Obtener datos para cada mes del año
+            for (int mes = 1; mes <= 12; mes++) {
+                LocalDate inicioMes = LocalDate.of(anoActual, mes, 1);
+                LocalDate finMes = inicioMes.withDayOfMonth(inicioMes.lengthOfMonth());
+                
+                // Convertir LocalDate a Date para MongoDB
+                Date fechaInicio = Date.from(inicioMes.atStartOfDay(ZoneId.systemDefault()).toInstant());
+                Date fechaFin = Date.from(finMes.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+                
+                // Filtro para facturas del mes (solo facturas finalizadas, no borradores)
+                Bson filtroMes = Filters.and(
+                    Filters.gte("fechaEmision", fechaInicio),
+                    Filters.lt("fechaEmision", fechaFin),
+                    Filters.ne("esBorrador", true),  // Excluir borradores
+                    Filters.in("estado", Arrays.asList("EMITIDA", "PAGADA", "VENCIDA")) // Solo facturas válidas
+                );
+                
+                List<Document> facturasMes = facturasCollection.find(filtroMes).into(new ArrayList<>());
+                
+                double ingresosMes = 0.0;
+                for (Document factura : facturasMes) {
+                    Double total = factura.getDouble("total");
+                    if (total != null) {
+                        ingresosMes += total;
+                    }
+                }
+                
+                String etiqueta = nombresMeses[mes - 1];
+                datos.add(new DatoGrafico(etiqueta, ingresosMes));
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error al obtener datos del gráfico de ingresos mensuales: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return datos;
+    }
+    
+    /**
+     * Formatea la etiqueta del estado para mostrar en el gráfico
+     */
+    private String formatearEtiquetaEstado(String estado) {
+        switch (estado) {
+            case "EMITIDA": return "Emitida";
+            case "PAGADA": return "Pagada";
+            case "VENCIDA": return "Vencida";
+            case "ANULADA": return "Anulada";
+            case "SIN_ESTADO": return "Sin Estado";
+            default: return estado;
+        }
+    }
+    
+    /**
+     * Clase para estadísticas básicas de facturación
+     */
+    public static class EstadisticasFacturacion implements Serializable {
+        private static final long serialVersionUID = 1L;
+        private int totalFacturas;
+        private double ingresosTotales;
+        private int facturasPendientes;
+        private double promedioFactura;
+        
+        // Getters y setters
+        public int getTotalFacturas() { return totalFacturas; }
+        public void setTotalFacturas(int totalFacturas) { this.totalFacturas = totalFacturas; }
+        
+        public double getIngresosTotales() { return ingresosTotales; }
+        public void setIngresosTotales(double ingresosTotales) { this.ingresosTotales = ingresosTotales; }
+        
+        public int getFacturasPendientes() { return facturasPendientes; }
+        public void setFacturasPendientes(int facturasPendientes) { this.facturasPendientes = facturasPendientes; }
+        
+        public double getPromedioFactura() { return promedioFactura; }
+        public void setPromedioFactura(double promedioFactura) { this.promedioFactura = promedioFactura; }
+    }
 } 

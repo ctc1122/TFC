@@ -42,6 +42,7 @@ public class ClienteHandler implements Runnable {
     private final CalendarService calendarService;
     private final com.example.pruebamongodbcss.Modulos.Facturacion.ServicioFacturacion servicioFacturacion;
     private final ServicioFichaje servicioFichaje;
+    private final com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes servicioInformes;
     
     //Declaro el constructor
     public ClienteHandler(Socket socket) {
@@ -51,6 +52,7 @@ public class ClienteHandler implements Runnable {
         this.calendarService = new CalendarService();
         this.servicioFacturacion = new com.example.pruebamongodbcss.Modulos.Facturacion.ServicioFacturacion();
         this.servicioFichaje = new ServicioFichaje();
+        this.servicioInformes = new com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes();
     }
 
     @Override
@@ -2520,6 +2522,94 @@ public class ClienteHandler implements Runnable {
                                 System.err.println("Error al obtener productividad de empleados: " + e.getMessage());
                                 synchronized (salida) {
                                     salida.writeInt(Protocolo.ERROR_OBTENER_PRODUCTIVIDAD_EMPLEADOS);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        // Casos para estadísticas de facturación
+                        case Protocolo.OBTENER_ESTADISTICAS_FACTURACION:
+                            System.out.println("Procesando solicitud de estadísticas de facturación...");
+                            try {
+                                if (parametros.length >= 1) {
+                                    String periodo = parametros[0];
+                                    com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.EstadisticasFacturacion estadisticas = 
+                                        servicioInformes.obtenerEstadisticasFacturacion(periodo);
+                                    
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.OBTENER_ESTADISTICAS_FACTURACION_RESPONSE);
+                                        salida.writeObject(estadisticas);
+                                        salida.flush();
+                                    }
+                                } else {
+                                    System.err.println("Error: Faltan parámetros para estadísticas de facturación");
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_OBTENER_ESTADISTICAS_FACTURACION);
+                                        salida.flush();
+                                    }
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener estadísticas de facturación: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_ESTADISTICAS_FACTURACION);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_DATOS_GRAFICO_ESTADOS_FACTURAS:
+                            System.out.println("Procesando solicitud de datos para gráfico de estados de facturas...");
+                            try {
+                                if (parametros.length >= 1) {
+                                    String periodo = parametros[0];
+                                    List<com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.DatoGrafico> datos = 
+                                        servicioInformes.obtenerDatosGraficoEstadosFacturas(periodo);
+                                    
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.OBTENER_DATOS_GRAFICO_ESTADOS_FACTURAS_RESPONSE);
+                                        salida.writeObject(datos);
+                                        salida.flush();
+                                    }
+                                } else {
+                                    System.err.println("Error: Faltan parámetros para datos de gráfico de estados");
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_OBTENER_DATOS_GRAFICO_ESTADOS_FACTURAS);
+                                        salida.flush();
+                                    }
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener datos de gráfico de estados: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_DATOS_GRAFICO_ESTADOS_FACTURAS);
+                                    salida.flush();
+                                }
+                            }
+                            break;
+                            
+                        case Protocolo.OBTENER_DATOS_GRAFICO_INGRESOS_MENSUALES:
+                            System.out.println("Procesando solicitud de datos para gráfico de ingresos mensuales...");
+                            try {
+                                if (parametros.length >= 1) {
+                                    String periodo = parametros[0];
+                                    List<com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.DatoGrafico> datos = 
+                                        servicioInformes.obtenerDatosGraficoIngresosMensuales(periodo);
+                                    
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.OBTENER_DATOS_GRAFICO_INGRESOS_MENSUALES_RESPONSE);
+                                        salida.writeObject(datos);
+                                        salida.flush();
+                                    }
+                                } else {
+                                    System.err.println("Error: Faltan parámetros para datos de gráfico de ingresos");
+                                    synchronized (salida) {
+                                        salida.writeInt(Protocolo.ERROR_OBTENER_DATOS_GRAFICO_INGRESOS_MENSUALES);
+                                        salida.flush();
+                                    }
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Error al obtener datos de gráfico de ingresos: " + e.getMessage());
+                                synchronized (salida) {
+                                    salida.writeInt(Protocolo.ERROR_OBTENER_DATOS_GRAFICO_INGRESOS_MENSUALES);
                                     salida.flush();
                                 }
                             }

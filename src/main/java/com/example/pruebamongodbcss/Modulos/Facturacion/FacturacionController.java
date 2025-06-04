@@ -351,9 +351,21 @@ public class FacturacionController implements Initializable {
      * Configura la sección de estadísticas
      */
     private void configurarEstadisticas() {
-        // Configurar combo de periodos
-        cmbPeriodo.getItems().addAll("2024", "2023", "2022", "2021", "2020");
-        cmbPeriodo.setValue("2024");
+        // Obtener el año actual
+        int anoActual = LocalDate.now().getYear();
+        
+        // Configurar combo de periodos dinámicamente con el año actual y los 4 años anteriores
+        cmbPeriodo.getItems().clear();
+        for (int i = 0; i < 5; i++) {
+            int ano = anoActual - i;
+            cmbPeriodo.getItems().add(String.valueOf(ano));
+        }
+        
+        // Establecer el año actual como valor por defecto
+        cmbPeriodo.setValue(String.valueOf(anoActual));
+        
+        System.out.println("📅 Combo de periodos configurado con años: " + cmbPeriodo.getItems());
+        System.out.println("📅 Año seleccionado por defecto: " + anoActual);
         
         // Cargar estadísticas iniciales
         cargarEstadisticas();
@@ -810,43 +822,129 @@ public class FacturacionController implements Initializable {
     }
     
     /**
-     * Carga las estadísticas del periodo seleccionado
+     * Carga las estadísticas del periodo seleccionado desde el servidor
      */
     private void cargarEstadisticas() {
         String periodo = cmbPeriodo.getValue();
         if (periodo == null) return;
         
-        // Calcular estadísticas de las facturas cargadas
-        double totalFacturado = listaFacturas.stream()
-            .filter(f -> !f.isEsBorrador())
-            .filter(f -> {
-                if (f.getFechaEmision() != null) {
-                    LocalDate fecha = f.getFechaEmision().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                    return fecha.getYear() == Integer.parseInt(periodo);
+        System.out.println("🔄 Cargando estadísticas desde el servidor para el periodo: " + periodo);
+        
+        new Thread(() -> {
+            GestorSocket gestorSocketEstadisticas = null;
+            try {
+                // Crear conexión independiente para estadísticas
+                gestorSocketEstadisticas = GestorSocket.crearConexionIndependiente();
+                
+                if (!gestorSocketEstadisticas.isConectado()) {
+                    Platform.runLater(() -> mostrarError("Error de conexión", "No hay conexión con el servidor para cargar estadísticas"));
+                    return;
                 }
-                return false;
-            })
-            .mapToDouble(ModeloFactura::getTotal)
-            .sum();
-        
-        long numeroFacturas = listaFacturas.stream()
-            .filter(f -> !f.isEsBorrador())
-            .filter(f -> {
-                if (f.getFechaEmision() != null) {
-                    LocalDate fecha = f.getFechaEmision().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                    return fecha.getYear() == Integer.parseInt(periodo);
+                
+                // PASO 1: Cargar estadísticas básicas
+                System.out.println("📊 Solicitando estadísticas básicas...");
+                String peticionEstadisticas = Protocolo.OBTENER_ESTADISTICAS_FACTURACION + "|" + periodo;
+                gestorSocketEstadisticas.enviarPeticion(peticionEstadisticas);
+                
+                ObjectInputStream entrada = gestorSocketEstadisticas.getEntrada();
+                int codigoRespuesta1 = entrada.readInt();
+                
+                if (codigoRespuesta1 == Protocolo.OBTENER_ESTADISTICAS_FACTURACION_RESPONSE) {
+                    com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.EstadisticasFacturacion estadisticas = 
+                        (com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.EstadisticasFacturacion) entrada.readObject();
+                    
+                    // PASO 2: Cargar datos para gráfico de estados
+                    System.out.println("📈 Solicitando datos para gráfico de estados...");
+                    String peticionEstados = Protocolo.OBTENER_DATOS_GRAFICO_ESTADOS_FACTURAS + "|" + periodo;
+                    gestorSocketEstadisticas.enviarPeticion(peticionEstados);
+                    
+                    int codigoRespuesta2 = gestorSocketEstadisticas.getEntrada().readInt();
+                    List<com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.DatoGrafico> datosEstados = null;
+                    
+                    if (codigoRespuesta2 == Protocolo.OBTENER_DATOS_GRAFICO_ESTADOS_FACTURAS_RESPONSE) {
+                        datosEstados = (List<com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.DatoGrafico>) 
+                            gestorSocketEstadisticas.getEntrada().readObject();
+                    }
+                    
+                    // PASO 3: Cargar datos para gráfico de ingresos mensuales
+                    System.out.println("📊 Solicitando datos para gráfico de ingresos...");
+                    String peticionIngresos = Protocolo.OBTENER_DATOS_GRAFICO_INGRESOS_MENSUALES + "|" + periodo;
+                    gestorSocketEstadisticas.enviarPeticion(peticionIngresos);
+                    
+                    int codigoRespuesta3 = gestorSocketEstadisticas.getEntrada().readInt();
+                    List<com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.DatoGrafico> datosIngresos = null;
+                    
+                    if (codigoRespuesta3 == Protocolo.OBTENER_DATOS_GRAFICO_INGRESOS_MENSUALES_RESPONSE) {
+                        datosIngresos = (List<com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.DatoGrafico>) 
+                            gestorSocketEstadisticas.getEntrada().readObject();
+                    }
+                    
+                    // PASO 4: Actualizar la interfaz en el hilo principal
+                    final List<com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.DatoGrafico> datosEstadosFinal = datosEstados;
+                    final List<com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.DatoGrafico> datosIngresosFinal = datosIngresos;
+                    
+                    Platform.runLater(() -> {
+                        // Actualizar labels con las estadísticas básicas
+                        lblTotalFacturas.setText(String.valueOf(estadisticas.getTotalFacturas()));
+                        lblIngresosTotales.setText(formatoMoneda.format(estadisticas.getIngresosTotales()));
+                        lblFacturasPendientes.setText(String.valueOf(estadisticas.getFacturasPendientes()));
+                        lblPromedioFactura.setText(formatoMoneda.format(estadisticas.getPromedioFactura()));
+                        
+                        // Actualizar gráfico de estados (PieChart)
+                        if (datosEstadosFinal != null && !datosEstadosFinal.isEmpty()) {
+                            chartEstados.getData().clear();
+                            for (com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.DatoGrafico dato : datosEstadosFinal) {
+                                javafx.scene.chart.PieChart.Data slice = new javafx.scene.chart.PieChart.Data(
+                                    dato.getEtiqueta(), dato.getValor());
+                                chartEstados.getData().add(slice);
+                            }
+                            System.out.println("✅ Gráfico de estados actualizado con " + datosEstadosFinal.size() + " elementos");
+                        } else {
+                            chartEstados.getData().clear();
+                            System.out.println("ℹ️ No hay datos para el gráfico de estados");
+                        }
+                        
+                        // Actualizar gráfico de ingresos (LineChart)
+                        if (datosIngresosFinal != null && !datosIngresosFinal.isEmpty()) {
+                            chartIngresos.getData().clear();
+                            javafx.scene.chart.XYChart.Series<String, Number> serie = new javafx.scene.chart.XYChart.Series<>();
+                            serie.setName("Ingresos " + periodo);
+                            
+                            for (com.example.pruebamongodbcss.Modulos.Informes.ServicioInformes.DatoGrafico dato : datosIngresosFinal) {
+                                serie.getData().add(new javafx.scene.chart.XYChart.Data<>(dato.getEtiqueta(), dato.getValor()));
+                            }
+                            
+                            chartIngresos.getData().add(serie);
+                            System.out.println("✅ Gráfico de ingresos actualizado con " + datosIngresosFinal.size() + " puntos");
+                        } else {
+                            chartIngresos.getData().clear();
+                            System.out.println("ℹ️ No hay datos para el gráfico de ingresos");
+                        }
+                        
+                        System.out.println("✅ Estadísticas cargadas exitosamente desde el servidor");
+                    });
+                    
+                } else {
+                    System.err.println("❌ Error al obtener estadísticas básicas: " + codigoRespuesta1);
+                    Platform.runLater(() -> mostrarError("Error", "No se pudieron cargar las estadísticas básicas"));
                 }
-                return false;
-            })
-            .count();
-        
-        double promedioFactura = numeroFacturas > 0 ? totalFacturado / numeroFacturas : 0;
-        
-        // Actualizar labels
-        lblTotalFacturas.setText(String.valueOf(numeroFacturas));
-        lblIngresosTotales.setText(formatoMoneda.format(totalFacturado));
-        lblFacturasPendientes.setText(String.valueOf(numeroFacturas - listaFacturas.stream().filter(f -> f.isEsBorrador()).count()));
-        lblPromedioFactura.setText(formatoMoneda.format(promedioFactura));
+                
+            } catch (Exception e) {
+                System.err.println("❌ Error al cargar estadísticas: " + e.getMessage());
+                e.printStackTrace();
+                Platform.runLater(() -> mostrarError("Error", "Error al cargar estadísticas: " + e.getMessage()));
+            } finally {
+                // Cerrar la conexión independiente
+                if (gestorSocketEstadisticas != null) {
+                    try {
+                        gestorSocketEstadisticas.cerrarConexion();
+                        System.out.println("🔌 Conexión independiente para estadísticas cerrada");
+                    } catch (Exception e) {
+                        System.err.println("⚠️ Error al cerrar conexión de estadísticas: " + e.getMessage());
+                    }
+                }
+            }
+        }).start();
     }
     
     /**

@@ -110,7 +110,6 @@ public class FacturaFormController implements Initializable {
     
     // Botones
     @FXML private Button btnGuardarBorrador;
-    @FXML private Button btnGuardar;
     @FXML private Button btnFinalizar;
     @FXML private Button btnCancelar;
     
@@ -473,7 +472,6 @@ public class FacturaFormController implements Initializable {
         btnAgregarServicio.setOnAction(e -> onAgregarServicio());
         btnAgregarMedicamento.setOnAction(e -> onAgregarMedicamento());
         btnGuardarBorrador.setOnAction(e -> onGuardarBorrador());
-        btnGuardar.setOnAction(e -> onGuardar());
         btnFinalizar.setOnAction(e -> onFinalizar());
         btnCancelar.setOnAction(e -> onCancelar());
         
@@ -1617,14 +1615,12 @@ public class FacturaFormController implements Initializable {
         if (soloLectura) {
             // OCULTAR TODOS LOS BOTONES EN MODO SOLO LECTURA
             btnGuardarBorrador.setVisible(false);
-            btnGuardar.setVisible(false);
             btnFinalizar.setVisible(false);
             btnCancelar.setVisible(false); // ← OCULTAR TAMBIÉN EL BOTÓN CERRAR
             System.out.println("🔒 Todos los botones ocultos en modo solo lectura");
         } else {
             // Mostrar todos los botones en modo edición
             btnGuardarBorrador.setVisible(true);
-            btnGuardar.setVisible(true);
             btnFinalizar.setVisible(true);
             btnCancelar.setVisible(true);
             btnCancelar.setText("Cancelar");
@@ -1686,29 +1682,6 @@ public class FacturaFormController implements Initializable {
     @FXML
     private void onGuardarBorrador() {
         guardarBorrador();
-    }
-
-    @FXML
-    private void onGuardar() {
-        try {
-            System.out.println("💾 Guardando factura...");
-            
-            // Actualizar datos del formulario
-            actualizarFacturaDesdeFormulario();
-            
-            // Configurar como factura normal (no borrador)
-            factura.setEsBorrador(false);
-            factura.setEstado(ModeloFactura.EstadoFactura.EMITIDA);
-            factura.setFechaModificacion(new Date());
-            
-            // Enviar al servidor
-            enviarFacturaAlServidor();
-            
-        } catch (Exception e) {
-            System.err.println("❌ Error al guardar factura: " + e.getMessage());
-            e.printStackTrace();
-            mostrarError("Error", "No se pudo guardar la factura: " + e.getMessage());
-        }
     }
 
     @FXML
