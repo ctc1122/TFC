@@ -2959,16 +2959,67 @@ public class ClinicaController implements Initializable {
      */
     private void verCitasPaciente(ModeloPaciente paciente) {
         if (paciente != null) {
-            // Navegar a la pestaña de citas
-            //tabPane.getSelectionModel().select(tabCitas);
-            
-            // Filtrar citas por paciente (implementar esta función en CitasController)
-            // Mostrar mensaje si el controlador no está disponible
-            mostrarMensaje("Citas del paciente", "Filtrar citas", 
-                    "Mostrando citas para el paciente: " + paciente.getNombre());
+            try {
+                // Buscar la ventana principal de la aplicación
+                javafx.stage.Window ventanaPrincipal = mainPane.getScene().getWindow();
+                javafx.scene.Scene scene = ventanaPrincipal.getScene();
+                
+                if (scene != null && scene.getRoot() instanceof BorderPane) {
+                    BorderPane mainRoot = (BorderPane) scene.getRoot();
+                    
+                    // Buscar el BorderPane central donde se cargan los módulos
+                    BorderPane centerPane = (BorderPane) mainRoot.getCenter();
+                    if (centerPane != null) {
+                        // Cargar directamente el módulo de citas (no el standalone)
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Citas/citas-view.fxml"));
+                        Parent citasView = loader.load();
+                        
+                        // Obtener directamente el CitasController
+                        com.example.pruebamongodbcss.Modulos.Clinica.Citas.CitasController citasController = loader.getController();
+                        
+                        // Reemplazar el contenido central con el módulo de citas
+                        centerPane.setCenter(citasView);
+                        
+                        // Actualizar el título si existe
+                        javafx.scene.control.Label lblClinica = (javafx.scene.control.Label) mainRoot.lookup("#lblClinica");
+                        if (lblClinica != null) {
+                            lblClinica.setText("Gestión de Citas - " + paciente.getNombre());
+                        }
+                        
+                        // Filtrar por paciente después de que la vista se haya cargado completamente
+                        if (citasController != null) {
+                            Platform.runLater(() -> {
+                                try {
+                                    System.out.println("🔍 Filtrando citas para paciente: " + paciente.getNombre() + " (ID: " + paciente.getId() + ")");
+                                    citasController.filtrarPorPaciente(paciente.getId());
+                                    mostrarMensaje("Filtro aplicado", 
+                                            "Citas de " + paciente.getNombre(), 
+                                            "Se han filtrado las citas para mostrar solo las de: " + paciente.getNombre());
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                    System.err.println("❌ Error al filtrar por paciente: " + e.getMessage());
+                                    mostrarAlerta("Error al filtrar", 
+                                            "No se pudo filtrar automáticamente", 
+                                            "Se ha navegado al módulo de citas, pero no se pudo filtrar automáticamente por el paciente.\n" +
+                                            "Busque manualmente las citas de: " + paciente.getNombre());
+                                }
+                            });
+                        } else {
+                            mostrarAlerta("Error", 
+                                    "Controlador no encontrado", 
+                                    "Se cargó el módulo de citas pero no se pudo acceder al controlador para filtrar.");
+                        }
+                    }
+                }
+                
+            } catch (Exception e) {
+                e.printStackTrace();
+                mostrarAlerta("Error", "Error al navegar a citas", 
+                        "No se pudo navegar al módulo de citas: " + e.getMessage());
+            }
         }
     }
-
+    
     /**
      * Muestra las mascotas de un propietario
      */
