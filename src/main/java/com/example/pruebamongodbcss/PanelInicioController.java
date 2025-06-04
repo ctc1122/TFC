@@ -547,7 +547,7 @@ public class PanelInicioController implements Initializable {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/InicioSesion/PruebaDoblePanel.fxml"));
             Parent root = loader.load();
             Scene scene = new Scene(root, 900, 450);
-            Stage currentStage = (Stage) btnSalir.getScene().getWindow();
+            Stage currentStage = (Stage) this.root.getScene().getWindow();
             
             // Crear un nuevo Stage sin decoración
             Stage newStage = new Stage();
