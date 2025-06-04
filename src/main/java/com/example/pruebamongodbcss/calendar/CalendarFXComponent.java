@@ -232,15 +232,22 @@ public class CalendarFXComponent extends BorderPane {
                 public void run() {
                     while (true) {
                         Platform.runLater(() -> {
-                            calendarView.setToday(LocalDate.now());
-                            calendarView.setTime(LocalTime.now());
+                            LocalDate today = LocalDate.now();
+                            LocalTime now = LocalTime.now();
+                            
+                            // Solo actualizar si ha cambiado la fecha o si son los primeros segundos del minuto
+                            if (!today.equals(calendarView.getToday()) || now.getSecond() < 5) {
+                                calendarView.setToday(today);
+                                calendarView.setTime(now);
+                            }
                         });
                         
                         try {
-                            // Actualizar cada 10 segundos
-                            sleep(10000);
+                            // OPTIMIZACIÓN: Aumentar intervalo de 10s a 60s
+                            sleep(60000); // Actualizar cada minuto en lugar de cada 10 segundos
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            System.out.println("Hilo de actualización de tiempo interrumpido");
+                            break;
                         }
                     }
                 }
@@ -249,18 +256,18 @@ public class CalendarFXComponent extends BorderPane {
             updateTimeThread.setDaemon(true);
             updateTimeThread.start();
             
-            // Hilo para refrescar el calendario cada 2 minutos (sincronización automática)
+            // OPTIMIZACIÓN: Reducir frecuencia de refresh del calendario
             Thread refreshThread = new Thread("Calendar: Auto Refresh Thread") {
                 @Override
                 public void run() {
                     while (true) {
                         try {
-                            // Esperar 2 minutos antes del siguiente refresh
-                            sleep(120000); // 2 minutos
+                            // OPTIMIZACIÓN: Aumentar intervalo de 2 min a 5 min
+                            sleep(300000); // 5 minutos en lugar de 2 minutos
                             
                             // Refrescar el calendario en el hilo de JavaFX
                             Platform.runLater(() -> {
-                                System.out.println("🔄 Refresh automático del calendario cada 2 minutos...");
+                                System.out.println("🔄 Refresh automático del calendario cada 5 minutos...");
                                 refreshCalendarFromDatabase();
                                 System.out.println("✅ Refresh automático completado");
                             });
@@ -286,24 +293,20 @@ public class CalendarFXComponent extends BorderPane {
             // Añadir el calendario a este BorderPane
             setCenter(calendarView);
             
-            // Buscar y modificar el botón de impresión una vez que todo esté configurado
-            Platform.runLater(() -> {
-                // Programar múltiples intentos para asegurar que capturamos el botón
-                for (int i = 0; i < 5; i++) {
-                    int delay = i * 1000;
-                    new Thread(() -> {
-                        try {
-                            Thread.sleep(delay);
-                            Platform.runLater(() -> {
-                                buscarYCambiarColorBoton(calendarView);
-                                aplicarTextoNegro(calendarView);
-                            });
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }).start();
+            // OPTIMIZACIÓN: Reducir intentos de búsqueda de botón de impresión
+            new Thread(() -> {
+                for (int i = 0; i < 5; i++) {  // Reducir de 10 a 5 intentos
+                    try {
+                        Thread.sleep(1000 * (i + 1));  // Mantener incremento gradual
+                        Platform.runLater(() -> {
+                            buscarYCambiarColorBoton(calendarView);
+                            aplicarTextoNegro(calendarView);
+                        });
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
-            });
+            }).start();
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -1659,9 +1662,9 @@ public class CalendarFXComponent extends BorderPane {
     private void setupCustomTooltips() {
         System.out.println("Iniciando configuración de tooltips personalizados...");
         
-        // Programar múltiples intentos para asegurar que capturamos todas las entradas
-        for (int i = 0; i < 5; i++) {
-            final int delay = 1000 * (i + 1); // Mayores retrasos para asegurar que el calendario esté completamente renderizado
+        // OPTIMIZACIÓN: Reducir intentos y usar delays más eficientes
+        for (int i = 0; i < 3; i++) { // Reducir de 5 a 3 intentos
+            final int delay = 2000 * (i + 1); // Usar delays más espaciados: 2s, 4s, 6s
             new Thread(() -> {
                 try {
                     Thread.sleep(delay);

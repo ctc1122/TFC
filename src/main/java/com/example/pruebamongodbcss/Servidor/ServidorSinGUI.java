@@ -49,7 +49,7 @@ public class ServidorSinGUI {
                             if (citasActualizadas > 0) {
                                 System.out.println("🔄 Servidor: " + citasActualizadas + " citas actualizadas automáticamente");
                             }
-                            Thread.sleep(600000); // 10 minutos
+                            Thread.sleep(900000); // 15 minutos en lugar de 10 minutos
                         } catch (InterruptedException e) {
                             System.out.println("Hilo de gestión automática interrumpido");
                             break;

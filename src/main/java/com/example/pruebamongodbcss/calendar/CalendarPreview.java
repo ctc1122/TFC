@@ -58,13 +58,22 @@ public class CalendarPreview extends BorderPane {
                 public void run() {
                     while (true) {
                         Platform.runLater(() -> {
-                            calendarFXComponent.getCalendarView().setToday(LocalDate.now());
-                            calendarFXComponent.getCalendarView().setTime(LocalTime.now());
+                            LocalDate today = LocalDate.now();
+                            LocalTime now = LocalTime.now();
+                            
+                            // OPTIMIZACIÓN: Solo actualizar si realmente ha cambiado
+                            if (!today.equals(calendarFXComponent.getCalendarView().getToday()) || 
+                                Math.abs(now.getMinute() - calendarFXComponent.getCalendarView().getTime().getMinute()) >= 1) {
+                                calendarFXComponent.getCalendarView().setToday(today);
+                                calendarFXComponent.getCalendarView().setTime(now);
+                            }
                         });
                         try {
-                            sleep(60000); // Actualiza cada minuto
+                            // OPTIMIZACIÓN: Aumentar intervalo de 1 min a 5 min para preview
+                            sleep(300000); // Actualiza cada 5 minutos en lugar de cada minuto
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            System.out.println("Hilo de actualización de tiempo preview interrumpido");
+                            break;
                         }
                     }
                 }
