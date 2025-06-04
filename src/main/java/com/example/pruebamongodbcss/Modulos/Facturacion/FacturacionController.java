@@ -898,6 +898,18 @@ public class FacturacionController implements Initializable {
                                     dato.getEtiqueta(), dato.getValor());
                                 chartEstados.getData().add(slice);
                             }
+                            
+                            // Agregar tooltips al gráfico circular
+                            Platform.runLater(() -> {
+                                chartEstados.getData().forEach(data -> {
+                                    javafx.scene.control.Tooltip tooltip = new javafx.scene.control.Tooltip(
+                                        data.getName() + ": " + (int)data.getPieValue() + " facturas"
+                                    );
+                                    tooltip.setStyle("-fx-font-size: 12px; -fx-background-color: rgba(0,0,0,0.8); -fx-text-fill: white;");
+                                    javafx.scene.control.Tooltip.install(data.getNode(), tooltip);
+                                });
+                            });
+                            
                             System.out.println("✅ Gráfico de estados actualizado con " + datosEstadosFinal.size() + " elementos");
                         } else {
                             chartEstados.getData().clear();
@@ -915,6 +927,18 @@ public class FacturacionController implements Initializable {
                             }
                             
                             chartIngresos.getData().add(serie);
+                            
+                            // Agregar tooltips al gráfico de líneas
+                            Platform.runLater(() -> {
+                                for (javafx.scene.chart.XYChart.Data<String, Number> data : serie.getData()) {
+                                    javafx.scene.control.Tooltip tooltip = new javafx.scene.control.Tooltip(
+                                        data.getXValue() + ": " + formatoMoneda.format(data.getYValue())
+                                    );
+                                    tooltip.setStyle("-fx-font-size: 12px; -fx-background-color: rgba(0,0,0,0.8); -fx-text-fill: white;");
+                                    javafx.scene.control.Tooltip.install(data.getNode(), tooltip);
+                                }
+                            });
+                            
                             System.out.println("✅ Gráfico de ingresos actualizado con " + datosIngresosFinal.size() + " puntos");
                         } else {
                             chartIngresos.getData().clear();

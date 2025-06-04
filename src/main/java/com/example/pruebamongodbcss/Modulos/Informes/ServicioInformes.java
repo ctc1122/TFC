@@ -1783,7 +1783,7 @@ public class ServicioInformes {
             Date fechaInicio = Date.from(inicioAno.atStartOfDay(ZoneId.systemDefault()).toInstant());
             Date fechaFin = Date.from(finAno.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
             
-            // Filtro para facturas del año especificado
+            // Filtro para facturas del año especificado (TODAS las facturas)
             Bson filtroAno = Filters.and(
                 Filters.gte("fechaEmision", fechaInicio),
                 Filters.lt("fechaEmision", fechaFin)
@@ -1794,29 +1794,29 @@ public class ServicioInformes {
             // Variables para cálculos
             double ingresosTotales = 0.0;
             int totalFacturas = 0;
-            int facturasPendientes = 0;
+            int facturasPendientes = 0; // Solo BORRADOR
             
             for (Document factura : facturas) {
-                // Contar solo facturas no borrador
+                totalFacturas++; // Contar TODAS las facturas
+                
+                // Para ingresos, solo contar facturas finalizadas (no borradores)
                 Boolean esBorrador = factura.getBoolean("esBorrador");
                 if (esBorrador == null || !esBorrador) {
-                    totalFacturas++;
-                    
                     Double total = factura.getDouble("total");
                     if (total != null) {
                         ingresosTotales += total;
                     }
-                    
-                    // Contar facturas pendientes (EMITIDA o sin estado específico)
-                    String estado = factura.getString("estado");
-                    if ("EMITIDA".equals(estado) || "VENCIDA".equals(estado)) {
-                        facturasPendientes++;
-                    }
+                }
+                
+                // Facturas pendientes = solo BORRADOR
+                if (esBorrador != null && esBorrador) {
+                    facturasPendientes++;
                 }
             }
             
-            // Calcular promedio
-            double promedioFactura = totalFacturas > 0 ? ingresosTotales / totalFacturas : 0.0;
+            // Calcular promedio solo sobre facturas finalizadas
+            int facturasFinalizadas = totalFacturas - facturasPendientes;
+            double promedioFactura = facturasFinalizadas > 0 ? ingresosTotales / facturasFinalizadas : 0.0;
             
             // Establecer valores
             estadisticas.setTotalFacturas(totalFacturas);
@@ -1834,6 +1834,7 @@ public class ServicioInformes {
     
     /**
      * Obtiene datos para el gráfico de estados de facturas (PieChart)
+     * Incluye TODOS los estados, incluyendo BORRADOR
      */
     public List<DatoGrafico> obtenerDatosGraficoEstadosFacturas(String periodo) {
         List<DatoGrafico> datos = new ArrayList<>();
@@ -1847,17 +1848,17 @@ public class ServicioInformes {
             Date fechaInicio = Date.from(inicioAno.atStartOfDay(ZoneId.systemDefault()).toInstant());
             Date fechaFin = Date.from(finAno.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
             
-            // Filtro para facturas del año especificado (solo facturas no borrador)
+            // Filtro para facturas del año especificado (TODAS las facturas)
             Bson filtroAno = Filters.and(
                 Filters.gte("fechaEmision", fechaInicio),
-                Filters.lt("fechaEmision", fechaFin),
-                Filters.ne("esBorrador", true)  // Excluir borradores
+                Filters.lt("fechaEmision", fechaFin)
             );
             
             List<Document> facturas = facturasCollection.find(filtroAno).into(new ArrayList<>());
             
-            // Contar por estado
+            // Contar por estado incluyendo BORRADOR
             Map<String, Integer> conteoEstados = new HashMap<>();
+            conteoEstados.put("BORRADOR", 0);
             conteoEstados.put("EMITIDA", 0);
             conteoEstados.put("PAGADA", 0);
             conteoEstados.put("VENCIDA", 0);
@@ -1865,9 +1866,18 @@ public class ServicioInformes {
             conteoEstados.put("SIN_ESTADO", 0);
             
             for (Document factura : facturas) {
-                String estado = factura.getString("estado");
-                if (estado == null || estado.isEmpty()) {
-                    estado = "SIN_ESTADO";
+                Boolean esBorrador = factura.getBoolean("esBorrador");
+                String estado;
+                
+                // Si es borrador, clasificar como BORRADOR
+                if (esBorrador != null && esBorrador) {
+                    estado = "BORRADOR";
+                } else {
+                    // Si no es borrador, usar el estado normal
+                    estado = factura.getString("estado");
+                    if (estado == null || estado.isEmpty()) {
+                        estado = "SIN_ESTADO";
+                    }
                 }
                 
                 conteoEstados.put(estado, conteoEstados.getOrDefault(estado, 0) + 1);
@@ -1944,6 +1954,7 @@ public class ServicioInformes {
      */
     private String formatearEtiquetaEstado(String estado) {
         switch (estado) {
+            case "BORRADOR": return "Borrador";
             case "EMITIDA": return "Emitida";
             case "PAGADA": return "Pagada";
             case "VENCIDA": return "Vencida";
