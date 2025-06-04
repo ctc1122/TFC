@@ -6,11 +6,14 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 public class GestorSocket {
-   // Base ngrok (puerto dinámico)
     private static final String SERVER_HOST_SERVEO = "serveo.net";
     private static final String SERVER_HOST_LOCAL = "localhost";
     private static final int SERVER_PORT_SERVEO = 50002;  // Puerto serveo y localhost
    
+    // Variables estáticas para recordar la configuración exitosa
+    private static String servidorExitoso = null;
+    private static boolean configuracionDeterminada = false;
+    
     private static GestorSocket instance;
     private Socket socket;
     private ObjectOutputStream salida;
@@ -43,30 +46,91 @@ public class GestorSocket {
     }
 
     private void conectarAlServidor() {
+        // Si ya sabemos qué configuración funciona, usarla directamente
+        if (configuracionDeterminada && servidorExitoso != null) {
+            conectarConConfiguracionConocida();
+            return;
+        }
         
-        // Segundo intento: serveo.net (túnel SSH)
+        // Primera vez: determinar qué configuración funciona
+        determinarConfiguracionExitosa();
+    }
+    
+    private void conectarConConfiguracionConocida() {
+        try {
+            System.out.println("🔄 Conectando usando configuración conocida: " + servidorExitoso);
+            
+            if (servidorExitoso.equals("SERVEO")) {
+                socket = new Socket(SERVER_HOST_SERVEO, SERVER_PORT_SERVEO);
+                System.out.println("✅ Reconectado a Serveo.net correctamente.");
+            } else if (servidorExitoso.equals("LOCAL")) {
+                socket = new Socket(SERVER_HOST_LOCAL, SERVER_PORT_SERVEO);
+                System.out.println("✅ Reconectado al servidor local correctamente.");
+            }
+            
+            configurarSocket();
+            conectado = true;
+            
+        } catch (IOException e) {
+            System.err.println("❌ Error al reconectar con configuración conocida: " + e.getMessage());
+            // Si falla la configuración conocida, volver a determinarla
+            configuracionDeterminada = false;
+            servidorExitoso = null;
+            determinarConfiguracionExitosa();
+        }
+    }
+    
+    private void determinarConfiguracionExitosa() {
+        System.out.println("🔍 Determinando configuración de servidor por primera vez...");
+        
+        // Primer intento: serveo.net (túnel SSH)
         try {
             System.out.println("🌐 Intentando conectar a Serveo.net: " + SERVER_HOST_SERVEO + ":" + SERVER_PORT_SERVEO);
             socket = new Socket(SERVER_HOST_SERVEO, SERVER_PORT_SERVEO);
             configurarSocket();
             conectado = true;
-            System.out.println("✅ Conectado a Serveo.net correctamente.");
+            servidorExitoso = "SERVEO";
+            configuracionDeterminada = true;
+            System.out.println("✅ Conectado a Serveo.net correctamente. Configuración guardada.");
             return;
         } catch (IOException e) {
             System.out.println("⚠️ No se pudo conectar a Serveo.net: " + e.getMessage());
         }
         
-        // Tercer intento (fallback final): conexión local
+        // Segundo intento: conexión local
         try {
             System.out.println("🏠 Intentando conectar al servidor local: " + SERVER_HOST_LOCAL + ":" + SERVER_PORT_SERVEO);
             socket = new Socket(SERVER_HOST_LOCAL, SERVER_PORT_SERVEO);
             configurarSocket();
             conectado = true;
-            System.out.println("✅ Conectado al servidor local correctamente.");
+            servidorExitoso = "LOCAL";
+            configuracionDeterminada = true;
+            System.out.println("✅ Conectado al servidor local correctamente. Configuración guardada.");
         } catch (IOException e) {
             System.err.println("❌ Error al conectar con todos los servidores: " + e.getMessage());
             conectado = false;
+            configuracionDeterminada = false;
+            servidorExitoso = null;
         }
+    }
+    
+    /**
+     * Método para forzar la redetección del servidor (útil si cambia la configuración de red)
+     */
+    public static void resetearConfiguracion() {
+        configuracionDeterminada = false;
+        servidorExitoso = null;
+        System.out.println("🔄 Configuración de servidor reseteada. Se volverá a detectar en la próxima conexión.");
+    }
+    
+    /**
+     * Método para conocer qué configuración está usando actualmente
+     */
+    public static String getConfiguracionActual() {
+        if (configuracionDeterminada && servidorExitoso != null) {
+            return servidorExitoso.equals("SERVEO") ? "Serveo.net" : "Servidor Local";
+        }
+        return "No determinada";
     }
     
     private void configurarSocket() throws IOException {
@@ -124,7 +188,6 @@ public class GestorSocket {
         }
         
     }
-
 
     public ObjectOutputStream getSalida() {
         return salida;
