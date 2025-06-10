@@ -117,6 +117,8 @@ public class ClinicaController implements Initializable {
     @FXML private Button btnEliminarDiagnostico;
     @FXML private ComboBox<ModeloPaciente> cmbPacientesDiagnostico;
     @FXML private Button btnLimpiarFiltro;
+    @FXML private Button btnExportarPDFDiagnostico;
+    @FXML private Button btnExportarCSVDiagnostico;
     
     // Servicio clínico
     //private ServicioClinica servicioClinica;
@@ -3118,7 +3120,7 @@ public class ClinicaController implements Initializable {
         colDiagnostico.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDiagnostico()));
         colVeterinario.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getVeterinario()));
         
-        // Configurar columna de acciones con botones "Ver"
+        // Configurar columna de acciones con botón "Ver"
         colAcciones.setCellFactory(col -> new TableCell<ModeloDiagnostico, Void>() {
             private final Button btnVer = new Button("Ver");
             
@@ -3152,6 +3154,17 @@ public class ClinicaController implements Initializable {
         tablaDiagnosticos.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2 && tablaDiagnosticos.getSelectionModel().getSelectedItem() != null) {
                 abrirDetallesDiagnostico(tablaDiagnosticos.getSelectionModel().getSelectedItem());
+            }
+        });
+        
+        // Configurar listener para habilitar/deshabilitar botones de exportación
+        tablaDiagnosticos.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            boolean haySeleccion = newSelection != null;
+            if (btnExportarPDFDiagnostico != null) {
+                btnExportarPDFDiagnostico.setDisable(!haySeleccion);
+            }
+            if (btnExportarCSVDiagnostico != null) {
+                btnExportarCSVDiagnostico.setDisable(!haySeleccion);
             }
         });
         
@@ -3218,6 +3231,34 @@ public class ClinicaController implements Initializable {
     private void onLimpiarFiltroDiagnostico() {
         cmbPacientesDiagnostico.getSelectionModel().clearSelection();
         buscarDiagnosticos();
+    }
+    
+    /**
+     * Exporta el diagnóstico seleccionado a PDF
+     */
+    @FXML
+    private void onExportarPDFDiagnostico() {
+        ModeloDiagnostico diagnosticoSeleccionado = tablaDiagnosticos.getSelectionModel().getSelectedItem();
+        if (diagnosticoSeleccionado != null) {
+            exportarDiagnosticoPDF(diagnosticoSeleccionado);
+        } else {
+            mostrarAlerta("Selección requerida", "No hay diagnóstico seleccionado",
+                    "Por favor, seleccione un diagnóstico de la tabla para exportar a PDF.");
+        }
+    }
+    
+    /**
+     * Exporta el diagnóstico seleccionado a CSV
+     */
+    @FXML
+    private void onExportarCSVDiagnostico() {
+        ModeloDiagnostico diagnosticoSeleccionado = tablaDiagnosticos.getSelectionModel().getSelectedItem();
+        if (diagnosticoSeleccionado != null) {
+            exportarDiagnosticoCSV(diagnosticoSeleccionado);
+        } else {
+            mostrarAlerta("Selección requerida", "No hay diagnóstico seleccionado",
+                    "Por favor, seleccione un diagnóstico de la tabla para exportar a CSV.");
+        }
     }
     
     /**
@@ -3543,5 +3584,199 @@ public class ClinicaController implements Initializable {
                 System.err.println("❌ Error al refrescar tabla de propietarios: " + e.getMessage());
             }
         });
+    }
+    
+    /**
+     * Exporta un diagnóstico específico a PDF usando el DiagnosticoController
+     */
+    private void exportarDiagnosticoPDF(ModeloDiagnostico diagnostico) {
+        try {
+            // Crear una instancia del DiagnosticoController para usar sus métodos de exportación
+            com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico.DiagnosticoController diagController = 
+                new com.example.pruebamongodbcss.Modulos.Clinica.Diagnostico.DiagnosticoController();
+            
+            // Buscar el paciente asociado al diagnóstico
+            ModeloPaciente paciente = null;
+            for (ModeloPaciente p : pacientesObservable) {
+                if (p.getId().equals(diagnostico.getPacienteId())) {
+                    paciente = p;
+                    break;
+                }
+            }
+            
+            if (paciente == null) {
+                // Si no está en la lista observable, buscarlo en el servidor
+                try {
+                    gestorPeticiones.enviarPeticion(Protocolo.OBTENERPACIENTE_POR_ID + Protocolo.SEPARADOR_CODIGO + diagnostico.getPacienteId());
+                    ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                    if (entrada.readInt() == Protocolo.OBTENERPACIENTE_POR_ID_RESPONSE) {
+                        paciente = (ModeloPaciente) entrada.readObject();
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+            
+            if (paciente == null) {
+                mostrarAlerta("Error", "Paciente no encontrado", 
+                        "No se pudo encontrar el paciente asociado a este diagnóstico.");
+                return;
+            }
+            
+            // Buscar la cita asociada si existe
+            ModeloCita cita = null;
+            if (diagnostico.getCitaId() != null) {
+                try {
+                    gestorPeticiones.enviarPeticion(Protocolo.BUSCAR_CITAS_POR_PACIENTE + Protocolo.SEPARADOR_CODIGO + paciente.getId());
+                    ObjectInputStream entradaCitas = gestorPeticiones.getEntrada();
+                    if (entradaCitas.readInt() == Protocolo.BUSCAR_CITAS_POR_PACIENTE_RESPONSE) {
+                        List<ModeloCita> citas = (List<ModeloCita>) entradaCitas.readObject();
+                        cita = citas.stream()
+                            .filter(c -> c.getId().equals(diagnostico.getCitaId()))
+                            .findFirst()
+                            .orElse(null);
+                    }
+                } catch (Exception e) {
+                    System.err.println("No se pudieron obtener las citas: " + e.getMessage());
+                }
+            }
+            
+            // Llamar al método de exportación del DiagnosticoController
+            diagController.exportarPDFDesdeLista(diagnostico, paciente, cita);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al exportar PDF", 
+                    "Ha ocurrido un error al exportar el diagnóstico a PDF: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Exporta un diagnóstico específico a CSV
+     */
+    private void exportarDiagnosticoCSV(ModeloDiagnostico diagnostico) {
+                 try {
+             // Buscar el paciente asociado al diagnóstico
+             ModeloPaciente pacienteTemporal = null;
+             for (ModeloPaciente p : pacientesObservable) {
+                 if (p.getId().equals(diagnostico.getPacienteId())) {
+                     pacienteTemporal = p;
+                     break;
+                 }
+             }
+             
+             if (pacienteTemporal == null) {
+                 // Si no está en la lista observable, buscarlo en el servidor
+                 try {
+                     gestorPeticiones.enviarPeticion(Protocolo.OBTENERPACIENTE_POR_ID + Protocolo.SEPARADOR_CODIGO + diagnostico.getPacienteId());
+                     ObjectInputStream entrada = gestorPeticiones.getEntrada();
+                     if (entrada.readInt() == Protocolo.OBTENERPACIENTE_POR_ID_RESPONSE) {
+                         pacienteTemporal = (ModeloPaciente) entrada.readObject();
+                     }
+                 } catch (IOException | ClassNotFoundException e) {
+                     e.printStackTrace();
+                 }
+             }
+             
+             final ModeloPaciente paciente = pacienteTemporal; // Hacer final para usar en lambda
+             
+             if (paciente == null) {
+                 mostrarAlerta("Error", "Paciente no encontrado", 
+                         "No se pudo encontrar el paciente asociado a este diagnóstico.");
+                 return;
+             }
+             
+             // Crear el FileChooser para guardar el CSV
+             FileChooser fileChooser = new FileChooser();
+             fileChooser.setTitle("Guardar Diagnóstico CSV");
+             fileChooser.getExtensionFilters().add(
+                 new FileChooser.ExtensionFilter("Archivos CSV", "*.csv")
+             );
+             fileChooser.setInitialFileName("diagnostico_" + paciente.getNombre().replaceAll("[^a-zA-Z0-9]", "_") + ".csv");
+             
+             // Obtener ventana actual para mostrar el diálogo
+             Stage stage = (Stage) mainPane.getScene().getWindow();
+             File file = fileChooser.showSaveDialog(stage);
+             
+             if (file != null) {
+                 // Ejecutar en un hilo separado para no bloquear la interfaz
+                 new Thread(() -> {
+                     try (FileWriter writer = new FileWriter(file)) {
+                         // Escribir encabezados CSV
+                         writer.append("Paciente,Especie,Raza,Fecha,Motivo,Diagnóstico,Veterinario,Anamnesis,Examen Físico,Tratamiento,Observaciones,Próxima Visita\n");
+                         
+                         // Formatear fecha
+                         String fecha = diagnostico.getFecha() != null ? 
+                                 formatoFecha.format(diagnostico.getFecha()) : "No especificada";
+                         
+                         // Formatear próxima visita
+                         String proximaVisita = diagnostico.getProximaVisita() != null ? 
+                                 formatoFecha.format(diagnostico.getProximaVisita()) : "No programada";
+                         
+                         // Escapar comas y comillas en los campos de texto
+                         String nombre = escaparCSV(paciente.getNombre());
+                         String especie = escaparCSV(paciente.getEspecie());
+                         String raza = escaparCSV(paciente.getRaza());
+                         String motivo = escaparCSV(diagnostico.getMotivo());
+                         String diagnosticoTexto = escaparCSV(diagnostico.getDiagnostico());
+                         String veterinario = escaparCSV(diagnostico.getVeterinario());
+                         String anamnesis = escaparCSV(diagnostico.getAnamnesis());
+                         String examenFisico = escaparCSV(diagnostico.getExamenFisico());
+                         String tratamiento = escaparCSV(diagnostico.getTratamiento());
+                         String observaciones = escaparCSV(diagnostico.getObservaciones());
+                         
+                         // Escribir línea de datos
+                         writer.append(nombre).append(",")
+                               .append(especie).append(",")
+                               .append(raza).append(",")
+                               .append(fecha).append(",")
+                               .append(motivo).append(",")
+                               .append(diagnosticoTexto).append(",")
+                               .append(veterinario).append(",")
+                               .append(anamnesis).append(",")
+                               .append(examenFisico).append(",")
+                               .append(tratamiento).append(",")
+                               .append(observaciones).append(",")
+                               .append(proximaVisita).append("\n");
+                         
+                         Platform.runLater(() -> {
+                             mostrarMensaje("Exportación exitosa", "CSV generado", 
+                                     "El diagnóstico ha sido exportado correctamente a CSV:\n" + file.getAbsolutePath());
+                         });
+                         
+                     } catch (IOException e) {
+                         e.printStackTrace();
+                         Platform.runLater(() -> {
+                             mostrarAlerta("Error al exportar", "Error de escritura", 
+                                     "No se pudo exportar el diagnóstico a CSV. Error: " + e.getMessage());
+                         });
+                     }
+                 }).start();
+             }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta("Error", "Error al exportar CSV", 
+                    "Ha ocurrido un error al exportar el diagnóstico a CSV: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Escapa caracteres especiales para CSV
+     */
+    private String escaparCSV(String texto) {
+        if (texto == null) {
+            return "";
+        }
+        
+        // Si contiene comas, comillas o saltos de línea, envolverlo en comillas
+        if (texto.contains(",") || texto.contains("\"") || texto.contains("\n") || texto.contains("\r")) {
+            // Escapar comillas dobles duplicándolas
+            texto = texto.replace("\"", "\"\"");
+            // Envolver en comillas
+            return "\"" + texto + "\"";
+        }
+        
+        return texto;
     }
 } 

@@ -191,6 +191,8 @@
                               <children>
                                  <Button fx:id="btnEliminarDiagnostico" onAction="#onEliminarDiagnostico" styleClass="btn-danger" text="Eliminar" />
                                  <Button fx:id="btnLimpiarFiltro" onAction="#onLimpiarFiltroDiagnostico" styleClass="btn-secondary" text="Actualizar" />
+                                 <Button fx:id="btnExportarPDFDiagnostico" onAction="#onExportarPDFDiagnostico" styleClass="btn-danger" text="Exportar PDF" disable="true" />
+                                 <Button fx:id="btnExportarCSVDiagnostico" onAction="#onExportarCSVDiagnostico" styleClass="btn-success" text="Exportar CSV" disable="true" />
                               </children>
                               <VBox.margin>
                                  <Insets left="10.0" right="10.0" />
