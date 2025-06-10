@@ -1010,11 +1010,9 @@ public class CalendarFXComponent extends BorderPane {
      */
     private void showCitaFormulario(CalendarEvent event, Entry<?> entry) {
         try {
-            // Si la entrada ya está en un calendario, eliminarla temporalmente
+            // Si la entrada ya está en un calendario, recordar el calendario original
             Calendar originalCalendar = entry.getCalendar();
-            if (originalCalendar != null) {
-                originalCalendar.removeEntry(entry);
-            }
+            final boolean[] entrySaved = {false}; // Flag para saber si se guardó
             
             // Cargar el formulario de citas desde la ubicación correcta
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/Clinica/Citas/cita-formulario.fxml"));
@@ -1103,6 +1101,7 @@ public class CalendarFXComponent extends BorderPane {
             
             // Configurar callback para refrescar el calendario
             controller.setCitaGuardadaCallback(() -> {
+                entrySaved[0] = true; // Marcar como guardado
                 System.out.println("🔄 Cita guardada, refrescando calendario inmediatamente...");
                 Platform.runLater(() -> {
                     refreshCalendarFromDatabase();
@@ -1116,6 +1115,28 @@ public class CalendarFXComponent extends BorderPane {
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setScene(new Scene(root));
             stage.showAndWait();
+            
+            // Si se canceló y no se guardó, eliminar la entrada del calendario visual
+            if (!entrySaved[0] && originalCalendar != null) {
+                // Verificar si la entrada aún existe en el calendario antes de eliminarla
+                boolean entryExists = false;
+                Map<LocalDate, List<Entry<?>>> entriesMap = originalCalendar.findEntries(
+                    entry.getStartDate().minusDays(1), 
+                    entry.getEndDate().plusDays(1), 
+                    ZoneId.systemDefault()
+                );
+                for (List<Entry<?>> entries : entriesMap.values()) {
+                    if (entries.contains(entry)) {
+                        entryExists = true;
+                        break;
+                    }
+                }
+                
+                if (entryExists) {
+                    System.out.println("🗑️ Cita cancelada, eliminando entrada temporal del calendario");
+                    originalCalendar.removeEntry(entry);
+                }
+            }
             
             // Refrescar el calendario después de cerrar
             refreshCalendarFromDatabase();
@@ -1131,11 +1152,9 @@ public class CalendarFXComponent extends BorderPane {
      */
     private void showEventoFormulario(CalendarEvent event, Entry<?> entry) {
         try {
-            // Si la entrada ya está en un calendario, eliminarla temporalmente
+            // Si la entrada ya está en un calendario, recordar el calendario original
             Calendar originalCalendar = entry.getCalendar();
-            if (originalCalendar != null) {
-                originalCalendar.removeEntry(entry);
-            }
+            final boolean[] entrySaved = {false}; // Flag para saber si se guardó
             
             // Cargar el formulario de eventos
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/pruebamongodbcss/calendar/evento-formulario.fxml"));
@@ -1144,11 +1163,12 @@ public class CalendarFXComponent extends BorderPane {
             // Obtener el controlador
             EventoFormularioController controller = loader.getController();
             
-            // Configurar el controlador
-            controller.setServicio(null);
+            // Configurar el controlador con GestorSocket en lugar de CalendarService
+            controller.setGestorSocket(gestorSocket);
             
             // Configurar callback para refrescar el calendario
             controller.setEventoGuardadoCallback(() -> {
+                entrySaved[0] = true; // Marcar como guardado
                 System.out.println("🔄 Evento guardado, refrescando calendario inmediatamente...");
                 Platform.runLater(() -> {
                     refreshCalendarFromDatabase();
@@ -1167,6 +1187,28 @@ public class CalendarFXComponent extends BorderPane {
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setScene(new Scene(root));
             stage.showAndWait();
+            
+            // Si se canceló y no se guardó, eliminar la entrada del calendario visual
+            if (!entrySaved[0] && originalCalendar != null) {
+                // Verificar si la entrada aún existe en el calendario antes de eliminarla
+                boolean entryExists = false;
+                Map<LocalDate, List<Entry<?>>> entriesMap = originalCalendar.findEntries(
+                    entry.getStartDate().minusDays(1), 
+                    entry.getEndDate().plusDays(1), 
+                    ZoneId.systemDefault()
+                );
+                for (List<Entry<?>> entries : entriesMap.values()) {
+                    if (entries.contains(entry)) {
+                        entryExists = true;
+                        break;
+                    }
+                }
+                
+                if (entryExists) {
+                    System.out.println("🗑️ Evento cancelado, eliminando entrada temporal del calendario");
+                    originalCalendar.removeEntry(entry);
+                }
+            }
             
             // Refrescar el calendario después de cerrar, independientemente del resultado
             refreshCalendarFromDatabase();
@@ -1455,102 +1497,33 @@ public class CalendarFXComponent extends BorderPane {
             LocalDateTime ahora = LocalDateTime.now();
             boolean citaPasada = fechaHoraCita.isBefore(ahora);
             
+            // Determinar si es una cita médica o un evento
+            boolean isMedicalAppointment = entry.getCalendar() == calendars.get(0) || // Pendientes
+                                         entry.getCalendar() == calendars.get(1) || // En curso
+                                         entry.getCalendar() == calendars.get(2) || // Completadas
+                                         entry.getCalendar() == calendars.get(3);   // Canceladas
+            
             // Configurar acción de edición
             editItem.setOnAction(e -> {
                 showEntryDetailsDialog(entry);
             });
             
-            // Configurar acción de eliminación (siempre disponible pero con nombre diferente para citas pasadas)
-            if (citaPasada) {
-                deleteItem.setText("Cancelar cita");
-            }
-            deleteItem.setOnAction(e -> {
-                // Confirmar eliminación/cancelación
-                Alert confirmDialog = new Alert(AlertType.CONFIRMATION);
+            // Configurar acción de eliminación con diferente lógica para citas vs eventos
+            if (isMedicalAppointment) {
+                // Es una cita médica
                 if (citaPasada) {
-                    confirmDialog.setTitle("Cancelar cita");
-                    confirmDialog.setHeaderText("¿Está seguro que desea cancelar esta cita?");
-                    confirmDialog.setContentText("Esta cita ya ha pasado su fecha programada.");
-                } else {
-                    confirmDialog.setTitle("Eliminar cita");
-                    confirmDialog.setHeaderText("¿Está seguro que desea eliminar esta cita?");
-                    confirmDialog.setContentText("Esta acción no se puede deshacer.");
+                    deleteItem.setText("Cancelar cita");
                 }
-                
-                Optional<ButtonType> result = confirmDialog.showAndWait();
-                if (result.isPresent() && result.get() == ButtonType.OK) {
-                    // Obtener ID de la cita
-                    String entryId = entry.getId();
-                    
-                    // Eliminar usando conexión independiente y protocolo correcto
-                    boolean deleted = false;
-                    GestorSocket gestorSocketEliminar = null;
-                    
-                    try {
-                        System.out.println("🗑️ Eliminando cita con ID: " + entryId);
-                        
-                        // Crear conexión independiente para evitar conflictos
-                        gestorSocketEliminar = GestorSocket.crearConexionIndependiente();
-                        
-                        // Usar el protocolo correcto para eliminar citas médicas
-                        gestorSocketEliminar.enviarPeticion(Protocolo.ELIMINAR_CITA + Protocolo.SEPARADOR_CODIGO + entryId);
-                        
-                        // Leer respuesta
-                        ObjectInputStream ois = gestorSocketEliminar.getEntrada();
-                        int codigo = ois.readInt();
-                        
-                        if (codigo == Protocolo.ELIMINAR_CITA_RESPONSE) {
-                            deleted = ois.readBoolean();
-                            System.out.println(deleted ? "✅ Cita eliminada exitosamente" : "❌ No se pudo eliminar la cita");
-                        } else if (codigo == Protocolo.ERROR_ELIMINAR_CITA) {
-                            System.err.println("❌ Error del servidor al eliminar cita");
-                            deleted = false;
-                        } else {
-                            System.err.println("❌ Código de respuesta inesperado: " + codigo);
-                            deleted = false;
-                        }
-                        
-                    } catch (Exception ex) {
-                        System.err.println("❌ Error al eliminar cita: " + ex.getMessage());
-                        ex.printStackTrace();
-                        deleted = false;
-                    } finally {
-                        // Cerrar la conexión independiente
-                        if (gestorSocketEliminar != null) {
-                            try {
-                                gestorSocketEliminar.cerrarConexion();
-                                System.out.println("🔌 Conexión de eliminación cerrada correctamente");
-                            } catch (Exception ex) {
-                                System.err.println("Error al cerrar conexión de eliminación: " + ex.getMessage());
-                            }
-                        }
-                    }
-                    
-                    if (deleted) {
-                        // Eliminar del calendario visual
-                        Calendar calendar = entry.getCalendar();
-                        if (calendar != null) {
-                            calendar.removeEntry(entry);
-                        }
-                        
-                        // Refrescar la vista inmediatamente
-                        System.out.println("🔄 Cita eliminada exitosamente, refrescando calendario...");
-                        refreshCalendarFromDatabase();
-                        
-                        // Mostrar mensaje de éxito
-                        Alert alert = new Alert(AlertType.INFORMATION);
-                        alert.setTitle("Éxito");
-                        alert.setHeaderText(null);
-                        alert.setContentText(citaPasada ? "La cita ha sido cancelada correctamente." : "La cita ha sido eliminada correctamente.");
-                        alert.showAndWait();
-                    } else {
-                        // Mostrar error
-                        showErrorMessage("Error", citaPasada ? "No se pudo cancelar la cita. Por favor, inténtelo de nuevo." : "No se pudo eliminar la cita. Por favor, inténtelo de nuevo.");
-                        // Refrescar de todos modos para asegurar consistencia
-                        refreshCalendarFromDatabase();
-                    }
-                }
-            });
+                deleteItem.setOnAction(e -> {
+                    eliminarCitaMedica(entry, citaPasada);
+                });
+            } else {
+                // Es un evento (reunión o recordatorio)
+                deleteItem.setText("Eliminar evento");
+                deleteItem.setOnAction(e -> {
+                    eliminarEvento(entry);
+                });
+            }
             
             // Configurar acción de cambio de estado
             changeStatusItem.setOnAction(e -> {
@@ -1558,10 +1531,7 @@ public class CalendarFXComponent extends BorderPane {
             });
             
             // Solo mostrar "Cambiar estado" para citas médicas (no para reuniones o recordatorios)
-            boolean isMedicalAppointment = entry.getCalendar() == calendars.get(0) || // Pendientes
-                                         entry.getCalendar() == calendars.get(1) || // En curso
-                                         entry.getCalendar() == calendars.get(2) || // Completadas
-                                         entry.getCalendar() == calendars.get(3);   // Canceladas
+            // (La variable isMedicalAppointment ya está definida arriba)
             
             // Agregar opciones al menú
             contextMenu.getItems().addAll(editItem, deleteItem);
@@ -1580,7 +1550,7 @@ public class CalendarFXComponent extends BorderPane {
                 
                 MenuItem newAppointmentItem = new MenuItem("Nueva cita médica");
                 MenuItem newMeetingItem = new MenuItem("Nueva reunión");
-                MenuItem newReminderItem = new MenuItem("Nuevo recordatorio");
+                
                 
                 // Configurar acciones
                 newAppointmentItem.setOnAction(e -> {
@@ -1629,27 +1599,10 @@ public class CalendarFXComponent extends BorderPane {
                     showEntryDetailsDialog(entry);
                 });
                 
-                newReminderItem.setOnAction(e -> {
-                    // Obtener la fecha y hora exacta donde se hizo clic
-                    ZonedDateTime fechaHoraClick = param.getZonedDateTime();
-                    
-                    Entry<String> entry = new Entry<>("Nuevo recordatorio");
-                    
-                    // Establecer intervalo: desde la hora de clic hasta 1 hora después
-                    ZonedDateTime horaInicio = fechaHoraClick;
-                    ZonedDateTime horaFin = fechaHoraClick.plusHours(1);
-                    
-                    entry.setInterval(horaInicio, horaFin);
-                    entry.setCalendar(calendars.get(6)); // Recordatorios (índice correcto)
-                    entry.setId(""); // Asegurar que sea cadena vacía para nuevos recordatorios
-                    
-                    System.out.println("🕒 Nuevo recordatorio creado en: " + horaInicio.toLocalDateTime() + " - " + horaFin.toLocalDateTime());
-                    
-                    showEntryDetailsDialog(entry);
-                });
+
                 
                 // Agregar items al menú
-                contextMenu.getItems().addAll(newAppointmentItem, newMeetingItem, newReminderItem);
+                contextMenu.getItems().addAll(newAppointmentItem, newMeetingItem);
                 
                 return contextMenu;
             }
@@ -2533,5 +2486,181 @@ public class CalendarFXComponent extends BorderPane {
                 Platform.runLater(() -> showErrorMessage("Error", "Error de comunicación: " + e.getMessage()));
             }
         }).start();
+    }
+    
+    /**
+     * Elimina una cita médica del sistema
+     */
+    private void eliminarCitaMedica(Entry<?> entry, boolean citaPasada) {
+        // Confirmar eliminación/cancelación
+        Alert confirmDialog = new Alert(AlertType.CONFIRMATION);
+        if (citaPasada) {
+            confirmDialog.setTitle("Cancelar cita");
+            confirmDialog.setHeaderText("¿Está seguro que desea cancelar esta cita?");
+            confirmDialog.setContentText("Esta cita ya ha pasado su fecha programada.");
+        } else {
+            confirmDialog.setTitle("Eliminar cita");
+            confirmDialog.setHeaderText("¿Está seguro que desea eliminar esta cita?");
+            confirmDialog.setContentText("Esta acción no se puede deshacer.");
+        }
+        
+        Optional<ButtonType> result = confirmDialog.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            // Obtener ID de la cita
+            String entryId = entry.getId();
+            
+            // Eliminar usando conexión independiente y protocolo correcto
+            boolean deleted = false;
+            GestorSocket gestorSocketEliminar = null;
+            
+            try {
+                System.out.println("🗑️ Eliminando cita con ID: " + entryId);
+                
+                // Crear conexión independiente para evitar conflictos
+                gestorSocketEliminar = GestorSocket.crearConexionIndependiente();
+                
+                // Usar el protocolo correcto para eliminar citas médicas
+                gestorSocketEliminar.enviarPeticion(Protocolo.ELIMINAR_CITA + Protocolo.SEPARADOR_CODIGO + entryId);
+                
+                // Leer respuesta
+                ObjectInputStream ois = gestorSocketEliminar.getEntrada();
+                int codigo = ois.readInt();
+                
+                if (codigo == Protocolo.ELIMINAR_CITA_RESPONSE) {
+                    deleted = ois.readBoolean();
+                    System.out.println(deleted ? "✅ Cita eliminada exitosamente" : "❌ No se pudo eliminar la cita");
+                } else if (codigo == Protocolo.ERROR_ELIMINAR_CITA) {
+                    System.err.println("❌ Error del servidor al eliminar cita");
+                    deleted = false;
+                } else {
+                    System.err.println("❌ Código de respuesta inesperado: " + codigo);
+                    deleted = false;
+                }
+                
+            } catch (Exception ex) {
+                System.err.println("❌ Error al eliminar cita: " + ex.getMessage());
+                ex.printStackTrace();
+                deleted = false;
+            } finally {
+                // Cerrar la conexión independiente
+                if (gestorSocketEliminar != null) {
+                    try {
+                        gestorSocketEliminar.cerrarConexion();
+                        System.out.println("🔌 Conexión de eliminación cerrada correctamente");
+                    } catch (Exception ex) {
+                        System.err.println("Error al cerrar conexión de eliminación: " + ex.getMessage());
+                    }
+                }
+            }
+            
+            if (deleted) {
+                // Eliminar del calendario visual
+                Calendar calendar = entry.getCalendar();
+                if (calendar != null) {
+                    calendar.removeEntry(entry);
+                }
+                
+                // Refrescar la vista inmediatamente
+                System.out.println("🔄 Cita eliminada exitosamente, refrescando calendario...");
+                refreshCalendarFromDatabase();
+                
+                // Mostrar mensaje de éxito
+                Alert alert = new Alert(AlertType.INFORMATION);
+                alert.setTitle("Éxito");
+                alert.setHeaderText(null);
+                alert.setContentText(citaPasada ? "La cita ha sido cancelada correctamente." : "La cita ha sido eliminada correctamente.");
+                alert.showAndWait();
+            } else {
+                // Mostrar error
+                showErrorMessage("Error", citaPasada ? "No se pudo cancelar la cita. Por favor, inténtelo de nuevo." : "No se pudo eliminar la cita. Por favor, inténtelo de nuevo.");
+                // Refrescar de todos modos para asegurar consistencia
+                refreshCalendarFromDatabase();
+            }
+        }
+    }
+    
+    /**
+     * Elimina un evento (reunión o recordatorio) del sistema
+     */
+    private void eliminarEvento(Entry<?> entry) {
+        // Confirmar eliminación
+        Alert confirmDialog = new Alert(AlertType.CONFIRMATION);
+        confirmDialog.setTitle("Eliminar evento");
+        confirmDialog.setHeaderText("¿Está seguro que desea eliminar este evento?");
+        confirmDialog.setContentText("Esta acción no se puede deshacer.");
+        
+        Optional<ButtonType> result = confirmDialog.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            // Obtener ID del evento
+            String entryId = entry.getId();
+            
+            // Eliminar usando conexión independiente y protocolo correcto
+            boolean deleted = false;
+            GestorSocket gestorSocketEliminar = null;
+            
+            try {
+                System.out.println("🗑️ Eliminando evento con ID: " + entryId);
+                
+                // Crear conexión independiente para evitar conflictos
+                gestorSocketEliminar = GestorSocket.crearConexionIndependiente();
+                
+                // Usar el protocolo correcto para eliminar eventos de calendario
+                gestorSocketEliminar.enviarPeticion(Protocolo.ELIMINAR_EVENTO_CALENDARIO + Protocolo.SEPARADOR_CODIGO + entryId);
+                
+                // Leer respuesta
+                ObjectInputStream ois = gestorSocketEliminar.getEntrada();
+                int codigo = ois.readInt();
+                
+                if (codigo == Protocolo.ELIMINAR_EVENTO_CALENDARIO_RESPONSE) {
+                    deleted = ois.readBoolean();
+                    System.out.println(deleted ? "✅ Evento eliminado exitosamente" : "❌ No se pudo eliminar el evento");
+                } else if (codigo == Protocolo.ERROR_ELIMINAR_EVENTO_CALENDARIO) {
+                    System.err.println("❌ Error del servidor al eliminar evento");
+                    deleted = false;
+                } else {
+                    System.err.println("❌ Código de respuesta inesperado: " + codigo);
+                    deleted = false;
+                }
+                
+            } catch (Exception ex) {
+                System.err.println("❌ Error al eliminar evento: " + ex.getMessage());
+                ex.printStackTrace();
+                deleted = false;
+            } finally {
+                // Cerrar la conexión independiente
+                if (gestorSocketEliminar != null) {
+                    try {
+                        gestorSocketEliminar.cerrarConexion();
+                        System.out.println("🔌 Conexión de eliminación cerrada correctamente");
+                    } catch (Exception ex) {
+                        System.err.println("Error al cerrar conexión de eliminación: " + ex.getMessage());
+                    }
+                }
+            }
+            
+            if (deleted) {
+                // Eliminar del calendario visual
+                Calendar calendar = entry.getCalendar();
+                if (calendar != null) {
+                    calendar.removeEntry(entry);
+                }
+                
+                // Refrescar la vista inmediatamente
+                System.out.println("🔄 Evento eliminado exitosamente, refrescando calendario...");
+                refreshCalendarFromDatabase();
+                
+                // Mostrar mensaje de éxito
+                Alert alert = new Alert(AlertType.INFORMATION);
+                alert.setTitle("Éxito");
+                alert.setHeaderText(null);
+                alert.setContentText("El evento ha sido eliminado correctamente.");
+                alert.showAndWait();
+            } else {
+                // Mostrar error
+                showErrorMessage("Error", "No se pudo eliminar el evento. Por favor, inténtelo de nuevo.");
+                // Refrescar de todos modos para asegurar consistencia
+                refreshCalendarFromDatabase();
+            }
+        }
     }
 }

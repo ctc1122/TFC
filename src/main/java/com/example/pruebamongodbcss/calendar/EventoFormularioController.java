@@ -4,6 +4,9 @@ import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.PanelInicioController;
 import com.example.pruebamongodbcss.Data.ServicioUsuarios;
 import com.example.pruebamongodbcss.calendar.CalendarEvent.EventoTipo;
+import com.example.pruebamongodbcss.Protocolo.Protocolo;
+import Utilidades1.GestorSocket;
+import java.io.ObjectInputStream;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -50,7 +53,7 @@ public class EventoFormularioController implements Initializable {
     @FXML private Button btnCancelar;
     @FXML private Button btnGuardar;
     
-    private CalendarService servicio;
+    private GestorSocket gestorSocket;
     private CalendarEvent evento;
     private boolean esEdicion = false;
     private Runnable eventoGuardadoCallback;
@@ -149,10 +152,10 @@ public class EventoFormularioController implements Initializable {
     }
     
     /**
-     * Establece el servicio de calendario
+     * Establece el gestor de socket para comunicación cliente-servidor
      */
-    public void setServicio(CalendarService servicio) {
-        this.servicio = servicio;
+    public void setGestorSocket(GestorSocket gestorSocket) {
+        this.gestorSocket = gestorSocket;
         
         // Cargar datos iniciales
         cargarParticipantes();
@@ -173,30 +176,36 @@ public class EventoFormularioController implements Initializable {
         this.esEdicion = true;
         
         // Actualizar título
-        lblTitulo.setText("Editar " + (servicio.esReunion(evento) ? "Reunión" : "Recordatorio"));
+        lblTitulo.setText("Editar " + (evento.getTipoEvento() == EventoTipo.REUNION ? "Reunión" : "Recordatorio"));
         
         // Cargar datos del evento
         cargarDatosEvento();
     }
     
     /**
-     * Carga la lista de participantes
+     * Carga la lista de participantes usando el protocolo cliente-servidor
      */
     private void cargarParticipantes() {
-        if (servicio != null) {
+        if (gestorSocket != null) {
             participantesObservable.clear();
             
-            // Cargar usuarios desde la base de datos
-            ServicioUsuarios servicioUsuarios = new ServicioUsuarios();
-            
             try {
-                // Obtener usuarios - utilizando el método obtenerTodosUsuarios
-                List<Usuario> listaUsuarios = servicioUsuarios.obtenerTodosUsuarios();
+                // Solicitar todos los usuarios al servidor
+                gestorSocket.enviarPeticion(Protocolo.GETALLUSERS + Protocolo.SEPARADOR_CODIGO);
+                ObjectInputStream ois = gestorSocket.getEntrada();
+                int codigo = ois.readInt();
                 
-                // Convertir la lista de objetos Usuario a una lista de nombres
-                for (Usuario usuario : listaUsuarios) {
-                    String nombreCompleto = usuario.getNombre() + " " + usuario.getApellido();
-                    participantesObservable.add(nombreCompleto);
+                if (codigo == Protocolo.GETALLUSERS_RESPONSE) {
+                    @SuppressWarnings("unchecked")
+                    List<Usuario> listaUsuarios = (List<Usuario>) ois.readObject();
+                    
+                    // Convertir la lista de objetos Usuario a una lista de nombres
+                    for (Usuario usuario : listaUsuarios) {
+                        String nombreCompleto = usuario.getNombre() + " " + usuario.getApellido();
+                        participantesObservable.add(nombreCompleto);
+                    }
+                } else {
+                    System.err.println("Error al cargar usuarios para participantes");
                 }
             } catch (Exception e) {
                 System.err.println("Error al cargar usuarios: " + e.getMessage());
@@ -222,10 +231,34 @@ public class EventoFormularioController implements Initializable {
             txtDescripcion.setText(evento.getDescription());
             txtUbicacion.setText(evento.getLocation());
             
-            // Configurar fecha y hora
-            DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-            LocalDateTime fechaHoraInicio = LocalDateTime.parse(evento.getStart(), formatter);
-            LocalDateTime fechaHoraFin = LocalDateTime.parse(evento.getEnd(), formatter);
+            // Configurar fecha y hora con manejo de diferentes formatos
+            LocalDateTime fechaHoraInicio;
+            LocalDateTime fechaHoraFin;
+            
+            try {
+                // Intentar parsear como ISO_LOCAL_DATE_TIME primero
+                DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+                fechaHoraInicio = LocalDateTime.parse(evento.getStart(), formatter);
+                fechaHoraFin = LocalDateTime.parse(evento.getEnd(), formatter);
+            } catch (Exception e) {
+                try {
+                    // Si falla, intentar parsear solo como fecha (ISO_LOCAL_DATE)
+                    DateTimeFormatter dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE;
+                    LocalDate fechaInicio = LocalDate.parse(evento.getStart(), dateFormatter);
+                    LocalDate fechaFin = LocalDate.parse(evento.getEnd(), dateFormatter);
+                    
+                    // Asignar horas por defecto
+                    fechaHoraInicio = fechaInicio.atTime(9, 0);  // 9:00 AM por defecto
+                    fechaHoraFin = fechaFin.atTime(10, 0);      // 10:00 AM por defecto
+                    
+                    System.out.println("Fecha parseada como DATE, asignando horas por defecto");
+                } catch (Exception ex) {
+                    // Si también falla, usar fecha y hora actual
+                    System.err.println("Error al parsear fechas del evento: " + ex.getMessage());
+                    fechaHoraInicio = LocalDateTime.now();
+                    fechaHoraFin = LocalDateTime.now().plusHours(1);
+                }
+            }
             
             dpFecha.setValue(fechaHoraInicio.toLocalDate());
             cmbHora.getSelectionModel().select(String.format("%02d", fechaHoraInicio.getHour()));
@@ -385,19 +418,61 @@ public class EventoFormularioController implements Initializable {
 
             evento.setUsuario(PanelInicioController.getUsuarioSesion().getUsuario());
             
-            // Guardar en la base de datos
-            CalendarEvent guardado = servicio.saveAppointment(evento);
-            
-            if (guardado != null) {
-                // Ejecutar callback si existe
-                if (eventoGuardadoCallback != null) {
-                    eventoGuardadoCallback.run();
+            // Guardar en la base de datos usando el protocolo cliente-servidor
+            try {
+                if (esEdicion) {
+                    // Actualizar evento existente
+                    gestorSocket.enviarPeticion(Protocolo.ACTUALIZAR_EVENTO_CALENDARIO + Protocolo.SEPARADOR_CODIGO);
+                    gestorSocket.getSalida().writeObject(evento);
+                    gestorSocket.getSalida().flush();
+                    
+                    ObjectInputStream ois = gestorSocket.getEntrada();
+                    int codigo = ois.readInt();
+                    
+                    if (codigo == Protocolo.ACTUALIZAR_EVENTO_CALENDARIO_RESPONSE) {
+                        boolean actualizado = ois.readBoolean();
+                        if (actualizado) {
+                            // Ejecutar callback si existe
+                            if (eventoGuardadoCallback != null) {
+                                eventoGuardadoCallback.run();
+                            }
+                            // Cerrar ventana
+                            cerrarVentana();
+                        } else {
+                            mostrarError("No se pudo actualizar el evento.");
+                        }
+                    } else {
+                        mostrarError("Error del servidor al actualizar el evento.");
+                    }
+                } else {
+                    // Crear nuevo evento
+                    gestorSocket.enviarPeticion(Protocolo.GUARDAR_EVENTO_CALENDARIO + Protocolo.SEPARADOR_CODIGO);
+                    gestorSocket.getSalida().writeObject(evento);
+                    gestorSocket.getSalida().flush();
+                    
+                    ObjectInputStream ois = gestorSocket.getEntrada();
+                    int codigo = ois.readInt();
+                    
+                    if (codigo == Protocolo.GUARDAR_EVENTO_CALENDARIO_RESPONSE) {
+                        CalendarEvent guardado = (CalendarEvent) ois.readObject();
+                        if (guardado != null) {
+                            // Ejecutar callback si existe
+                            if (eventoGuardadoCallback != null) {
+                                eventoGuardadoCallback.run();
+                            }
+                            // Cerrar ventana
+                            cerrarVentana();
+                        } else {
+                            mostrarError("No se pudo guardar el evento.");
+                        }
+                    } else {
+                        mostrarError("Error del servidor al guardar el evento.");
+                    }
                 }
-                
-                // Cerrar ventana
-                cerrarVentana();
-            } else {
-                mostrarError("Ha ocurrido un error al guardar el evento.");
+            } catch (Exception e) {
+                System.err.println("Error al comunicarse con el servidor: " + e.getMessage());
+                e.printStackTrace();
+                mostrarError("Error de comunicación con el servidor.");
             }
         }
     }
@@ -407,6 +482,20 @@ public class EventoFormularioController implements Initializable {
      */
     @FXML
     private void onCancelar(ActionEvent event) {
+        // Si estamos creando un evento nuevo (no edición) y ya se creó la entrada visual,
+        // necesitamos informar que se canceló para que se elimine del calendario visual
+        if (!esEdicion && evento != null && evento.getId() != null && !evento.getId().isEmpty()) {
+            try {
+                // Si el evento ya tiene ID (UUID temporal), eliminar del calendario visual
+                if (eventoGuardadoCallback != null) {
+                    // El callback se ejecuta para refrescar el calendario y eliminar entradas temporales
+                    eventoGuardadoCallback.run();
+                }
+            } catch (Exception e) {
+                System.err.println("Error al cancelar evento: " + e.getMessage());
+            }
+        }
+        
         cerrarVentana();
     }
     
