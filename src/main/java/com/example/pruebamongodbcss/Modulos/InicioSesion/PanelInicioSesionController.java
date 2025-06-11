@@ -4,6 +4,11 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -12,6 +17,7 @@ import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.theme.ThemeManager;
 
 import Utilidades1.GestorSocket;
+import Utilidades1.importarUMLSsql;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -165,6 +171,10 @@ public class PanelInicioSesionController extends Application implements Initiali
         }
         
         conectarAlServidor();
+        
+        // Verificar e inicializar base de datos UMLS si es necesario
+        verificarEInicializarUMLS();
+        
         System.out.println("Creando diapositivas...");
         crearDiapositivas();
         System.out.println("Mostrando primera diapositiva...");
@@ -933,6 +943,152 @@ public class PanelInicioSesionController extends Application implements Initiali
             e.printStackTrace();
             mostrarMensaje("Error al cargar el panel de registro: " + e.getMessage());
         }
+    }
+
+    /**
+     * Verifica si existe la base de datos UMLS y la tabla de diagnósticos
+     * Si no existe, ejecuta automáticamente la importación
+     */
+    private void verificarEInicializarUMLS() {
+        // Ejecutar verificación en un hilo separado para no bloquear la UI
+        new Thread(() -> {
+            System.out.println("🔍 Verificando base de datos UMLS...");
+            
+            // Configuración de conexión a MariaDB (igual que en importarUMLSsql)
+            final String DB_URL = "jdbc:mariadb://localhost:3306/";
+            final String DB_NAME = "umls";
+            final String USERNAME = "root";
+            final String PASSWORD = "miclave";
+            final String DRIVER = "org.mariadb.jdbc.Driver";
+            
+            Connection connection = null;
+            
+            try {
+                // Cargar el driver de MariaDB
+                Class.forName(DRIVER);
+                
+                // Conectar a MariaDB
+                String urlCompleta = DB_URL + DB_NAME + "?useSSL=false&allowPublicKeyRetrieval=true";
+                connection = DriverManager.getConnection(urlCompleta, USERNAME, PASSWORD);
+                
+                // Verificar si existe alguna tabla con diagnósticos
+                Statement stmt = connection.createStatement();
+                ResultSet rs = stmt.executeQuery("SHOW TABLES LIKE '%Diagn%'");
+                
+                boolean tablasDiagnosticosExisten = rs.next();
+                rs.close();
+                
+                if (!tablasDiagnosticosExisten) {
+                    // No existen tablas de diagnósticos, verificar si existe alguna tabla
+                    rs = stmt.executeQuery("SHOW TABLES");
+                    boolean hayTablas = rs.next();
+                    rs.close();
+                    
+                    if (!hayTablas) {
+                        System.out.println("⚠️ Base de datos UMLS vacía - Iniciando importación automática...");
+                        
+                        // Mostrar mensaje informativo en la UI
+                        Platform.runLater(() -> {
+                            mostrarMensaje("Inicializando base de datos UMLS...\nEsto puede tardar unos minutos.");
+                        });
+                        
+                        // Ejecutar la importación
+                        try {
+                            System.out.println("🚀 Ejecutando importación de diagnósticos UMLS...");
+                            importarUMLSsql.main(new String[]{});
+                            System.out.println("✅ Importación UMLS completada exitosamente");
+                            
+                            // Mostrar mensaje de éxito en la UI
+                            Platform.runLater(() -> {
+                                mostrarMensaje("Base de datos UMLS inicializada correctamente.");
+                            });
+                            
+                        } catch (Exception e) {
+                            System.err.println("❌ Error durante la importación UMLS: " + e.getMessage());
+                            e.printStackTrace();
+                            
+                            Platform.runLater(() -> {
+                                mostrarMensaje("Error al inicializar base de datos UMLS: " + e.getMessage());
+                            });
+                        }
+                    } else {
+                        System.out.println("ℹ️ Base de datos UMLS existe pero no tiene tablas de diagnósticos");
+                    }
+                } else {
+                    System.out.println("✅ Base de datos UMLS ya existe y contiene diagnósticos");
+                }
+                
+                stmt.close();
+                
+            } catch (ClassNotFoundException e) {
+                System.err.println("❌ Driver MariaDB no encontrado: " + e.getMessage());
+                Platform.runLater(() -> {
+                    mostrarMensaje("Error: Driver MariaDB no encontrado");
+                });
+            } catch (SQLException e) {
+                // Si no se puede conectar a la base de datos específica, verificar si MariaDB está funcionando
+                System.err.println("⚠️ No se pudo conectar a la base de datos UMLS: " + e.getMessage());
+                
+                // Intentar conectar sin especificar base de datos para verificar si MariaDB funciona
+                try {
+                    String urlSinBD = DB_URL + "?useSSL=false&allowPublicKeyRetrieval=true";
+                    Connection connTest = DriverManager.getConnection(urlSinBD, USERNAME, PASSWORD);
+                    
+                    // MariaDB funciona, crear base de datos
+                    Statement stmt = connTest.createStatement();
+                    stmt.executeUpdate("CREATE DATABASE IF NOT EXISTS " + DB_NAME + 
+                                     " CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+                    stmt.close();
+                    connTest.close();
+                    
+                    System.out.println("✅ Base de datos UMLS creada - Iniciando importación...");
+                    
+                    Platform.runLater(() -> {
+                        mostrarMensaje("Creando base de datos UMLS...\nEsto puede tardar unos minutos.");
+                    });
+                    
+                    // Ejecutar la importación
+                    try {
+                        importarUMLSsql.main(new String[]{});
+                        System.out.println("✅ Importación UMLS completada exitosamente");
+                        
+                        Platform.runLater(() -> {
+                            mostrarMensaje("Base de datos UMLS inicializada correctamente.");
+                        });
+                        
+                    } catch (Exception ex) {
+                        System.err.println("❌ Error durante la importación UMLS: " + ex.getMessage());
+                        ex.printStackTrace();
+                        
+                        Platform.runLater(() -> {
+                            mostrarMensaje("Error al inicializar base de datos UMLS: " + ex.getMessage());
+                        });
+                    }
+                    
+                } catch (SQLException ex) {
+                    System.err.println("❌ MariaDB no está disponible: " + ex.getMessage());
+                    Platform.runLater(() -> {
+                        mostrarMensaje("Advertencia: MariaDB no está disponible.\nAlgunas funciones pueden no funcionar.");
+                    });
+                }
+            } catch (Exception e) {
+                System.err.println("❌ Error inesperado al verificar UMLS: " + e.getMessage());
+                e.printStackTrace();
+                
+                Platform.runLater(() -> {
+                    mostrarMensaje("Error inesperado al verificar base de datos UMLS: " + e.getMessage());
+                });
+            } finally {
+                // Cerrar conexión
+                if (connection != null) {
+                    try {
+                        connection.close();
+                    } catch (SQLException e) {
+                        System.err.println("Error al cerrar conexión: " + e.getMessage());
+                    }
+                }
+            }
+        }).start();
     }
 }
     

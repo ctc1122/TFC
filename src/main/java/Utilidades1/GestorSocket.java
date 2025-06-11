@@ -9,7 +9,7 @@ public class GestorSocket {
     private static final String SERVER_HOST_SERVEO = "serveo.net";
     private static final String SERVER_HOST_LOCAL = "localhost";
     private static final int SERVER_PORT_SERVEO = 50002;  // Puerto serveo y localhost
-   
+
     // Variables estáticas para recordar la configuración exitosa
     private static String servidorExitoso = null;
     private static boolean configuracionDeterminada = false;
@@ -134,15 +134,15 @@ public class GestorSocket {
     }
     
     private void configurarSocket() throws IOException {
-        socket.setKeepAlive(true); // Mantener la conexión viva
-        socket.setTcpNoDelay(true); // Desactivar el algoritmo de Nagle para envío inmediato
-        socket.setSoTimeout(60000); // Timeout de 60 segundos para operaciones de lectura
-        
-        // Importante: primero crear el ObjectOutputStream antes que el ObjectInputStream
-        salida = new ObjectOutputStream(socket.getOutputStream());
-        salida.flush(); // Es importante hacer flush después de crear el ObjectOutputStream
-        
-        entrada = new ObjectInputStream(socket.getInputStream());
+            socket.setKeepAlive(true); // Mantener la conexión viva
+            socket.setTcpNoDelay(true); // Desactivar el algoritmo de Nagle para envío inmediato
+            socket.setSoTimeout(60000); // Timeout de 60 segundos para operaciones de lectura
+            
+            // Importante: primero crear el ObjectOutputStream antes que el ObjectInputStream
+            salida = new ObjectOutputStream(socket.getOutputStream());
+            salida.flush(); // Es importante hacer flush después de crear el ObjectOutputStream
+            
+            entrada = new ObjectInputStream(socket.getInputStream());
     }
 
     public void enviarPeticion(String codigoPeticion) throws IOException {
