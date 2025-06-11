@@ -12,11 +12,15 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.ResourceBundle;
 
+import org.bson.Document;
+
 import com.example.pruebamongodbcss.Data.Usuario;
 import com.example.pruebamongodbcss.Protocolo.Protocolo;
 import com.example.pruebamongodbcss.theme.ThemeManager;
 
+import Utilidades1.GestorConexion;
 import Utilidades1.GestorSocket;
+import Utilidades1.InicializadorMongoDB;
 import Utilidades1.importarUMLSsql;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -174,6 +178,9 @@ public class PanelInicioSesionController extends Application implements Initiali
         
         // Verificar e inicializar base de datos UMLS si es necesario
         verificarEInicializarUMLS();
+        
+        // Verificar e inicializar MongoDB si es necesario
+        verificarEInicializarMongoDB();
         
         System.out.println("Creando diapositivas...");
         crearDiapositivas();
@@ -1085,6 +1092,93 @@ public class PanelInicioSesionController extends Application implements Initiali
                         connection.close();
                     } catch (SQLException e) {
                         System.err.println("Error al cerrar conexión: " + e.getMessage());
+                    }
+                }
+            }
+        }).start();
+    }
+
+    /**
+     * Verifica si existe la base de datos MongoDB y la colección de usuarios
+     * Si no existe, ejecuta automáticamente la creación
+     */
+    private void verificarEInicializarMongoDB() {
+        // Ejecutar verificación en un hilo separado para no bloquear la UI
+        new Thread(() -> {
+            System.out.println("🔍 Verificando base de datos MongoDB...");
+            
+            try {
+                // Verificar si existe el usuario admin en la base de datos Empresa
+                com.mongodb.client.MongoDatabase empresaDB = GestorConexion.conectarBD("Empresa");
+                com.mongodb.client.MongoCollection<Document> usuariosCollection = empresaDB.getCollection("usuarios");
+                
+                // Buscar el usuario admin específico
+                Document adminQuery = new Document("usuario", "admin");
+                Document adminUser = usuariosCollection.find(adminQuery).first();
+                
+                if (adminUser == null) {
+                    System.out.println("⚠️ Usuario admin no encontrado - Iniciando inicialización de MongoDB...");
+                    
+                    // Mostrar mensaje informativo en la UI
+                    Platform.runLater(() -> {
+                        mostrarMensaje("Inicializando base de datos MongoDB...\nCreando colecciones y usuario administrador...");
+                    });
+                    
+                    // Ejecutar la inicialización de MongoDB
+                    try {
+                        System.out.println("🚀 Ejecutando inicialización de MongoDB...");
+                        InicializadorMongoDB.main(new String[]{});
+                        System.out.println("✅ Inicialización de MongoDB completada exitosamente");
+                        
+                        // Mostrar mensaje de éxito en la UI
+                        Platform.runLater(() -> {
+                            mostrarMensaje("Base de datos MongoDB inicializada correctamente.\nUsuario admin creado: admin/admin12345");
+                        });
+                        
+                    } catch (Exception e) {
+                        System.err.println("❌ Error durante la inicialización de MongoDB: " + e.getMessage());
+                        e.printStackTrace();
+                        
+                        Platform.runLater(() -> {
+                            mostrarMensaje("Error al inicializar MongoDB: " + e.getMessage());
+                        });
+                    }
+                } else {
+                    System.out.println("✅ Base de datos MongoDB ya está inicializada (usuario admin existe)");
+                }
+                
+            } catch (Exception e) {
+                System.err.println("❌ Error al verificar MongoDB: " + e.getMessage());
+                
+                // Verificar si es un problema de conexión (MongoDB no está funcionando)
+                if (e.getMessage().contains("Connection refused") || e.getMessage().contains("UnknownHostException")) {
+                    System.err.println("⚠️ MongoDB no está disponible - Intentando inicializar de todos modos...");
+                    
+                    Platform.runLater(() -> {
+                        mostrarMensaje("MongoDB no disponible.\nAsegúrate de que Docker esté funcionando con las bases de datos.");
+                    });
+                } else {
+                    // Error diferente, intentar inicializar
+                    Platform.runLater(() -> {
+                        mostrarMensaje("Inicializando MongoDB...\nPrimera ejecución del sistema.");
+                    });
+                    
+                    try {
+                        System.out.println("🚀 Intentando inicialización de MongoDB debido a error de verificación...");
+                        InicializadorMongoDB.main(new String[]{});
+                        System.out.println("✅ Inicialización de MongoDB completada");
+                        
+                        Platform.runLater(() -> {
+                            mostrarMensaje("MongoDB inicializado correctamente.");
+                        });
+                        
+                    } catch (Exception ex) {
+                        System.err.println("❌ Error durante inicialización de emergencia: " + ex.getMessage());
+                        ex.printStackTrace();
+                        
+                        Platform.runLater(() -> {
+                            mostrarMensaje("Error crítico con MongoDB: " + ex.getMessage());
+                        });
                     }
                 }
             }
