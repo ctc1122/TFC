@@ -48,7 +48,7 @@ public class Servidor {
             // Iniciar hilo automático para gestión de estados de citas
             Thread autoStatusThread = new Thread("Server: Auto Status Management Thread") {
                 @Override
-                public void run() {
+                public void run() { 
                     // Esperar 30 segundos antes de la primera verificación para que el servidor esté completamente iniciado
                     try {
                         Thread.sleep(30000);
